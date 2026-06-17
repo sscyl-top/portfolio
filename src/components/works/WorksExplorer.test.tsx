@@ -1,25 +1,29 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { getPublishedWorks } from "@/data/portfolio";
+import { categories, getPublishedWorks } from "@/data/portfolio";
 import { WorksExplorer } from "./WorksExplorer";
 
 describe("WorksExplorer", () => {
-  it("filters category cases without rendering an all category", async () => {
-    const user = userEvent.setup();
-
+  it("renders category groups without an all filter", () => {
     render(<WorksExplorer works={getPublishedWorks()} />);
 
-    expect(screen.getByRole("link", { name: /AIGC Concept Lab/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "全部作品" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "全部" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "品牌全案" }));
+    for (const category of categories) {
+      const heading = screen.getByRole("heading", { name: category });
+      const group = heading.closest("section");
 
-    expect(
-      screen.queryByRole("link", { name: /AIGC Concept Lab/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /RJ Tech/i })).toHaveAttribute(
+      expect(group).not.toBeNull();
+      expect(within(group as HTMLElement).getAllByRole("link")).toHaveLength(4);
+    }
+  });
+
+  it("keeps category cards linked to work details", () => {
+    render(<WorksExplorer works={getPublishedWorks()} />);
+
+    expect(screen.getAllByRole("link", { name: /RJ Tech Brand System/i })[0]).toHaveAttribute(
       "href",
       "/works/rj-tech-brand-system",
     );
