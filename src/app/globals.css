@@ -61,6 +61,30 @@ button {
   }
 }
 
+@keyframes cta-logo-ticker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes cta-logo-cut-in {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translate(-50%, -18px) skewX(-8deg);
+  }
+
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translate(-50%, 0) skewX(-8deg);
+  }
+}
+
 @keyframes works-route-blob-a {
   0%,
   100% {
@@ -127,6 +151,53 @@ button {
     720px 460px,
     560px 360px,
     620px 400px;
+}
+
+.portfolio-cta-panel {
+  border-radius: 36px;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.portfolio-cta-panel::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -36px;
+  z-index: 0;
+  width: min(260px, 34vw);
+  height: 76px;
+  transform: translateX(-50%);
+  border-radius: 999px 999px 0 0;
+  background: #20251e;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.portfolio-cta-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 64px;
+  background:
+    radial-gradient(90px 58px at 18% 100%, transparent 62%, #20251e 64%),
+    radial-gradient(90px 58px at 82% 100%, transparent 62%, #20251e 64%),
+    linear-gradient(#20251e, #20251e);
+  pointer-events: none;
+}
+
+.cta-logo-track {
+  animation: cta-logo-ticker 24s linear infinite;
+}
+
+.cta-logo-mark {
+  clip-path: inset(0 100% 0 0);
+  opacity: 0;
+  transform: translate(-50%, -18px) skewX(-8deg);
+}
+
+.cta-logo-mark.is-visible {
+  animation: cta-logo-cut-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .ticker-viewport {

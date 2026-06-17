@@ -64,40 +64,38 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
                 className="group block"
               >
                 <article className="relative">
-                  <div className="overflow-hidden rounded-lg border border-white/12 bg-white/[0.045] p-2 shadow-[0_28px_90px_rgba(0,0,0,0.42)] backdrop-blur-xl transition duration-500 group-hover:-translate-y-2 group-hover:border-white/30 group-hover:bg-white/[0.075]">
-                    <div className="relative aspect-[1.28] overflow-hidden rounded-md md:aspect-[1.42]">
-                      <div className={`absolute inset-0 opacity-70 saturate-[0.72] ${toneClass(work.coverTone)}`} />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_26%,rgba(255,255,255,0.18),transparent_22%),linear-gradient(to_bottom,rgba(10,14,13,0.18),rgba(0,0,0,0.3)_42%,rgba(0,0,0,0.58))]" />
-                      <div className="absolute left-4 top-4 flex gap-2">
-                        {work.palette.slice(0, 3).map((color) => (
-                          <span
-                            key={color}
-                            className="h-3 w-3 rounded-full border border-white/35"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                      <div className="absolute right-4 top-4 font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
-                        {String(index + 1).padStart(2, "0")} / {work.year}
-                      </div>
+                  <div className="relative aspect-[1.72] overflow-hidden rounded-[24px] bg-white/[0.04] shadow-[0_28px_90px_rgba(0,0,0,0.32)] transition duration-500 group-hover:-translate-y-2 md:rounded-[28px]">
+                    <div className={`absolute inset-0 opacity-78 saturate-[0.82] ${toneClass(work.coverTone)}`} />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(120deg,rgba(255,255,255,0.06),transparent_32%),linear-gradient(to_bottom,transparent_55%,rgba(0,0,0,0.38))]" />
+                    <div className="absolute left-5 top-5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/58">
+                      {String(index + 1).padStart(2, "0")} / {work.year}
+                    </div>
+                    <div className="absolute bottom-5 right-5 flex gap-2">
+                      {work.palette.slice(0, 3).map((color) => (
+                        <span
+                          key={color}
+                          className="h-3 w-3 rounded-full border border-white/32"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
                     </div>
                   </div>
 
-                  <div className="mt-6 flex items-start justify-between gap-6 px-1">
+                  <div className="mt-9 flex items-start justify-between gap-6 px-0">
                     <div>
                       <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-copper">
                         {work.category}
                       </p>
-                      <h3 className="mt-2 max-w-xl text-3xl font-semibold leading-tight text-white md:text-4xl">
+                      <h3 className="mt-3 max-w-xl text-4xl font-semibold leading-tight text-white md:text-5xl">
                         {work.title}
                       </h3>
-                      <p className="mt-3 line-clamp-1 max-w-xl text-sm leading-6 text-white/55 md:text-base">
+                      <p className="mt-3 line-clamp-1 max-w-xl text-lg leading-7 text-white/64">
                         {work.summary}
                       </p>
                     </div>
                     <ArrowUpRight
                       aria-hidden="true"
-                      className="mt-2 h-6 w-6 shrink-0 text-white/42 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white"
+                      className="mt-3 h-6 w-6 shrink-0 text-white/42 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white"
                     />
                   </div>
                 </article>
