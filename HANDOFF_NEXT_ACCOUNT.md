@@ -6,8 +6,10 @@ Use this file as the first thing to read after switching Codex accounts.
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
 - Latest completed feature commit before this handoff: `5922b66 Use image logo and simplify works CTA`
-- The worktree was clean before this handoff note was added.
-- A separate git bundle backup should exist one level up after this handoff is committed.
+- Latest handoff commit: `a2d5c7f Add next account handoff notes`
+- The worktree was clean when this handoff was checked.
+- Local git bundle backup:
+  `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-20260617-161921.bundle`
 
 ## How To Continue
 
@@ -26,6 +28,28 @@ Use this file as the first thing to read after switching Codex accounts.
    `http://localhost:3000`
 
 If Next.js shows a Turbopack runtime overlay, stop the local `next dev` process, delete `.next/dev`, and restart `npm run dev`.
+
+## First Prompt For The New Account
+
+Copy this into the new Codex account:
+
+```text
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请延续当前 /works 页面视觉迭代，不要重做项目。继续开发前请先确认当前状态和最近提交。
+```
+
+## If The Folder Is Lost
+
+The normal path is to keep using the existing workspace folder. If the folder is accidentally damaged or lost, restore from the bundle:
+
+```bash
+cd "D:\上山采月亮的台式\作品集网站"
+git clone "D:\上山采月亮的台式\作品集网站\portfolio-site-backup-20260617-161921.bundle" "2026-作品集网站-restored"
+cd "2026-作品集网站-restored"
+npm install
+npm run dev
+```
+
+The restored folder name can be changed later. Prefer continuing in the original folder if it still exists.
 
 ## Must-Know Project Rules
 
@@ -125,3 +149,13 @@ Recent useful commits:
 - If replacing the bottom CTA logo, replace `public/brand/infinite-progress-logo.svg` first.
 - If adding a figure/driver/person image, add the asset under `public/` temporarily and set `ctaFigureSrc` in `CompositeDesignWall.tsx`. Later this should become a CMS field.
 - Do not start Payload CMS yet unless the user explicitly shifts from visual MVP to backend/admin work.
+
+## Known Encoding Note
+
+If Windows PowerShell displays Chinese in this file as mojibake, read it with:
+
+```powershell
+Get-Content -LiteralPath "HANDOFF_NEXT_ACCOUNT.md" -Encoding UTF8
+```
+
+The file content itself is UTF-8.
