@@ -1,6 +1,7 @@
 import { CompositeDesignWall } from "@/components/works/CompositeDesignWall";
 import { RepresentativeWorks } from "@/components/works/RepresentativeWorks";
 import { WorksExplorer } from "@/components/works/WorksExplorer";
+import { WorksPageShell } from "@/components/works/WorksPageShell";
 import {
   getCompositeWorks,
   getFeaturedWorks,
@@ -13,10 +14,10 @@ export default function WorksPage() {
   const compositeWorks = getCompositeWorks();
 
   return (
-    <main>
+    <WorksPageShell>
       <RepresentativeWorks works={featuredWorks} />
       <WorksExplorer works={works} />
       <CompositeDesignWall works={compositeWorks} />
-    </main>
+    </WorksPageShell>
   );
 }

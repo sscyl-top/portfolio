@@ -1,31 +1,41 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { categories, getPublishedWorks } from "@/data/portfolio";
 import { WorksExplorer } from "./WorksExplorer";
 
 describe("WorksExplorer", () => {
-  it("renders category groups without an all filter", () => {
+  it("renders category filters without an all filter", () => {
     render(<WorksExplorer works={getPublishedWorks()} />);
 
-    expect(screen.getByRole("heading", { name: "全部作品" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("全部作品");
     expect(screen.queryByRole("button", { name: "全部" })).not.toBeInTheDocument();
 
     for (const category of categories) {
-      const heading = screen.getByRole("heading", { name: category });
-      const group = heading.closest("section");
-
-      expect(group).not.toBeNull();
-      expect(within(group as HTMLElement).getAllByRole("link")).toHaveLength(4);
+      expect(screen.getByRole("button", { name: category })).toBeInTheDocument();
     }
   });
 
-  it("keeps category cards linked to work details", () => {
+  it("filters cards by selected category", async () => {
+    const user = userEvent.setup();
     render(<WorksExplorer works={getPublishedWorks()} />);
 
-    expect(screen.getAllByRole("link", { name: /RJ Tech Brand System/i })[0]).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: /Hotelite Hospitality Identity/i }),
+    ).toHaveAttribute("href", "/works/hotelite-hospitality-identity");
+    expect(
+      screen.queryByRole("link", { name: /RJ Tech Brand System/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: categories[1] }));
+
+    expect(screen.getByRole("link", { name: /RJ Tech Brand System/i })).toHaveAttribute(
       "href",
       "/works/rj-tech-brand-system",
     );
+    expect(
+      screen.queryByRole("link", { name: /Hotelite Hospitality Identity/i }),
+    ).not.toBeInTheDocument();
   });
 });

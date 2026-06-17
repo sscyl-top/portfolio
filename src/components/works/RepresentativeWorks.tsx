@@ -17,13 +17,13 @@ type Tilt = {
 };
 
 const fanSlots = [
-  { x: -28, y: 88, r: -16, z: 1 },
-  { x: -20, y: 48, r: -10, z: 2 },
-  { x: -10.5, y: 16, r: -5, z: 3 },
-  { x: 0, y: -16, r: 0, z: 7 },
-  { x: 10.5, y: 16, r: 5, z: 3 },
-  { x: 20, y: 48, r: 10, z: 2 },
-  { x: 28, y: 88, r: 16, z: 1 },
+  { x: -24, y: 92, r: -18, z: 1 },
+  { x: -17, y: 52, r: -11, z: 2 },
+  { x: -8.5, y: 18, r: -5.5, z: 3 },
+  { x: 0, y: -18, r: 0, z: 7 },
+  { x: 8.5, y: 18, r: 5.5, z: 3 },
+  { x: 17, y: 52, r: 11, z: 2 },
+  { x: 24, y: 92, r: 18, z: 1 },
 ];
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
@@ -32,10 +32,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const [tilt, setTilt] = useState<Tilt>({ x: 0, y: 0 });
 
   return (
-    <section className="relative overflow-hidden border-b border-white/10 px-5 pb-24 pt-32 md:px-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(26,171,188,0.28),transparent_32%),radial-gradient(circle_at_72%_62%,rgba(201,162,127,0.16),transparent_28%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:80px_80px] opacity-20" />
-
+    <section className="relative overflow-hidden px-5 pb-32 pt-32 md:px-8">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase text-white/45">
           代表作 / Featured Works
@@ -48,13 +45,13 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         </p>
 
         <div
-          className="relative mx-auto mt-10 hidden h-[640px] max-w-7xl md:block"
+          className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
           onPointerLeave={() => {
             setActiveIndex(null);
             setTilt({ x: 0, y: 0 });
           }}
         >
-          <div className="pointer-events-none absolute left-1/2 top-[49%] h-[500px] w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-[49%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
 
           {displayWorks.map((work, index) => {
             const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];

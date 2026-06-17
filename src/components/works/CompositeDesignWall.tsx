@@ -64,12 +64,9 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
   }
 
   return (
-    <section className="relative overflow-hidden border-t border-white/10 px-5 py-24 md:px-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(201,162,127,0.14),transparent_28%),radial-gradient(circle_at_76%_38%,rgba(139,215,205,0.12),transparent_30%)]" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
+    <section className="relative overflow-hidden px-5 pb-28 pt-36 md:px-8">
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-12 text-center">
+        <div className="mb-20 text-center">
           <p className="font-mono text-xs uppercase text-copper">
             Composite Design / Visual Flow
           </p>
