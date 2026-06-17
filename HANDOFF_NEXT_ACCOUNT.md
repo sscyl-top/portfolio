@@ -6,10 +6,10 @@ Use this file as the first thing to read after switching Codex accounts.
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
 - Latest completed feature commit before this handoff: `5922b66 Use image logo and simplify works CTA`
-- Latest handoff commit: `3246a46 Clarify account handoff recovery steps`
+- Latest handoff commit: `fc52d61 Update handoff backup bundle path`
 - The worktree was clean when this handoff was checked.
 - Local git bundle backup:
-  `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-20260617-164331.bundle`
+  `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-latest.bundle`
 
 ## How To Continue
 
@@ -43,7 +43,7 @@ The normal path is to keep using the existing workspace folder. If the folder is
 
 ```bash
 cd "D:\上山采月亮的台式\作品集网站"
-git clone "D:\上山采月亮的台式\作品集网站\portfolio-site-backup-20260617-164331.bundle" "2026-作品集网站-restored"
+git clone "D:\上山采月亮的台式\作品集网站\portfolio-site-backup-latest.bundle" "2026-作品集网站-restored"
 cd "2026-作品集网站-restored"
 npm install
 npm run dev
