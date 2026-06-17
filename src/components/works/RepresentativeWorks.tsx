@@ -17,13 +17,13 @@ type Tilt = {
 };
 
 const fanSlots = [
-  { x: -34, y: 92, r: -20, z: 1 },
-  { x: -24, y: 48, r: -13, z: 2 },
-  { x: -13, y: 14, r: -6, z: 3 },
-  { x: 0, y: -18, r: 0, z: 7 },
-  { x: 13, y: 14, r: 6, z: 3 },
-  { x: 24, y: 48, r: 13, z: 2 },
-  { x: 34, y: 92, r: 20, z: 1 },
+  { x: -28, y: 88, r: -16, z: 1 },
+  { x: -20, y: 48, r: -10, z: 2 },
+  { x: -10.5, y: 16, r: -5, z: 3 },
+  { x: 0, y: -16, r: 0, z: 7 },
+  { x: 10.5, y: 16, r: 5, z: 3 },
+  { x: 20, y: 48, r: 10, z: 2 },
+  { x: 28, y: 88, r: 16, z: 1 },
 ];
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
@@ -79,7 +79,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                     ((event.clientY - rect.top) / rect.height - 0.5) * -7;
                   setTilt({ x: nextX, y: nextY });
                 }}
-                className="group absolute left-1/2 top-[52%] block w-[clamp(214px,19vw,288px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity] duration-500 hover:border-white/35 focus-visible:border-copper"
+                className="group absolute left-1/2 top-[52%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity] duration-500 hover:border-white/35 focus-visible:border-copper"
                 style={{
                   zIndex: isActive ? 30 : slot.z,
                   opacity: hasActive && !isActive ? 0.74 : 1,
