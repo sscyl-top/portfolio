@@ -114,6 +114,21 @@ button {
   animation: works-route-blob-b 28s ease-in-out infinite reverse;
 }
 
+.contour-lines {
+  background-image:
+    radial-gradient(ellipse at 14% 18%, transparent 0 22%, rgba(198, 214, 145, 0.14) 22.4% 22.8%, transparent 23.2% 100%),
+    radial-gradient(ellipse at 36% 28%, transparent 0 28%, rgba(198, 214, 145, 0.12) 28.4% 28.8%, transparent 29.2% 100%),
+    radial-gradient(ellipse at 72% 22%, transparent 0 25%, rgba(198, 214, 145, 0.12) 25.4% 25.8%, transparent 26.2% 100%),
+    radial-gradient(ellipse at 84% 78%, transparent 0 18%, rgba(198, 214, 145, 0.11) 18.4% 18.8%, transparent 19.2% 100%),
+    radial-gradient(ellipse at 22% 82%, transparent 0 24%, rgba(198, 214, 145, 0.11) 24.4% 24.8%, transparent 25.2% 100%);
+  background-size:
+    760px 420px,
+    680px 460px,
+    720px 460px,
+    560px 360px,
+    620px 400px;
+}
+
 .ticker-viewport {
   overflow: hidden;
   width: 100%;

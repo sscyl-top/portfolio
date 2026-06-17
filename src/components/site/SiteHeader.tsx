@@ -35,11 +35,11 @@ export function SiteHeader() {
         </div>
 
         <div className="hidden justify-self-end rounded-lg border border-white/10 bg-white/[0.035] px-4 py-2 text-right md:block">
-          <p className="font-mono text-sm font-semibold tracking-[0.18em] text-white">
-            NEXA
+          <p className="text-sm font-black tracking-[0.16em] text-white">
+            无限进步
           </p>
           <p className="font-mono text-[10px] uppercase text-white/40">
-            Visual Lab
+            Infinite Progress
           </p>
         </div>
       </nav>

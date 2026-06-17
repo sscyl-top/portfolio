@@ -19,9 +19,9 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
   }, [activeCategory, works]);
 
   return (
-    <section className="relative px-5 pb-32 pt-28 md:px-8 md:pt-36">
+    <section className="relative px-5 pb-48 pt-32 md:px-8 md:pt-44">
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-20 text-center">
+        <div className="mb-24 text-center">
           <p className="font-mono text-xs uppercase text-copper">
             Projects / Works Archive
           </p>
@@ -33,7 +33,7 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
           </p>
         </div>
 
-        <div className="mb-24 flex flex-wrap items-center justify-center gap-3">
+        <div className="mb-32 flex flex-wrap items-center justify-center gap-3">
           {categories.map((category) => {
             const isActive = activeCategory === category;
 
@@ -61,13 +61,13 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
               <Link
                 key={work.slug}
                 href={`/works/${work.slug}`}
-                className={`group block ${index % 2 === 1 ? "md:translate-y-16" : ""}`}
+                className="group block"
               >
                 <article className="relative">
                   <div className="overflow-hidden rounded-lg border border-white/12 bg-white/[0.045] p-2 shadow-[0_28px_90px_rgba(0,0,0,0.42)] backdrop-blur-xl transition duration-500 group-hover:-translate-y-2 group-hover:border-white/30 group-hover:bg-white/[0.075]">
                     <div className="relative aspect-[1.28] overflow-hidden rounded-md md:aspect-[1.42]">
-                      <div className={`absolute inset-0 ${toneClass(work.coverTone)}`} />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_26%,rgba(255,255,255,0.24),transparent_22%),linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_42%,rgba(0,0,0,0.46))]" />
+                      <div className={`absolute inset-0 opacity-70 saturate-[0.72] ${toneClass(work.coverTone)}`} />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_26%,rgba(255,255,255,0.18),transparent_22%),linear-gradient(to_bottom,rgba(10,14,13,0.18),rgba(0,0,0,0.3)_42%,rgba(0,0,0,0.58))]" />
                       <div className="absolute left-4 top-4 flex gap-2">
                         {work.palette.slice(0, 3).map((color) => (
                           <span

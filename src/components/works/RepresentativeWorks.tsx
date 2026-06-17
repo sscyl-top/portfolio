@@ -32,7 +32,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const [tilt, setTilt] = useState<Tilt>({ x: 0, y: 0 });
 
   return (
-    <section className="relative overflow-hidden px-5 pb-32 pt-32 md:px-8">
+    <section className="relative overflow-hidden px-5 pb-40 pt-32 md:px-8">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase text-white/45">
           代表作 / Featured Works
@@ -45,7 +45,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         </p>
 
         <div
-          className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
+          className="relative mx-auto mt-28 hidden h-[640px] max-w-7xl md:block"
           onPointerLeave={() => {
             setActiveIndex(null);
             setTilt({ x: 0, y: 0 });
