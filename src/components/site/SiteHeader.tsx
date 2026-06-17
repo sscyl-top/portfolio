@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { siteSettings } from "@/data/portfolio";
 
@@ -34,13 +35,15 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <div className="hidden justify-self-end rounded-lg border border-white/10 bg-white/[0.035] px-4 py-2 text-right md:block">
-          <p className="text-sm font-black tracking-[0.16em] text-white">
-            無限進步
-          </p>
-          <p className="font-mono text-[10px] uppercase text-white/40">
-            Infinite Progress
-          </p>
+        <div className="hidden justify-self-end rounded-lg border border-white/10 bg-white/[0.035] px-4 py-2 md:grid md:h-14 md:w-36 md:place-items-center">
+          <Image
+            src="/brand/infinite-progress-logo.svg"
+            alt="无限进步"
+            width={120}
+            height={30}
+            className="h-auto w-28"
+            priority
+          />
         </div>
       </nav>
     </header>
