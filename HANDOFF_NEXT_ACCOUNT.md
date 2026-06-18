@@ -214,6 +214,9 @@ Recent useful commits:
 - The fifth shape is now a set of smooth overlapping orbital ribbons rather than sharp polylines.
 - The homepage ends with `Browse works / View resume / Hiring contact` CTAs; Browse works is highlighted.
 - Stable QA anchors: `/#strength-1` through `/#strength-5`, and `/#home-cta`.
+- The latest shader pass follows the extracted USTA transition profile more closely: scroll morphing uses a cubic sine envelope, expands at mid-transition, then converges quickly near the next panel.
+- Particle sizes now use a softer `1.8` power distribution, producing mostly solid circular points with a restrained share of larger halo points instead of uniformly tiny or blurry dots.
+- Blue/gold/pearl color clusters use faster domain-warped 3D noise, so all three palettes remain visible while their grouped regions drift over time instead of sweeping linearly across the model.
 
 Latest verification for this state:
 

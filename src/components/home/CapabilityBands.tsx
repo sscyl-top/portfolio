@@ -541,7 +541,7 @@ function ParticleMorph({
       current[i * 3 + 2] = targetSets[0][i * 3 + 2];
 
       const sizeSeed = pseudoRandom(i, 18);
-      sizeValues[i] = 0.5 + sizeSeed ** 3 * 1.15;
+      sizeValues[i] = 0.5 + sizeSeed ** 1.8 * 1.15;
       phaseValues[i] = pseudoRandom(i, 19) * Math.PI * 2;
     }
 
@@ -663,7 +663,9 @@ function ParticleMorph({
     stateRef.current.mousePresence +=
       ((hasPointer ? 1 : 0) - stateRef.current.mousePresence) * 0.12;
     const mousePresence = stateRef.current.mousePresence;
-    const transitionScatter = Math.sin(shapeMixWindow * Math.PI) * 0.24;
+    const transitionSine = Math.sin(shapeMixWindow * Math.PI);
+    const transitionEnvelope = transitionSine * transitionSine * transitionSine;
+    const transitionScatter = transitionEnvelope * 0.34;
     const scrollScatter = Math.min(
       1,
       stateRef.current.scrollScatter + transitionScatter,
@@ -714,6 +716,8 @@ function ParticleMorph({
         targetFrom[i + 1] + (targetTo[i + 1] - targetFrom[i + 1]) * shapeMix;
       const blendedZ =
         targetFrom[i + 2] + (targetTo[i + 2] - targetFrom[i + 2]) * shapeMix;
+      const transitionExpansion =
+        1 + transitionEnvelope * (0.46 + sizes[index] * 0.14);
       const transitionDrift =
         scrollScatter * (0.2 + pseudoRandom(index, 282) * 0.34);
       const orbitX =
@@ -723,20 +727,21 @@ function ParticleMorph({
       const orbitZ =
         Math.sin(transitionSeed * 1.71 + time * 0.52) * transitionDrift * 0.58;
       const targetX =
-        blendedX +
+        blendedX * transitionExpansion +
         wave +
         dx * (repel + mouseWake * 0.018) -
         dy * swirl +
         disperse * 0.14 +
         orbitX;
       const targetY =
-        blendedY +
+        blendedY * transitionExpansion +
         wave +
         dy * (repel + mouseWake * 0.018) +
         dx * swirl +
         disperse * 0.1 +
         orbitY;
-      const targetZ = blendedZ + disperse * 0.3 + orbitZ;
+      const targetZ =
+        blendedZ * transitionExpansion + disperse * 0.3 + orbitZ;
       const arrivalRaw = Math.min(
         1,
         Math.max(0, (shapeMixRaw - 0.42) / 0.36),
@@ -785,6 +790,7 @@ const particleVertexShader = `
   attribute float phase;
   varying float vTwinkle;
   varying float vFlow;
+  varying float vScale;
   varying vec3 vPosition;
   uniform float uTime;
   uniform float uPixelRatio;
@@ -795,6 +801,7 @@ const particleVertexShader = `
     float mouseDistance = distance(position.xy, uCursor);
     float mouseGlow = (1.0 - smoothstep(0.0, 1.55, mouseDistance)) * uMouseForce;
     vTwinkle = 0.52 + 0.48 * sin(uTime * (1.55 + phase * 0.16) + phase);
+    vScale = clamp((size - 0.5) / 1.15, 0.0, 1.0);
     float snakeX = sin(
       position.x * 0.76 +
       sin(position.y * 1.15 + uTime * 0.19) * 1.4 -
@@ -815,7 +822,7 @@ const particleVertexShader = `
     vPosition = worldPosition.xyz;
     vec4 mvPosition = viewMatrix * worldPosition;
     float pulse = 0.92 + vTwinkle * 0.32 + vFlow * 0.14 + mouseGlow * 0.22;
-    gl_PointSize = size * uPixelRatio * pulse * (21.0 / -mvPosition.z);
+    gl_PointSize = size * uPixelRatio * pulse * (22.5 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -823,6 +830,7 @@ const particleVertexShader = `
 const particleFragmentShader = `
   varying float vTwinkle;
   varying float vFlow;
+  varying float vScale;
   varying vec3 vPosition;
   uniform float uTime;
 
@@ -860,10 +868,12 @@ const particleFragmentShader = `
     vec2 uv = gl_PointCoord - vec2(0.5);
     float distanceFromCenter = length(uv);
     float core = smoothstep(0.48, 0.2, distanceFromCenter);
-    float halo = smoothstep(0.5, 0.34, distanceFromCenter) * 0.1;
+    float halo =
+      smoothstep(0.5, 0.32, distanceFromCenter) *
+      (0.08 + vScale * 0.08);
     float alpha =
-      core * (0.66 + vTwinkle * 0.25) +
-      halo * (0.3 + vFlow * 0.16);
+      core * (0.7 + vTwinkle * 0.25) +
+      halo * (0.32 + vFlow * 0.16);
 
     if (alpha < 0.02) {
       discard;
@@ -871,30 +881,30 @@ const particleFragmentShader = `
 
     vec3 fieldBase = vPosition * vec3(0.54, 0.55, 0.42);
     float warpA = valueNoise(
-      fieldBase * 0.72 + vec3(0.0, uTime * 0.052, 1.7)
+      fieldBase * 0.72 + vec3(0.0, uTime * 0.12, 1.7)
     );
     float warpB = valueNoise(
-      fieldBase * 0.94 + vec3(-uTime * 0.046, 3.1, 0.0)
+      fieldBase * 0.94 + vec3(-uTime * 0.105, 3.1, 0.0)
     );
     vec3 fieldPosition = fieldBase;
     fieldPosition.x += sin(
-      fieldBase.y * 1.3 + warpA * 4.5 + uTime * 0.14
+      fieldBase.y * 1.3 + warpA * 4.5 + uTime * 0.22
     ) * 0.48;
     fieldPosition.y += sin(
-      fieldBase.x * 0.85 + warpB * 5.2 - uTime * 0.12
+      fieldBase.x * 0.85 + warpB * 5.2 - uTime * 0.19
     ) * 0.42;
     fieldPosition += vec3(
-      uTime * 0.065,
-      -uTime * 0.043,
-      uTime * 0.03
+      uTime * 0.16,
+      -uTime * 0.11,
+      uTime * 0.08
     );
     float cluster = valueNoise(fieldPosition);
     float detail = valueNoise(fieldPosition * 2.05 + vec3(4.7, 1.3, 8.1));
-    float sparkle = valueNoise(fieldPosition * 3.4 + vec3(9.1, uTime * 0.08, 2.4));
+    float sparkle = valueNoise(fieldPosition * 3.4 + vec3(9.1, uTime * 0.16, 2.4));
     float paletteRibbon = 0.5 + 0.5 * sin(
       vPosition.x * 0.88 +
-      sin(vPosition.y * 0.72 + uTime * 0.11) * 2.1 -
-      uTime * 0.14
+      sin(vPosition.y * 0.72 + uTime * 0.18) * 2.1 -
+      uTime * 0.22
     );
     float goldSignal =
       cluster * 0.42 +
@@ -909,9 +919,9 @@ const particleFragmentShader = `
     goldRegion = mix(
       goldRegion,
       smoothstep(0.38, 0.62, stablePartition),
-      0.38
+      0.32
     );
-    float pearlRegion = smoothstep(0.72, 0.9, sparkle + detail * 0.16);
+    float pearlRegion = smoothstep(0.64, 0.86, sparkle + detail * 0.18);
 
     vec3 blueDark = vec3(0.035, 0.32, 0.68);
     vec3 blueLight = vec3(0.18, 0.68, 1.0);
@@ -920,11 +930,11 @@ const particleFragmentShader = `
     vec3 blue = mix(blueDark, blueLight, 0.18 + detail * 0.82);
     vec3 gold = mix(goldDark, goldLight, 0.18 + detail * 0.82);
     vec3 fieldColor = mix(blue, gold, clamp(goldRegion, 0.0, 1.0));
-    fieldColor = mix(fieldColor, vec3(0.84, 0.83, 0.76), pearlRegion * 0.34);
-    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.012 + vTwinkle * 0.014);
+    fieldColor = mix(fieldColor, vec3(0.9, 0.9, 0.86), pearlRegion * 0.48);
+    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.025 + vTwinkle * 0.03);
 
     gl_FragColor = vec4(
-      glowColor * (0.72 + vTwinkle * 0.2 + vFlow * 0.08),
+      glowColor * (0.8 + vTwinkle * 0.22 + vFlow * 0.08),
       alpha
     );
   }
