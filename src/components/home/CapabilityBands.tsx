@@ -140,6 +140,8 @@ const polylineCache = new WeakMap<
 >();
 
 const particleModelUrls = [
+  "/models/particles/rocket.glb",
+  "/models/particles/satellite.glb",
   "/models/particles/earth.gltf",
   "/models/particles/astronaut.gltf",
 ];
@@ -361,11 +363,12 @@ function ParticleStage({
   scrollProgressRef: { current: number };
 }) {
   return (
-    <div className="absolute inset-0">
+    <div className="pointer-events-none absolute inset-0">
       <Canvas
         camera={{ position: [0, 0, 6.8], fov: 48 }}
         dpr={[1, 1.6]}
         gl={{ alpha: true, antialias: true }}
+        style={{ pointerEvents: "none" }}
       >
         <ambientLight intensity={0.35} />
         <Suspense fallback={null}>
@@ -386,7 +389,7 @@ function ParticleMorph({
   activeIndex: number;
   scrollProgressRef: { current: number };
 }) {
-  const [earthModel, astronautModel] = useLoader(
+  const [rocketModel, satelliteModel, earthModel, astronautModel] = useLoader(
     GLTFLoader,
     particleModelUrls,
   );
@@ -396,7 +399,9 @@ function ParticleMorph({
     active: activeIndex,
     lastPointerX: 0,
     lastPointerY: 0,
+    lastScrollProgress: 0,
     scatter: 0,
+    scrollScatter: 0,
     side: activeIndex % 2 === 0 ? 1 : -1,
     mouseX: 50,
     mouseY: 50,
@@ -413,8 +418,30 @@ function ParticleMorph({
     const sizeValues = new Float32Array(count);
     const phaseValues = new Float32Array(count);
     const modelTargets: Array<Float32Array | null> = [
-      null,
-      null,
+      sampleModelSurface(rocketModel.scene, count, {
+        mainMeshIndex: 0,
+        mainMeshShare: 0.42,
+        mirrorX: true,
+        rotation: new THREE.Euler(
+          Math.PI * -0.08,
+          Math.PI * 0.08,
+          Math.PI * -0.42,
+        ),
+        fitWidth: 4.0,
+        fitHeight: 5.55,
+        fitDepth: 2.65,
+      }),
+      sampleModelSurface(satelliteModel.scene, count, {
+        mainMeshIndex: null,
+        rotation: new THREE.Euler(
+          Math.PI * -0.08,
+          Math.PI * 0.06,
+          Math.PI * 0.04,
+        ),
+        fitWidth: 5.35,
+        fitHeight: 3.35,
+        fitDepth: 2.8,
+      }),
       sampleModelSurface(earthModel.scene, count, {
         mainMeshIndex: 0,
         rotation: new THREE.Euler(
@@ -422,9 +449,9 @@ function ParticleMorph({
           Math.PI * -0.3,
           Math.PI * 0.1,
         ),
-        fitWidth: 4.65,
-        fitHeight: 4.1,
-        fitDepth: 3.2,
+        fitWidth: 6.98,
+        fitHeight: 6.15,
+        fitDepth: 4.8,
       }),
       sampleModelSurface(astronautModel.scene, count, {
         mainMeshIndex: 4,
@@ -458,7 +485,7 @@ function ParticleMorph({
       current[i * 3 + 1] = targetSets[0][i * 3 + 1];
       current[i * 3 + 2] = targetSets[0][i * 3 + 2];
 
-      sizeValues[i] = 0.34 + pseudoRandom(i, 18) * 1.06;
+      sizeValues[i] = 0.46 + pseudoRandom(i, 18) * 1.34;
       phaseValues[i] = pseudoRandom(i, 19) * Math.PI * 2;
     }
 
@@ -468,7 +495,12 @@ function ParticleMorph({
       sizes: sizeValues,
       phases: phaseValues,
     };
-  }, [astronautModel.scene, earthModel.scene]);
+  }, [
+    astronautModel.scene,
+    earthModel.scene,
+    rocketModel.scene,
+    satelliteModel.scene,
+  ]);
 
   const uniforms = useMemo(
     () => ({
@@ -532,10 +564,20 @@ function ParticleMorph({
     const attribute = geometry.getAttribute("position") as THREE.BufferAttribute;
     const array = attribute.array as Float32Array;
     const active = stateRef.current.active;
-    const target = targets[active];
     const time = clock.elapsedTime;
     const side = stateRef.current.side;
+    const shapeTravel = scrollProgressRef.current * (slides.length - 1);
+    const shapeFrom = Math.min(slides.length - 1, Math.floor(shapeTravel));
+    const shapeTo = Math.min(slides.length - 1, shapeFrom + 1);
+    const shapeMixRaw = shapeTravel - shapeFrom;
+    const shapeMix = shapeMixRaw * shapeMixRaw * (3 - 2 * shapeMixRaw);
+    const targetFrom = targets[shapeFrom];
+    const targetTo = targets[shapeTo];
     const travel = scrollProgressRef.current * slides.length;
+    const scrollDelta = Math.abs(
+      scrollProgressRef.current - stateRef.current.lastScrollProgress,
+    );
+    stateRef.current.lastScrollProgress = scrollProgressRef.current;
     const travelX = Math.cos(travel * Math.PI) * 1.72;
     const travelY = 0.42 + Math.sin(travel * Math.PI) * 0.22;
     const hasPointer = stateRef.current.hasPointer;
@@ -553,7 +595,16 @@ function ParticleMorph({
       1,
       stateRef.current.scatter * 0.986 + pointerSpeed * 5.4,
     );
-    const scatter = stateRef.current.scatter;
+    stateRef.current.scrollScatter = Math.min(
+      1,
+      stateRef.current.scrollScatter * 0.94 + scrollDelta * 28,
+    );
+    const transitionScatter = Math.sin(shapeMixRaw * Math.PI) * 0.36;
+    const scrollScatter = Math.min(
+      1,
+      stateRef.current.scrollScatter + transitionScatter,
+    );
+    const scatter = Math.min(1, stateRef.current.scatter + scrollScatter * 0.68);
     const localMouseX = hasPointer
       ? pointerX * 5.15 - points.position.x
       : 50;
@@ -583,12 +634,31 @@ function ParticleMorph({
         scatter *
         0.62 *
         Math.sin(time * 0.52 + index * 0.29 + active * 1.7);
+      const transitionSeed = pseudoRandom(index, active + 281) * Math.PI * 2;
+      const blendedX = targetFrom[i] + (targetTo[i] - targetFrom[i]) * shapeMix;
+      const blendedY =
+        targetFrom[i + 1] + (targetTo[i + 1] - targetFrom[i + 1]) * shapeMix;
+      const blendedZ =
+        targetFrom[i + 2] + (targetTo[i + 2] - targetFrom[i + 2]) * shapeMix;
+      const transitionDrift =
+        scrollScatter * (0.82 + pseudoRandom(index, 282) * 1.15);
+      const orbitX =
+        Math.cos(transitionSeed + time * 0.8 + active) * transitionDrift;
+      const orbitY =
+        Math.sin(transitionSeed * 1.23 - time * 0.62) * transitionDrift * 0.72;
+      const orbitZ =
+        Math.sin(transitionSeed * 1.71 + time * 0.52) * transitionDrift * 0.58;
       const targetX =
-        target[i] + wave + dx * repel - dy * swirl + disperse * 0.18;
+        blendedX + wave + dx * repel - dy * swirl + disperse * 0.18 + orbitX;
       const targetY =
-        target[i + 1] + wave + dy * repel + dx * swirl + disperse * 0.13;
-      const targetZ = target[i + 2] + disperse * 0.38;
-      const morphSpeed = 0.014 + scatter * 0.004;
+        blendedY +
+        wave +
+        dy * repel +
+        dx * swirl +
+        disperse * 0.13 +
+        orbitY;
+      const targetZ = blendedZ + disperse * 0.38 + orbitZ;
+      const morphSpeed = 0.012 + scatter * 0.003 + scrollScatter * 0.006;
 
       array[i] += (targetX - array[i]) * morphSpeed;
       array[i + 1] += (targetY - array[i + 1]) * morphSpeed;
@@ -659,8 +729,8 @@ const particleVertexShader = `
     vec4 worldPosition = modelMatrix * vec4(displaced, 1.0);
     vPosition = worldPosition.xyz;
     vec4 mvPosition = viewMatrix * worldPosition;
-    float pulse = 0.84 + vTwinkle * 0.44 + vFlow * 0.24 + mouseGlow * 1.65;
-    gl_PointSize = size * uPixelRatio * pulse * (19.5 / -mvPosition.z);
+    float pulse = 0.92 + vTwinkle * 0.48 + vFlow * 0.3 + mouseGlow * 1.75;
+    gl_PointSize = size * uPixelRatio * pulse * (23.5 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -735,7 +805,16 @@ const particleFragmentShader = `
     );
     float cluster = valueNoise(fieldPosition);
     float detail = valueNoise(fieldPosition * 2.05 + vec3(4.7, 1.3, 8.1));
-    float goldRegion = smoothstep(0.64, 0.76, cluster + vFlow * 0.018);
+    float sparkle = valueNoise(fieldPosition * 3.4 + vec3(9.1, uTime * 0.08, 2.4));
+    float goldSignal =
+      cluster * 0.72 +
+      detail * 0.18 +
+      sin(vPosition.x * 0.9 + vPosition.y * 0.45 + uTime * 0.18) * 0.08 +
+      vFlow * 0.04;
+    float goldRegion = smoothstep(0.47, 0.64, goldSignal);
+    float blueReturn = smoothstep(0.42, 0.72, 1.0 - cluster + detail * 0.12);
+    goldRegion = mix(goldRegion, 1.0 - blueReturn, 0.22);
+    float pearlRegion = smoothstep(0.79, 0.92, sparkle + detail * 0.12);
 
     vec3 blueDark = vec3(0.06, 0.39, 0.72);
     vec3 blueLight = vec3(0.22, 0.72, 1.0);
@@ -743,8 +822,9 @@ const particleFragmentShader = `
     vec3 goldLight = vec3(1.0, 0.68, 0.18);
     vec3 blue = mix(blueDark, blueLight, 0.2 + detail * 0.8);
     vec3 gold = mix(goldDark, goldLight, 0.16 + detail * 0.84);
-    vec3 fieldColor = mix(blue, gold, goldRegion);
-    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.008 + vTwinkle * 0.012);
+    vec3 fieldColor = mix(blue, gold, clamp(goldRegion, 0.0, 1.0));
+    fieldColor = mix(fieldColor, vec3(0.92, 0.9, 0.82), pearlRegion * 0.24);
+    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.015 + vTwinkle * 0.018);
 
     gl_FragColor = vec4(
       glowColor * (0.58 + vTwinkle * 0.22 + vFlow * 0.12),
@@ -754,7 +834,9 @@ const particleFragmentShader = `
 `;
 
 type ModelSurfaceOptions = {
-  mainMeshIndex: number;
+  mainMeshIndex?: number | null;
+  mainMeshShare?: number;
+  mirrorX?: boolean;
   rotation: THREE.Euler;
   fitWidth: number;
   fitHeight: number;
@@ -782,10 +864,22 @@ function sampleModelSurface(
     return sampled;
   }
 
-  const mainMeshIndex = Math.min(options.mainMeshIndex, meshes.length - 1);
+  const mainMeshIndex =
+    options.mainMeshIndex === null
+      ? null
+      : Math.min(
+          options.mainMeshIndex ?? getLargestMeshIndex(meshes),
+          meshes.length - 1,
+        );
+  const mainShare = Math.min(0.9, Math.max(0.1, options.mainMeshShare ?? 0.7));
   const secondaryCount =
-    meshes.length > 1 ? Math.floor((count * 0.3) / (meshes.length - 1)) : 0;
-  const mainCount = count - secondaryCount * (meshes.length - 1);
+    mainMeshIndex !== null && meshes.length > 1
+      ? Math.floor((count * (1 - mainShare)) / (meshes.length - 1))
+      : Math.floor(count / meshes.length);
+  const mainCount =
+    mainMeshIndex !== null
+      ? count - secondaryCount * (meshes.length - 1)
+      : count - secondaryCount * (meshes.length - 1);
   const rotationMatrix = new THREE.Matrix4().makeRotationFromEuler(
     options.rotation,
   );
@@ -798,7 +892,10 @@ function sampleModelSurface(
     geometry.applyMatrix4(rotationMatrix);
     const samplingMesh = new THREE.Mesh(geometry);
     const sampler = new MeshSurfaceSampler(samplingMesh).build();
-    const meshPointCount = meshIndex === mainMeshIndex ? mainCount : secondaryCount;
+    const meshPointCount =
+      meshIndex === mainMeshIndex || (mainMeshIndex === null && meshIndex === 0)
+        ? mainCount
+        : secondaryCount;
 
     for (let index = 0; index < meshPointCount; index += 1) {
       sampler.sample(point);
@@ -814,6 +911,23 @@ function sampleModelSurface(
   fitPointCloud(sampled, options);
 
   return sampled;
+}
+
+function getLargestMeshIndex(meshes: THREE.Mesh<THREE.BufferGeometry>[]) {
+  let largestIndex = 0;
+  let largestCount = 0;
+
+  meshes.forEach((mesh, index) => {
+    const position = mesh.geometry.getAttribute("position");
+    const count = position?.count ?? 0;
+
+    if (count > largestCount) {
+      largestCount = count;
+      largestIndex = index;
+    }
+  });
+
+  return largestIndex;
 }
 
 function fitPointCloud(points: Float32Array, options: ModelSurfaceOptions) {
@@ -838,7 +952,8 @@ function fitPointCloud(points: Float32Array, options: ModelSurfaceOptions) {
   );
 
   for (let index = 0; index < points.length; index += 3) {
-    points[index] = (points[index] - center.x) * scale;
+    const mirror = options.mirrorX ? -1 : 1;
+    points[index] = (points[index] - center.x) * scale * mirror;
     points[index + 1] = (points[index + 1] - center.y) * scale;
     points[index + 2] = (points[index + 2] - center.z) * scale;
   }

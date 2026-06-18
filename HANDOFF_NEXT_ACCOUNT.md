@@ -33,7 +33,7 @@ If Next.js shows a Turbopack runtime overlay, stop the local `next dev` process,
 Copy this into the new Codex account:
 
 ```text
-请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请继续当前首页第一屏之后的 USTA 风格核心优势粒子段落，不要重做首页第一屏或 /works。rocket.glb 和 satellite.glb 已在 public/models/particles；优先用 MeshSurfaceSampler 接入并校正方向、尺寸和主 Mesh 权重，延续现有 Shader、鼠标交互和左右滚动运动。
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请继续当前首页第一屏之后的 USTA 风格核心优势粒子段落，不要重做首页第一屏或 /works。rocket.glb 和 satellite.glb 已通过 MeshSurfaceSampler 接入；继续对比 USTA 参考站微调模型轮廓、蓝/金/灰白粒子配色、点径、滚动 morph 和鼠标交互即可。
 ```
 
 ## Current Homepage Particle Work
@@ -45,25 +45,24 @@ Implemented in `src/components/home/CapabilityBands.tsx`:
 - Five alternating strength panels; odd panels place text left and particles right, even panels reverse this.
 - Text becomes fully active earlier while entering the viewport.
 - Circular particles with varied sizes and twinkle.
-- Sky-blue and gold spatial color clusters driven by animated 3D value noise.
+- Sky-blue, gold, and restrained pearly white spatial color clusters driven by animated 3D value noise.
 - Domain-warped, irregular S-shaped color movement instead of a single linear sweep.
 - Strong cursor repel, swirl, scatter, and slower regroup behavior across the whole viewport.
 - About 14% ambient particles spread across the full screen; model regions remain denser.
 - Continuous left/right particle-stage travel tied to vertical scroll progress.
-- Procedural rocket and satellite placeholders; rocket width has been increased.
-- Real GLTF surface sampling for Earth and astronaut using Three.js `MeshSurfaceSampler`.
+- Continuous shape-to-shape morph tied to scroll progress, with extra scroll scatter during transitions.
+- Real GLTF/GLB surface sampling for rocket, satellite, Earth, and astronaut using Three.js `MeshSurfaceSampler`.
+- Rocket is mirrored so its head faces left and scaled larger; Earth is enlarged by about 50%.
+- Particle canvas has `pointer-events: none` so the WebGL layer does not capture wheel/pointer hit testing.
 
 Local model assets:
 
+- `public/models/particles/rocket.glb` (valid GLB 2.0, 95,040 bytes, 7 meshes)
+- `public/models/particles/satellite.glb` (valid GLB 2.0, 1,280,136 bytes, 21 meshes)
 - `public/models/particles/earth.gltf`
 - `public/models/particles/astronaut.gltf`
 
-The next account should replace only the procedural target arrays for the first two shapes using the supplied models:
-
-- `public/models/particles/rocket.glb` (valid GLB 2.0, 95,040 bytes, 7 meshes)
-- `public/models/particles/satellite.glb` (valid GLB 2.0, 1,280,136 bytes, 21 meshes)
-
-Preferred model requirements: one GLB per object, clear silhouette, centered origin, applied transforms, no textures or animation required, roughly 1-10 MB, and licensed for portfolio use.
+Preferred replacement-model requirements: one GLB per object, clear silhouette, centered origin, applied transforms, no textures or animation required, roughly 1-10 MB, and licensed for portfolio use.
 
 Reference/reverse-analysis files remain outside the repo at:
 
@@ -74,11 +73,13 @@ Reference/reverse-analysis files remain outside the repo at:
 Browser verification completed:
 
 - WebGL shader compiled without runtime errors.
-- Earth GLTF rendered as a larger particle sphere.
-- Sky-blue/gold regions visibly cluster instead of random per-particle coloring.
+- Rocket and satellite now render from supplied GLB models instead of procedural outlines.
+- Earth GLTF rendered as a larger particle sphere, scaled up for stronger presence.
+- Sky-blue/gold/pearl regions visibly cluster instead of random per-particle coloring.
 - Ambient particles cover the viewport.
 - Wheel input changed `window.scrollY` by the expected delta in both content and particle regions.
-- Scroll investigation found no `wheel` listeners on window, document, or either canvas; `html/body` both compute to `overflow: visible`.
+- Scroll investigation found no source-level `wheel` preventDefault handlers; `html/body` both compute to `overflow: visible`.
+- The particle canvas computes to `pointer-events: none`; automation wheel input still changes `window.scrollY` by the expected delta.
 - A 45-frame browser sample averaged 16.38 ms with no frame above 33 ms, so the reported physical mouse-wheel failure was not reproduced in automation.
 - On the next account, test one physical wheel gesture in both the in-app browser and external Edge. If external Edge scrolls and the in-app browser does not, treat it as browser-container focus rather than adding a forced `window.scrollBy` handler.
 - If scrolling appears frozen, restart `npm run dev`; running `next build` alongside an old dev process previously left HMR stale.
