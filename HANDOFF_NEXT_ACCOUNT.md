@@ -5,9 +5,8 @@ Use this file as the first thing to read after switching Codex accounts.
 ## Current Safe Point
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
-- Latest completed feature commit before this handoff: `5922b66 Use image logo and simplify works CTA`
-- Latest handoff commit: `fc52d61 Update handoff backup bundle path`
-- The worktree was clean when this handoff was checked.
+- The latest homepage particle checkpoint is the newest commit shown by `git log --oneline -8`.
+- The worktree was verified with lint, tests, build, and `git diff --check` before checkpointing.
 - Local git bundle backup:
   `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-latest.bundle`
 
@@ -34,8 +33,52 @@ If Next.js shows a Turbopack runtime overlay, stop the local `next dev` process,
 Copy this into the new Codex account:
 
 ```text
-请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请延续当前 /works 页面视觉迭代，不要重做项目。继续开发前请先确认当前状态和最近提交。
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请继续当前首页第一屏之后的 USTA 风格核心优势粒子段落，不要重做首页第一屏或 /works。优先接入我提供的 rocket.glb 和 satellite.glb，并延续现有 Shader、鼠标交互和左右滚动运动。
 ```
+
+## Current Homepage Particle Work
+
+The active target is the homepage core-strengths section after the first hero. The first hero must remain unchanged.
+
+Implemented in `src/components/home/CapabilityBands.tsx`:
+
+- Five alternating strength panels; odd panels place text left and particles right, even panels reverse this.
+- Text becomes fully active earlier while entering the viewport.
+- Circular particles with varied sizes and twinkle.
+- Sky-blue and gold spatial color clusters driven by animated 3D value noise.
+- Domain-warped, irregular S-shaped color movement instead of a single linear sweep.
+- Strong cursor repel, swirl, scatter, and slower regroup behavior across the whole viewport.
+- About 14% ambient particles spread across the full screen; model regions remain denser.
+- Continuous left/right particle-stage travel tied to vertical scroll progress.
+- Procedural rocket and satellite placeholders; rocket width has been increased.
+- Real GLTF surface sampling for Earth and astronaut using Three.js `MeshSurfaceSampler`.
+
+Local model assets:
+
+- `public/models/particles/earth.gltf`
+- `public/models/particles/astronaut.gltf`
+
+The next account should replace only the procedural target arrays for the first two shapes after the user supplies:
+
+- `rocket.glb`
+- `satellite.glb`
+
+Preferred model requirements: one GLB per object, clear silhouette, centered origin, applied transforms, no textures or animation required, roughly 1-10 MB, and licensed for portfolio use.
+
+Reference/reverse-analysis files remain outside the repo at:
+
+- `D:\上山采月亮的台式\作品集网站\逆向报告`
+- Original discovered filenames: `rocket_v2.33f015f5.gltf` and `satellite_v2.76b104df.gltf`
+- Original particle shaders: `shader_42_VERTEX_SHADER.glsl` and `shader_43_FRAGMENT_SHADER.glsl`
+
+Browser verification completed:
+
+- WebGL shader compiled without runtime errors.
+- Earth GLTF rendered as a larger particle sphere.
+- Sky-blue/gold regions visibly cluster instead of random per-particle coloring.
+- Ambient particles cover the viewport.
+- Wheel input changed `window.scrollY` by the expected delta in both content and particle regions.
+- If scrolling appears frozen, restart `npm run dev`; running `next build` alongside an old dev process previously left HMR stale.
 
 ## If The Folder Is Lost
 
