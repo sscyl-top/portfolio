@@ -1,6 +1,8 @@
 "use client";
 
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { ArrowUpRight, FileText, Mail } from "lucide-react";
+import Link from "next/link";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Points } from "three";
@@ -125,15 +127,6 @@ const astronautContour: Point2[] = [
   [0, 1.7],
 ];
 
-const brandOrbit: Point2[] = [
-  [-1.8, -0.82],
-  [-1.12, -0.1],
-  [-0.34, 0.42],
-  [0.5, 0.72],
-  [1.42, 0.86],
-  [1.95, 0.72],
-];
-
 const polylineCache = new WeakMap<
   readonly Point2[],
   { lengths: number[]; total: number }
@@ -188,15 +181,33 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
     }
 
     const update = () => {
-      const rect = section.getBoundingClientRect();
-      const total = rect.height - window.innerHeight;
-      const raw = total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 0;
-      scrollProgressRef.current = raw;
-      const next = Math.min(
-        slides.length - 1,
-        Math.floor(raw * slides.length + 0.68),
+      const panels = Array.from(
+        section.querySelectorAll<HTMLElement>("[data-strength-panel]"),
       );
-      setActiveIndex(next);
+      const firstPanelRect = panels[0]?.getBoundingClientRect();
+      const secondPanelRect = panels[1]?.getBoundingClientRect();
+      const panelStep =
+        firstPanelRect && secondPanelRect
+          ? secondPanelRect.top - firstPanelRect.top
+          : window.innerHeight;
+      const panelTravel = firstPanelRect
+        ? Math.min(
+            slides.length - 1,
+            Math.max(0, -firstPanelRect.top / Math.max(panelStep, 1)),
+          )
+        : 0;
+      scrollProgressRef.current = panelTravel / (slides.length - 1);
+      const activationLine = window.innerHeight * 0.58;
+      const next = panels.findIndex((panel) => {
+        const panelRect = panel.getBoundingClientRect();
+        return (
+          panelRect.top <= activationLine && panelRect.bottom > activationLine
+        );
+      });
+
+      if (next >= 0) {
+        setActiveIndex(next);
+      }
     };
 
     update();
@@ -212,7 +223,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative border-t border-white/10 bg-black"
+      className="relative bg-black"
       onMouseMove={(event) => {
         if (cursorRef.current) {
           cursorRef.current.style.transform = `translate3d(${event.clientX - 40}px, ${event.clientY - 40}px, 0)`;
@@ -224,6 +235,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
         }
       }}
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[6] h-44 -translate-y-full bg-gradient-to-b from-transparent via-black/60 to-black" />
       <Loader progress={progress} hidden={isLoaded} />
 
       <div className="sticky top-0 h-screen overflow-hidden">
@@ -275,6 +287,36 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
               </div>
             ))}
           </div>
+
+          <div
+            id="home-cta"
+            className="mx-auto mt-20 flex max-w-3xl flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center"
+          >
+            <Link
+              href="/works"
+              className="group inline-flex min-h-14 flex-1 items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan"
+            >
+              浏览作品
+              <ArrowUpRight
+                aria-hidden="true"
+                className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
+            <Link
+              href="/resume"
+              className="inline-flex min-h-14 flex-1 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white"
+            >
+              查看简历
+              <FileText aria-hidden="true" className="h-4 w-4" />
+            </Link>
+            <a
+              href={`mailto:${resume.contact.email}?subject=Portfolio%20Hiring%20Contact`}
+              className="inline-flex min-h-14 flex-1 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white"
+            >
+              聘用联系
+              <Mail aria-hidden="true" className="h-4 w-4" />
+            </a>
+          </div>
         </section>
       </div>
 
@@ -312,7 +354,11 @@ function StrengthPanel({
   const isReversed = index % 2 === 1;
 
   return (
-    <section className="relative flex min-h-screen items-center px-5 py-24 md:px-8">
+    <section
+      id={`strength-${index + 1}`}
+      className="relative flex min-h-screen items-center px-5 py-24 md:px-8"
+      data-strength-panel
+    >
       <div className="mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
         <div
           className={`max-w-2xl transition duration-700 ${
@@ -402,6 +448,7 @@ function ParticleMorph({
     lastScrollProgress: 0,
     scatter: 0,
     scrollScatter: 0,
+    mousePresence: 0,
     side: activeIndex % 2 === 0 ? 1 : -1,
     mouseX: 50,
     mouseY: 50,
@@ -425,11 +472,13 @@ function ParticleMorph({
         rotation: new THREE.Euler(
           Math.PI * -0.08,
           Math.PI * 0.08,
-          Math.PI * -0.42,
+          Math.PI * -0.25,
         ),
-        fitWidth: 4.0,
-        fitHeight: 5.55,
+        fitWidth: 4.6,
+        fitHeight: 5.15,
         fitDepth: 2.65,
+        edgeShare: 0.07,
+        featureProfile: "rocket",
       }),
       sampleModelSurface(satelliteModel.scene, count, {
         mainMeshIndex: null,
@@ -441,9 +490,11 @@ function ParticleMorph({
         fitWidth: 5.35,
         fitHeight: 3.35,
         fitDepth: 2.8,
+        edgeShare: 0.06,
       }),
       sampleModelSurface(earthModel.scene, count, {
         mainMeshIndex: 0,
+        mainMeshShare: 0.76,
         rotation: new THREE.Euler(
           Math.PI * -0.65,
           Math.PI * -0.3,
@@ -452,13 +503,17 @@ function ParticleMorph({
         fitWidth: 6.98,
         fitHeight: 6.15,
         fitDepth: 4.8,
+        edgeShare: 0.11,
       }),
       sampleModelSurface(astronautModel.scene, count, {
         mainMeshIndex: 4,
+        mainMeshShare: 0.42,
+        secondaryDistribution: "equal",
         rotation: new THREE.Euler(0, Math.PI * 0.1, Math.PI * -0.05),
         fitWidth: 3.1,
         fitHeight: 3.85,
         fitDepth: 2.2,
+        edgeShare: 0.12,
       }),
       null,
     ];
@@ -485,7 +540,8 @@ function ParticleMorph({
       current[i * 3 + 1] = targetSets[0][i * 3 + 1];
       current[i * 3 + 2] = targetSets[0][i * 3 + 2];
 
-      sizeValues[i] = 0.46 + pseudoRandom(i, 18) * 1.34;
+      const sizeSeed = pseudoRandom(i, 18);
+      sizeValues[i] = 0.5 + sizeSeed ** 3 * 1.15;
       phaseValues[i] = pseudoRandom(i, 19) * Math.PI * 2;
     }
 
@@ -570,10 +626,15 @@ function ParticleMorph({
     const shapeFrom = Math.min(slides.length - 1, Math.floor(shapeTravel));
     const shapeTo = Math.min(slides.length - 1, shapeFrom + 1);
     const shapeMixRaw = shapeTravel - shapeFrom;
-    const shapeMix = shapeMixRaw * shapeMixRaw * (3 - 2 * shapeMixRaw);
+    const shapeMixWindow = Math.min(
+      1,
+      Math.max(0, (shapeMixRaw - 0.08) / 0.7),
+    );
+    const shapeMix =
+      shapeMixWindow * shapeMixWindow * (3 - 2 * shapeMixWindow);
     const targetFrom = targets[shapeFrom];
     const targetTo = targets[shapeTo];
-    const travel = scrollProgressRef.current * slides.length;
+    const travel = shapeTravel;
     const scrollDelta = Math.abs(
       scrollProgressRef.current - stateRef.current.lastScrollProgress,
     );
@@ -593,28 +654,37 @@ function ParticleMorph({
     stateRef.current.lastPointerY = pointerY;
     stateRef.current.scatter = Math.min(
       1,
-      stateRef.current.scatter * 0.986 + pointerSpeed * 5.4,
+      stateRef.current.scatter * 0.972 + pointerSpeed * 1.35,
     );
     stateRef.current.scrollScatter = Math.min(
       1,
-      stateRef.current.scrollScatter * 0.94 + scrollDelta * 28,
+      stateRef.current.scrollScatter * 0.91 + scrollDelta * 18,
     );
-    const transitionScatter = Math.sin(shapeMixRaw * Math.PI) * 0.36;
+    stateRef.current.mousePresence +=
+      ((hasPointer ? 1 : 0) - stateRef.current.mousePresence) * 0.12;
+    const mousePresence = stateRef.current.mousePresence;
+    const transitionScatter = Math.sin(shapeMixWindow * Math.PI) * 0.24;
     const scrollScatter = Math.min(
       1,
       stateRef.current.scrollScatter + transitionScatter,
     );
-    const scatter = Math.min(1, stateRef.current.scatter + scrollScatter * 0.68);
+    const scatter = Math.min(
+      1,
+      stateRef.current.scatter * 0.36 + scrollScatter * 0.66,
+    );
     const localMouseX = hasPointer
       ? pointerX * 5.15 - points.position.x
       : 50;
     const localMouseY = hasPointer ? pointerY * 3.0 - 0.45 : 50;
-    const repelRadius = 1.62 + scatter * 1.05;
+    const repelRadius = 1.22 + scatter * 0.72 + mousePresence * 0.12;
 
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value = time;
       materialRef.current.uniforms.uCursor.value.set(localMouseX, localMouseY);
-      materialRef.current.uniforms.uMouseForce.value = scatter;
+      materialRef.current.uniforms.uMouseForce.value = Math.max(
+        scatter * 0.48,
+        mousePresence * 0.1,
+      );
     }
 
     for (let i = 0; i < array.length; i += 3) {
@@ -627,9 +697,13 @@ function ParticleMorph({
       const distance = Math.max(0.001, Math.hypot(dx, dy));
       const repel =
         distance < repelRadius
-          ? ((1 - distance / repelRadius) ** 2) * (0.26 + scatter * 0.56)
+          ? ((1 - distance / repelRadius) ** 2) * (0.07 + scatter * 0.18)
           : 0;
-      const swirl = repel * (0.44 + scatter * 0.28);
+      const mouseWake =
+        distance < repelRadius * 1.15
+          ? (1 - distance / (repelRadius * 1.15)) * mousePresence
+          : 0;
+      const swirl = (repel + mouseWake * 0.035) * (0.42 + scatter * 0.22);
       const disperse =
         scatter *
         0.62 *
@@ -641,7 +715,7 @@ function ParticleMorph({
       const blendedZ =
         targetFrom[i + 2] + (targetTo[i + 2] - targetFrom[i + 2]) * shapeMix;
       const transitionDrift =
-        scrollScatter * (0.82 + pseudoRandom(index, 282) * 1.15);
+        scrollScatter * (0.2 + pseudoRandom(index, 282) * 0.34);
       const orbitX =
         Math.cos(transitionSeed + time * 0.8 + active) * transitionDrift;
       const orbitY =
@@ -649,16 +723,27 @@ function ParticleMorph({
       const orbitZ =
         Math.sin(transitionSeed * 1.71 + time * 0.52) * transitionDrift * 0.58;
       const targetX =
-        blendedX + wave + dx * repel - dy * swirl + disperse * 0.18 + orbitX;
+        blendedX +
+        wave +
+        dx * (repel + mouseWake * 0.018) -
+        dy * swirl +
+        disperse * 0.14 +
+        orbitX;
       const targetY =
         blendedY +
         wave +
-        dy * repel +
+        dy * (repel + mouseWake * 0.018) +
         dx * swirl +
-        disperse * 0.13 +
+        disperse * 0.1 +
         orbitY;
-      const targetZ = blendedZ + disperse * 0.38 + orbitZ;
-      const morphSpeed = 0.012 + scatter * 0.003 + scrollScatter * 0.006;
+      const targetZ = blendedZ + disperse * 0.3 + orbitZ;
+      const arrivalRaw = Math.min(
+        1,
+        Math.max(0, (shapeMixRaw - 0.42) / 0.36),
+      );
+      const arrivalEase = arrivalRaw * arrivalRaw * (3 - 2 * arrivalRaw);
+      const morphSpeed =
+        0.018 + arrivalEase * 0.064 + (1 - transitionScatter) * 0.01;
 
       array[i] += (targetX - array[i]) * morphSpeed;
       array[i + 1] += (targetY - array[i + 1]) * morphSpeed;
@@ -708,7 +793,7 @@ const particleVertexShader = `
 
   void main() {
     float mouseDistance = distance(position.xy, uCursor);
-    float mouseGlow = (1.0 - smoothstep(0.0, 2.2, mouseDistance)) * uMouseForce;
+    float mouseGlow = (1.0 - smoothstep(0.0, 1.55, mouseDistance)) * uMouseForce;
     vTwinkle = 0.52 + 0.48 * sin(uTime * (1.55 + phase * 0.16) + phase);
     float snakeX = sin(
       position.x * 0.76 +
@@ -723,14 +808,14 @@ const particleVertexShader = `
     float flowSignal = 0.5 + 0.5 * (snakeX * 0.58 + snakeY * 0.42);
     vFlow = pow(smoothstep(0.34, 0.94, flowSignal), 4.0);
     vec3 displaced = position;
-    displaced.x += snakeY * vFlow * 0.012;
-    displaced.y += snakeX * vFlow * 0.01;
-    displaced.z += mouseGlow * 0.36 * sin(uTime * 1.4 + phase);
+    displaced.x += snakeY * vFlow * 0.015 + mouseGlow * 0.018 * sin(phase + uTime);
+    displaced.y += snakeX * vFlow * 0.013 + mouseGlow * 0.016 * cos(phase * 1.3 - uTime * 0.8);
+    displaced.z += mouseGlow * 0.08 * sin(uTime * 1.4 + phase);
     vec4 worldPosition = modelMatrix * vec4(displaced, 1.0);
     vPosition = worldPosition.xyz;
     vec4 mvPosition = viewMatrix * worldPosition;
-    float pulse = 0.92 + vTwinkle * 0.48 + vFlow * 0.3 + mouseGlow * 1.75;
-    gl_PointSize = size * uPixelRatio * pulse * (23.5 / -mvPosition.z);
+    float pulse = 0.92 + vTwinkle * 0.32 + vFlow * 0.14 + mouseGlow * 0.22;
+    gl_PointSize = size * uPixelRatio * pulse * (21.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -774,69 +859,84 @@ const particleFragmentShader = `
   void main() {
     vec2 uv = gl_PointCoord - vec2(0.5);
     float distanceFromCenter = length(uv);
-    float core = smoothstep(0.46, 0.02, distanceFromCenter);
-    float halo = smoothstep(0.5, 0.16, distanceFromCenter) * 0.2;
+    float core = smoothstep(0.48, 0.2, distanceFromCenter);
+    float halo = smoothstep(0.5, 0.34, distanceFromCenter) * 0.1;
     float alpha =
-      (core * 0.7 + halo) *
-      (0.22 + vTwinkle * 0.28 + vFlow * 0.07);
+      core * (0.66 + vTwinkle * 0.25) +
+      halo * (0.3 + vFlow * 0.16);
 
     if (alpha < 0.02) {
       discard;
     }
 
-    vec3 fieldBase = vPosition * vec3(0.48, 0.5, 0.38);
+    vec3 fieldBase = vPosition * vec3(0.54, 0.55, 0.42);
     float warpA = valueNoise(
-      fieldBase * 0.72 + vec3(0.0, uTime * 0.025, 1.7)
+      fieldBase * 0.72 + vec3(0.0, uTime * 0.052, 1.7)
     );
     float warpB = valueNoise(
-      fieldBase * 0.94 + vec3(-uTime * 0.021, 3.1, 0.0)
+      fieldBase * 0.94 + vec3(-uTime * 0.046, 3.1, 0.0)
     );
     vec3 fieldPosition = fieldBase;
     fieldPosition.x += sin(
-      fieldBase.y * 1.3 + warpA * 4.5 + uTime * 0.09
+      fieldBase.y * 1.3 + warpA * 4.5 + uTime * 0.14
     ) * 0.48;
     fieldPosition.y += sin(
-      fieldBase.x * 0.85 + warpB * 5.2 - uTime * 0.07
+      fieldBase.x * 0.85 + warpB * 5.2 - uTime * 0.12
     ) * 0.42;
     fieldPosition += vec3(
-      uTime * 0.035,
-      -uTime * 0.022,
-      uTime * 0.016
+      uTime * 0.065,
+      -uTime * 0.043,
+      uTime * 0.03
     );
     float cluster = valueNoise(fieldPosition);
     float detail = valueNoise(fieldPosition * 2.05 + vec3(4.7, 1.3, 8.1));
     float sparkle = valueNoise(fieldPosition * 3.4 + vec3(9.1, uTime * 0.08, 2.4));
+    float paletteRibbon = 0.5 + 0.5 * sin(
+      vPosition.x * 0.88 +
+      sin(vPosition.y * 0.72 + uTime * 0.11) * 2.1 -
+      uTime * 0.14
+    );
     float goldSignal =
-      cluster * 0.72 +
-      detail * 0.18 +
-      sin(vPosition.x * 0.9 + vPosition.y * 0.45 + uTime * 0.18) * 0.08 +
-      vFlow * 0.04;
-    float goldRegion = smoothstep(0.47, 0.64, goldSignal);
-    float blueReturn = smoothstep(0.42, 0.72, 1.0 - cluster + detail * 0.12);
-    goldRegion = mix(goldRegion, 1.0 - blueReturn, 0.22);
-    float pearlRegion = smoothstep(0.79, 0.92, sparkle + detail * 0.12);
+      cluster * 0.42 +
+      detail * 0.33 +
+      paletteRibbon * 0.25;
+    float goldRegion = smoothstep(0.44, 0.61, goldSignal);
+    float goldPocket = smoothstep(0.56, 0.78, detail + vFlow * 0.2);
+    float stablePartition = 0.5 + 0.5 * sin(
+      vPosition.x * 1.36 + sin(vPosition.y * 0.72) * 1.18
+    );
+    goldRegion = mix(goldRegion, goldPocket, 0.18);
+    goldRegion = mix(
+      goldRegion,
+      smoothstep(0.38, 0.62, stablePartition),
+      0.38
+    );
+    float pearlRegion = smoothstep(0.72, 0.9, sparkle + detail * 0.16);
 
-    vec3 blueDark = vec3(0.06, 0.39, 0.72);
-    vec3 blueLight = vec3(0.22, 0.72, 1.0);
-    vec3 goldDark = vec3(0.68, 0.39, 0.08);
-    vec3 goldLight = vec3(1.0, 0.68, 0.18);
-    vec3 blue = mix(blueDark, blueLight, 0.2 + detail * 0.8);
-    vec3 gold = mix(goldDark, goldLight, 0.16 + detail * 0.84);
+    vec3 blueDark = vec3(0.035, 0.32, 0.68);
+    vec3 blueLight = vec3(0.18, 0.68, 1.0);
+    vec3 goldDark = vec3(0.78, 0.43, 0.06);
+    vec3 goldLight = vec3(1.0, 0.72, 0.2);
+    vec3 blue = mix(blueDark, blueLight, 0.18 + detail * 0.82);
+    vec3 gold = mix(goldDark, goldLight, 0.18 + detail * 0.82);
     vec3 fieldColor = mix(blue, gold, clamp(goldRegion, 0.0, 1.0));
-    fieldColor = mix(fieldColor, vec3(0.92, 0.9, 0.82), pearlRegion * 0.24);
-    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.015 + vTwinkle * 0.018);
+    fieldColor = mix(fieldColor, vec3(0.84, 0.83, 0.76), pearlRegion * 0.34);
+    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.012 + vTwinkle * 0.014);
 
     gl_FragColor = vec4(
-      glowColor * (0.58 + vTwinkle * 0.22 + vFlow * 0.12),
+      glowColor * (0.72 + vTwinkle * 0.2 + vFlow * 0.08),
       alpha
     );
   }
 `;
 
 type ModelSurfaceOptions = {
+  edgeShare?: number;
+  featureProfile?: "rocket";
   mainMeshIndex?: number | null;
   mainMeshShare?: number;
   mirrorX?: boolean;
+  secondaryDistribution?: "area" | "equal";
   rotation: THREE.Euler;
   fitWidth: number;
   fitHeight: number;
@@ -872,30 +972,35 @@ function sampleModelSurface(
           meshes.length - 1,
         );
   const mainShare = Math.min(0.9, Math.max(0.1, options.mainMeshShare ?? 0.7));
-  const secondaryCount =
-    mainMeshIndex !== null && meshes.length > 1
-      ? Math.floor((count * (1 - mainShare)) / (meshes.length - 1))
-      : Math.floor(count / meshes.length);
-  const mainCount =
-    mainMeshIndex !== null
-      ? count - secondaryCount * (meshes.length - 1)
-      : count - secondaryCount * (meshes.length - 1);
   const rotationMatrix = new THREE.Matrix4().makeRotationFromEuler(
     options.rotation,
   );
   const point = new THREE.Vector3();
   let cursor = 0;
-
-  meshes.forEach((sourceMesh, meshIndex) => {
+  const preparedMeshes = meshes.map((sourceMesh) => {
     const geometry = sourceMesh.geometry.clone();
     geometry.applyMatrix4(sourceMesh.matrixWorld);
     geometry.applyMatrix4(rotationMatrix);
-    const samplingMesh = new THREE.Mesh(geometry);
-    const sampler = new MeshSurfaceSampler(samplingMesh).build();
-    const meshPointCount =
-      meshIndex === mainMeshIndex || (mainMeshIndex === null && meshIndex === 0)
-        ? mainCount
-        : secondaryCount;
+
+    return {
+      area: getGeometrySurfaceArea(geometry),
+      geometry,
+      sampler: new MeshSurfaceSampler(new THREE.Mesh(geometry)).build(),
+    };
+  });
+  const edgeShare = Math.min(0.18, Math.max(0, options.edgeShare ?? 0));
+  const edgePointCount = Math.round(count * edgeShare);
+  const surfacePointCount = count - edgePointCount;
+  const meshPointCounts = allocateSurfaceSamples(
+    preparedMeshes.map(({ area }) => area),
+    surfacePointCount,
+    mainMeshIndex,
+    mainShare,
+    options.secondaryDistribution ?? "area",
+  );
+
+  preparedMeshes.forEach(({ sampler }, meshIndex) => {
+    const meshPointCount = meshPointCounts[meshIndex];
 
     for (let index = 0; index < meshPointCount; index += 1) {
       sampler.sample(point);
@@ -905,12 +1010,183 @@ function sampleModelSurface(
       cursor += 1;
     }
 
-    geometry.dispose();
   });
+
+  if (edgePointCount > 0) {
+    cursor = sampleModelEdges(
+      preparedMeshes.map(({ geometry }) => geometry),
+      sampled,
+      cursor,
+      edgePointCount,
+    );
+  }
+
+  preparedMeshes.forEach(({ geometry }) => geometry.dispose());
 
   fitPointCloud(sampled, options);
 
+  if (options.featureProfile === "rocket") {
+    addRocketFinParticles(sampled);
+  }
+
   return sampled;
+}
+
+function sampleModelEdges(
+  geometries: THREE.BufferGeometry[],
+  sampled: Float32Array,
+  cursor: number,
+  count: number,
+) {
+  const segments: Array<{
+    a: THREE.Vector3;
+    b: THREE.Vector3;
+    end: number;
+  }> = [];
+  let totalLength = 0;
+
+  geometries.forEach((geometry) => {
+    const edges = new THREE.EdgesGeometry(geometry, 24);
+    const position = edges.getAttribute("position") as THREE.BufferAttribute;
+
+    for (let index = 0; index < position.count; index += 2) {
+      const a = new THREE.Vector3().fromBufferAttribute(position, index);
+      const b = new THREE.Vector3().fromBufferAttribute(position, index + 1);
+      const length = a.distanceTo(b);
+
+      if (length > 0.000001) {
+        totalLength += length;
+        segments.push({ a, b, end: totalLength });
+      }
+    }
+
+    edges.dispose();
+  });
+
+  if (segments.length === 0 || totalLength === 0) {
+    return cursor;
+  }
+
+  for (let index = 0; index < count; index += 1) {
+    const distance = pseudoRandom(index, 447) * totalLength;
+    let low = 0;
+    let high = segments.length - 1;
+
+    while (low < high) {
+      const middle = Math.floor((low + high) / 2);
+      if (segments[middle].end < distance) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+
+    const segment = segments[low];
+    const start = low === 0 ? 0 : segments[low - 1].end;
+    const mix = (distance - start) / Math.max(segment.end - start, 0.000001);
+    sampled[cursor * 3] = THREE.MathUtils.lerp(segment.a.x, segment.b.x, mix);
+    sampled[cursor * 3 + 1] = THREE.MathUtils.lerp(
+      segment.a.y,
+      segment.b.y,
+      mix,
+    );
+    sampled[cursor * 3 + 2] = THREE.MathUtils.lerp(
+      segment.a.z,
+      segment.b.z,
+      mix,
+    );
+    cursor += 1;
+  }
+
+  return cursor;
+}
+
+function addRocketFinParticles(points: Float32Array) {
+  const count = Math.floor(points.length / 3);
+  const finCount = Math.floor(count * 0.022);
+
+  for (let index = 0; index < finCount; index += 1) {
+    const pointIndex = count - finCount + index;
+    const side = index % 2 === 0 ? -1 : 1;
+    const along = pseudoRandom(index, 503);
+    const spread = pseudoRandom(index, 504);
+    points[pointIndex * 3] = 1.25 + along * 0.92;
+    points[pointIndex * 3 + 1] =
+      -0.48 + side * (0.18 + along * 0.48) + (spread - 0.5) * 0.12;
+    points[pointIndex * 3 + 2] = side * (0.08 + spread * 0.22);
+  }
+}
+
+function allocateSurfaceSamples(
+  areas: number[],
+  count: number,
+  mainMeshIndex: number | null,
+  mainShare: number,
+  secondaryDistribution: "area" | "equal",
+) {
+  const weights = areas.map((area) => Math.pow(Math.max(area, 0.000001), 0.72));
+
+  if (mainMeshIndex !== null && areas.length > 1) {
+    const mainCount = Math.round(count * mainShare);
+    const secondaryWeights = weights.map((weight, index) =>
+      index === mainMeshIndex
+        ? 0
+        : secondaryDistribution === "equal"
+          ? 1
+          : weight,
+    );
+    const counts = distributeSamples(secondaryWeights, count - mainCount);
+    counts[mainMeshIndex] = mainCount;
+    return counts;
+  }
+
+  return distributeSamples(weights, count);
+}
+
+function distributeSamples(weights: number[], count: number) {
+  const minimum = Math.min(12, Math.floor(count / Math.max(weights.length, 1)));
+  const reserved = minimum * weights.length;
+  const available = Math.max(0, count - reserved);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || 1;
+  const exact = weights.map((weight) => (weight / totalWeight) * available);
+  const counts = exact.map((value) => minimum + Math.floor(value));
+  const remainder = count - counts.reduce((sum, value) => sum + value, 0);
+  const fractionalOrder = exact
+    .map((value, index) => ({ fraction: value - Math.floor(value), index }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  for (let index = 0; index < remainder; index += 1) {
+    counts[fractionalOrder[index % fractionalOrder.length].index] += 1;
+  }
+
+  return counts;
+}
+
+function getGeometrySurfaceArea(geometry: THREE.BufferGeometry) {
+  const position = geometry.getAttribute("position") as THREE.BufferAttribute;
+  const index = geometry.getIndex();
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const ab = new THREE.Vector3();
+  const ac = new THREE.Vector3();
+  let area = 0;
+  const triangleCount = index
+    ? Math.floor(index.count / 3)
+    : Math.floor(position.count / 3);
+
+  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+    const offset = triangle * 3;
+    const aIndex = index ? index.getX(offset) : offset;
+    const bIndex = index ? index.getX(offset + 1) : offset + 1;
+    const cIndex = index ? index.getX(offset + 2) : offset + 2;
+    a.fromBufferAttribute(position, aIndex);
+    b.fromBufferAttribute(position, bIndex);
+    c.fromBufferAttribute(position, cIndex);
+    area += ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() * 0.5;
+  }
+
+  return area;
 }
 
 function getLargestMeshIndex(meshes: THREE.Mesh<THREE.BufferGeometry>[]) {
@@ -1122,29 +1398,25 @@ function astronautPoint(index: number, part: number) {
 }
 
 function brandNebulaPoint(index: number, part: number, t: number) {
-  const angle = t * Math.PI * 6.8;
-  const radius = 0.35 + t * 2.4 + Math.sin(t * Math.PI * 10) * 0.18;
+  const lane = Math.min(3, Math.floor(part * 4));
+  const angle = t * Math.PI * 2 + lane * 0.42;
+  const configs = [
+    { rx: 2.5, ry: 1.28, rotation: -0.38, z: -0.28 },
+    { rx: 2.32, ry: 1.02, rotation: 0.44, z: 0.18 },
+    { rx: 1.82, ry: 0.72, rotation: -0.08, z: 0.4 },
+    { rx: 1.18, ry: 1.58, rotation: 0.18, z: -0.05 },
+  ] as const;
+  const config = configs[lane];
+  const ribbon = Math.sin(angle * 3 + lane * 1.7) * 0.055;
+  const x = Math.cos(angle) * (config.rx + ribbon);
+  const y = Math.sin(angle) * (config.ry + ribbon * 0.72);
+  const rotated = rotatePoint(x, y, config.rotation);
 
-  if (part < 0.24) {
-    return samplePolyline(index, brandOrbit, 0.06, 0.12, 241);
-  }
-
-  if (part < 0.76) {
-    return {
-      x: Math.cos(angle) * radius,
-      y: Math.sin(angle * 0.82) * radius * 0.68,
-      z: (t - 0.5) * 3.8,
-    };
-  }
-
-  return sampleLine(
-    index,
-    -1.7 + pseudoRandom(index, 71) * 0.2,
-    -0.8,
-    1.8,
-    0.95,
-    0.16,
-  );
+  return {
+    x: rotated.x + (pseudoRandom(index, 71) - 0.5) * 0.055,
+    y: rotated.y + (pseudoRandom(index, 72) - 0.5) * 0.055,
+    z: config.z + (pseudoRandom(index, 73) - 0.5) * 0.3,
+  };
 }
 
 function sampleEllipse(

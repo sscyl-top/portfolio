@@ -33,16 +33,38 @@ function ParticleField() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial
-        color="#d8d5cc"
-        size={0.018}
+      <shaderMaterial
+        vertexShader={ambientParticleVertexShader}
+        fragmentShader={ambientParticleFragmentShader}
         transparent
-        opacity={0.62}
-        sizeAttenuation
+        depthWrite={false}
       />
     </points>
   );
 }
+
+const ambientParticleVertexShader = `
+  void main() {
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = clamp(8.0 / max(-mvPosition.z, 0.1), 1.0, 3.6);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const ambientParticleFragmentShader = `
+  void main() {
+    float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
+
+    if (distanceFromCenter > 0.5) {
+      discard;
+    }
+
+    float core = smoothstep(0.46, 0.3, distanceFromCenter);
+    float edge = smoothstep(0.5, 0.34, distanceFromCenter) * 0.22;
+    float alpha = core * 0.54 + edge;
+    gl_FragColor = vec4(vec3(0.847, 0.835, 0.8), alpha);
+  }
+`;
 
 function pseudoRandom(index: number, salt: number) {
   const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;

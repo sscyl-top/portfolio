@@ -197,6 +197,32 @@ Recent useful commits:
 - If adding a figure/driver/person image, add the asset under `public/` temporarily and set `ctaFigureSrc` in `CompositeDesignWall.tsx`. Later this should become a CMS field.
 - Do not start Payload CMS yet unless the user explicitly shifts from visual MVP to backend/admin work.
 
+## Homepage Particle State (2026-06-18)
+
+- The first hero layout/content is preserved.
+- `AmbientParticles.tsx` now uses a custom round-point shader. Hero particles keep their original neutral color, and large square GL points are clamped out.
+- The hard divider between the hero and the resume-strength particle section was removed and replaced with a soft black overlap gradient.
+- `CapabilityBands.tsx` loads the rocket, satellite, earth, and astronaut models and samples their real mesh surfaces.
+- Mesh samples are distributed by triangle surface area, with a small edge-sampling share for clearer silhouettes.
+- Rocket is mirrored and rotated to roughly 45 degrees toward the upper-left, with a subtle procedural tail-fin supplement.
+- Earth slightly prioritizes the continent mesh and its boundary edges.
+- Astronaut uses a 42% primary mesh share, equal secondary-part distribution, and 12% edge samples so the helmet/limbs read without the hose dominating.
+- Shape progress is calculated from the five strength panels themselves, not the extra expertise/footer screen. Text activation and particle formation are now synchronized.
+- Particle sides alternate correctly: strength 1 right, 2 left, 3 right, 4 left, 5 right.
+- Mouse hover disturbance is intentionally subtle. Wheel/scroll movement remains the primary morph interaction.
+- Blue and gold are guaranteed to coexist through a stable spatial partition blended with faster moving noise fields.
+- The fifth shape is now a set of smooth overlapping orbital ribbons rather than sharp polylines.
+- The homepage ends with `Browse works / View resume / Hiring contact` CTAs; Browse works is highlighted.
+- Stable QA anchors: `/#strength-1` through `/#strength-5`, and `/#home-cta`.
+
+Latest verification for this state:
+
+- `npm run lint`: passed
+- `npm test`: passed, 2 files / 8 tests
+- `npm run build`: passed, 19 static pages generated
+
+Recommended next fidelity step: add subtle selective Bloom with `@react-three/postprocessing`, limited to the largest 8-12% of particles. Do not apply full-screen bloom, because it will blur the model silhouettes again.
+
 ## Known Encoding Note
 
 If Windows PowerShell displays Chinese in this file as mojibake, read it with:
