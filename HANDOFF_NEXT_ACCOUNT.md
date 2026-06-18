@@ -33,7 +33,7 @@ If Next.js shows a Turbopack runtime overlay, stop the local `next dev` process,
 Copy this into the new Codex account:
 
 ```text
-请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请继续当前首页第一屏之后的 USTA 风格核心优势粒子段落，不要重做首页第一屏或 /works。优先接入我提供的 rocket.glb 和 satellite.glb，并延续现有 Shader、鼠标交互和左右滚动运动。
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md，然后检查 git status 和 git log --oneline -8。这个项目是 Next.js 16 个人作品集网站，请继续当前首页第一屏之后的 USTA 风格核心优势粒子段落，不要重做首页第一屏或 /works。rocket.glb 和 satellite.glb 已在 public/models/particles；优先用 MeshSurfaceSampler 接入并校正方向、尺寸和主 Mesh 权重，延续现有 Shader、鼠标交互和左右滚动运动。
 ```
 
 ## Current Homepage Particle Work
@@ -58,10 +58,10 @@ Local model assets:
 - `public/models/particles/earth.gltf`
 - `public/models/particles/astronaut.gltf`
 
-The next account should replace only the procedural target arrays for the first two shapes after the user supplies:
+The next account should replace only the procedural target arrays for the first two shapes using the supplied models:
 
-- `rocket.glb`
-- `satellite.glb`
+- `public/models/particles/rocket.glb` (valid GLB 2.0, 95,040 bytes, 7 meshes)
+- `public/models/particles/satellite.glb` (valid GLB 2.0, 1,280,136 bytes, 21 meshes)
 
 Preferred model requirements: one GLB per object, clear silhouette, centered origin, applied transforms, no textures or animation required, roughly 1-10 MB, and licensed for portfolio use.
 
@@ -78,6 +78,9 @@ Browser verification completed:
 - Sky-blue/gold regions visibly cluster instead of random per-particle coloring.
 - Ambient particles cover the viewport.
 - Wheel input changed `window.scrollY` by the expected delta in both content and particle regions.
+- Scroll investigation found no `wheel` listeners on window, document, or either canvas; `html/body` both compute to `overflow: visible`.
+- A 45-frame browser sample averaged 16.38 ms with no frame above 33 ms, so the reported physical mouse-wheel failure was not reproduced in automation.
+- On the next account, test one physical wheel gesture in both the in-app browser and external Edge. If external Edge scrolls and the in-app browser does not, treat it as browser-container focus rather than adding a forced `window.scrollBy` handler.
 - If scrolling appears frozen, restart `npm run dev`; running `next build` alongside an old dev process previously left HMR stale.
 
 ## If The Folder Is Lost
