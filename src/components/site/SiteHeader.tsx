@@ -6,28 +6,28 @@ import { siteSettings } from "@/data/portfolio";
 export function SiteHeader() {
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/45 backdrop-blur-xl">
-      <nav className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-5 md:px-8">
-        <Link href="/" className="group flex min-w-0 items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/[0.04] font-mono text-sm text-white">
+      <nav className="mx-auto grid h-24 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-5 md:px-8">
+        <Link href="/" className="group flex min-w-0 items-center gap-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/[0.04] font-mono text-base text-white">
             {siteSettings.logo}
           </span>
           <span className="hidden min-w-0 sm:block">
-            <span className="block truncate text-sm font-semibold tracking-[0.18em] text-white">
+            <span className="block truncate text-base font-semibold tracking-[0.18em] text-white">
               {siteSettings.name}
             </span>
-            <span className="block truncate font-mono text-[11px] text-white/45">
+            <span className="mt-1 block truncate font-mono text-xs text-white/45">
               {siteSettings.title}
             </span>
           </span>
         </Link>
 
-        <div className="justify-self-center rounded-full border border-white/10 bg-white/[0.035] p-1">
+        <div className="justify-self-center">
           <div className="flex items-center gap-1">
             {siteSettings.navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-full px-4 py-2 text-sm text-white/62 transition hover:bg-white/10 hover:text-white max-sm:px-3"
+                className="relative px-5 py-3 text-base text-white/62 transition after:absolute after:inset-x-5 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 max-sm:px-3 max-sm:text-sm"
               >
                 {item.label}
               </Link>
@@ -35,13 +35,13 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <div className="hidden justify-self-end rounded-lg border border-white/10 bg-white/[0.035] px-4 py-2 md:grid md:h-14 md:w-36 md:place-items-center">
+        <div className="hidden justify-self-end md:grid md:h-16 md:w-40 md:place-items-center">
           <Image
             src="/brand/infinite-progress-logo.svg"
             alt="无限进步"
             width={120}
             height={30}
-            className="h-auto w-28"
+            className="h-auto w-32"
             priority
           />
         </div>

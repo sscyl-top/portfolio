@@ -1,5 +1,29 @@
 # Codex Handoff For Next Account
 
+## Latest Checkpoint (2026-06-19)
+
+This section supersedes older progress notes below. Use the newest commit shown by
+`git log --oneline -8` as the recovery point.
+
+- Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
+- Backup bundle: `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-latest.bundle`
+- Homepage hero: enlarged and lowered central video card, larger external floating cards,
+  larger header/navigation, duplicate five-year summary removed.
+- Particle sequence: rocket, satellite, earth, procedural Saturn, centered astronaut.
+- Particle work includes GLB surface sampling, satellite feature weighting, rocket entry
+  aggregation/fins, blue-gold color balance, and a more visible Saturn ring profile.
+- Final contact scene: centered astronaut, `hello@sscyl.top`, left-aligned
+  `期待一起共事：`, one-row CTA buttons, and four compact expertise cards at the bottom.
+- QA anchors: `/`, `/#strength-4`, `/#strength-5`, `/#home-cta`.
+- Continue with visual review from browser annotations. Do not rebuild the page or replace
+  the existing particle architecture.
+
+### First Prompt For The New Account
+
+```text
+请先阅读 HANDOFF_NEXT_ACCOUNT.md 和 AGENTS.md，检查 git status 与 git log --oneline -8。继续当前 Next.js 16 作品集项目，不要重做页面。当前首页已完成首屏布局、火箭/卫星/地球/土星/宇航员粒子序列和最终联系场景；请从最新提交继续，根据我下一条浏览器标注做视觉迭代。先启动 npm run dev 并确认 http://localhost:3000/ 可预览。
+```
+
 Use this file as the first thing to read after switching Codex accounts.
 
 ## Current Safe Point

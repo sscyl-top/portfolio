@@ -46,7 +46,7 @@ function ParticleField() {
 const ambientParticleVertexShader = `
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(8.0 / max(-mvPosition.z, 0.1), 1.0, 3.6);
+    gl_PointSize = clamp(11.0 / max(-mvPosition.z, 0.1), 1.4, 5.2);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -59,9 +59,9 @@ const ambientParticleFragmentShader = `
       discard;
     }
 
-    float core = smoothstep(0.46, 0.3, distanceFromCenter);
-    float edge = smoothstep(0.5, 0.34, distanceFromCenter) * 0.22;
-    float alpha = core * 0.54 + edge;
+    float core = smoothstep(0.46, 0.24, distanceFromCenter);
+    float edge = smoothstep(0.5, 0.34, distanceFromCenter) * 0.18;
+    float alpha = core * 0.68 + edge;
     gl_FragColor = vec4(vec3(0.847, 0.835, 0.8), alpha);
   }
 `;

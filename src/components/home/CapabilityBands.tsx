@@ -12,7 +12,11 @@ import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.j
 import { resume } from "@/data/portfolio";
 
 import {
+  allocateSatelliteMeshSamples,
   findActivePanelIndex,
+  getParticleSceneRole,
+  getParticleStageX,
+  getSaturnParticleRegion,
   getPointerInteraction,
 } from "./particleMotion";
 
@@ -57,14 +61,14 @@ const slides: StrengthSlide[] = [
     title: "跨部门协同与落地",
     outline: "WEB + MOTION",
     body: "具备 Web 视觉设计与落地能力，可进行 vibe coding 式页面搭建与设计实现，同时具备短视频剪辑与动效表达能力。",
-    shapeLabel: "Particle astronaut",
+    shapeLabel: "Particle saturn",
   },
   {
     kicker: "05 / Brand practice",
     title: "品牌推广实战",
     outline: "TEAM VALUE",
     body: "曾主导多项大型活动全案视觉与团队统筹，将创意转化为可量化的品牌价值，适应高强度设计节奏。",
-    shapeLabel: "Particle brand orbit",
+    shapeLabel: "Particle astronaut",
   },
 ];
 
@@ -152,6 +156,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const cursorRef = useRef<HTMLDivElement>(null);
   const scrollProgressRef = useRef(0);
+  const entryProgressRef = useRef(0);
 
   useEffect(() => {
     const startedAt = performance.now();
@@ -202,6 +207,16 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
           )
         : 0;
       scrollProgressRef.current = panelTravel / (slides.length - 1);
+      entryProgressRef.current = firstPanelRect
+        ? Math.min(
+            1,
+            Math.max(
+              0,
+              (window.innerHeight - firstPanelRect.top) /
+                Math.max(window.innerHeight * 0.84, 1),
+            ),
+          )
+        : 0;
       const next = findActivePanelIndex(
         panels.map((panel) => panel.getBoundingClientRect()),
         window.innerHeight,
@@ -246,6 +261,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
         <ParticleStage
           activeIndex={activeIndex}
           scrollProgressRef={scrollProgressRef}
+          entryProgressRef={entryProgressRef}
         />
         <div
           ref={cursorRef}
@@ -257,7 +273,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
       </div>
 
       <div className="relative z-10 -mt-[100vh]">
-        {slides.map((slide, index) => (
+        {slides.slice(0, -1).map((slide, index) => (
           <StrengthPanel
             key={slide.kicker}
             slide={slide}
@@ -266,60 +282,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
           />
         ))}
 
-        <section className="relative min-h-screen px-5 py-24 md:px-8">
-          <div className="mx-auto grid max-w-7xl gap-4 pt-24 lg:grid-cols-4">
-            {resume.expertise.map((group) => (
-              <div
-                key={group.title}
-                className="rounded-lg border border-white/10 bg-black/50 p-6 backdrop-blur"
-              >
-                <h3 className="font-mono text-sm uppercase text-cyan/75">
-                  {group.title}
-                </h3>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {group.items.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full bg-white/[0.06] px-3 py-1.5 text-sm text-white/62"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div
-            id="home-cta"
-            className="mx-auto mt-20 flex max-w-3xl flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center"
-          >
-            <Link
-              href="/works"
-              className="group inline-flex min-h-14 flex-1 items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan"
-            >
-              浏览作品
-              <ArrowUpRight
-                aria-hidden="true"
-                className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Link>
-            <Link
-              href="/resume"
-              className="inline-flex min-h-14 flex-1 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white"
-            >
-              查看简历
-              <FileText aria-hidden="true" className="h-4 w-4" />
-            </Link>
-            <a
-              href={`mailto:${resume.contact.email}?subject=Portfolio%20Hiring%20Contact`}
-              className="inline-flex min-h-14 flex-1 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white"
-            >
-              聘用联系
-              <Mail aria-hidden="true" className="h-4 w-4" />
-            </a>
-          </div>
-        </section>
+        <FinalContactPanel active={activeIndex === slides.length - 1} />
       </div>
 
       <span className="sr-only">{strengths.join(" ")}</span>
@@ -336,11 +299,100 @@ function Loader({ progress, hidden }: { progress: number; hidden: boolean }) {
     >
       <div className="text-center font-mono text-white">
         <p className="text-sm uppercase text-white/42">Loading visual system</p>
-        <p className="mt-4 text-5xl font-semibold tracking-[-0.02em]">
+        <p className="mt-4 text-3xl font-semibold md:text-4xl">
           SSCYL {progress}%
         </p>
       </div>
     </div>
+  );
+}
+
+function FinalContactPanel({ active }: { active: boolean }) {
+  return (
+    <section
+      id="strength-5"
+      className="relative flex min-h-[100svh] px-5 pb-6 pt-28 md:px-8"
+      data-strength-panel
+    >
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col">
+        <div
+          className={`flex flex-1 items-center justify-center transition duration-700 ${
+            active ? "translate-y-0 opacity-100" : "translate-y-8 opacity-40"
+          }`}
+        >
+          <div className="flex w-fit max-w-full flex-col items-start">
+            <p className="text-base font-light text-white">
+              期待一起共事：
+            </p>
+            <a
+              href="mailto:hello@sscyl.top"
+              className="mt-5 whitespace-nowrap text-5xl font-light leading-none tracking-[0.035em] text-white md:text-7xl xl:text-[7.5rem]"
+            >
+              hello@sscyl.top
+            </a>
+          </div>
+        </div>
+
+        <div className="relative z-20 mt-8">
+          <div
+            id="home-cta"
+            className="mx-auto flex max-w-3xl flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center sm:gap-6"
+          >
+            <Link
+              href="/works"
+              className="group inline-flex min-h-12 items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
+            >
+              浏览作品
+              <ArrowUpRight
+                aria-hidden="true"
+                className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
+            <Link
+              href="/resume"
+              className="inline-flex min-h-12 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
+            >
+              查看简历
+              <FileText aria-hidden="true" className="h-4 w-4" />
+            </Link>
+            <a
+              href="mailto:hello@sscyl.top?subject=Portfolio%20Hiring%20Contact"
+              className="inline-flex min-h-12 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
+            >
+              聘用联系
+              <Mail aria-hidden="true" className="h-4 w-4" />
+            </a>
+          </div>
+
+          <div className="mx-auto mt-7 grid max-w-[1420px] gap-5 lg:grid-cols-4">
+            {resume.expertise.map((group) => (
+              <div
+                key={group.title}
+                className="min-h-28 rounded-lg border border-white/10 bg-black/55 px-5 py-4 backdrop-blur"
+              >
+                <h3 className="font-mono text-xs uppercase text-cyan/75">
+                  {group.title}
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {group.items.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs text-white/62"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 font-mono text-[0.65rem] uppercase text-white/30">
+            © 2026 SSCYL Portfolio
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -406,9 +458,11 @@ function StrengthPanel({
 function ParticleStage({
   activeIndex,
   scrollProgressRef,
+  entryProgressRef,
 }: {
   activeIndex: number;
   scrollProgressRef: { current: number };
+  entryProgressRef: { current: number };
 }) {
   return (
     <div className="pointer-events-none absolute inset-0">
@@ -423,6 +477,7 @@ function ParticleStage({
           <ParticleMorph
             activeIndex={activeIndex}
             scrollProgressRef={scrollProgressRef}
+            entryProgressRef={entryProgressRef}
           />
         </Suspense>
       </Canvas>
@@ -433,9 +488,11 @@ function ParticleStage({
 function ParticleMorph({
   activeIndex,
   scrollProgressRef,
+  entryProgressRef,
 }: {
   activeIndex: number;
   scrollProgressRef: { current: number };
+  entryProgressRef: { current: number };
 }) {
   const [rocketModel, satelliteModel, earthModel, astronautModel] = useLoader(
     GLTFLoader,
@@ -500,7 +557,8 @@ function ParticleMorph({
         fitWidth: 5.35,
         fitHeight: 3.35,
         fitDepth: 2.8,
-        edgeShare: 0.06,
+        edgeShare: 0.09,
+        featureProfile: "satellite",
       }),
       sampleModelSurface(earthModel.scene, count, {
         mainMeshIndex: 0,
@@ -515,17 +573,17 @@ function ParticleMorph({
         fitDepth: 4.8,
         edgeShare: 0.11,
       }),
+      null,
       sampleModelSurface(astronautModel.scene, count, {
         mainMeshIndex: 4,
         mainMeshShare: 0.42,
         secondaryDistribution: "equal",
         rotation: new THREE.Euler(0, Math.PI * 0.1, Math.PI * -0.05),
-        fitWidth: 3.1,
-        fitHeight: 3.85,
-        fitDepth: 2.2,
+        fitWidth: 3.8,
+        fitHeight: 4.8,
+        fitDepth: 2.6,
         edgeShare: 0.12,
       }),
-      null,
     ];
 
     for (let i = 0; i < count; i += 1) {
@@ -546,9 +604,15 @@ function ParticleMorph({
         targetSets[shape][i * 3 + 2] = point.z;
       }
 
-      current[i * 3] = targetSets[0][i * 3];
-      current[i * 3 + 1] = targetSets[0][i * 3 + 1];
-      current[i * 3 + 2] = targetSets[0][i * 3 + 2];
+      const introSeed = pseudoRandom(i, 316) * Math.PI * 2;
+      const introRadius = 0.4 + pseudoRandom(i, 317) * 1.1;
+      current[i * 3] =
+        targetSets[0][i * 3] * 1.28 + Math.cos(introSeed) * introRadius;
+      current[i * 3 + 1] =
+        targetSets[0][i * 3 + 1] * 1.28 +
+        Math.sin(introSeed) * introRadius * 0.74;
+      current[i * 3 + 2] =
+        targetSets[0][i * 3 + 2] + (pseudoRandom(i, 318) - 0.5) * 1.4;
 
       const sizeSeed = pseudoRandom(i, 18);
       sizeValues[i] = 0.5 + sizeSeed ** 1.8 * 1.15;
@@ -644,12 +708,15 @@ function ParticleMorph({
       shapeMixWindow * shapeMixWindow * (3 - 2 * shapeMixWindow);
     const targetFrom = targets[shapeFrom];
     const targetTo = targets[shapeTo];
+    const entryProgress = Math.min(1, Math.max(0, entryProgressRef.current));
+    const entryEase = entryProgress * entryProgress * (3 - 2 * entryProgress);
+    const entryScatter = (1 - entryEase) * 0.72;
     const travel = shapeTravel;
     const scrollDelta = Math.abs(
       scrollProgressRef.current - stateRef.current.lastScrollProgress,
     );
     stateRef.current.lastScrollProgress = scrollProgressRef.current;
-    const travelX = Math.cos(travel * Math.PI) * 1.72;
+    const travelX = getParticleStageX(travel, slides.length - 1);
     const travelY = 0.42 + Math.sin(travel * Math.PI) * 0.22;
     const hasPointer = stateRef.current.hasPointer;
     const pointerX = hasPointer ? stateRef.current.mouseX : 0;
@@ -745,6 +812,20 @@ function ParticleMorph({
         targetFrom[i + 1] + (targetTo[i + 1] - targetFrom[i + 1]) * shapeMix;
       const blendedZ =
         targetFrom[i + 2] + (targetTo[i + 2] - targetFrom[i + 2]) * shapeMix;
+      const introSeed = pseudoRandom(index, 319) * Math.PI * 2;
+      const introRadius = entryScatter * (0.62 + pseudoRandom(index, 320) * 1.42);
+      const entryX =
+        shapeFrom === 0
+          ? Math.cos(introSeed + time * 0.16) * introRadius
+          : 0;
+      const entryY =
+        shapeFrom === 0
+          ? Math.sin(introSeed * 1.18 - time * 0.12) * introRadius * 0.72
+          : 0;
+      const entryZ =
+        shapeFrom === 0
+          ? (pseudoRandom(index, 321) - 0.5) * entryScatter * 1.2
+          : 0;
       const transitionExpansion =
         1 + transitionEnvelope * (0.46 + sizes[index] * 0.14);
       const transitionDrift =
@@ -757,6 +838,7 @@ function ParticleMorph({
         Math.sin(transitionSeed * 1.71 + time * 0.52) * transitionDrift * 0.58;
       const targetX =
         blendedX * transitionExpansion +
+        entryX +
         wave +
         radialX +
         swirlX +
@@ -765,6 +847,7 @@ function ParticleMorph({
         orbitX;
       const targetY =
         blendedY * transitionExpansion +
+        entryY +
         wave +
         radialY +
         swirlY +
@@ -772,14 +855,17 @@ function ParticleMorph({
         disperse * 0.1 +
         orbitY;
       const targetZ =
-        blendedZ * transitionExpansion + disperse * 0.3 + orbitZ;
+        blendedZ * transitionExpansion + entryZ + disperse * 0.3 + orbitZ;
       const arrivalRaw = Math.min(
         1,
         Math.max(0, (shapeMixRaw - 0.42) / 0.36),
       );
       const arrivalEase = arrivalRaw * arrivalRaw * (3 - 2 * arrivalRaw);
       const morphSpeed =
-        0.018 + arrivalEase * 0.064 + (1 - transitionScatter) * 0.01;
+        0.018 +
+        arrivalEase * 0.064 +
+        (1 - transitionScatter) * 0.01 +
+        entryEase * (shapeFrom === 0 ? 0.025 : 0);
 
       array[i] += (targetX - array[i]) * morphSpeed;
       array[i + 1] += (targetY - array[i + 1]) * morphSpeed;
@@ -952,17 +1038,17 @@ const particleFragmentShader = `
       smoothstep(0.38, 0.62, stablePartition),
       0.32
     );
-    float pearlRegion = smoothstep(0.64, 0.86, sparkle + detail * 0.18);
+    float pearlRegion = smoothstep(0.72, 0.9, sparkle + detail * 0.14);
 
-    vec3 blueDark = vec3(0.035, 0.32, 0.68);
-    vec3 blueLight = vec3(0.18, 0.68, 1.0);
+    vec3 blueDark = vec3(0.035, 0.3, 0.68);
+    vec3 blueLight = vec3(0.08, 0.76, 1.0);
     vec3 goldDark = vec3(0.78, 0.43, 0.06);
-    vec3 goldLight = vec3(1.0, 0.72, 0.2);
-    vec3 blue = mix(blueDark, blueLight, 0.18 + detail * 0.82);
-    vec3 gold = mix(goldDark, goldLight, 0.18 + detail * 0.82);
+    vec3 goldLight = vec3(1.0, 0.78, 0.16);
+    vec3 blue = mix(blueDark, blueLight, 0.3 + detail * 0.7);
+    vec3 gold = mix(goldDark, goldLight, 0.32 + detail * 0.68);
     vec3 fieldColor = mix(blue, gold, clamp(goldRegion, 0.0, 1.0));
-    fieldColor = mix(fieldColor, vec3(0.9, 0.9, 0.86), pearlRegion * 0.48);
-    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.025 + vTwinkle * 0.03);
+    fieldColor = mix(fieldColor, vec3(0.78, 0.9, 0.96), pearlRegion * 0.24);
+    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.012 + vTwinkle * 0.016);
 
     gl_FragColor = vec4(
       glowColor * (0.8 + vTwinkle * 0.22 + vFlow * 0.08),
@@ -973,7 +1059,7 @@ const particleFragmentShader = `
 
 type ModelSurfaceOptions = {
   edgeShare?: number;
-  featureProfile?: "rocket";
+  featureProfile?: "rocket" | "satellite";
   mainMeshIndex?: number | null;
   mainMeshShare?: number;
   mirrorX?: boolean;
@@ -1026,19 +1112,31 @@ function sampleModelSurface(
     return {
       area: getGeometrySurfaceArea(geometry),
       geometry,
+      name: sourceMesh.name,
+      parentName: sourceMesh.parent?.name ?? "",
       sampler: new MeshSurfaceSampler(new THREE.Mesh(geometry)).build(),
     };
   });
   const edgeShare = Math.min(0.18, Math.max(0, options.edgeShare ?? 0));
   const edgePointCount = Math.round(count * edgeShare);
   const surfacePointCount = count - edgePointCount;
-  const meshPointCounts = allocateSurfaceSamples(
-    preparedMeshes.map(({ area }) => area),
-    surfacePointCount,
-    mainMeshIndex,
-    mainShare,
-    options.secondaryDistribution ?? "area",
-  );
+  const meshPointCounts =
+    options.featureProfile === "satellite"
+      ? allocateSatelliteMeshSamples(
+          preparedMeshes.map(({ area, name, parentName }) => ({
+            area,
+            name,
+            parentName,
+          })),
+          surfacePointCount,
+        )
+      : allocateSurfaceSamples(
+          preparedMeshes.map(({ area }) => area),
+          surfacePointCount,
+          mainMeshIndex,
+          mainShare,
+          options.secondaryDistribution ?? "area",
+        );
 
   preparedMeshes.forEach(({ sampler }, meshIndex) => {
     const meshPointCount = meshPointCounts[meshIndex];
@@ -1144,17 +1242,22 @@ function sampleModelEdges(
 
 function addRocketFinParticles(points: Float32Array) {
   const count = Math.floor(points.length / 3);
-  const finCount = Math.floor(count * 0.022);
+  const finCount = Math.floor(count * 0.04);
+  const fins = [
+    { x: 1.2, y: -0.68, z: 0.24 },
+    { x: 1.2, y: 0.1, z: -0.24 },
+    { x: 1.74, y: -0.56, z: 0.34 },
+    { x: 1.74, y: 0.0, z: -0.34 },
+  ];
 
   for (let index = 0; index < finCount; index += 1) {
     const pointIndex = count - finCount + index;
-    const side = index % 2 === 0 ? -1 : 1;
+    const fin = fins[index % fins.length];
     const along = pseudoRandom(index, 503);
     const spread = pseudoRandom(index, 504);
-    points[pointIndex * 3] = 1.25 + along * 0.92;
-    points[pointIndex * 3 + 1] =
-      -0.48 + side * (0.18 + along * 0.48) + (spread - 0.5) * 0.12;
-    points[pointIndex * 3 + 2] = side * (0.08 + spread * 0.22);
+    points[pointIndex * 3] = fin.x + along * 0.48;
+    points[pointIndex * 3 + 1] = fin.y + (spread - 0.5) * 0.18;
+    points[pointIndex * 3 + 2] = fin.z + (pseudoRandom(index, 505) - 0.5) * 0.16;
   }
 }
 
@@ -1280,20 +1383,21 @@ function shapePoint(index: number, count: number, shape: number) {
   const t = index / count;
   const noise = pseudoRandom(index, shape + 1) - 0.5;
   const part = pseudoRandom(index, shape + 30);
+  const role = getParticleSceneRole(shape);
   const isAtmosphere =
     pseudoRandom(index, shape + 130) > ambientParticleThreshold;
   const point =
     isAtmosphere
       ? ambientDustPoint(index, t, shape)
-      : shape === 0
+      : role === "rocket"
         ? rocketPoint(index, part)
-        : shape === 1
+        : role === "satellite"
           ? satellitePoint(index, part)
-          : shape === 2
+          : role === "earth"
             ? earthMapPoint(index, part)
-            : shape === 3
-              ? astronautPoint(index, part)
-              : brandNebulaPoint(index, part, t);
+            : role === "saturn"
+              ? saturnPoint(index, part)
+              : astronautPoint(index, part);
 
   const shapeX = shape === 0 && !isAtmosphere ? point.x * 1.35 : point.x;
   const rotated = rotatePoint(shapeX, point.y, shape === 0 ? -0.52 : 0);
@@ -1415,7 +1519,7 @@ function astronautPoint(index: number, part: number) {
     return sampleEllipseRing(index, 0, 1.05, 0.58, 0.58, 0.22, 0.04);
   }
 
-  if (part < 0.58) {
+  if (part < 0.5) {
     return sampleEllipseRing(index, 0, 1.02, 0.34, 0.22, 0.34, 0.03);
   }
 
@@ -1438,25 +1542,36 @@ function astronautPoint(index: number, part: number) {
   return sampleLine(index, 0.2, -0.58, 0.68, -1.58, 0.08);
 }
 
-function brandNebulaPoint(index: number, part: number, t: number) {
-  const lane = Math.min(3, Math.floor(part * 4));
-  const angle = t * Math.PI * 2 + lane * 0.42;
-  const configs = [
-    { rx: 2.5, ry: 1.28, rotation: -0.38, z: -0.28 },
-    { rx: 2.32, ry: 1.02, rotation: 0.44, z: 0.18 },
-    { rx: 1.82, ry: 0.72, rotation: -0.08, z: 0.4 },
-    { rx: 1.18, ry: 1.58, rotation: 0.18, z: -0.05 },
-  ] as const;
-  const config = configs[lane];
-  const ribbon = Math.sin(angle * 3 + lane * 1.7) * 0.055;
-  const x = Math.cos(angle) * (config.rx + ribbon);
-  const y = Math.sin(angle) * (config.ry + ribbon * 0.72);
-  const rotated = rotatePoint(x, y, config.rotation);
+function saturnPoint(index: number, part: number) {
+  if (getSaturnParticleRegion(part) === "planet") {
+    const theta = pseudoRandom(index, 241) * Math.PI * 2;
+    const cosPhi = pseudoRandom(index, 242) * 2 - 1;
+    const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+    const shell = 0.94 + pseudoRandom(index, 243) * 0.08;
+
+    return {
+      x: Math.cos(theta) * sinPhi * 1.48 * shell,
+      y: cosPhi * 1.34 * shell,
+      z: Math.sin(theta) * sinPhi * 1.12 * shell,
+    };
+  }
+
+  const rawAngle = pseudoRandom(index, 244) * Math.PI * 2;
+  const angle = rawAngle + Math.sin(rawAngle * 3) * 0.055;
+  const band = pseudoRandom(index, 245);
+  const radius =
+    band < 0.72
+      ? 1.72 + pseudoRandom(index, 247) * 0.42
+      : 2.34 + pseudoRandom(index, 248) * 0.3;
+  const x = Math.cos(angle) * radius;
+  const flatY = Math.sin(angle) * radius * 0.3;
+  const depth = Math.sin(angle) * radius * 0.5;
+  const tilted = rotatePoint(x, flatY, -0.2);
 
   return {
-    x: rotated.x + (pseudoRandom(index, 71) - 0.5) * 0.055,
-    y: rotated.y + (pseudoRandom(index, 72) - 0.5) * 0.055,
-    z: config.z + (pseudoRandom(index, 73) - 0.5) * 0.3,
+    x: tilted.x,
+    y: tilted.y,
+    z: depth + (pseudoRandom(index, 246) - 0.5) * 0.08,
   };
 }
 

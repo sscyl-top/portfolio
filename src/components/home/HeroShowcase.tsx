@@ -45,11 +45,11 @@ export function HeroShowcase() {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-screen overflow-hidden px-5 pb-20 pt-28 md:px-8"
+      className="relative min-h-screen overflow-hidden px-5 pb-20 pt-32 md:px-8"
     >
       <AmbientParticles />
       <div className="grain" />
-      <div className="absolute inset-x-0 top-20 z-10 border-y border-white/10 bg-white/[0.025] py-3">
+      <div className="absolute inset-x-0 top-24 z-10 border-y border-white/10 bg-white/[0.025] py-3">
         <div className="ticker-viewport font-mono text-xs text-white/40">
           <div className="ticker-track">
             {[0, 1].map((group) => (
@@ -65,20 +65,17 @@ export function HeroShowcase() {
         </div>
       </div>
 
-      <div className="relative z-20 mx-auto flex min-h-[calc(100vh-9rem)] max-w-[1720px] items-center justify-center">
-        <div className="relative w-full py-10">
+      <div className="relative z-20 mx-auto flex min-h-[calc(100vh-10rem)] max-w-[1880px] items-center justify-center">
+        <div className="relative w-full pb-10 pt-16">
           <HeroMainCard />
           <HeroSideCards />
 
           <div
             data-hero-reveal
-            className="mx-auto mt-10 grid max-w-[1280px] gap-6 md:grid-cols-[0.58fr_1fr_auto] md:items-end"
+            className="mx-auto mt-10 grid max-w-[1420px] gap-6 md:grid-cols-[1fr_auto] md:items-end"
           >
             <p className="font-mono text-sm font-semibold uppercase text-white/82">
               AI / 3D / Motion Design Studio
-            </p>
-            <p className="max-w-xl text-sm leading-7 text-white/58">
-              {resume.strengths[0]}
             </p>
             <span className="font-mono text-sm text-white/68">YR26</span>
           </div>
@@ -92,7 +89,7 @@ function HeroMainCard() {
   return (
     <div
       data-hero-reveal
-      className="relative mx-auto aspect-[16/9] w-full max-w-[1280px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-5 shadow-2xl shadow-black"
+      className="relative mx-auto aspect-[16/9] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-5 shadow-2xl shadow-black"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
       <div className="relative z-10 flex items-center justify-between font-mono text-xs uppercase text-white/50">
@@ -123,16 +120,16 @@ function HeroSideCards() {
   return (
     <>
       <FloatingImageCard
-        className="-left-1 top-[27%] hidden w-56 md:block xl:left-9"
+        className="z-20 -left-16 top-[32%] hidden w-64 md:block xl:-left-20 2xl:-left-28"
         tone="mono"
       />
       <FloatingImageCard
-        className="left-[13%] top-[22%] hidden w-48 md:block"
+        className="z-10 left-0 top-[23%] hidden w-56 md:block xl:left-2 2xl:left-4"
         tone="warm"
       />
       <HeroActions />
       <FloatingImageCard
-        className="right-0 top-[69%] hidden w-80 lg:block xl:right-8"
+        className="-right-10 top-[69%] hidden w-96 lg:block xl:-right-12 2xl:-right-20"
         tone="graphite"
         wide
       />
@@ -140,10 +137,10 @@ function HeroSideCards() {
       <div
         data-float-card
         data-hero-reveal
-        className="absolute right-[1%] top-[28%] hidden w-40 rounded-lg border border-white/12 bg-white/[0.06] p-5 backdrop-blur xl:block"
+        className="absolute right-[1%] top-[29%] hidden w-44 rounded-lg border border-white/12 bg-white/[0.06] p-5 backdrop-blur xl:block 2xl:right-[2%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
-        <p className="mt-6 text-4xl font-semibold text-white">5Y+</p>
+        <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
         <p className="mt-2 text-xs leading-5 text-white/50">
           品牌视觉与商业设计实践
         </p>
@@ -156,7 +153,7 @@ function HeroActions() {
   return (
     <div
       data-hero-reveal
-      className="absolute right-[14%] top-[47%] hidden w-52 space-y-3 md:block xl:right-[18%]"
+      className="hidden"
     >
       <Link
         href="/works"
