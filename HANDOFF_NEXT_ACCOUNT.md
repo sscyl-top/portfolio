@@ -193,6 +193,8 @@ Recent useful commits:
 ## Suggested Next Steps
 
 - Continue visual tuning from the browser comments.
+- Immediate homepage task: continue investigating the satellite silhouette before changing sampling weights. `satellite.glb` contains 34 nodes and 21 meshes. Large solar-panel groups and a separate body/dish group coexist, so area-based sampling currently over-emphasizes panels and makes the object read ambiguously. The previous account only inspected GLB metadata; no satellite code change is pending or uncommitted.
+- Useful satellite evidence: body meshes are named `Cube`, `Cylinder`, `Cylinder.001`, `Cylinder.002`, `Torus`, and `Cylinder.003`; panel meshes are mostly `Mesh.006`, `Mesh.011`, `Mesh.016`, `Mesh.034`, `Mesh.029`, `Mesh.045`, and their `.001` counterparts. Next step should calculate transformed surface areas, then add a tested `featureProfile: "satellite"` allocation instead of guessing rotation or scale.
 - If replacing the bottom CTA logo, replace `public/brand/infinite-progress-logo.svg` first.
 - If adding a figure/driver/person image, add the asset under `public/` temporarily and set `ctaFigureSrc` in `CompositeDesignWall.tsx`. Later this should become a CMS field.
 - Do not start Payload CMS yet unless the user explicitly shifts from visual MVP to backend/admin work.
