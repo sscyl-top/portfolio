@@ -217,11 +217,14 @@ Recent useful commits:
 - The latest shader pass follows the extracted USTA transition profile more closely: scroll morphing uses a cubic sine envelope, expands at mid-transition, then converges quickly near the next panel.
 - Particle sizes now use a softer `1.8` power distribution, producing mostly solid circular points with a restrained share of larger halo points instead of uniformly tiny or blurry dots.
 - Blue/gold/pearl color clusters use faster domain-warped 3D noise, so all three palettes remain visible while their grouped regions drift over time instead of sweeping linearly across the model.
+- Mouse motion is now separated from global scroll scatter. The cursor creates a local radial opening, tangential flow, and short directional wake; leaving the area smoothly restores the sampled model surface instead of shaking the entire shape.
+- The pointer response curve lives in `src/components/home/particleMotion.ts` and reuses one output object in the 9,000-particle hot loop to avoid per-frame garbage collection.
+- Incoming strength copy becomes fully active at 72% of viewport height, so titles turn white before reaching the visual center.
 
 Latest verification for this state:
 
 - `npm run lint`: passed
-- `npm test`: passed, 2 files / 8 tests
+- `npm test`: passed, 3 files / 13 tests
 - `npm run build`: passed, 19 static pages generated
 
 Recommended next fidelity step: add subtle selective Bloom with `@react-three/postprocessing`, limited to the largest 8-12% of particles. Do not apply full-screen bloom, because it will blur the model silhouettes again.

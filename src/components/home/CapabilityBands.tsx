@@ -11,6 +11,11 @@ import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.j
 
 import { resume } from "@/data/portfolio";
 
+import {
+  findActivePanelIndex,
+  getPointerInteraction,
+} from "./particleMotion";
+
 type CapabilityBandsProps = {
   strengths: string[];
 };
@@ -197,13 +202,10 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
           )
         : 0;
       scrollProgressRef.current = panelTravel / (slides.length - 1);
-      const activationLine = window.innerHeight * 0.58;
-      const next = panels.findIndex((panel) => {
-        const panelRect = panel.getBoundingClientRect();
-        return (
-          panelRect.top <= activationLine && panelRect.bottom > activationLine
-        );
-      });
+      const next = findActivePanelIndex(
+        panels.map((panel) => panel.getBoundingClientRect()),
+        window.innerHeight,
+      );
 
       if (next >= 0) {
         setActiveIndex(next);
@@ -446,13 +448,21 @@ function ParticleMorph({
     lastPointerX: 0,
     lastPointerY: 0,
     lastScrollProgress: 0,
-    scatter: 0,
+    pointerEnergy: 0,
     scrollScatter: 0,
     mousePresence: 0,
+    pointerVelocityX: 0,
+    pointerVelocityY: 0,
     side: activeIndex % 2 === 0 ? 1 : -1,
     mouseX: 50,
     mouseY: 50,
     hasPointer: false,
+    pointerInteraction: {
+      radial: 0,
+      tangential: 0,
+      wake: 0,
+      proximity: 0,
+    },
   });
 
   const { positions, targets, sizes, phases } = useMemo(() => {
@@ -644,18 +654,25 @@ function ParticleMorph({
     const hasPointer = stateRef.current.hasPointer;
     const pointerX = hasPointer ? stateRef.current.mouseX : 0;
     const pointerY = hasPointer ? stateRef.current.mouseY : 0;
-    const pointerSpeed = hasPointer
-      ? Math.hypot(
-          pointerX - stateRef.current.lastPointerX,
-          pointerY - stateRef.current.lastPointerY,
-        )
+    const pointerDeltaX = hasPointer
+      ? pointerX - stateRef.current.lastPointerX
       : 0;
+    const pointerDeltaY = hasPointer
+      ? pointerY - stateRef.current.lastPointerY
+      : 0;
+    const pointerSpeed = Math.hypot(pointerDeltaX, pointerDeltaY);
     stateRef.current.lastPointerX = pointerX;
     stateRef.current.lastPointerY = pointerY;
-    stateRef.current.scatter = Math.min(
-      1,
-      stateRef.current.scatter * 0.972 + pointerSpeed * 1.35,
-    );
+    const pointerEnergyTarget = Math.min(1, pointerSpeed * 30);
+    const pointerEnergyEase =
+      pointerEnergyTarget > stateRef.current.pointerEnergy ? 0.38 : 0.055;
+    stateRef.current.pointerEnergy +=
+      (pointerEnergyTarget - stateRef.current.pointerEnergy) *
+      pointerEnergyEase;
+    stateRef.current.pointerVelocityX +=
+      (pointerDeltaX - stateRef.current.pointerVelocityX) * 0.28;
+    stateRef.current.pointerVelocityY +=
+      (pointerDeltaY - stateRef.current.pointerVelocityY) * 0.28;
     stateRef.current.scrollScatter = Math.min(
       1,
       stateRef.current.scrollScatter * 0.91 + scrollDelta * 18,
@@ -670,22 +687,30 @@ function ParticleMorph({
       1,
       stateRef.current.scrollScatter + transitionScatter,
     );
-    const scatter = Math.min(
-      1,
-      stateRef.current.scatter * 0.36 + scrollScatter * 0.66,
-    );
+    const pointerEnergy = stateRef.current.pointerEnergy;
     const localMouseX = hasPointer
       ? pointerX * 5.15 - points.position.x
       : 50;
     const localMouseY = hasPointer ? pointerY * 3.0 - 0.45 : 50;
-    const repelRadius = 1.22 + scatter * 0.72 + mousePresence * 0.12;
+    const repelRadius = 1.72 + pointerEnergy * 0.24;
+    const pointerVelocityLength = Math.max(
+      0.0001,
+      Math.hypot(
+        stateRef.current.pointerVelocityX,
+        stateRef.current.pointerVelocityY,
+      ),
+    );
+    const pointerDirectionX =
+      stateRef.current.pointerVelocityX / pointerVelocityLength;
+    const pointerDirectionY =
+      stateRef.current.pointerVelocityY / pointerVelocityLength;
 
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value = time;
       materialRef.current.uniforms.uCursor.value.set(localMouseX, localMouseY);
       materialRef.current.uniforms.uMouseForce.value = Math.max(
-        scatter * 0.48,
-        mousePresence * 0.1,
+        pointerEnergy * 0.48,
+        mousePresence * 0.18,
       );
     }
 
@@ -697,17 +722,21 @@ function ParticleMorph({
       const dx = array[i] - localMouseX;
       const dy = array[i + 1] - localMouseY;
       const distance = Math.max(0.001, Math.hypot(dx, dy));
-      const repel =
-        distance < repelRadius
-          ? ((1 - distance / repelRadius) ** 2) * (0.07 + scatter * 0.18)
-          : 0;
-      const mouseWake =
-        distance < repelRadius * 1.15
-          ? (1 - distance / (repelRadius * 1.15)) * mousePresence
-          : 0;
-      const swirl = (repel + mouseWake * 0.035) * (0.42 + scatter * 0.22);
+      const pointerInteraction = getPointerInteraction(
+        distance,
+        repelRadius,
+        mousePresence,
+        pointerEnergy,
+        stateRef.current.pointerInteraction,
+      );
+      const radialX = (dx / distance) * pointerInteraction.radial;
+      const radialY = (dy / distance) * pointerInteraction.radial;
+      const swirlX = (-dy / distance) * pointerInteraction.tangential;
+      const swirlY = (dx / distance) * pointerInteraction.tangential;
+      const wakeX = pointerDirectionX * pointerInteraction.wake;
+      const wakeY = pointerDirectionY * pointerInteraction.wake;
       const disperse =
-        scatter *
+        scrollScatter *
         0.62 *
         Math.sin(time * 0.52 + index * 0.29 + active * 1.7);
       const transitionSeed = pseudoRandom(index, active + 281) * Math.PI * 2;
@@ -729,15 +758,17 @@ function ParticleMorph({
       const targetX =
         blendedX * transitionExpansion +
         wave +
-        dx * (repel + mouseWake * 0.018) -
-        dy * swirl +
+        radialX +
+        swirlX +
+        wakeX +
         disperse * 0.14 +
         orbitX;
       const targetY =
         blendedY * transitionExpansion +
         wave +
-        dy * (repel + mouseWake * 0.018) +
-        dx * swirl +
+        radialY +
+        swirlY +
+        wakeY +
         disperse * 0.1 +
         orbitY;
       const targetZ =
@@ -761,7 +792,7 @@ function ParticleMorph({
     points.rotation.y =
       pointerX * 0.22 +
       Math.sin(time * 0.065) * 0.075 +
-      scatter * side * 0.08;
+      pointerEnergy * side * 0.045;
     points.rotation.x = pointerY * 0.14 + Math.sin(time * 0.04) * 0.035;
   });
 
@@ -821,7 +852,7 @@ const particleVertexShader = `
     vec4 worldPosition = modelMatrix * vec4(displaced, 1.0);
     vPosition = worldPosition.xyz;
     vec4 mvPosition = viewMatrix * worldPosition;
-    float pulse = 0.92 + vTwinkle * 0.32 + vFlow * 0.14 + mouseGlow * 0.22;
+    float pulse = 0.92 + vTwinkle * 0.32 + vFlow * 0.14 + mouseGlow * 0.48;
     gl_PointSize = size * uPixelRatio * pulse * (22.5 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
