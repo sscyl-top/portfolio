@@ -29,6 +29,8 @@ describe("portfolio data", () => {
       "视觉设计",
       "品牌全案",
       "概念设计",
+      "AI漫剧",
+      "TVC广告",
       "包装设计",
       "电商设计",
       "工作案例",
@@ -70,5 +72,19 @@ describe("portfolio data", () => {
     expect(resume.positioning).toContain("求职面试");
     expect(resume.contact.email).toBe("3020714732@qq.com");
     expect(resume.contact.phone).toBe("19276690901");
+  });
+
+  it("exposes the complete education achievements and activities", () => {
+    expect(resume.education.achievements).toHaveLength(6);
+    expect(resume.education.achievements[0]).toMatchObject({
+      label: "GPA",
+      value: "3.93",
+      detail: "专业第一",
+    });
+    expect(
+      resume.education.achievements.some((item) => item.value === "5+"),
+    ).toBe(false);
+    expect(resume.education.activities).toHaveLength(4);
+    expect(resume.education.activities[0].title).toBe("交通银行校园大使");
   });
 });

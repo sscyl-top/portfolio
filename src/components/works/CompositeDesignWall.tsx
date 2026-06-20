@@ -24,6 +24,8 @@ const toneFallbacks = [
 ];
 
 const infiniteProgressLogo = "/brand/infinite-progress-logo.svg";
+const ctaCardSrc = "";
+const ctaTickerLogoSrc = infiniteProgressLogo;
 const ctaFigureSrc = "";
 
 export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
@@ -160,12 +162,25 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-48 min-h-[680px] bg-[#141918] px-6 pb-8 pt-20 shadow-[0_34px_110px_rgba(0,0,0,0.52)] md:px-12 md:pt-24"
+          className="portfolio-cta-panel relative mt-48 min-h-[680px] px-0 pb-8 pt-10 md:pt-16"
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(139,215,205,0.14),transparent_22%),radial-gradient(circle_at_18%_68%,rgba(201,162,127,0.1),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-44 bg-[linear-gradient(to_top,rgba(7,9,9,0.94),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(0,0,0,0.72),transparent_42%)]" />
 
-          <div className="pointer-events-none absolute inset-x-0 top-16 z-20 flex justify-center">
+          <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
+            {ctaCardSrc ? (
+              <Image
+                src={ctaCardSrc}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 92vw, 1100px"
+                className="object-contain object-center"
+              />
+            ) : (
+              <div className="cta-card-upload-slot h-full w-full" aria-hidden="true" />
+            )}
+          </div>
+
+          <div className="pointer-events-none absolute inset-x-0 top-24 z-40 flex justify-center md:top-28">
             <Image
               src={infiniteProgressLogo}
               alt="无限进步"
@@ -177,23 +192,27 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
             />
           </div>
 
-          <div className="cta-logo-ticker absolute inset-x-0 bottom-[120px] z-10 h-20 overflow-hidden text-cyan/42">
-            <div className="cta-logo-track flex h-full w-max items-center gap-12 whitespace-nowrap font-mono text-2xl font-black uppercase tracking-[0.24em] md:text-4xl">
+          <div className="cta-logo-ticker absolute inset-x-0 bottom-[140px] z-20 h-24 overflow-hidden opacity-70 md:bottom-[150px]">
+            <div className="cta-logo-track flex h-full w-max items-center gap-16 whitespace-nowrap">
               {Array.from({ length: 2 }).map((_, groupIndex) => (
-                <div key={groupIndex} className="flex items-center gap-12">
-                  <span>INFINITE PROGRESS</span>
-                  <span>Brand Visual</span>
-                  <span>AI Design</span>
-                  <span>Web Experience</span>
-                  <span>Design Service</span>
-                  <span>INFINITE PROGRESS</span>
+                <div key={groupIndex} className="flex items-center gap-16">
+                  {Array.from({ length: 6 }).map((_, logoIndex) => (
+                    <Image
+                      key={`${groupIndex}-${logoIndex}`}
+                      src={ctaTickerLogoSrc}
+                      alt=""
+                      width={240}
+                      height={60}
+                      className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen"
+                    />
+                  ))}
                 </div>
               ))}
             </div>
           </div>
 
-          {ctaFigureSrc ? (
-            <div className="absolute bottom-0 left-1/2 z-20 h-[440px] w-[min(560px,84vw)] -translate-x-1/2">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[440px] w-[min(560px,84vw)] -translate-x-1/2">
+            {ctaFigureSrc ? (
               <Image
                 src={ctaFigureSrc}
                 alt=""
@@ -201,28 +220,30 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
                 sizes="(max-width: 768px) 84vw, 560px"
                 className="object-contain object-bottom"
               />
-            </div>
-          ) : null}
+            ) : (
+              <div className="cta-figure-upload-slot h-full w-full" aria-hidden="true" />
+            )}
+          </div>
 
-          <div className="relative z-30 mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-end text-center">
+          <div className="relative z-40 mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-end text-center">
             <div className="flex w-full flex-col items-center justify-center gap-5 pb-6 sm:w-auto sm:flex-row sm:gap-9 md:pb-5">
               <Link
                 href="/resume"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white/78 backdrop-blur-md transition hover:border-white/28 hover:bg-white/[0.12] hover:text-white sm:w-auto"
+                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 查看简历
               </Link>
               <Link
                 href="mailto:3020714732@qq.com?subject=Portfolio%20Hiring%20Contact"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan/35 bg-cyan px-8 py-3 text-sm font-semibold text-[#08100f] shadow-[0_0_34px_rgba(139,215,205,0.2)] transition hover:bg-[#a7ebe3] sm:w-auto"
+                className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
               >
                 <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
                 聘用联系
               </Link>
               <Link
                 href="mailto:3020714732@qq.com?subject=Commercial%20Design%20Consulting"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white/78 backdrop-blur-md transition hover:border-white/28 hover:bg-white/[0.12] hover:text-white sm:w-auto"
+                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
               >
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
                 商业咨询

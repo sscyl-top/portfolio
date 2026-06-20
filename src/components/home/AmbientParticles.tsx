@@ -46,7 +46,7 @@ function ParticleField() {
 const ambientParticleVertexShader = `
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(11.0 / max(-mvPosition.z, 0.1), 1.4, 5.2);
+    gl_PointSize = clamp(15.4 / max(-mvPosition.z, 0.1), 2.0, 7.3);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;

@@ -57,6 +57,8 @@ export const categories = [
   "视觉设计",
   "品牌全案",
   "概念设计",
+  "AI漫剧",
+  "TVC广告",
   "包装设计",
   "电商设计",
   "工作案例",
@@ -157,9 +159,45 @@ export const resume = {
   ],
   education: {
     school: "毕节学院",
+    schoolEnglish: "BIJIE UNIVERSITY",
     major: "视觉传达设计专业",
+    majorEnglish: "Visual Communication Design",
     period: "2020.9 - 2024.7",
     note: "绩点 3.93（专业第一）；获 vivo 全球主题大赛特邀奖、大广赛省赛一等奖 2 个、二等奖 3 个、优秀奖若干、贵州省包装大赛二等奖。",
+    achievements: [
+      { label: "GPA", value: "3.93", detail: "专业第一" },
+      { label: "AWARD", value: "vivo 全球主题大赛特邀奖" },
+      { label: "AWARD", value: "大广赛省赛一等奖 2 个" },
+      { label: "AWARD", value: "大广赛省赛二等奖 3 个" },
+      { label: "AWARD", value: "大广赛优秀奖若干" },
+      { label: "AWARD", value: "贵州省包装大赛二等奖" },
+    ],
+    activities: [
+      {
+        period: "2021年4月",
+        title: "交通银行校园大使",
+        description:
+          "自建团队并执行路演、联名活动等品牌推广方案，借助线上线下整合传播并达成 500+ 发卡量。",
+      },
+      {
+        period: "2021 - 2022",
+        title: "学生会宣传部部长",
+        description:
+          "带领宣传部和融媒体中心干事，策划并落地校运会、迎新晚会等大型校园活动的全案视觉统筹。",
+      },
+      {
+        period: "2022 - 2023",
+        title: "动漫社社长",
+        description:
+          "组织社团招新 137 人，打破社团 8 年记录；策划动漫文化节，负责视觉宣发、人员协调与现场氛围布置。",
+      },
+      {
+        period: "2024年4月 - 5月",
+        title: "毕业展主设计师",
+        description:
+          "主导设计艺术学院本届美术系、音乐系、舞蹈系大型桁架毕业海报设计，策划设计系毕业宣传海报与设计展布置。",
+      },
+    ],
   },
   services: ["品牌视觉升级", "AI 概念图与视觉提案", "作品集网页视觉", "活动与电商主视觉"],
   downloads: {

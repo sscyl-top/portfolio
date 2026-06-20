@@ -16,13 +16,13 @@ export function WorksPageShell({ children }: WorksPageShellProps) {
   const [pointer, setPointer] = useState<PointerState>({ x: 0.5, y: 0.36 });
 
   const blobAStyle = {
-    "--blob-x": `${(pointer.x - 0.5) * 34}px`,
-    "--blob-y": `${(pointer.y - 0.5) * 26}px`,
+    "--blob-x": `${(pointer.x - 0.5) * 118}px`,
+    "--blob-y": `${(pointer.y - 0.5) * 82}px`,
   } as CSSProperties;
 
   const blobBStyle = {
-    "--blob-x": `${(0.5 - pointer.x) * 30}px`,
-    "--blob-y": `${(0.5 - pointer.y) * 22}px`,
+    "--blob-x": `${(0.5 - pointer.x) * 104}px`,
+    "--blob-y": `${(0.5 - pointer.y) * 78}px`,
   } as CSSProperties;
 
   return (
@@ -38,11 +38,11 @@ export function WorksPageShell({ children }: WorksPageShellProps) {
     >
       <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,#050505_0%,#050505_34%,#06110f_54%,#050505_100%)]" />
       <div
-        className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[900px] w-[900px] rounded-full opacity-54"
+        className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-70"
         style={blobAStyle}
       />
       <div
-        className="works-route-blob works-route-blob-b pointer-events-none fixed z-0 h-[820px] w-[820px] rounded-full opacity-48"
+        className="works-route-blob works-route-blob-b pointer-events-none fixed z-0 h-[900px] w-[900px] rounded-full opacity-64"
         style={blobBStyle}
       />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.026)_1px,transparent_1px)] bg-[size:88px_88px] opacity-18" />

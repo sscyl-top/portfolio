@@ -11,6 +11,22 @@ type WorksExplorerProps = {
   works: Work[];
 };
 
+type DisplayWorkItem =
+  | {
+      kind: "work";
+      work: Work;
+      index: number;
+    }
+  | {
+      kind: "placeholder";
+      id: string;
+      index: number;
+      coverTone: Work["coverTone"];
+      palette: string[];
+    };
+
+const placeholderTones: Work["coverTone"][] = ["cyan", "blue", "graphite", "warm"];
+
 export function WorksExplorer({ works }: WorksExplorerProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]);
 
@@ -18,9 +34,35 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
     return works.filter((work) => work.category === activeCategory);
   }, [activeCategory, works]);
 
+  const displayItems = useMemo<DisplayWorkItem[]>(() => {
+    const workItems: DisplayWorkItem[] = visibleWorks.map((work, index) => ({
+      kind: "work",
+      work,
+      index,
+    }));
+
+    const placeholderCount = Math.max(0, 4 - workItems.length);
+    const placeholderItems: DisplayWorkItem[] = Array.from(
+      { length: placeholderCount },
+      (_, offset) => {
+        const index = workItems.length + offset;
+
+        return {
+          kind: "placeholder",
+          id: `${activeCategory}-placeholder-${offset}`,
+          index,
+          coverTone: placeholderTones[index % placeholderTones.length],
+          palette: ["#8bd7cd", "#c9a27f", "#f4f1ea"],
+        };
+      },
+    );
+
+    return [...workItems, ...placeholderItems];
+  }, [activeCategory, visibleWorks]);
+
   return (
     <section className="relative px-5 pb-48 pt-32 md:px-8 md:pt-44">
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-[1500px]">
         <div className="mb-24 text-center">
           <p className="font-mono text-xs uppercase text-copper">
             Projects / Works Archive
@@ -55,52 +97,81 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
           })}
         </div>
 
-        {visibleWorks.length > 0 ? (
-          <div className="grid gap-x-14 gap-y-20 md:grid-cols-2 lg:gap-x-24 lg:gap-y-28">
-            {visibleWorks.map((work, index) => (
-              <Link
-                key={work.slug}
-                href={`/works/${work.slug}`}
-                className="group block"
-              >
+        {displayItems.length > 0 ? (
+          <div className="grid gap-x-16 gap-y-24 md:grid-cols-2 lg:gap-x-28 lg:gap-y-32">
+            {displayItems.map((item) => {
+              const isPlaceholder = item.kind === "placeholder";
+              const work = item.kind === "work" ? item.work : null;
+              const coverTone =
+                item.kind === "work" ? item.work.coverTone : item.coverTone;
+              const palette =
+                item.kind === "work" ? item.work.palette : item.palette;
+              const index = item.index;
+              const card = (
                 <article className="relative">
-                  <div className="relative aspect-[1.72] overflow-hidden rounded-[24px] bg-white/[0.04] shadow-[0_28px_90px_rgba(0,0,0,0.32)] transition duration-500 group-hover:-translate-y-2 md:rounded-[28px]">
-                    <div className={`absolute inset-0 opacity-78 saturate-[0.82] ${toneClass(work.coverTone)}`} />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(120deg,rgba(255,255,255,0.06),transparent_32%),linear-gradient(to_bottom,transparent_55%,rgba(0,0,0,0.38))]" />
-                    <div className="absolute left-5 top-5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/58">
-                      {String(index + 1).padStart(2, "0")} / {work.year}
+                  <div className="relative aspect-[1.56] overflow-hidden rounded-[28px] bg-white/[0.04] shadow-[0_32px_100px_rgba(0,0,0,0.36)] transition duration-500 group-hover:-translate-y-2 md:rounded-[32px]">
+                    <div
+                      className={`absolute inset-0 opacity-82 saturate-[0.86] ${toneClass(
+                        coverTone,
+                      )}`}
+                    />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,rgba(255,255,255,0.24),transparent_22%),linear-gradient(120deg,rgba(255,255,255,0.08),transparent_34%),linear-gradient(to_bottom,transparent_56%,rgba(0,0,0,0.42))]" />
+                    {isPlaceholder ? (
+                      <div className="absolute inset-5 rounded-[22px] border border-dashed border-white/16 bg-black/10" />
+                    ) : null}
+                    <div className="absolute left-6 top-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/58">
+                      {String(index + 1).padStart(2, "0")} /{" "}
+                      {work?.year ?? "Next"}
                     </div>
-                    <div className="absolute bottom-5 right-5 flex gap-2">
-                      {work.palette.slice(0, 3).map((color) => (
+                    <div className="absolute bottom-6 right-6 flex gap-2">
+                      {palette.slice(0, 3).map((color) => (
                         <span
                           key={color}
-                          className="h-3 w-3 rounded-full border border-white/32"
+                          className="h-3.5 w-3.5 rounded-full border border-white/32"
                           style={{ backgroundColor: color }}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="mt-9 flex items-start justify-between gap-6 px-0">
+                  <div className="mt-10 flex items-start justify-between gap-6 px-0">
                     <div>
                       <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-copper">
-                        {work.category}
+                        {work?.category ?? activeCategory}
                       </p>
                       <h3 className="mt-3 max-w-xl text-4xl font-semibold leading-tight text-white md:text-5xl">
-                        {work.title}
+                        {work?.title ?? "Project placeholder"}
                       </h3>
                       <p className="mt-3 line-clamp-1 max-w-xl text-lg leading-7 text-white/64">
-                        {work.summary}
+                        {work?.summary ?? "Reserved visual slot for upcoming work."}
                       </p>
                     </div>
                     <ArrowUpRight
                       aria-hidden="true"
-                      className="mt-3 h-6 w-6 shrink-0 text-white/42 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white"
+                      className={`mt-3 h-6 w-6 shrink-0 text-white/42 transition duration-300 ${
+                        isPlaceholder
+                          ? "opacity-30"
+                          : "group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white"
+                      }`}
                     />
                   </div>
                 </article>
-              </Link>
-            ))}
+              );
+
+              return item.kind === "work" ? (
+                <Link
+                  key={item.work.slug}
+                  href={`/works/${item.work.slug}`}
+                  className="group block"
+                >
+                  {card}
+                </Link>
+              ) : (
+                <div key={item.id} className="group block" aria-hidden="true">
+                  {card}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center text-white/55">

@@ -1,27 +1,55 @@
 # Codex Handoff For Next Account
 
-## Latest Checkpoint (2026-06-19)
+## Latest Checkpoint (2026-06-20)
 
-This section supersedes older progress notes below. Use the newest commit shown by
-`git log --oneline -8` as the recovery point.
+This section supersedes older progress notes below. The newest visual/backend work is
+currently saved in the local worktree and is **not committed**. Do not reset, checkout,
+clean, or overwrite the dirty files.
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
-- Backup bundle: `D:\上山采月亮的台式\作品集网站\portfolio-site-backup-latest.bundle`
-- Homepage hero: enlarged and lowered central video card, larger external floating cards,
-  larger header/navigation, duplicate five-year summary removed.
-- Particle sequence: rocket, satellite, earth, procedural Saturn, centered astronaut.
-- Particle work includes GLB surface sampling, satellite feature weighting, rocket entry
-  aggregation/fins, blue-gold color balance, and a more visible Saturn ring profile.
-- Final contact scene: centered astronaut, `hello@sscyl.top`, left-aligned
-  `期待一起共事：`, one-row CTA buttons, and four compact expertise cards at the bottom.
-- QA anchors: `/`, `/#strength-4`, `/#strength-5`, `/#home-cta`.
-- Continue with visual review from browser annotations. Do not rebuild the page or replace
-  the existing particle architecture.
+- Dev preview is running and `http://localhost:3000/resume` returns HTTP 200.
+- Latest commit is still `d5d8409 Refine homepage particle finale`; all work described
+  below exists after that commit as uncommitted changes.
+- `/works` now includes the revised loader, seven-card representative fan animations,
+  larger work cards/placeholders, added `AI漫剧` and `TVC广告` categories, layered PNG
+  slots in the final CTA, moving glows, and a PNG placeholder for the left header logo.
+- Representative cards now raise/lower their layer immediately; scale, lift, opacity,
+  filter, and pointer tilt remain smoothly animated.
+- Homepage first-screen ambient particles were enlarged after user feedback. Current
+  shader sizing in `src/components/home/AmbientParticles.tsx` is
+  `gl_PointSize = clamp(15.4 / max(-mvPosition.z, 0.1), 2.0, 7.3);`.
+- `/resume` hero spacing/copy/download labels and moving glows were revised.
+- Resume education now has school/major bilingual headings, six equal compact achievement
+  cards, and a separate `组织与实践` section. Existing `校园经历` remains unchanged.
+- Resume final contact section is now three-part:
+  1. Horizontal phone, email, location, and WeChat QR PNG placeholder.
+  2. Hiring and commercial enquiry forms.
+  3. Infinite `聊聊设计 · BRAND & AI · LET'S TALK ·` marquee.
+- Latest resume finale visual tweaks: top contact items are centered with larger text,
+  the hiring/commercial form cards are shorter, message/note textareas are compact but
+  still manually resizable, send buttons use a lighter blue-white, and the marquee track
+  repeats four groups with `22s` animation timing.
+- Contact backend code is implemented with Next.js Route Handlers, Supabase storage/Auth,
+  RLS, IP-hash rate limiting, Resend notifications, and `/admin` message management.
+- Admin email and notification recipient: `3624457672@qq.com`.
+- Supabase/Resend credentials are not configured yet, so live submissions are not active.
+  Follow `CONTACT_BACKEND_SETUP.md` and `.env.example`.
+- Database migration:
+  `supabase/migrations/20260620135759_create_contact_messages.sql`.
+- WeChat QR replacement: add `/public/resume/wechat-qr.png`, then set `wechatQrSrc` in
+  `src/components/resume/ContactFinale.tsx`.
+- Latest verification: `npm run lint` passed; `npm test` passed 9 files / 31 tests;
+  `npm run build` passed with 20 pages and dynamic `/admin` + `/api/contact` routes;
+  `http://localhost:3000/` and `http://localhost:3000/resume` both return HTTP 200.
+- `git diff --check` has only LF/CRLF conversion warnings.
+- In-app browser automation is currently blocked by missing `sandboxPolicy` metadata.
+  Visual screenshots for the latest resume finale were not captured; continue review from
+  the user's browser annotations.
 
 ### First Prompt For The New Account
 
 ```text
-请先阅读 HANDOFF_NEXT_ACCOUNT.md 和 AGENTS.md，检查 git status 与 git log --oneline -8。继续当前 Next.js 16 作品集项目，不要重做页面。当前首页已完成首屏布局、火箭/卫星/地球/土星/宇航员粒子序列和最终联系场景；请从最新提交继续，根据我下一条浏览器标注做视觉迭代。先启动 npm run dev 并确认 http://localhost:3000/ 可预览。
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md 和 CONTACT_BACKEND_SETUP.md，检查 git status 与 git log --oneline -8。继续当前 Next.js 16 作品集项目，不要重做页面，也不要覆盖未提交改动。当前 /works 和 /resume 已完成多轮视觉迭代；首页第一屏背景粒子刚按用户要求放大；/resume 终场双表单、Supabase/Resend 接口和 /admin 消息后台代码已实现但尚未配置云端凭据。先确认 npm run dev 和 http://localhost:3000/resume 可预览，再根据我下一条浏览器标注继续视觉调整。
 ```
 
 Use this file as the first thing to read after switching Codex accounts.

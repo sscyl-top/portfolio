@@ -148,17 +148,27 @@ const particleModelUrls = [
   "/models/particles/astronaut.gltf",
 ];
 const ambientParticleThreshold = 0.86;
+let hasShownCapabilityLoaderThisDocument = false;
 
 export function CapabilityBands({ strengths }: CapabilityBandsProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [shouldShowLoader] = useState(() => {
+    const shouldShow = !hasShownCapabilityLoaderThisDocument;
+    hasShownCapabilityLoaderThisDocument = true;
+    return shouldShow;
+  });
+  const [progress, setProgress] = useState(() => (shouldShowLoader ? 0 : 100));
+  const [isLoaded, setIsLoaded] = useState(() => !shouldShowLoader);
   const cursorRef = useRef<HTMLDivElement>(null);
   const scrollProgressRef = useRef(0);
   const entryProgressRef = useRef(0);
 
   useEffect(() => {
+    if (!shouldShowLoader) {
+      return;
+    }
+
     const startedAt = performance.now();
     let frame = 0;
     let timeout = 0;
@@ -181,7 +191,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
       cancelAnimationFrame(frame);
       window.clearTimeout(timeout);
     };
-  }, []);
+  }, [shouldShowLoader]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -253,7 +263,7 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
       }}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[6] h-44 -translate-y-full bg-gradient-to-b from-transparent via-black/60 to-black" />
-      <Loader progress={progress} hidden={isLoaded} />
+      {shouldShowLoader ? <Loader progress={progress} hidden={isLoaded} /> : null}
 
       <div className="sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_46%,rgba(139,215,205,0.08),transparent_32%),radial-gradient(circle_at_28%_66%,rgba(201,162,127,0.08),transparent_28%)]" />
@@ -297,10 +307,9 @@ function Loader({ progress, hidden }: { progress: number; hidden: boolean }) {
         hidden ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
-      <div className="text-center font-mono text-white">
-        <p className="text-sm uppercase text-white/42">Loading visual system</p>
-        <p className="mt-4 text-3xl font-semibold md:text-4xl">
-          SSCYL {progress}%
+      <div className="text-center font-sans text-white">
+        <p className="text-3xl font-light leading-none tracking-[0.035em] md:text-5xl">
+          hello@sscyl.top {progress}%
         </p>
       </div>
     </div>
@@ -424,9 +433,9 @@ function StrengthPanel({
           <p className="font-mono text-xs uppercase text-copper">
             {slide.kicker}
           </p>
-          <h2 className="mt-5 text-5xl font-semibold leading-[0.88] text-white md:text-8xl">
+          <h2 className="mt-5 text-5xl font-semibold leading-[1.04] text-white md:text-8xl md:leading-[0.98]">
             {slide.title}
-            <span className="mt-4 block text-4xl text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:text-7xl">
+            <span className="mt-7 block text-4xl leading-[1.05] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:mt-8 md:text-7xl">
               {slide.outline}
             </span>
           </h2>

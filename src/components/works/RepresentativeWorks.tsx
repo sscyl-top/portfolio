@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
@@ -11,9 +12,16 @@ type RepresentativeWorksProps = {
   works: Work[];
 };
 
-type Tilt = {
-  x: number;
-  y: number;
+type RepresentativeCardStyle = CSSProperties & {
+  "--slot-x": string;
+  "--slot-y": string;
+  "--slot-r": string;
+  "--slot-spread": string;
+  "--card-lift": string;
+  "--card-scale": number;
+  "--tilt-x": string;
+  "--tilt-y": string;
+  "--intro-delay": string;
 };
 
 const fanSlots = [
@@ -29,10 +37,16 @@ const fanSlots = [
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, 7);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [tilt, setTilt] = useState<Tilt>({ x: 0, y: 0 });
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
 
   return (
-    <section className="relative overflow-hidden px-5 pb-40 pt-32 md:px-8">
+    <section className="relative overflow-hidden px-5 pb-40 pt-40 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase text-white/45">
           代表作 / Featured Works
@@ -45,23 +59,38 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         </p>
 
         <div
-          className="relative mx-auto mt-28 hidden h-[640px] max-w-7xl md:block"
+          className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
           onPointerLeave={() => {
             setActiveIndex(null);
-            setTilt({ x: 0, y: 0 });
+            if (frameRef.current !== null) {
+              cancelAnimationFrame(frameRef.current);
+              frameRef.current = null;
+            }
           }}
         >
-          <div className="pointer-events-none absolute left-1/2 top-[49%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-[45%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
 
           {displayWorks.map((work, index) => {
             const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];
             const isActive = activeIndex === index;
             const hasActive = activeIndex !== null;
-            const lift = isActive ? -34 : 0;
-            const spread = hasActive && !isActive ? slot.x * 0.1 : 0;
-            const scale = isActive ? 1.08 : hasActive ? 0.94 : 1;
-            const rotateX = isActive ? tilt.y : 0;
-            const rotateY = isActive ? tilt.x : 0;
+            const lift = isActive ? -26 : 0;
+            const spread = hasActive && !isActive ? slot.x * 0.055 : 0;
+            const scale = isActive ? 1.045 : hasActive ? 0.965 : 1;
+            const cardStyle: RepresentativeCardStyle = {
+              zIndex: isActive ? 30 : slot.z,
+              opacity: hasActive && !isActive ? 0.82 : 1,
+              filter: hasActive && !isActive ? "saturate(0.88)" : "none",
+              "--slot-x": `${slot.x}vw`,
+              "--slot-y": `${slot.y}px`,
+              "--slot-r": `${slot.r}deg`,
+              "--slot-spread": `${spread}vw`,
+              "--card-lift": `${lift}px`,
+              "--card-scale": scale,
+              "--tilt-x": "0deg",
+              "--tilt-y": "0deg",
+              "--intro-delay": `${index * 95}ms`,
+            };
 
             return (
               <Link
@@ -70,21 +99,28 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerMove={(event) => {
                   const rect = event.currentTarget.getBoundingClientRect();
+                  const target = event.currentTarget;
                   const nextX =
-                    ((event.clientX - rect.left) / rect.width - 0.5) * 9;
+                    ((event.clientX - rect.left) / rect.width - 0.5) * 5.5;
                   const nextY =
-                    ((event.clientY - rect.top) / rect.height - 0.5) * -7;
-                  setTilt({ x: nextX, y: nextY });
+                    ((event.clientY - rect.top) / rect.height - 0.5) * -4.5;
+
+                  if (frameRef.current !== null) {
+                    cancelAnimationFrame(frameRef.current);
+                  }
+
+                  frameRef.current = requestAnimationFrame(() => {
+                    target.style.setProperty("--tilt-x", `${nextY}deg`);
+                    target.style.setProperty("--tilt-y", `${nextX}deg`);
+                    frameRef.current = null;
+                  });
                 }}
-                className="group absolute left-1/2 top-[52%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity] duration-500 hover:border-white/35 focus-visible:border-copper"
-                style={{
-                  zIndex: isActive ? 30 : slot.z,
-                  opacity: hasActive && !isActive ? 0.74 : 1,
-                  filter: hasActive && !isActive ? "saturate(0.78)" : "none",
-                  transform: `translate(-50%, -50%) translate3d(calc(${slot.x + spread}vw), ${slot.y + lift}px, 0) rotate(${slot.r}deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`,
-                  transition:
-                    "transform 520ms cubic-bezier(.2,.8,.2,1), opacity 420ms ease, filter 420ms ease, border-color 420ms ease",
+                onPointerLeave={(event) => {
+                  event.currentTarget.style.setProperty("--tilt-x", "0deg");
+                  event.currentTarget.style.setProperty("--tilt-y", "0deg");
                 }}
+                className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity,border-color,box-shadow] duration-700 hover:border-white/35 hover:shadow-[0_34px_96px_rgba(0,0,0,0.62)] focus-visible:border-copper"
+                style={cardStyle}
               >
                 <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
                   <div className={`absolute inset-0 ${toneClass(work.coverTone)}`} />
