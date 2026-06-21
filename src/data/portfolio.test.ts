@@ -33,6 +33,9 @@ describe("portfolio data", () => {
       "TVC广告",
       "包装设计",
       "电商设计",
+      "工作流搭建",
+      "Agent设计",
+      "早期设计",
       "工作案例",
     ]);
     expect(categories).not.toContain("全部");

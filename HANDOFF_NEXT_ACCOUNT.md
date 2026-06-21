@@ -3,19 +3,29 @@
 ## Latest Checkpoint (2026-06-20)
 
 This section supersedes older progress notes below. The visual/backend milestone was
-committed as `f2d777c Checkpoint portfolio visuals and contact backend`. The newest
-button-anchor and WeChat contact adjustments are intended to be committed immediately
-before switching accounts. After switching, first check `git status --short` and
-`git log --oneline -8`; do not reset, checkout, clean, or overwrite any dirty files if
-the handoff commit did not complete.
+committed as `f2d777c Checkpoint portfolio visuals and contact backend`. The
+button-anchor and optional contact form milestone was committed as
+`7812fb7 Refine resume contact links and optional forms`. The newest `/works`
+category and homepage media-card front-end edits are intended to be committed
+immediately before switching accounts. After switching, first check
+`git status --short` and `git log --oneline -8`; do not reset, checkout, clean, or
+overwrite any dirty files if the handoff commit did not complete.
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
 - Dev preview is running and `http://localhost:3000/resume` returns HTTP 200.
 - Latest committed milestone before the current handoff edits is
-  `f2d777c Checkpoint portfolio visuals and contact backend`.
+  `7812fb7 Refine resume contact links and optional forms`.
 - `/works` now includes the revised loader, seven-card representative fan animations,
   larger work cards/placeholders, added `AI漫剧` and `TVC广告` categories, layered PNG
   slots in the final CTA, moving glows, and a PNG placeholder for the left header logo.
+- `/works` All Works category tabs now also include `工作流搭建`, `Agent设计`, and
+  `早期设计` immediately after `电商设计`.
+- Deferred backend requirement: the All Works category list must later become editable
+  in `/admin`, with per-category sort order and a front-end visibility toggle. This was
+  intentionally not implemented yet; only the front-end static display was changed.
+- Homepage first-screen three floating media cards now render grayscale by default and
+  return to color on hover. They also support a front-end `videoSrc` path for uploaded
+  videos, but real upload/media management is deferred to the later backend/admin phase.
 - Representative cards now raise/lower their layer immediately; scale, lift, opacity,
   filter, and pointer tilt remain smoothly animated.
 - Homepage first-screen ambient particles were enlarged after user feedback. Current
@@ -48,9 +58,10 @@ the handoff commit did not complete.
   Follow `CONTACT_BACKEND_SETUP.md` and `.env.example`.
 - Database migration:
   `supabase/migrations/20260620135759_create_contact_messages.sql`.
-- Latest verification: `npm run lint` passed; `npm test` passed 11 files / 33 tests;
+- Latest verification: `npm run lint` passed; `npm test` passed 12 files / 36 tests;
   `npm run build` passed with 20 pages and dynamic `/admin` + `/api/contact` routes;
-  `http://localhost:3000/resume` returns HTTP 200 and contains `CTT522423`.
+  `http://localhost:3000/resume` returns HTTP 200 and contains `CTT522423`; `/works`
+  returns HTTP 200 and contains `工作流搭建`, `Agent设计`, and `早期设计`.
 - `git diff --check` has only LF/CRLF conversion warnings.
 - In-app browser automation is currently blocked by missing `sandboxPolicy` metadata.
   Visual screenshots for the latest resume finale were not captured; continue review from

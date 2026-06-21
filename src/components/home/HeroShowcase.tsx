@@ -8,6 +8,25 @@ import gsap from "gsap";
 import { AmbientParticles } from "@/components/home/AmbientParticles";
 import { resume } from "@/data/portfolio";
 
+const heroFloatingMediaCards = [
+  {
+    className: "z-20 -left-16 top-[32%] hidden w-64 md:block xl:-left-20 2xl:-left-28",
+    tone: "mono" as const,
+    videoSrc: "",
+  },
+  {
+    className: "z-10 left-0 top-[23%] hidden w-56 md:block xl:left-2 2xl:left-4",
+    tone: "warm" as const,
+    videoSrc: "",
+  },
+  {
+    className: "-right-10 top-[69%] hidden w-96 lg:block xl:-right-12 2xl:-right-20",
+    tone: "graphite" as const,
+    videoSrc: "",
+    wide: true,
+  },
+];
+
 export function HeroShowcase() {
   const rootRef = useRef<HTMLElement>(null);
 
@@ -119,20 +138,17 @@ function HeroMainCard() {
 function HeroSideCards() {
   return (
     <>
-      <FloatingImageCard
-        className="z-20 -left-16 top-[32%] hidden w-64 md:block xl:-left-20 2xl:-left-28"
-        tone="mono"
-      />
-      <FloatingImageCard
-        className="z-10 left-0 top-[23%] hidden w-56 md:block xl:left-2 2xl:left-4"
-        tone="warm"
-      />
+      {heroFloatingMediaCards.slice(0, 2).map((card) => (
+        <FloatingImageCard
+          key={card.tone}
+          className={card.className}
+          tone={card.tone}
+          videoSrc={card.videoSrc}
+          wide={card.wide}
+        />
+      ))}
       <HeroActions />
-      <FloatingImageCard
-        className="-right-10 top-[69%] hidden w-96 lg:block xl:-right-12 2xl:-right-20"
-        tone="graphite"
-        wide
-      />
+      <FloatingImageCard {...heroFloatingMediaCards[2]} />
 
       <div
         data-float-card
@@ -177,13 +193,15 @@ function HeroActions() {
   );
 }
 
-function FloatingImageCard({
+export function FloatingImageCard({
   className,
   tone,
+  videoSrc = "",
   wide = false,
 }: {
   className: string;
   tone: "mono" | "warm" | "graphite";
+  videoSrc?: string;
   wide?: boolean;
 }) {
   const tones = {
@@ -198,13 +216,26 @@ function FloatingImageCard({
     <div
       data-float-card
       data-hero-reveal
-      className={`absolute overflow-hidden rounded-lg border border-white/12 shadow-2xl shadow-black/45 ${className}`}
+      data-testid="hero-floating-media-card"
+      className={`absolute overflow-hidden rounded-lg border border-white/12 shadow-2xl shadow-black/45 grayscale transition duration-500 hover:grayscale-0 ${className}`}
     >
-      <div
-        className={`${wide ? "aspect-[2.2/1]" : "aspect-[1.18/1]"} ${
-          tones[tone]
-        }`}
-      />
+      {videoSrc ? (
+        <video
+          data-testid="hero-floating-media-video"
+          src={videoSrc}
+          className={`${wide ? "aspect-[2.2/1]" : "aspect-[1.18/1]"} h-full w-full object-cover`}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : (
+        <div
+          className={`${wide ? "aspect-[2.2/1]" : "aspect-[1.18/1]"} ${
+            tones[tone]
+          }`}
+        />
+      )}
     </div>
   );
 }
