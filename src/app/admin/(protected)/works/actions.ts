@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
@@ -60,12 +61,14 @@ export async function createDraftWork(formData: FormData) {
   if (!parsed.success) return;
 
   const { client } = await requireAdmin();
-  await client.from("works").insert({
+  const { error } = await client.from("works").insert({
     ...parsed.data,
     status: "draft",
     palette: [],
     sort_order: 0,
   });
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
 }
@@ -100,10 +103,12 @@ export async function updateWork(formData: FormData) {
     values.status === "published" ? new Date().toISOString() : null;
 
   const { client } = await requireAdmin();
-  await client
+  const { error } = await client
     .from("works")
     .update({ ...values, published_at })
     .eq("id", id);
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${id}`);
@@ -115,10 +120,12 @@ export async function deleteWork(formData: FormData) {
   if (!id.success) return;
 
   const { client } = await requireAdmin();
-  await client
+  const { error } = await client
     .from("works")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id.data);
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
 }
@@ -127,23 +134,26 @@ export async function seedStaticPortfolio() {
   const { client, user } = await requireAdmin();
 
   const categoryRows = toCategorySeedRows(categories);
-  const { data: savedCategories } = await client
+  const { data: savedCategories, error: categoryError } = await client
     .from("categories")
     .upsert(categoryRows, { onConflict: "slug" })
     .select("id,name");
+  if (categoryError) throw new Error(categoryError.message);
 
   const tagRows = toTagSeedRows(staticWorks);
-  const { data: savedTags } = await client
+  const { data: savedTags, error: tagError } = await client
     .from("tags")
     .upsert(tagRows, { onConflict: "slug" })
     .select("id,name");
+  if (tagError) throw new Error(tagError.message);
 
   const compositeSlugs = new Set(getCompositeWorks().map((work) => work.slug));
   const workRows = toWorkSeedRows(staticWorks, compositeSlugs);
-  const { data: savedWorks } = await client
+  const { data: savedWorks, error: workError } = await client
     .from("works")
     .upsert(workRows, { onConflict: "slug" })
     .select("id,slug");
+  if (workError) throw new Error(workError.message);
 
   const categoryByName = new Map(
     (savedCategories ?? []).map((category) => [category.name, category.id]),
@@ -164,7 +174,8 @@ export async function seedStaticPortfolio() {
     );
 
   if (workCategoryRows.length > 0) {
-    await client.from("work_categories").upsert(workCategoryRows);
+    const { error } = await client.from("work_categories").upsert(workCategoryRows);
+    if (error) throw new Error(error.message);
   }
 
   const workTagRows = staticWorks
@@ -180,10 +191,11 @@ export async function seedStaticPortfolio() {
     );
 
   if (workTagRows.length > 0) {
-    await client.from("work_tags").upsert(workTagRows);
+    const { error } = await client.from("work_tags").upsert(workTagRows);
+    if (error) throw new Error(error.message);
   }
 
-  await client.from("audit_logs").insert({
+  const { error: auditError } = await client.from("audit_logs").insert({
     admin_user_id: user.id,
     action: "seed_static_portfolio",
     entity_type: "portfolio",
@@ -194,10 +206,12 @@ export async function seedStaticPortfolio() {
       tags: tagRows.length,
     },
   });
+  if (auditError) throw new Error(auditError.message);
 
   revalidatePath("/admin");
   revalidatePath("/admin/works");
   revalidatePath("/admin/categories");
+  redirect("/admin/works?seeded=1");
 }
 
 export async function suggestSlug(title: string) {

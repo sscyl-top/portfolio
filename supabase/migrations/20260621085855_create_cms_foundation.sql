@@ -301,6 +301,13 @@ grant insert, update, delete on public.site_settings, public.pages,
   public.work_blocks, public.media_usages, public.audit_logs to authenticated;
 grant usage, select on sequence public.audit_logs_id_seq to authenticated;
 
+grant select, insert, update, delete on public.admin_profiles,
+  public.site_settings, public.pages, public.categories, public.tags,
+  public.media_assets, public.works, public.work_categories, public.work_tags,
+  public.work_versions, public.work_blocks, public.media_usages,
+  public.audit_logs to service_role;
+grant usage, select on sequence public.audit_logs_id_seq to service_role;
+
 insert into storage.buckets (id, name, public)
 values ('portfolio-media', 'portfolio-media', true)
 on conflict (id) do update set public = excluded.public;

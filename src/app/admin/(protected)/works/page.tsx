@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { createDraftWork, seedStaticPortfolio } from "./actions";
+import { createDraftWork } from "./actions";
+import { SeedPortfolioButton } from "./SeedPortfolioButton";
 
 type AdminWorkRow = {
   id: string;
@@ -40,11 +41,7 @@ export default async function AdminWorksPage() {
             {works.length} 个 CMS 作品，支持从当前静态作品一键导入。
           </p>
         </div>
-        <form action={seedStaticPortfolio}>
-          <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            导入当前作品
-          </button>
-        </form>
+        <SeedPortfolioButton />
       </div>
 
       <form
