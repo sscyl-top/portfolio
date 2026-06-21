@@ -14,7 +14,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
   listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>>;
-  getSiteSettings(): Promise<unknown>;
+  getSiteSettings(): Promise<PublicSiteSettings>;
+};
+
+export type PublicSiteSettings = {
+  description: string;
+  name: string;
+  navigation: Array<{ href: string; label: string }>;
+  nickname: string;
+  seoDescription: string;
+  seoTitle: string;
+  socialLinks: Array<{ href: string; label: string }>;
+  title: string;
 };
 
 type CmsWorkRow = {
@@ -99,10 +110,10 @@ export function createCmsRepository(source: CmsReadSource | null) {
         try {
           return await source.getSiteSettings();
         } catch {
-          return getStaticSiteSettings();
+          return getStaticPublicSiteSettings();
         }
       }
-      return getStaticSiteSettings();
+      return getStaticPublicSiteSettings();
     },
   };
 }
@@ -152,9 +163,51 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return data ?? getStaticSiteSettings();
+      return data ? toPublicSiteSettings(data as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
     },
   });
+}
+
+type CmsSiteSettingsRow = {
+  name: string;
+  nickname: string;
+  seo_title: string;
+  seo_description: string;
+  social_links: Array<{ label: string; url: string }> | null;
+};
+
+function getStaticPublicSiteSettings(): PublicSiteSettings {
+  const settings = getStaticSiteSettings();
+
+  return {
+    description: settings.description,
+    name: settings.name,
+    navigation: settings.navigation,
+    nickname: settings.logo,
+    seoDescription: settings.description,
+    seoTitle: `${settings.name} | ${settings.title}`,
+    socialLinks: settings.socialLinks,
+    title: settings.title,
+  };
+}
+
+function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
+  const settings = getStaticSiteSettings();
+
+  return {
+    description: row.seo_description || settings.description,
+    name: row.name || settings.name,
+    navigation: settings.navigation,
+    nickname: row.nickname || settings.logo,
+    seoDescription: row.seo_description || settings.description,
+    seoTitle: row.seo_title || `${settings.name} | ${settings.title}`,
+    socialLinks:
+      row.social_links?.map((link) => ({
+        href: link.url,
+        label: link.label,
+      })) ?? settings.socialLinks,
+    title: row.seo_title || settings.title,
+  };
 }
 
 function toPublicWork(row: CmsWorkRow): Work {

@@ -1,11 +1,27 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
-import { siteSettings } from "@/data/portfolio";
+import { siteSettings as staticSiteSettings } from "@/data/portfolio";
+import type { PublicSiteSettings } from "@/lib/cms/repository";
 
 const headerLogoSrc = "";
 
-export function SiteHeader() {
+const defaultSiteSettings: PublicSiteSettings = {
+  description: staticSiteSettings.description,
+  name: staticSiteSettings.name,
+  navigation: staticSiteSettings.navigation,
+  nickname: staticSiteSettings.logo,
+  seoDescription: staticSiteSettings.description,
+  seoTitle: `${staticSiteSettings.name} | ${staticSiteSettings.title}`,
+  socialLinks: staticSiteSettings.socialLinks,
+  title: staticSiteSettings.title,
+};
+
+export function SiteHeader({
+  siteSettings = defaultSiteSettings,
+}: {
+  siteSettings?: PublicSiteSettings;
+}) {
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/45 backdrop-blur-xl">
       <nav className="mx-auto grid h-24 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-5 md:px-8">
