@@ -42,11 +42,8 @@ ADMIN_EMAIL=3624457672@qq.com
 3. 打开 `/admin`，使用 Supabase 后台用户登录。
 4. 确认消息可标记已读、归档和删除。
 
-## 5. 微信二维码
+## 5. 微信号
 
-将 PNG 放入 `public/resume/`，然后修改：
-`src/components/resume/ContactFinale.tsx` 中的 `wechatQrSrc`，例如：
+简历页终场当前展示微信号 `CTT522423`，不再使用二维码图片。
 
-```ts
-const wechatQrSrc = "/resume/wechat-qr.png";
-```
+如需修改，更新 `src/components/resume/ContactFinale.tsx` 中的 `wechatId`。

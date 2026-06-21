@@ -1,5 +1,4 @@
-import { Mail, MapPin, Phone, QrCode } from "lucide-react";
-import Image from "next/image";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { ContactForm } from "./ContactForm";
 
@@ -9,7 +8,7 @@ type ContactFinaleProps = {
   location: string;
 };
 
-const wechatQrSrc = "/resume/wechat-qr.png";
+const wechatId = "CTT522423";
 
 const marqueeGroups = [0, 1, 2, 3];
 
@@ -26,7 +25,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
           </h2>
         </div>
 
-        <div className="mt-10 grid border-y border-white/10 sm:grid-cols-2 lg:grid-cols-[1fr_1.2fr_1fr_auto]">
+        <div className="mt-10 grid border-y border-white/10 sm:grid-cols-2 lg:grid-cols-4">
           <a
             href={`tel:${phone}`}
             className="group flex min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center transition hover:bg-white/[0.035] sm:border-r lg:border-b-0"
@@ -63,27 +62,13 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
             </span>
           </div>
           <div className="flex min-h-28 flex-col items-center justify-center gap-3 px-5 text-center">
-            {wechatQrSrc ? (
-              <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-white/12 bg-white">
-                <Image
-                  src={wechatQrSrc}
-                  alt="微信二维码"
-                  fill
-                  sizes="64px"
-                  className="object-contain"
-                />
-              </div>
-            ) : (
-              <div className="grid h-16 w-16 place-items-center rounded-lg border border-dashed border-white/18 bg-white/[0.025]">
-                <QrCode aria-hidden="true" className="h-7 w-7 text-white/35" />
-              </div>
-            )}
+            <MessageCircle aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
               <span className="block font-mono text-[11px] uppercase text-white/38">
                 WeChat
               </span>
-              <span className="mt-2 block text-sm font-medium text-white/58 md:text-base">
-                {wechatQrSrc ? "扫码添加微信" : "微信二维码占位图"}
+              <span className="mt-2 block text-base font-medium text-white/82 md:text-lg">
+                {wechatId}
               </span>
             </span>
           </div>
@@ -91,6 +76,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
 
         <div className="mt-10 grid gap-5 lg:grid-cols-2">
           <ContactForm
+            id="hiring-contact"
             type="hiring"
             title="聘用联系"
             description="如果您觉得我的履历和作品符合贵司审美或者用人部门要求，请及时与我联系，期待一起共事。"
@@ -102,6 +88,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
             messagePlaceholder="请描述岗位职责与团队需求..."
           />
           <ContactForm
+            id="commercial-contact"
             type="commercial"
             title="商业咨询"
             description="如果您正在筹备一个对视觉有要求的项目，或者想聊聊 AIGC 与品牌设计的可能性，欢迎随时联系。"

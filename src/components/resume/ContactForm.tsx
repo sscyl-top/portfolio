@@ -4,6 +4,7 @@ import { Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 type ContactFormProps = {
+  id?: string;
   type: "hiring" | "commercial";
   title: string;
   description: string;
@@ -19,6 +20,7 @@ const fieldClass =
   "mt-2 min-h-10 w-full rounded-lg border border-white/10 bg-black/25 px-3.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
 
 export function ContactForm({
+  id,
   type,
   title,
   description,
@@ -62,7 +64,11 @@ export function ContactForm({
   }
 
   return (
-    <article className="rounded-lg border border-white/10 bg-white/[0.035] p-4 md:p-5">
+    <article
+      id={id}
+      data-testid={`${type}-contact-card`}
+      className="scroll-mt-24 rounded-lg border border-white/10 bg-white/[0.035] p-4 md:p-5"
+    >
       <div className="border-b border-white/10 pb-4">
         <p className="font-mono text-[10px] uppercase text-copper">
           {type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
@@ -90,18 +96,17 @@ export function ContactForm({
         </div>
 
         <label className="text-sm text-white/68">
-          姓名 *
+          姓名
           <input
             className={fieldClass}
             name="name"
             placeholder="您的姓名"
             autoComplete="name"
             maxLength={80}
-            required
           />
         </label>
         <label className="text-sm text-white/68">
-          邮箱 *
+          邮箱
           <input
             className={fieldClass}
             type="email"
@@ -109,7 +114,6 @@ export function ContactForm({
             placeholder="your@email.com"
             autoComplete="email"
             maxLength={160}
-            required
           />
         </label>
         <label className="text-sm text-white/68 sm:col-span-2">
@@ -129,7 +133,6 @@ export function ContactForm({
             name="subject"
             placeholder={subjectPlaceholder}
             maxLength={120}
-            required
           />
         </label>
         <label className="text-sm text-white/68">
@@ -142,23 +145,21 @@ export function ContactForm({
           />
         </label>
         <label className="text-sm text-white/68 sm:col-span-2">
-          {messageLabel} *
+          {messageLabel}
           <textarea
             className={`${fieldClass} min-h-20 resize-y py-2.5`}
             name="message"
             placeholder={messagePlaceholder}
             maxLength={3000}
-            required
           />
         </label>
         <label className="text-sm text-white/68 sm:col-span-2">
-          备注 *
+          备注
           <textarea
             className={`${fieldClass} min-h-16 resize-y py-2.5`}
             name="note"
             placeholder="补充时间安排、联系方式或其他说明"
             maxLength={1000}
-            required
           />
         </label>
 

@@ -364,13 +364,13 @@ function FinalContactPanel({ active }: { active: boolean }) {
               查看简历
               <FileText aria-hidden="true" className="h-4 w-4" />
             </Link>
-            <a
-              href="mailto:hello@sscyl.top?subject=Portfolio%20Hiring%20Contact"
+            <Link
+              href="/resume#hiring-contact"
               className="inline-flex min-h-12 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
             >
               聘用联系
               <Mail aria-hidden="true" className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
 
           <div className="mx-auto mt-7 grid max-w-[1420px] gap-5 lg:grid-cols-4">

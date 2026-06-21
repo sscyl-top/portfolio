@@ -2,14 +2,17 @@
 
 ## Latest Checkpoint (2026-06-20)
 
-This section supersedes older progress notes below. The newest visual/backend work is
-currently saved in the local worktree and is **not committed**. Do not reset, checkout,
-clean, or overwrite the dirty files.
+This section supersedes older progress notes below. The visual/backend milestone was
+committed as `f2d777c Checkpoint portfolio visuals and contact backend`. The newest
+button-anchor and WeChat contact adjustments are intended to be committed immediately
+before switching accounts. After switching, first check `git status --short` and
+`git log --oneline -8`; do not reset, checkout, clean, or overwrite any dirty files if
+the handoff commit did not complete.
 
 - Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
 - Dev preview is running and `http://localhost:3000/resume` returns HTTP 200.
-- Latest commit is still `d5d8409 Refine homepage particle finale`; all work described
-  below exists after that commit as uncommitted changes.
+- Latest committed milestone before the current handoff edits is
+  `f2d777c Checkpoint portfolio visuals and contact backend`.
 - `/works` now includes the revised loader, seven-card representative fan animations,
   larger work cards/placeholders, added `AI漫剧` and `TVC广告` categories, layered PNG
   slots in the final CTA, moving glows, and a PNG placeholder for the left header logo.
@@ -22,9 +25,18 @@ clean, or overwrite the dirty files.
 - Resume education now has school/major bilingual headings, six equal compact achievement
   cards, and a separate `组织与实践` section. Existing `校园经历` remains unchanged.
 - Resume final contact section is now three-part:
-  1. Horizontal phone, email, location, and WeChat QR PNG placeholder.
+  1. Horizontal phone, email, location, and WeChat ID `CTT522423`.
   2. Hiring and commercial enquiry forms.
   3. Infinite `聊聊设计 · BRAND & AI · LET'S TALK ·` marquee.
+- Homepage final `聘用联系` now links to `/resume#hiring-contact`.
+- `/works` final `聘用联系` now links to `/resume#hiring-contact`, and `商业咨询`
+  links to `/resume#commercial-contact`.
+- The resume contact forms now expose anchor targets:
+  `#hiring-contact` and `#commercial-contact`.
+- The two resume contact forms no longer require any visible field before submit. The
+  backend accepts sparse submissions, while still rejecting a non-empty invalid email.
+- The WeChat QR image was removed from the UI and `public/resume/wechat-qr.png` is no
+  longer needed.
 - Latest resume finale visual tweaks: top contact items are centered with larger text,
   the hiring/commercial form cards are shorter, message/note textareas are compact but
   still manually resizable, send buttons use a lighter blue-white, and the marquee track
@@ -36,11 +48,9 @@ clean, or overwrite the dirty files.
   Follow `CONTACT_BACKEND_SETUP.md` and `.env.example`.
 - Database migration:
   `supabase/migrations/20260620135759_create_contact_messages.sql`.
-- WeChat QR replacement: add `/public/resume/wechat-qr.png`, then set `wechatQrSrc` in
-  `src/components/resume/ContactFinale.tsx`.
-- Latest verification: `npm run lint` passed; `npm test` passed 9 files / 31 tests;
+- Latest verification: `npm run lint` passed; `npm test` passed 11 files / 33 tests;
   `npm run build` passed with 20 pages and dynamic `/admin` + `/api/contact` routes;
-  `http://localhost:3000/` and `http://localhost:3000/resume` both return HTTP 200.
+  `http://localhost:3000/resume` returns HTTP 200 and contains `CTT522423`.
 - `git diff --check` has only LF/CRLF conversion warnings.
 - In-app browser automation is currently blocked by missing `sandboxPolicy` metadata.
   Visual screenshots for the latest resume finale were not captured; continue review from
@@ -49,7 +59,7 @@ clean, or overwrite the dirty files.
 ### First Prompt For The New Account
 
 ```text
-请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md 和 CONTACT_BACKEND_SETUP.md，检查 git status 与 git log --oneline -8。继续当前 Next.js 16 作品集项目，不要重做页面，也不要覆盖未提交改动。当前 /works 和 /resume 已完成多轮视觉迭代；首页第一屏背景粒子刚按用户要求放大；/resume 终场双表单、Supabase/Resend 接口和 /admin 消息后台代码已实现但尚未配置云端凭据。先确认 npm run dev 和 http://localhost:3000/resume 可预览，再根据我下一条浏览器标注继续视觉调整。
+请先阅读 HANDOFF_NEXT_ACCOUNT.md、AGENTS.md 和 CONTACT_BACKEND_SETUP.md，检查 git status 与 git log --oneline -8。继续当前 Next.js 16 作品集项目，不要重做页面，也不要覆盖未提交改动。当前 /works 和 /resume 已完成多轮视觉迭代；/resume 终场双表单、Supabase/Resend 接口和 /admin 消息后台代码已实现但尚未配置云端凭据。最新调整是：首页终场和 /works 终场的联系按钮跳转到 /resume 的聘用/商业咨询表单锚点，简历终场微信二维码已改成微信号 CTT522423。先确认 npm run dev 和 http://localhost:3000/resume 可预览，再根据我下一条浏览器标注继续。
 ```
 
 Use this file as the first thing to read after switching Codex accounts.

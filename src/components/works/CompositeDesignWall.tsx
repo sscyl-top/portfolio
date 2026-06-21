@@ -235,14 +235,14 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
                 查看简历
               </Link>
               <Link
-                href="mailto:3020714732@qq.com?subject=Portfolio%20Hiring%20Contact"
+                href="/resume#hiring-contact"
                 className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
               >
                 <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
                 聘用联系
               </Link>
               <Link
-                href="mailto:3020714732@qq.com?subject=Commercial%20Design%20Consulting"
+                href="/resume#commercial-contact"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
               >
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
