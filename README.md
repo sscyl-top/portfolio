@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CHEN TAOTAO Portfolio
 
-## Getting Started
+Next.js 16 portfolio site with a Supabase-backed CMS, admin dashboard, media library, contact messages, and private work preview links.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Supabase Auth, Postgres, and Storage
+- Vitest and Testing Library
+
+## Local Development
 
 ```bash
+npm install
+npx supabase start
+npx supabase db reset
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Site: `http://localhost:3000`
+- Admin: `http://localhost:3000/admin/login`
+- Supabase Studio: `http://127.0.0.1:54323`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Local admin account:
 
-## Learn More
+- Email: `3624457672@qq.com`
+- Password: configured in local Supabase Auth
 
-To learn more about Next.js, take a look at the following resources:
+## Useful Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm test
+npm run lint
+npm run build
+npm run cms:check
+npm run cms:make-admin -- 3624457672@qq.com
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## CMS Flow
 
-## Deploy on Vercel
+1. Log in at `/admin/login`.
+2. Open `/admin/works`.
+3. Import current static works, or create drafts.
+4. Edit metadata, media, taxonomy, content blocks, and private preview links.
+5. Upload portfolio media in `/admin/media`.
+6. Configure site metadata in `/admin/settings` and `/admin/pages`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Published works appear on `/works` and `/works/[slug]`. Private works only render through generated preview links.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md).
