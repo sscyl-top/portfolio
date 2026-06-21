@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cms:check": "node scripts/cms-check.mjs",
+    "cms:make-admin": "node scripts/make-admin.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.6.1",
