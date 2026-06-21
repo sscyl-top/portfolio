@@ -4,7 +4,13 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { deleteWork, updateWork } from "../actions";
+import {
+  createTextBlock,
+  deleteWork,
+  deleteWorkBlock,
+  updateTextBlock,
+  updateWork,
+} from "../actions";
 
 type WorkEditorRow = {
   id: string;
@@ -28,7 +34,7 @@ type WorkEditorRow = {
 
 type WorkBlockRow = {
   id: string;
-  block_type: string;
+  block_type: "text" | "media" | "gallery" | "video" | "pdf" | "before_after";
   sort_order: number;
   is_visible: boolean;
   payload: Record<string, unknown>;
@@ -59,6 +65,9 @@ export default async function AdminWorkEditorPage({
 
   if (!work) notFound();
 
+  const workRow = work as WorkEditorRow;
+  const blockRows = (blocks ?? []) as WorkBlockRow[];
+
   return (
     <div>
       <Link
@@ -74,15 +83,11 @@ export default async function AdminWorkEditorPage({
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
             Work editor
           </p>
-          <h2 className="mt-3 text-3xl font-semibold">
-            {(work as WorkEditorRow).title}
-          </h2>
-          <p className="mt-3 font-mono text-xs text-white/38">
-            {(work as WorkEditorRow).slug}
-          </p>
+          <h2 className="mt-3 text-3xl font-semibold">{workRow.title}</h2>
+          <p className="mt-3 font-mono text-xs text-white/38">{workRow.slug}</p>
         </div>
         <form action={deleteWork}>
-          <input type="hidden" name="id" value={(work as WorkEditorRow).id} />
+          <input type="hidden" name="id" value={workRow.id} />
           <button className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-300/20 px-4 text-sm text-red-200 transition hover:bg-red-300/10">
             <Trash2 aria-hidden="true" className="h-4 w-4" />
             删除
@@ -90,8 +95,8 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      <WorkForm work={work as WorkEditorRow} />
-      <BlockPreview blocks={(blocks ?? []) as WorkBlockRow[]} />
+      <WorkForm work={workRow} />
+      <BlockEditor work={workRow} blocks={blockRows} />
     </div>
   );
 }
@@ -175,7 +180,146 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
 
       <div className="flex justify-end">
         <button className="min-h-10 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white">
-          保存
+          保存作品
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function BlockEditor({
+  blocks,
+  work,
+}: {
+  blocks: WorkBlockRow[];
+  work: WorkEditorRow;
+}) {
+  return (
+    <section className="mt-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h3 className="text-xl font-semibold text-white">内容块</h3>
+          <p className="mt-2 text-sm text-white/45">
+            当前版本先支持文本块；媒体、图库和 PDF 块会继续接入媒体库。
+          </p>
+        </div>
+      </div>
+
+      <form
+        action={createTextBlock}
+        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+      >
+        <input type="hidden" name="work_id" value={work.id} />
+        <input type="hidden" name="work_slug" value={work.slug} />
+        <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto]">
+          <Field label="标题" name="heading" defaultValue="" required />
+          <Field
+            label="排序"
+            name="sort_order"
+            type="number"
+            defaultValue={String(blocks.length)}
+          />
+          <label className="flex min-h-10 items-center gap-3 self-end rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/68">
+            <input
+              name="is_visible"
+              type="checkbox"
+              defaultChecked
+              className="h-4 w-4 accent-cyan"
+            />
+            可见
+          </label>
+        </div>
+        <label className="grid gap-2 text-sm">
+          <span className="text-white/58">正文</span>
+          <textarea
+            name="body"
+            required
+            rows={5}
+            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          />
+        </label>
+        <div className="flex justify-end">
+          <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+            新增文本块
+          </button>
+        </div>
+      </form>
+
+      <div className="mt-4 grid gap-4">
+        {blocks.length === 0 ? (
+          <div className="grid min-h-40 place-items-center border-y border-white/10 text-sm text-white/38">
+            暂无内容块。
+          </div>
+        ) : (
+          blocks.map((block) =>
+            block.block_type === "text" ? (
+              <TextBlockForm key={block.id} block={block} work={work} />
+            ) : (
+              <div
+                key={block.id}
+                className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50"
+              >
+                {block.block_type} 块暂未开放编辑。
+              </div>
+            ),
+          )
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TextBlockForm({
+  block,
+  work,
+}: {
+  block: WorkBlockRow;
+  work: WorkEditorRow;
+}) {
+  const heading = String(block.payload.heading ?? "");
+  const body = String(block.payload.body ?? "");
+
+  return (
+    <form
+      action={updateTextBlock}
+      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+    >
+      <input type="hidden" name="block_id" value={block.id} />
+      <input type="hidden" name="work_id" value={work.id} />
+      <input type="hidden" name="work_slug" value={work.slug} />
+      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
+        <Field label="标题" name="heading" defaultValue={heading} required />
+        <Field
+          label="排序"
+          name="sort_order"
+          type="number"
+          defaultValue={String(block.sort_order)}
+        />
+        <CheckField
+          label="可见"
+          name="is_visible"
+          defaultChecked={block.is_visible}
+        />
+        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
+          保存块
+        </button>
+      </div>
+      <label className="grid gap-2 text-sm">
+        <span className="text-white/58">正文</span>
+        <textarea
+          name="body"
+          defaultValue={body}
+          rows={5}
+          className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+        />
+      </label>
+      <div className="flex justify-end">
+        <button
+          formAction={deleteWorkBlock}
+          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
+        >
+          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          删除块
         </button>
       </div>
     </form>
@@ -228,36 +372,5 @@ function CheckField({
       />
       {label}
     </label>
-  );
-}
-
-function BlockPreview({ blocks }: { blocks: WorkBlockRow[] }) {
-  return (
-    <section className="mt-6">
-      <h3 className="text-sm font-medium text-white/80">内容块</h3>
-      <div className="mt-3 divide-y divide-white/10 border-y border-white/10">
-        {blocks.length === 0 ? (
-          <p className="py-8 text-sm text-white/38">
-            暂无内容块。下一步会接入文本、媒体和图库块编辑。
-          </p>
-        ) : (
-          blocks.map((block) => (
-            <div
-              key={block.id}
-              className="grid gap-3 py-3 text-sm md:grid-cols-[3rem_9rem_1fr_auto]"
-            >
-              <span className="font-mono text-white/34">{block.sort_order}</span>
-              <span className="text-white/62">{block.block_type}</span>
-              <code className="break-all text-xs text-white/42">
-                {JSON.stringify(block.payload)}
-              </code>
-              <span className="text-white/48">
-                {block.is_visible ? "可见" : "隐藏"}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-    </section>
   );
 }

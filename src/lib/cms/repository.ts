@@ -48,6 +48,7 @@ type CmsWorkRow = {
   }>;
   work_blocks?: Array<{
     block_type: string;
+    is_visible?: boolean;
     sort_order: number;
     payload: Record<string, unknown>;
   }>;
@@ -135,7 +136,7 @@ export async function createServerCmsRepository() {
           representative_order,is_composite,composite_order,sort_order,
           work_categories(categories(name)),
           work_tags(tags(name)),
-          work_blocks(block_type,sort_order,payload)
+          work_blocks(block_type,sort_order,is_visible,payload)
         `,
         )
         .eq("status", "published")
@@ -247,7 +248,7 @@ function getJoinedName(
 
 function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
   const mappedBlocks = blocks
-    .filter((block) => block.block_type === "text")
+    .filter((block) => block.block_type === "text" && block.is_visible !== false)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((block) => ({
       type: "text" as const,

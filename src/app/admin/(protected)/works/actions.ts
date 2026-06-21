@@ -41,6 +41,20 @@ const workUpdateSchema = z.object({
   seo_description: z.string().trim().max(300),
 });
 
+const textBlockSchema = z.object({
+  block_id: z.string().uuid().optional(),
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  heading: z.string().trim().min(1).max(160),
+  body: z.string().trim().min(1).max(5000),
+  sort_order: z.coerce.number().int().default(0),
+  is_visible: z.boolean(),
+});
+
 export async function createDraftWork(formData: FormData) {
   const parsed = draftWorkSchema.safeParse({
     title: formData.get("title"),
@@ -118,6 +132,95 @@ export async function deleteWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
+}
+
+export async function createTextBlock(formData: FormData) {
+  const parsed = textBlockSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    heading: formData.get("heading"),
+    body: formData.get("body"),
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, heading, body, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client.from("work_blocks").insert({
+    work_id,
+    block_type: "text",
+    sort_order,
+    is_visible,
+    payload: { heading, body },
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function updateTextBlock(formData: FormData) {
+  const parsed = textBlockSchema.safeParse({
+    block_id: formData.get("block_id"),
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    heading: formData.get("heading"),
+    body: formData.get("body"),
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success || !parsed.data.block_id) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug, heading, body, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client
+    .from("work_blocks")
+    .update({
+      sort_order,
+      is_visible,
+      payload: { heading, body },
+    })
+    .eq("id", block_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function deleteWorkBlock(formData: FormData) {
+  const parsed = z
+    .object({
+      block_id: z.string().uuid(),
+      work_id: z.string().uuid(),
+      work_slug: z
+        .string()
+        .trim()
+        .min(1)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    })
+    .safeParse({
+      block_id: formData.get("block_id"),
+      work_id: formData.get("work_id"),
+      work_slug: formData.get("work_slug"),
+    });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug } = parsed.data;
+  const { error } = await client.from("work_blocks").delete().eq("id", block_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
 }
 
 export async function seedStaticPortfolio() {
