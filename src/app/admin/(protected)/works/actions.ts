@@ -66,6 +66,23 @@ const taxonomyUpdateSchema = z.object({
   tag_ids: z.array(z.string().uuid()),
 });
 
+const nullableMediaId = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().uuid().nullable(),
+);
+
+const mediaUpdateSchema = z.object({
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  cover_media_id: nullableMediaId,
+  hover_media_id: nullableMediaId,
+  share_media_id: nullableMediaId,
+});
+
 export async function createDraftWork(formData: FormData) {
   const parsed = draftWorkSchema.safeParse({
     title: formData.get("title"),
@@ -86,6 +103,29 @@ export async function createDraftWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
+}
+
+export async function updateWorkMedia(formData: FormData) {
+  const parsed = mediaUpdateSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    cover_media_id: formData.get("cover_media_id") ?? "",
+    hover_media_id: formData.get("hover_media_id") ?? "",
+    share_media_id: formData.get("share_media_id") ?? "",
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, ...values } = parsed.data;
+  const { error } = await client.from("works").update(values).eq("id", work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${work_slug}`);
 }
 
 export async function updateWorkTaxonomy(formData: FormData) {

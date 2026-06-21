@@ -10,6 +10,7 @@ import {
   deleteWorkBlock,
   updateTextBlock,
   updateWork,
+  updateWorkMedia,
   updateWorkTaxonomy,
 } from "../actions";
 
@@ -28,6 +29,9 @@ type WorkEditorRow = {
   is_composite: boolean;
   composite_order: number | null;
   sort_order: number;
+  cover_media_id: string | null;
+  hover_media_id: string | null;
+  share_media_id: string | null;
   seo_title: string;
   seo_description: string;
   updated_at: string;
@@ -56,6 +60,14 @@ type WorkTagRow = {
   tag_id: string;
 };
 
+type MediaOptionRow = {
+  id: string;
+  storage_key: string;
+  mime_type: string;
+  original_name: string;
+  alt_text: string;
+};
+
 export default async function AdminWorkEditorPage({
   params,
 }: {
@@ -68,13 +80,14 @@ export default async function AdminWorkEditorPage({
     { data: blocks },
     { data: categories },
     { data: tags },
+    { data: mediaAssets },
     { data: workCategories },
     { data: workTags },
   ] = await Promise.all([
     supabase
       .from("works")
       .select(
-        "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,seo_title,seo_description,updated_at",
+        "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,cover_media_id,hover_media_id,share_media_id,seo_title,seo_description,updated_at",
       )
       .eq("id", id)
       .is("deleted_at", null)
@@ -94,6 +107,11 @@ export default async function AdminWorkEditorPage({
       .select("id,name,slug")
       .is("deleted_at", null)
       .order("name", { ascending: true }),
+    supabase
+      .from("media_assets")
+      .select("id,storage_key,mime_type,original_name,alt_text")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
     supabase.from("work_categories").select("category_id").eq("work_id", id),
     supabase.from("work_tags").select("tag_id").eq("work_id", id),
   ]);
@@ -103,6 +121,7 @@ export default async function AdminWorkEditorPage({
   const workRow = work as WorkEditorRow;
   const blockRows = (blocks ?? []) as WorkBlockRow[];
   const categoryRows = (categories ?? []) as TaxonomyOptionRow[];
+  const mediaRows = (mediaAssets ?? []) as MediaOptionRow[];
   const tagRows = (tags ?? []) as TaxonomyOptionRow[];
   const selectedCategoryIds = new Set(
     ((workCategories ?? []) as WorkCategoryRow[]).map((item) => item.category_id),
@@ -139,6 +158,7 @@ export default async function AdminWorkEditorPage({
       </div>
 
       <WorkForm work={workRow} />
+      <MediaForm mediaAssets={mediaRows} work={workRow} />
       <TaxonomyForm
         categories={categoryRows}
         selectedCategoryIds={selectedCategoryIds}
@@ -148,6 +168,90 @@ export default async function AdminWorkEditorPage({
       />
       <BlockEditor work={workRow} blocks={blockRows} />
     </div>
+  );
+}
+
+function MediaForm({
+  mediaAssets,
+  work,
+}: {
+  mediaAssets: MediaOptionRow[];
+  work: WorkEditorRow;
+}) {
+  return (
+    <form
+      action={updateWorkMedia}
+      className="mt-6 grid gap-5 rounded-md border border-white/10 bg-white/[0.035] p-5"
+    >
+      <input type="hidden" name="work_id" value={work.id} />
+      <input type="hidden" name="work_slug" value={work.slug} />
+      <div>
+        <h3 className="text-xl font-semibold text-white">作品媒体</h3>
+        <p className="mt-2 text-sm text-white/45">
+          从媒体库选择封面、悬停预览和分享图；素材先到“媒体库”上传。
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <MediaSelect
+          label="封面媒体"
+          name="cover_media_id"
+          assets={mediaAssets}
+          defaultValue={work.cover_media_id ?? ""}
+        />
+        <MediaSelect
+          label="悬停媒体"
+          name="hover_media_id"
+          assets={mediaAssets}
+          defaultValue={work.hover_media_id ?? ""}
+        />
+        <MediaSelect
+          label="分享媒体"
+          name="share_media_id"
+          assets={mediaAssets}
+          defaultValue={work.share_media_id ?? ""}
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+          保存媒体
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function MediaSelect({
+  assets,
+  defaultValue,
+  label,
+  name,
+}: {
+  assets: MediaOptionRow[];
+  defaultValue: string;
+  label: string;
+  name: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm">
+      <span className="text-white/58">{label}</span>
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+      >
+        <option value="">未选择</option>
+        {assets.map((asset) => (
+          <option key={asset.id} value={asset.id}>
+            {asset.original_name}
+          </option>
+        ))}
+      </select>
+      {assets.length === 0 ? (
+        <span className="text-xs text-white/34">媒体库暂无素材。</span>
+      ) : null}
+    </label>
   );
 }
 
