@@ -9,6 +9,7 @@ import {
   type Work,
 } from "@/data/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CmsReadSource = {
@@ -40,6 +41,9 @@ type CmsWorkRow = {
   is_composite: boolean;
   composite_order: number | null;
   sort_order: number;
+  cover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  hover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   work_categories?: Array<{
     categories?: { name: string } | Array<{ name: string }> | null;
   }>;
@@ -52,6 +56,12 @@ type CmsWorkRow = {
     sort_order: number;
     payload: Record<string, unknown>;
   }>;
+};
+
+type CmsMediaRow = {
+  alt_text: string;
+  mime_type: string;
+  storage_key: string;
 };
 
 export function createCmsRepository(source: CmsReadSource | null) {
@@ -134,6 +144,9 @@ export async function createServerCmsRepository() {
           `
           slug,title,summary,year,status,palette,is_representative,
           representative_order,is_composite,composite_order,sort_order,
+          cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
+          hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
+          share_media:media_assets!works_share_media_id_fkey(storage_key,mime_type,alt_text),
           work_categories(categories(name)),
           work_tags(tags(name)),
           work_blocks(block_type,sort_order,is_visible,payload)
@@ -235,6 +248,9 @@ function toPublicWork(row: CmsWorkRow): Work {
       : undefined,
     palette: row.palette ?? [],
     coverTone: "graphite",
+    coverMedia: toPublicMedia(row.cover_media),
+    hoverMedia: toPublicMedia(row.hover_media),
+    shareMedia: toPublicMedia(row.share_media),
     blocks: toPublicBlocks(row.work_blocks ?? []),
   };
 }
@@ -257,6 +273,23 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     }));
 
   return mappedBlocks.length > 0 ? mappedBlocks : [];
+}
+
+function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
+  const media = Array.isArray(value) ? value[0] : value;
+  if (!media?.storage_key) return undefined;
+
+  const { url } = getSupabasePublicConfig();
+  const encodedKey = media.storage_key
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+
+  return {
+    alt: media.alt_text,
+    mimeType: media.mime_type,
+    url: `${url}/storage/v1/object/public/portfolio-media/${encodedKey}`,
+  };
 }
 
 export const staticPortfolioCollections = {

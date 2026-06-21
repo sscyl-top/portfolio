@@ -6,6 +6,7 @@ import {
   getPublishedWorks,
 } from "@/data/portfolio";
 import { createServerCmsRepository } from "@/lib/cms/repository";
+import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
@@ -62,7 +63,10 @@ export default async function WorkDetailPage({
         </header>
 
         <div className="mt-14 min-h-[520px] rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_68%_24%,rgba(201,162,127,0.18),transparent_32%),linear-gradient(135deg,#171717,#050505_60%,#111)] p-8">
-          <div className="h-full min-h-[460px] rounded-[22px] border border-white/10 bg-black/30" />
+          <div className="relative h-full min-h-[460px] overflow-hidden rounded-[22px] border border-white/10 bg-black/30">
+            <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} />
+            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_52%,rgba(0,0,0,0.5))]" />
+          </div>
         </div>
 
         <div className="mt-16 grid gap-6">

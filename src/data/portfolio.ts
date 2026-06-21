@@ -33,7 +33,16 @@ export type Work = {
   featuredPriority?: number;
   palette: string[];
   coverTone: string;
+  coverMedia?: WorkMedia;
+  hoverMedia?: WorkMedia;
+  shareMedia?: WorkMedia;
   blocks: ContentBlock[];
+};
+
+export type WorkMedia = {
+  alt: string;
+  mimeType: string;
+  url: string;
 };
 
 export const siteSettings = {

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { categories, type Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
+import { WorkMediaFrame } from "./WorkMediaFrame";
 
 type WorksExplorerProps = {
   works: Work[];
@@ -119,6 +120,13 @@ export function WorksExplorer({
                         coverTone,
                       )}`}
                     />
+                    {work?.coverMedia ? (
+                      <WorkMediaFrame
+                        media={work.coverMedia}
+                        tone={coverTone}
+                        hover
+                      />
+                    ) : null}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,rgba(255,255,255,0.24),transparent_22%),linear-gradient(120deg,rgba(255,255,255,0.08),transparent_34%),linear-gradient(to_bottom,transparent_56%,rgba(0,0,0,0.42))]" />
                     {isPlaceholder ? (
                       <div className="absolute inset-5 rounded-[22px] border border-dashed border-white/16 bg-black/10" />

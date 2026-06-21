@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
+import { WorkMediaFrame } from "./WorkMediaFrame";
 
 type CompositeDesignWallProps = {
   works: Work[];
@@ -128,6 +129,13 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
                       work.coverTone,
                     )}`}
                   />
+                  {work.coverMedia ? (
+                    <WorkMediaFrame
+                      media={work.coverMedia}
+                      tone={work.coverTone}
+                      className="opacity-72 saturate-[0.72] transition duration-700 group-hover:scale-105 group-hover:opacity-0"
+                    />
+                  ) : null}
                   <div
                     className={`absolute inset-0 scale-105 opacity-0 saturate-[0.72] transition duration-700 group-hover:scale-100 group-hover:opacity-70 ${toneClass(
                       work.alternateTone,

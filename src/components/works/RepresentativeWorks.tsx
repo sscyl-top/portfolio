@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import type { Work } from "@/data/portfolio";
-import { toneClass } from "@/lib/workTone";
+import { WorkMediaFrame } from "./WorkMediaFrame";
 
 type RepresentativeWorksProps = {
   works: Work[];
@@ -123,7 +123,11 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 style={cardStyle}
               >
                 <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
-                  <div className={`absolute inset-0 ${toneClass(work.coverTone)}`} />
+                  <WorkMediaFrame
+                    media={work.coverMedia}
+                    tone={work.coverTone}
+                    hover
+                  />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(to_bottom,transparent_42%,rgba(0,0,0,0.84))]" />
                   <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
                     <span>{String(index + 1).padStart(2, "0")}</span>
@@ -172,7 +176,11 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               className="group block overflow-hidden rounded-[28px] border border-white/14 bg-white/[0.07] p-2 text-left shadow-2xl shadow-black/45 backdrop-blur-xl"
             >
               <article className="relative h-[390px] overflow-hidden rounded-[22px]">
-                <div className={`absolute inset-0 ${toneClass(work.coverTone)}`} />
+                <WorkMediaFrame
+                  media={work.coverMedia}
+                  tone={work.coverTone}
+                  hover
+                />
                 <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_44%,rgba(0,0,0,0.86))]" />
                 <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/12 bg-black/40 p-4 backdrop-blur-xl">
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">
