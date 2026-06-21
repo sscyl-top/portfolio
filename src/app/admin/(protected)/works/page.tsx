@@ -110,7 +110,12 @@ function WorkTable({ works }: { works: AdminWorkRow[] }) {
           {works.map((work) => (
             <tr key={work.id} className="align-top">
               <td className="py-4 pr-4">
-                <p className="font-medium text-white">{work.title}</p>
+                <Link
+                  href={`/admin/works/${work.id}`}
+                  className="font-medium text-white transition hover:text-cyan"
+                >
+                  {work.title}
+                </Link>
                 <p className="mt-1 font-mono text-xs text-white/36">
                   {work.slug}
                 </p>
