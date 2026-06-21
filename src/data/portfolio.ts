@@ -522,6 +522,14 @@ export function getPublishedWorks() {
     .sort((a, b) => b.priority - a.priority);
 }
 
+export function getStaticVisibleCategories() {
+  return categories.map((name, sort_order) => ({ name, sort_order }));
+}
+
+export function getStaticSiteSettings() {
+  return siteSettings;
+}
+
 export function getFeaturedWorks() {
   return getPublishedWorks()
     .filter((work) => typeof work.featuredPriority === "number")

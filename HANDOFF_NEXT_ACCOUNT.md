@@ -1,5 +1,49 @@
 # Codex Handoff For Next Account
 
+## Latest Checkpoint (2026-06-21 CMS Foundation)
+
+This checkpoint records the CMS foundation work completed after the API/account
+switch. The public portfolio pages remain static and deployable while the admin
+foundation is prepared.
+
+- Workspace: `D:\上山采月亮的台式\作品集网站\2026-作品集网站`
+- Completed backend plan tasks 1-7:
+  - split backend readiness into Supabase, contact email, and CMS capabilities;
+  - centralized admin authorization in `src/lib/admin-session.ts`;
+  - generated Supabase local config and CMS foundation migration;
+  - added CMS validation schemas and inferred TypeScript contracts;
+  - added CMS repository fallback that still serves current static portfolio data;
+  - added protected Chinese admin shell, login page, and module placeholders;
+  - moved contact inbox to `/admin/messages` with message actions scoped there.
+- New migration:
+  `supabase/migrations/20260621085855_create_cms_foundation.sql`
+- Existing contact migration remains:
+  `supabase/migrations/20260620135759_create_contact_messages.sql`
+- Admin routes now build:
+  `/admin`, `/admin/login`, `/admin/messages`, `/admin/works`,
+  `/admin/categories`, `/admin/media`, `/admin/pages`, `/admin/settings`.
+- Verification completed:
+  - `npm test` passed: 18 files / 46 tests.
+  - `npm run lint` passed.
+  - `npm run build` passed with 27 generated pages/routes.
+  - HTTP checks returned 200 for `/`, `/works`, `/resume`, `/admin`,
+    `/admin/login`, and `/admin/messages`.
+  - `git diff --check` passed with only LF/CRLF conversion warnings.
+- Supabase local migration verification is still blocked because Docker Desktop
+  is not running/available. `npx supabase db reset` fails before applying SQL
+  because it cannot connect to Docker.
+- `vitest.config.ts` now excludes `.worktrees` so tests do not pick up ignored
+  Codex worktree dependencies.
+- Contact setup docs now point verification to `/admin/login` and
+  `/admin/messages`.
+- Next development phase: start plan 2, "Works and media", to make works,
+  categories, media uploads, and current `/works` content editable from admin.
+- Do not ask for passwords or secret keys in chat. External owner actions after
+  this foundation are: create/select production Supabase project, create the
+  admin Auth user, set `app_metadata.role = "admin"`, configure environment
+  variables locally and in Vercel, and enable Docker locally before rerunning
+  `npx supabase db reset`.
+
 ## Latest Checkpoint (2026-06-20)
 
 This section supersedes older progress notes below. The visual/backend milestone was

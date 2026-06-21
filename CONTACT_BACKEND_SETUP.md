@@ -1,5 +1,7 @@
 # 联系表单后台配置
 
+这份文档只配置联系表单子系统。完整 CMS 后台会复用同一个 Supabase 项目、Auth 用户和 Storage 配置。
+
 ## 1. Supabase
 
 1. 创建 Supabase 项目。
@@ -32,18 +34,16 @@ ADMIN_EMAIL=3624457672@qq.com
 ```
 
 `CONTACT_RATE_LIMIT_SECRET` 使用随机长字符串，不要提交 `.env.local`。
-
 部署到 Vercel 时，在项目 Settings > Environment Variables 中配置同名变量。
 
 ## 4. 验证
 
 1. 打开 `/resume`，分别提交一条聘用联系和商业咨询。
 2. 检查 `3624457672@qq.com` 是否收到提醒邮件。
-3. 打开 `/admin`，使用 Supabase 后台用户登录。
-4. 确认消息可标记已读、归档和删除。
+3. 打开 `/admin/login`，使用 Supabase 后台用户登录。
+4. 打开 `/admin/messages`，确认消息可标记已读、归档和删除。
 
 ## 5. 微信号
 
 简历页终场当前展示微信号 `CTT522423`，不再使用二维码图片。
-
 如需修改，更新 `src/components/resume/ContactFinale.tsx` 中的 `wechatId`。

@@ -5,8 +5,25 @@ const supabasePublishableKey =
 const supabaseSecretKey =
   process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+export type BackendReadiness = {
+  supabase: boolean;
+  contactEmail: boolean;
+  cms: boolean;
+};
+
+export function getBackendReadiness(): BackendReadiness {
+  const supabase = Boolean(
+    supabaseUrl && supabasePublishableKey && supabaseSecretKey,
+  );
+  const contactEmail = Boolean(
+    process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL,
+  );
+
+  return { supabase, contactEmail, cms: supabase };
+}
+
 export function isSupabaseConfigured() {
-  return Boolean(supabaseUrl && supabasePublishableKey && supabaseSecretKey);
+  return getBackendReadiness().supabase;
 }
 
 export function getSupabasePublicConfig() {
