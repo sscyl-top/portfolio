@@ -55,6 +55,17 @@ const textBlockSchema = z.object({
   is_visible: z.boolean(),
 });
 
+const taxonomyUpdateSchema = z.object({
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  category_ids: z.array(z.string().uuid()),
+  tag_ids: z.array(z.string().uuid()),
+});
+
 export async function createDraftWork(formData: FormData) {
   const parsed = draftWorkSchema.safeParse({
     title: formData.get("title"),
@@ -75,6 +86,51 @@ export async function createDraftWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
+}
+
+export async function updateWorkTaxonomy(formData: FormData) {
+  const parsed = taxonomyUpdateSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    category_ids: formData.getAll("category_ids").map(String),
+    tag_ids: formData.getAll("tag_ids").map(String),
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, category_ids, tag_ids } = parsed.data;
+  const [{ error: categoryDeleteError }, { error: tagDeleteError }] =
+    await Promise.all([
+      client.from("work_categories").delete().eq("work_id", work_id),
+      client.from("work_tags").delete().eq("work_id", work_id),
+    ]);
+
+  if (categoryDeleteError) throw new Error(categoryDeleteError.message);
+  if (tagDeleteError) throw new Error(tagDeleteError.message);
+
+  const categoryRows = category_ids.map((category_id) => ({
+    work_id,
+    category_id,
+  }));
+  const tagRows = tag_ids.map((tag_id) => ({ work_id, tag_id }));
+  const [{ error: categoryInsertError }, { error: tagInsertError }] =
+    await Promise.all([
+      categoryRows.length
+        ? client.from("work_categories").insert(categoryRows)
+        : Promise.resolve({ error: null }),
+      tagRows.length
+        ? client.from("work_tags").insert(tagRows)
+        : Promise.resolve({ error: null }),
+    ]);
+
+  if (categoryInsertError) throw new Error(categoryInsertError.message);
+  if (tagInsertError) throw new Error(tagInsertError.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${work_slug}`);
 }
 
 export async function updateWork(formData: FormData) {

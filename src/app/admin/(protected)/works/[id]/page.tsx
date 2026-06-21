@@ -10,6 +10,7 @@ import {
   deleteWorkBlock,
   updateTextBlock,
   updateWork,
+  updateWorkTaxonomy,
 } from "../actions";
 
 type WorkEditorRow = {
@@ -40,6 +41,21 @@ type WorkBlockRow = {
   payload: Record<string, unknown>;
 };
 
+type TaxonomyOptionRow = {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order?: number;
+};
+
+type WorkCategoryRow = {
+  category_id: string;
+};
+
+type WorkTagRow = {
+  tag_id: string;
+};
+
 export default async function AdminWorkEditorPage({
   params,
 }: {
@@ -47,7 +63,14 @@ export default async function AdminWorkEditorPage({
 }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
-  const [{ data: work }, { data: blocks }] = await Promise.all([
+  const [
+    { data: work },
+    { data: blocks },
+    { data: categories },
+    { data: tags },
+    { data: workCategories },
+    { data: workTags },
+  ] = await Promise.all([
     supabase
       .from("works")
       .select(
@@ -61,12 +84,32 @@ export default async function AdminWorkEditorPage({
       .select("id,block_type,sort_order,is_visible,payload")
       .eq("work_id", id)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("categories")
+      .select("id,name,slug,sort_order")
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("tags")
+      .select("id,name,slug")
+      .is("deleted_at", null)
+      .order("name", { ascending: true }),
+    supabase.from("work_categories").select("category_id").eq("work_id", id),
+    supabase.from("work_tags").select("tag_id").eq("work_id", id),
   ]);
 
   if (!work) notFound();
 
   const workRow = work as WorkEditorRow;
   const blockRows = (blocks ?? []) as WorkBlockRow[];
+  const categoryRows = (categories ?? []) as TaxonomyOptionRow[];
+  const tagRows = (tags ?? []) as TaxonomyOptionRow[];
+  const selectedCategoryIds = new Set(
+    ((workCategories ?? []) as WorkCategoryRow[]).map((item) => item.category_id),
+  );
+  const selectedTagIds = new Set(
+    ((workTags ?? []) as WorkTagRow[]).map((item) => item.tag_id),
+  );
 
   return (
     <div>
@@ -96,6 +139,13 @@ export default async function AdminWorkEditorPage({
       </div>
 
       <WorkForm work={workRow} />
+      <TaxonomyForm
+        categories={categoryRows}
+        selectedCategoryIds={selectedCategoryIds}
+        selectedTagIds={selectedTagIds}
+        tags={tagRows}
+        work={workRow}
+      />
       <BlockEditor work={workRow} blocks={blockRows} />
     </div>
   );
@@ -181,6 +231,86 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
       <div className="flex justify-end">
         <button className="min-h-10 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white">
           保存作品
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function TaxonomyForm({
+  categories,
+  selectedCategoryIds,
+  selectedTagIds,
+  tags,
+  work,
+}: {
+  categories: TaxonomyOptionRow[];
+  selectedCategoryIds: Set<string>;
+  selectedTagIds: Set<string>;
+  tags: TaxonomyOptionRow[];
+  work: WorkEditorRow;
+}) {
+  return (
+    <form
+      action={updateWorkTaxonomy}
+      className="mt-6 grid gap-5 rounded-md border border-white/10 bg-white/[0.035] p-5"
+    >
+      <input type="hidden" name="work_id" value={work.id} />
+      <input type="hidden" name="work_slug" value={work.slug} />
+      <div>
+        <h3 className="text-xl font-semibold text-white">分类与标签</h3>
+        <p className="mt-2 text-sm text-white/45">
+          控制作品归属、列表筛选和前台标签展示。
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <fieldset>
+          <legend className="text-sm font-medium text-white/75">作品分类</legend>
+          <div className="mt-3 grid gap-2">
+            {categories.length === 0 ? (
+              <p className="border-y border-white/10 py-6 text-sm text-white/38">
+                暂无分类。可以先到“分类与标签”导入或创建分类。
+              </p>
+            ) : (
+              categories.map((category) => (
+                <CheckField
+                  key={category.id}
+                  label={category.name}
+                  name="category_ids"
+                  value={category.id}
+                  defaultChecked={selectedCategoryIds.has(category.id)}
+                />
+              ))
+            )}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="text-sm font-medium text-white/75">标签</legend>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tags.length === 0 ? (
+              <p className="border-y border-white/10 py-6 text-sm text-white/38">
+                暂无标签。
+              </p>
+            ) : (
+              tags.map((tag) => (
+                <CheckField
+                  key={tag.id}
+                  label={tag.name}
+                  name="tag_ids"
+                  value={tag.id}
+                  defaultChecked={selectedTagIds.has(tag.id)}
+                />
+              ))
+            )}
+          </div>
+        </fieldset>
+      </div>
+
+      <div className="flex justify-end">
+        <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+          保存分类与标签
         </button>
       </div>
     </form>
@@ -357,16 +487,19 @@ function CheckField({
   label,
   name,
   defaultChecked,
+  value = "on",
 }: {
   label: string;
   name: string;
   defaultChecked: boolean;
+  value?: string;
 }) {
   return (
     <label className="flex min-h-10 items-center gap-3 self-end rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/68">
       <input
         name={name}
         type="checkbox"
+        value={value}
         defaultChecked={defaultChecked}
         className="h-4 w-4 accent-cyan"
       />
