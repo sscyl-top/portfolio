@@ -3,7 +3,6 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { createDraftWork } from "./actions";
-import { SeedPortfolioButton } from "./SeedPortfolioButton";
 
 type AdminWorkRow = {
   id: string;
@@ -17,7 +16,12 @@ type AdminWorkRow = {
   updated_at: string;
 };
 
-export default async function AdminWorksPage() {
+export default async function AdminWorksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ seeded?: string; seedError?: string }>;
+}) {
+  const { seeded, seedError } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("works")
@@ -41,8 +45,26 @@ export default async function AdminWorksPage() {
             {works.length} 个 CMS 作品，支持从当前静态作品一键导入。
           </p>
         </div>
-        <SeedPortfolioButton />
+        <form action="/admin/works/seed" method="post">
+          <button
+            type="submit"
+            className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10"
+          >
+            导入当前作品
+          </button>
+        </form>
       </div>
+
+      {seeded ? (
+        <p className="mt-5 rounded-md border border-cyan/25 bg-cyan/10 p-3 text-sm text-cyan">
+          当前静态作品已导入 CMS。
+        </p>
+      ) : null}
+      {seedError ? (
+        <p className="mt-5 rounded-md border border-red-300/20 bg-red-300/10 p-3 text-sm text-red-200">
+          导入失败：{seedError}
+        </p>
+      ) : null}
 
       <form
         action={createDraftWork}
