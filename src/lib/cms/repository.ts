@@ -8,9 +8,13 @@ import {
   getWorkBySlug,
   type Work,
 } from "@/data/portfolio";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import {
+  getSupabasePublicConfig,
+  isSupabaseConfigured,
+} from "@/lib/supabase/config";
+import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -41,6 +45,7 @@ type CmsWorkRow = {
   is_composite: boolean;
   composite_order: number | null;
   sort_order: number;
+  private_token_hash?: string | null;
   cover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   hover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
@@ -57,6 +62,17 @@ type CmsWorkRow = {
     payload: Record<string, unknown>;
   }>;
 };
+
+const publicWorkSelect = `
+  slug,title,summary,year,status,palette,is_representative,
+  representative_order,is_composite,composite_order,sort_order,
+  cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
+  hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
+  share_media:media_assets!works_share_media_id_fkey(storage_key,mime_type,alt_text),
+  work_categories(categories(name)),
+  work_tags(tags(name)),
+  work_blocks(block_type,sort_order,is_visible,payload)
+`;
 
 type CmsMediaRow = {
   alt_text: string;
@@ -140,18 +156,7 @@ export async function createServerCmsRepository() {
     async listPublishedWorks() {
       const { data, error } = await client
         .from("works")
-        .select(
-          `
-          slug,title,summary,year,status,palette,is_representative,
-          representative_order,is_composite,composite_order,sort_order,
-          cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
-          hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
-          share_media:media_assets!works_share_media_id_fkey(storage_key,mime_type,alt_text),
-          work_categories(categories(name)),
-          work_tags(tags(name)),
-          work_blocks(block_type,sort_order,is_visible,payload)
-        `,
-        )
+        .select(publicWorkSelect)
         .eq("status", "published")
         .is("deleted_at", null)
         .order("sort_order", { ascending: false });
@@ -180,6 +185,28 @@ export async function createServerCmsRepository() {
       return data ? toPublicSiteSettings(data as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
     },
   });
+}
+
+export async function getPrivatePreviewWorkBySlug(slug: string, token: string) {
+  if (!isSupabaseConfigured()) return null;
+
+  const client = createSupabaseServiceClient();
+  const { data, error } = await client
+    .from("works")
+    .select(`private_token_hash,${publicWorkSelect}`)
+    .eq("slug", slug)
+    .eq("status", "private")
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !data) return null;
+
+  const row = data as unknown as CmsWorkRow;
+  if (!isPrivatePreviewTokenValid(token, row.private_token_hash ?? null)) {
+    return null;
+  }
+
+  return toPublicWork(row);
 }
 
 type CmsSiteSettingsRow = {

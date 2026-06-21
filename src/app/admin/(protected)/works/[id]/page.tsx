@@ -6,8 +6,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import {
   createTextBlock,
+  clearPrivatePreviewLink,
   deleteWork,
   deleteWorkBlock,
+  generatePrivatePreviewLink,
   updateTextBlock,
   updateWork,
   updateWorkMedia,
@@ -70,10 +72,13 @@ type MediaOptionRow = {
 
 export default async function AdminWorkEditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ privatePreview?: string }>;
 }) {
   const { id } = await params;
+  const { privatePreview } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const [
     { data: work },
@@ -158,6 +163,7 @@ export default async function AdminWorkEditorPage({
       </div>
 
       <WorkForm work={workRow} />
+      <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
       <MediaForm mediaAssets={mediaRows} work={workRow} />
       <TaxonomyForm
         categories={categoryRows}
@@ -168,6 +174,54 @@ export default async function AdminWorkEditorPage({
       />
       <BlockEditor work={workRow} blocks={blockRows} />
     </div>
+  );
+}
+
+function PrivatePreviewForm({
+  previewPath,
+  work,
+}: {
+  previewPath?: string;
+  work: WorkEditorRow;
+}) {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const previewUrl = previewPath ? `${origin}${previewPath}` : null;
+
+  return (
+    <section className="mt-6 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5">
+      <div>
+        <h3 className="text-xl font-semibold text-white">私密预览</h3>
+        <p className="mt-2 text-sm text-white/45">
+          生成带 token 的预览链接，作品不会进入公开列表；新链接会替换旧链接。
+        </p>
+      </div>
+
+      {previewUrl ? (
+        <div className="rounded-md border border-cyan/25 bg-cyan/10 p-4">
+          <p className="text-sm text-cyan">新的私密链接只显示这一次：</p>
+          <code className="mt-2 block break-all rounded-md bg-black/30 p-3 text-xs text-white/72">
+            {previewUrl}
+          </code>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <form action={clearPrivatePreviewLink}>
+          <input type="hidden" name="work_id" value={work.id} />
+          <input type="hidden" name="work_slug" value={work.slug} />
+          <button className="min-h-10 rounded-md border border-white/12 px-4 text-sm text-white/58 transition hover:border-white/30 hover:text-white">
+            清除私密链接
+          </button>
+        </form>
+        <form action={generatePrivatePreviewLink}>
+          <input type="hidden" name="work_id" value={work.id} />
+          <input type="hidden" name="work_slug" value={work.slug} />
+          <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+            生成私密链接
+          </button>
+        </form>
+      </div>
+    </section>
   );
 }
 

@@ -1,10 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createStableSlug } from "@/lib/cms/admin-model";
+import {
+  createPrivatePreviewToken,
+  hashPrivatePreviewToken,
+} from "@/lib/cms/private-preview";
 import { seedStaticPortfolioData } from "@/lib/cms/seed-static-portfolio";
 
 const draftWorkSchema = z.object({
@@ -83,6 +88,15 @@ const mediaUpdateSchema = z.object({
   share_media_id: nullableMediaId,
 });
 
+const privateLinkSchema = z.object({
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+});
+
 export async function createDraftWork(formData: FormData) {
   const parsed = draftWorkSchema.safeParse({
     title: formData.get("title"),
@@ -103,6 +117,58 @@ export async function createDraftWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
+}
+
+export async function generatePrivatePreviewLink(formData: FormData) {
+  const parsed = privateLinkSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug } = parsed.data;
+  const token = createPrivatePreviewToken();
+  const { error } = await client
+    .from("works")
+    .update({
+      private_token_hash: hashPrivatePreviewToken(token),
+      status: "private",
+    })
+    .eq("id", work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  redirect(
+    `/admin/works/${work_id}?privatePreview=${encodeURIComponent(
+      `/works/${work_slug}?preview=${token}`,
+    )}`,
+  );
+}
+
+export async function clearPrivatePreviewLink(formData: FormData) {
+  const parsed = privateLinkSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug } = parsed.data;
+  const { error } = await client
+    .from("works")
+    .update({ private_token_hash: null })
+    .eq("id", work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
 }
 
 export async function updateWorkMedia(formData: FormData) {

@@ -5,7 +5,10 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import {
   getPublishedWorks,
 } from "@/data/portfolio";
-import { createServerCmsRepository } from "@/lib/cms/repository";
+import {
+  createServerCmsRepository,
+  getPrivatePreviewWorkBySlug,
+} from "@/lib/cms/repository";
 import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
 
 export function generateStaticParams() {
@@ -14,14 +17,20 @@ export function generateStaticParams() {
 
 export default async function WorkDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string | string[] }>;
 }) {
   const { slug } = await params;
+  const { preview } = await searchParams;
+  const previewToken = Array.isArray(preview) ? preview[0] : preview;
   const repository = await createServerCmsRepository();
-  const work = await repository.getWorkBySlug(slug);
+  const work = previewToken
+    ? await getPrivatePreviewWorkBySlug(slug, previewToken)
+    : await repository.getWorkBySlug(slug);
 
-  if (!work || work.status !== "published") {
+  if (!work || (work.status !== "published" && !previewToken)) {
     notFound();
   }
 
