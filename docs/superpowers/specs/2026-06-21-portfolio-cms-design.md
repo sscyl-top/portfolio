@@ -173,8 +173,9 @@ The database is organized around these logical entities:
 - `site_settings`: singleton global settings and SEO defaults.
 - `pages`: page-level copy, metadata, and ordered module configuration.
 - `works`: work identity, status, metadata, ordering, placement, and SEO.
-- `work_versions`: publication snapshots and recovery metadata.
-- `work_blocks`: ordered typed block payloads belonging to a work version.
+- `work_versions`: complete publication snapshots and recovery metadata.
+- `work_blocks`: the current ordered typed block payloads belonging to a work;
+  published snapshots preserve their prior state for recovery.
 - `categories` and `tags`: reusable taxonomy with visibility and order.
 - Join tables for work-category and work-tag relationships.
 - `media_assets`: storage metadata and lifecycle state.
