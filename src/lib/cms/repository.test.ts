@@ -23,4 +23,16 @@ describe("CMS repository", () => {
 
     expect(works.length).toBeGreaterThan(0);
   });
+
+  it("falls back to static works when the database source fails", async () => {
+    const repository = createCmsRepository({
+      listPublishedWorks: vi.fn().mockRejectedValue(new Error("offline")),
+      listVisibleCategories: vi.fn().mockResolvedValue([]),
+      getSiteSettings: vi.fn().mockResolvedValue(null),
+    });
+
+    await expect(repository.listPublishedWorks()).resolves.toEqual(
+      getPublishedWorks(),
+    );
+  });
 });

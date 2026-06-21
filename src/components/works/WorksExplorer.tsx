@@ -9,6 +9,7 @@ import { toneClass } from "@/lib/workTone";
 
 type WorksExplorerProps = {
   works: Work[];
+  categoryNames?: string[];
 };
 
 type DisplayWorkItem =
@@ -27,8 +28,11 @@ type DisplayWorkItem =
 
 const placeholderTones: Work["coverTone"][] = ["cyan", "blue", "graphite", "warm"];
 
-export function WorksExplorer({ works }: WorksExplorerProps) {
-  const [activeCategory, setActiveCategory] = useState(categories[0]);
+export function WorksExplorer({
+  works,
+  categoryNames = categories,
+}: WorksExplorerProps) {
+  const [activeCategory, setActiveCategory] = useState(categoryNames[0] ?? "");
 
   const visibleWorks = useMemo(() => {
     return works.filter((work) => work.category === activeCategory);
@@ -76,7 +80,7 @@ export function WorksExplorer({ works }: WorksExplorerProps) {
         </div>
 
         <div className="mb-32 flex flex-wrap items-center justify-center gap-3">
-          {categories.map((category) => {
+          {categoryNames.map((category) => {
             const isActive = activeCategory === category;
 
             return (

@@ -4,9 +4,8 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import {
   getPublishedWorks,
-  getRelatedWorks,
-  getWorkBySlug,
 } from "@/data/portfolio";
+import { createServerCmsRepository } from "@/lib/cms/repository";
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
@@ -18,13 +17,14 @@ export default async function WorkDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const work = getWorkBySlug(slug);
+  const repository = await createServerCmsRepository();
+  const work = await repository.getWorkBySlug(slug);
 
   if (!work || work.status !== "published") {
     notFound();
   }
 
-  const relatedWorks = getRelatedWorks(work.slug);
+  const relatedWorks = await repository.getRelatedWorks(work.slug);
 
   return (
     <main className="px-5 pb-24 pt-32 md:px-8">
