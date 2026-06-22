@@ -2,24 +2,19 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Upload } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
-// 客户端Supabase实例（用于直传Storage）
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
-
 export function UploadForm() {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
+    setProgress(0);
     const fileInput = fileRef.current;
     if (!fileInput?.files?.[0]) {
       setMessage({ type: "error", text: "请选择一个文件" });
@@ -40,47 +35,46 @@ export function UploadForm() {
 
     setUploading(true);
     try {
-      // Step 1: 客户端直传Supabase Storage（绕过Vercel限制）
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+      // 使用 XMLHttpRequest 显示上传进度
+      await new Promise<void>((resolve, reject) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (altText) formData.append("alt_text", altText);
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("portfolio-media")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+        const xhr = new XMLHttpRequest();
 
-      if (uploadError) {
-        setMessage({ type: "error", text: `上传失败: ${uploadError.message}` });
-        return;
-      }
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        };
 
-      // Step 2: 通知服务器创建数据库记录
-      const res = await fetch("/api/media/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storage_key: uploadData.path,
-          original_name: file.name,
-          mime_type: file.type,
-          byte_size: file.size,
-          alt_text: altText,
-        }),
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              reject(new Error(data.error || `HTTP ${xhr.status}`));
+            } catch {
+              reject(new Error(`上传失败 (HTTP ${xhr.status})`));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("网络连接失败，请检查网络"));
+        xhr.ontimeout = () => reject(new Error("请求超时，请重试"));
+
+        xhr.timeout = 300000; // 5分钟超时
+        xhr.open("POST", "/api/media/upload");
+        xhr.send(formData);
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage({ type: "error", text: data.error || "数据库记录失败" });
-        return;
-      }
 
       setMessage({ type: "ok", text: `${file.name} 上传成功` });
       fileInput.value = "";
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
-      setMessage({ type: "error", text: `上传失败: ${(err as Error).message}` });
+      setMessage({ type: "error", text: (err as Error).message });
     } finally {
       setUploading(false);
     }
@@ -109,9 +103,20 @@ export function UploadForm() {
           className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
         >
           <Upload aria-hidden="true" className="h-4 w-4" />
-          {uploading ? "上传中…" : "上传"}
+          {uploading ? `上传中...${progress > 0 ? ` ${progress}%` : ""}` : "上传"}
         </button>
       </form>
+      {uploading && progress > 0 ? (
+        <div className="mt-2">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-cyan transition-all duration-200"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-1 text-xs text-white/40">{progress}%</p>
+        </div>
+      ) : null}
       {message && (
         <p
           className={`mt-2 rounded-md px-3 py-1.5 text-sm ${
