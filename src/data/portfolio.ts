@@ -28,6 +28,8 @@ export type ContentBlock =
       beforeLabel: string;
       afterLabel: string;
       note: string;
+      beforeMedia?: WorkMedia;
+      afterMedia?: WorkMedia;
     }
   | {
       type: "video";

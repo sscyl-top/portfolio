@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import {
@@ -13,6 +14,37 @@ import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const repository = await createServerCmsRepository();
+  const work = await repository.getWorkBySlug(slug);
+
+  if (!work) return { title: slug };
+
+  const ogImage = work.shareMedia?.url ?? work.coverMedia?.url;
+
+  return {
+    title: work.title,
+    description: work.summary,
+    openGraph: {
+      title: work.title,
+      description: work.summary,
+      type: "article",
+      ...(ogImage ? { images: [{ url: ogImage, alt: work.title }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: work.title,
+      description: work.summary,
+      ...(ogImage ? { images: [ogImage] } : {}),
+    },
+  };
 }
 
 export default async function WorkDetailPage({
@@ -138,32 +170,71 @@ export default async function WorkDetailPage({
                   key={block.heading}
                   className="rounded-lg border border-white/10 bg-white/[0.035] p-6"
                 >
-                  <h2 className="text-2xl font-semibold text-white">
-                    {block.heading}
-                  </h2>
-                  <p className="mt-3 text-white/58">{block.note}</p>
+                  {block.heading ? (
+                    <h2 className="text-2xl font-semibold text-white">
+                      {block.heading}
+                    </h2>
+                  ) : null}
+                  {block.note ? (
+                    <p className="mt-3 text-white/58">{block.note}</p>
+                  ) : null}
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
-                    {[block.beforeLabel, block.afterLabel].map((label) => (
-                      <div
-                        key={label}
-                        className="min-h-80 rounded-lg border border-white/10 bg-[linear-gradient(135deg,#111,#2b2b2b_46%,#050505)] p-5"
-                      >
-                        <span className="font-mono text-xs text-white/45">
-                          {label}
-                        </span>
-                      </div>
-                    ))}
+                    {[block.beforeLabel, block.afterLabel].map((label, i) => {
+                      const media = i === 0 ? block.beforeMedia : block.afterMedia;
+                      return (
+                        <div
+                          key={label}
+                          className="min-h-80 rounded-lg border border-white/10 bg-[linear-gradient(135deg,#111,#2b2b2b_46%,#050505)] overflow-hidden"
+                        >
+                          <span className="block p-3 font-mono text-xs text-white/45">
+                            {label}
+                          </span>
+                          {media ? (
+                            <WorkMediaFrame
+                              media={media}
+                              tone="graphite"
+                              className="w-full max-h-[520px]"
+                            />
+                          ) : (
+                            <div className="min-h-64" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </section>
               );
             }
 
-            if (block.type === "video" || block.type === "pdf") {
+            if (block.type === "video") {
               if (block.items.length === 0) return null;
-              const label = block.type === "video" ? "视频" : "PDF";
               return (
                 <section
-                  key={`${block.type}-${block.items[0]?.url ?? "empty"}`}
+                  key={`video-${block.items[0]?.url ?? "empty"}`}
+                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                >
+                  {block.caption ? (
+                    <p className="text-sm font-medium text-white/54">
+                      {block.caption}
+                    </p>
+                  ) : null}
+                  <div className="overflow-hidden rounded-lg border border-white/10">
+                    <video
+                      src={block.items[0].url}
+                      controls
+                      preload="metadata"
+                      className="w-full max-h-[70vh] bg-black"
+                    />
+                  </div>
+                </section>
+              );
+            }
+
+            if (block.type === "pdf") {
+              if (block.items.length === 0) return null;
+              return (
+                <section
+                  key={`pdf-${block.items[0]?.url ?? "empty"}`}
                   className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
                 >
                   {block.caption ? (
@@ -172,7 +243,7 @@ export default async function WorkDetailPage({
                     </p>
                   ) : null}
                   <div className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-4 py-3">
-                    <span className="font-mono text-xs text-white/45">{label} 文件</span>
+                    <span className="font-mono text-xs text-white/45">PDF 文件</span>
                     <a
                       href={block.items[0].url}
                       target="_blank"

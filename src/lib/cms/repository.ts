@@ -418,7 +418,9 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
           heading: caption || "Before / After",
           beforeLabel: beforeRef ? (beforeRef.alt_text || "Before") : "Before",
           afterLabel: afterRef ? (afterRef.alt_text || "After") : "After",
-          note: "",
+          note: caption || "",
+          beforeMedia: beforeRef ? toMedia(beforeRef) : undefined,
+          afterMedia: afterRef ? toMedia(afterRef) : undefined,
         };
       }
       return null;

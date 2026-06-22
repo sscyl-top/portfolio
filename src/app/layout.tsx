@@ -25,6 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: settings.seoTitle,
       description: settings.seoDescription,
       type: "website",
+      ...(settings.logoMediaUrl ? { images: [{ url: settings.logoMediaUrl }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: settings.seoTitle,
+      description: settings.seoDescription,
+      ...(settings.logoMediaUrl ? { images: [settings.logoMediaUrl] } : {}),
     },
   };
 }

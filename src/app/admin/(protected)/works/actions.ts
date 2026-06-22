@@ -819,6 +819,24 @@ export async function suggestSlug(title: string) {
   return createStableSlug(title, "new-work");
 }
 
+export async function reorderWorkBlocks(
+  workId: string,
+  workSlug: string,
+  blockIds: string[],
+) {
+  const { client } = await requireAdmin();
+
+  const updates = blockIds.map((id, index) =>
+    client.from("work_blocks").update({ sort_order: index }).eq("id", id).eq("work_id", workId),
+  );
+  const results = await Promise.all(updates);
+  const error = results.find((r) => r.error);
+  if (error?.error) throw new Error(error.error.message);
+
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath(`/works/${workSlug}`);
+}
+
 
 export async function createGalleryBlock(formData: FormData) {
   const rawIds = formData.getAll("media_ids").map(String).filter(Boolean);

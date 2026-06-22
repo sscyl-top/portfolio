@@ -7,6 +7,7 @@ import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 
 import { SlugInput } from "./SlugInput";
+import { BlockListWrapper } from "./BlockListWrapper";
 
 import {
   createTextBlock,
@@ -792,61 +793,45 @@ function BlockEditor({
           </button>
         </div>
         <Field label="说明文字" name="caption" defaultValue="" />
-      </form><div className="mt-4 grid gap-4">
-        {blocks.length === 0 ? (
-          <div className="grid min-h-40 place-items-center border-y border-white/10 text-sm text-white/38">
-            暂无内容块。
-          </div>
-        ) : (
-          blocks.map((block) =>
-            block.block_type === "text" ? (
-              <TextBlockForm key={block.id} block={block} work={work} />
-            ) : block.block_type === "media" ? (
-              <MediaBlockCard
-                key={block.id}
-                block={block}
-                mediaAssets={mediaAssets}
-                work={work}
-              />
-            ) : block.block_type === "gallery" ? (
-              <GalleryBlockCard
-                key={block.id}
-                block={block}
-                mediaAssets={mediaAssets}
-                work={work}
-              />
-            ) : block.block_type === "video" ? (
-              <VideoBlockCard
-                key={block.id}
-                block={block}
-                mediaAssets={mediaAssets}
-                work={work}
-              />
-            ) : block.block_type === "before_after" ? (
-              <BeforeAfterBlockCard
-                key={block.id}
-                block={block}
-                mediaAssets={mediaAssets}
-                work={work}
-              />
-            ) : block.block_type === "pdf" ? (
-              <PdfBlockCard
-                key={block.id}
-                block={block}
-                mediaAssets={mediaAssets}
-                work={work}
-              />
-            ) : (
-              <div
-                key={block.id}
-                className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50"
-              >
+      </form>
+      {blocks.length === 0 ? (
+        <div className="mt-4 grid min-h-40 place-items-center border-y border-white/10 text-sm text-white/38">
+          暂无内容块。
+        </div>
+      ) : (
+        <BlockListWrapper
+          blocks={blocks}
+          workId={work.id}
+          workSlug={work.slug}
+          renderBlock={(id) => {
+            const block = blocks.find((b) => b.id === id);
+            if (!block) return null;
+            if (block.block_type === "text") {
+              return <TextBlockForm block={block} work={work} />;
+            }
+            if (block.block_type === "media") {
+              return <MediaBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
+            }
+            if (block.block_type === "gallery") {
+              return <GalleryBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
+            }
+            if (block.block_type === "video") {
+              return <VideoBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
+            }
+            if (block.block_type === "before_after") {
+              return <BeforeAfterBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
+            }
+            if (block.block_type === "pdf") {
+              return <PdfBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
+            }
+            return (
+              <div className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50">
                 {block.block_type} 块暂未开放编辑。
               </div>
-            ),
-          )
-        )}
-      </div>
+            );
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -23,4 +23,5 @@
 - ✅ P1: Palette 颜色编辑器 + Slug 自动生成
 - ✅ P2: VideoBlockCard + BeforeAfterBlockCard 编辑组件；所有 5 种块类型编辑可用 (text/media/gallery/video/before_after)
 - ✅ PDF 块类型：pdfBlockSchema + createPdfBlock + updatePdfBlock + PdfBlockCard，6 种块类型全部可编辑
-- 下一波待办：前台页面渲染 PDF 块、媒体库增强
+- ✅ 前台渲染：media_ref 富化（所有单媒体 action 创建/更新时解析存储媒体引用），toPublicBlocks 支持 video/pdf/before_after 映射，works/[slug] 渲染 video/pdf 块
+- 下一波待办：部署验证 / 微调
