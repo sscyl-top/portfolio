@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { Work } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
@@ -30,7 +30,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const frameRef = useRef<number | null>(null);
 
-  // Mobile: fixed fan positions, content cycles via centerIndex
+  // Mobile fan
   const [centerIndex, setCenterIndex] = useState(3);
   const [isAnimating, setIsAnimating] = useState(false);
   const touchStartX = useRef(0);
@@ -40,12 +40,12 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     return () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); };
   }, []);
 
-  const snapTo = useCallback((idx: number) => {
-    if (isAnimating) return;
+  const snapTo = (idx: number) => {
     setIsAnimating(true);
+    accumulatedDrag.current = 0;
     setCenterIndex(idx);
-    setTimeout(() => setIsAnimating(false), 450);
-  }, [isAnimating]);
+    setTimeout(() => setIsAnimating(false), 400);
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
@@ -67,10 +67,10 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     }
   };
 
-  // Fixed relPos slots: always -3..+3, content mapped by centerIndex
-  const visibleCards: { work: Work; realIndex: number; relPos: number }[] = [];
+  // Build positions relative to center
+  const visibleCards = [];
   for (let i = 0; i < CARD_COUNT; i++) {
-    const relPos = i - 3;
+    const relPos = i - 3; // -3, -2, -1, 0, 1, 2, 3
     const absIdx = (((centerIndex + relPos) % CARD_COUNT) + CARD_COUNT) % CARD_COUNT;
     visibleCards.push({ work: displayWorks[absIdx], realIndex: absIdx, relPos });
   }
@@ -160,7 +160,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               // Z-index
               const zIdx = isCenter ? 20 : 10 - absPos;
               
-                            const style: CSSProperties = {
+              
+              const style: CSSProperties = {
                 position: "absolute",
                 left: "50%",
                 top: 0,
@@ -174,7 +175,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
               return (
                 <Link
-                  key={`slot-${relPos}`}
+                  key={realIndex}
                   href={`/works/${work.slug}`}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
