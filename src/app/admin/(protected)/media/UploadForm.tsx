@@ -2,8 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Upload } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+// 客户端Supabase实例（用于直传Storage）
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+);
 
 export function UploadForm() {
   const [uploading, setUploading] = useState(false);
@@ -33,36 +40,47 @@ export function UploadForm() {
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (altText) formData.append("alt_text", altText);
+      // Step 1: 客户端直传Supabase Storage（绕过Vercel限制）
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("portfolio-media")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-      const res = await fetch("/api/media/upload", {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage({ type: "error", text: data.error || "上传失败" });
+      if (uploadError) {
+        setMessage({ type: "error", text: `上传失败: ${uploadError.message}` });
         return;
       }
 
-      setMessage({ type: "ok", text: `${data.name} 上传成功` });
+      // Step 2: 通知服务器创建数据库记录
+      const res = await fetch("/api/media/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storage_key: uploadData.path,
+          original_name: file.name,
+          mime_type: file.type,
+          byte_size: file.size,
+          alt_text: altText,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "数据库记录失败" });
+        return;
+      }
+
+      setMessage({ type: "ok", text: `${file.name} 上传成功` });
       fileInput.value = "";
       window.location.reload();
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        setMessage({ type: "error", text: "上传超时（5分钟），请检查网络或文件是否过大" });
-      } else {
-        setMessage({ type: "error", text: `网络错误，请重试: ${(err as Error).message}` });
-      }
+      setMessage({ type: "error", text: `上传失败: ${(err as Error).message}` });
     } finally {
       setUploading(false);
     }
