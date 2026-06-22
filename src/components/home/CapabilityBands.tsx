@@ -373,7 +373,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
             </Link>
           </div>
 
-          <div className="mx-auto mt-7 grid max-w-[1420px] gap-5 lg:grid-cols-4">
+          <div className="mx-auto mt-7 grid max-w-[1420px] grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
             {resume.expertise.map((group) => (
               <div
                 key={group.title}

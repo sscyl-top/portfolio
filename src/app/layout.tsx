@@ -1,4 +1,14 @@
 import type { Metadata } from "next";
+import type { Viewport } from "next";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { createServerCmsRepository } from "@/lib/cms/repository";
@@ -29,7 +39,7 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <SiteHeader siteSettings={settings} />
         {children}
       </body>

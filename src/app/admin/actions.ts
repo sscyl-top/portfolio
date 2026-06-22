@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ export async function loginAdmin(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) redirect("/admin/login?error=login");
-  redirect("/admin/login");
+  redirect("/admin");
 }
 
 export async function logoutAdmin() {

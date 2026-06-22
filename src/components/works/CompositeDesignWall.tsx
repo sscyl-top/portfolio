@@ -106,7 +106,7 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4 md:gap-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-4">
           {displayWorks.map((work, index) => {
             const column = index % 4;
             const direction = column % 2 === 0 ? -1 : 1;

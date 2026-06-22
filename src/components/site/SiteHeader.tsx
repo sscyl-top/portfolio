@@ -21,8 +21,8 @@ export function SiteHeader({
   siteSettings?: PublicSiteSettings;
 }) {
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/45 backdrop-blur-xl">
-      <nav className="mx-auto grid h-16 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-4 md:h-24 md:px-8">
+    <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
+      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-3 md:h-24 md:px-8">
         <Link
           href="/"
           className="group flex min-w-0 items-center gap-4"
@@ -61,7 +61,7 @@ export function SiteHeader({
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative px-4 py-2.5 text-[15px] text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
+                className="relative px-3 py-2 text-sm text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
