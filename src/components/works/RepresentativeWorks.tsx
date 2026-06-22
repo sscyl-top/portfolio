@@ -174,7 +174,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
               return (
                 <Link
-                  key={realIndex}
+                  key={`slot-${relPos}`}
                   href={`/works/${work.slug}`}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
