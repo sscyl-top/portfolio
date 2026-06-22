@@ -294,8 +294,6 @@ export function FloatingImageCard({
       className={`absolute overflow-hidden rounded-lg grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
       style={{
         backgroundColor: "#2a2a2a",
-        boxShadow:
-          "0 0 80px -16px rgba(255,255,255,0.28), 0 0 0 1px rgba(255,255,255,0.15)",
       }}
     >
       {videoSrc ? (
