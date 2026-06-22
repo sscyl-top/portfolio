@@ -701,6 +701,13 @@ function BlockEditor({
                 mediaAssets={mediaAssets}
                 work={work}
               />
+            ) : block.block_type === "gallery" ? (
+              <GalleryBlockCard
+                key={block.id}
+                block={block}
+                mediaAssets={mediaAssets}
+                work={work}
+              />
             ) : (
               <div
                 key={block.id}
@@ -801,7 +808,6 @@ function Field({
 }
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function GalleryBlockCard({
   block,
   mediaAssets,
