@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         byte_size: file.size,
         width,
         height,
-        alt_text: altText || null,
+        alt_text: altText || file.name,
       })
       .select("id, storage_key, original_name")
       .single();

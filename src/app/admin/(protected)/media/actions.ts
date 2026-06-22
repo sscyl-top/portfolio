@@ -111,7 +111,7 @@ export async function uploadMediaAsset(formData: FormData) {
     width,
     height,
     duration_ms: durationMs,
-    alt_text: altText,
+    alt_text: altText || file.name,
   });
 
   revalidatePath("/admin/media");
