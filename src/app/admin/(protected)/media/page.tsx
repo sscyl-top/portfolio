@@ -1,8 +1,13 @@
-import { Upload } from "lucide-react";
+﻿import { Save, Trash2, Upload } from "lucide-react";
 
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { uploadMediaAsset } from "./actions";
+import {
+  deleteMediaAsset,
+  updateMediaAltText,
+  uploadMediaAsset,
+} from "./actions";
 
 type MediaAssetRow = {
   id: string;
@@ -11,14 +16,19 @@ type MediaAssetRow = {
   original_name: string;
   byte_size: number;
   alt_text: string;
+  width: number | null;
+  height: number | null;
   created_at: string;
 };
+
 
 export default async function AdminMediaPage() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("media_assets")
-    .select("id,storage_key,mime_type,original_name,byte_size,alt_text,created_at")
+    .select(
+      "id,storage_key,mime_type,original_name,byte_size,alt_text,width,height,created_at",
+    )
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
   const assets = (data ?? []) as MediaAssetRow[];
@@ -79,23 +89,112 @@ function MediaList({ assets }: { assets: MediaAssetRow[] }) {
   return (
     <div className="mt-6 grid gap-3">
       {assets.map((asset) => (
-        <article
-          key={asset.id}
-          className="grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm md:grid-cols-[1fr_auto]"
-        >
-          <div>
-            <p className="font-medium text-white">{asset.original_name}</p>
-            <p className="mt-1 break-all font-mono text-xs text-white/34">
-              {asset.storage_key}
-            </p>
-            <p className="mt-2 text-white/50">{asset.alt_text || "无替代文本"}</p>
-          </div>
-          <div className="font-mono text-xs text-white/38 md:text-right">
-            <p>{asset.mime_type}</p>
-            <p className="mt-1">{formatBytes(asset.byte_size)}</p>
-          </div>
-        </article>
+        <MediaRow key={asset.id} asset={asset} />
       ))}
+    </div>
+  );
+}
+
+function MediaRow({ asset }: { asset: MediaAssetRow }) {
+  const isImage = asset.mime_type.startsWith("image/");
+  const isVideo = asset.mime_type.startsWith("video/");
+  const publicUrl = buildPublicMediaUrl(asset.storage_key);
+
+  return (
+    <article className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[7rem_minmax(0,1fr)_auto]">
+      <MediaPreview
+        publicUrl={publicUrl}
+        isImage={isImage}
+        isVideo={isVideo}
+        alt={asset.alt_text || asset.original_name}
+      />
+
+      <div className="min-w-0">
+        <p className="truncate font-medium text-white">{asset.original_name}</p>
+        <p className="mt-1 break-all font-mono text-xs text-white/34">
+          {asset.storage_key}
+        </p>
+        <p className="mt-2 font-mono text-xs text-white/38">
+          {asset.mime_type}
+          {asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}
+          {" · "}
+          {formatBytes(asset.byte_size)}
+        </p>
+
+        <form
+          id={`alt-${asset.id}`}
+          action={updateMediaAltText}
+          className="mt-3 flex items-center gap-2"
+        >
+          <input type="hidden" name="id" value={asset.id} />
+          <input
+            name="alt_text"
+            defaultValue={asset.alt_text}
+            maxLength={500}
+            placeholder="替代文本（用于无障碍与 SEO）"
+            className="min-h-9 w-full rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          />
+          <button
+            type="submit"
+            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-cyan/30 px-3 text-xs text-cyan transition hover:bg-cyan/10"
+          >
+            <Save aria-hidden="true" className="h-3.5 w-3.5" />
+            保存
+          </button>
+        </form>
+      </div>
+
+      <form action={deleteMediaAsset} className="md:self-start">
+        <input type="hidden" name="id" value={asset.id} />
+        <button
+          type="submit"
+          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/25 px-3 text-xs text-red-200 transition hover:bg-red-300/10"
+        >
+          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          删除
+        </button>
+      </form>
+    </article>
+  );
+}
+
+function MediaPreview({
+  publicUrl,
+  isImage,
+  isVideo,
+  alt,
+}: {
+  publicUrl: string;
+  isImage: boolean;
+  isVideo: boolean;
+  alt: string;
+}) {
+  if (isImage) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={publicUrl}
+        alt={alt}
+        loading="lazy"
+        className="size-28 rounded-md border border-white/10 object-cover"
+      />
+    );
+  }
+
+  if (isVideo) {
+    return (
+      <video
+        src={publicUrl}
+        muted
+        playsInline
+        className="size-28 rounded-md border border-white/10 object-cover"
+      />
+    );
+  }
+
+  return (
+    <div className="grid size-28 place-items-center rounded-md border border-white/10 bg-black/30 font-mono text-[10px] uppercase text-white/40">
+      file
     </div>
   );
 }
