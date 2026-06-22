@@ -111,16 +111,16 @@ function HeroMainCard() {
       className="relative mx-auto aspect-[4/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-4 shadow-2xl shadow-black md:aspect-[16/9] md:p-5"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
-      <div className="relative z-10 flex items-center justify-between font-mono text-[10px] uppercase text-white/50 md:text-xs">
+      <div className="relative z-10 flex items-center justify-between font-mono text-[9px] uppercase text-white/50 md:text-xs">
         <span>CT DESIGN SYSTEM</span>
         <span>VIDEO SLOT / YR26</span>
       </div>
 
-      <div className="absolute left-4 top-12 rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
+      <div className="absolute left-4 top-12 hidden rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:block md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
         Upload video here
       </div>
 
-      <div className="absolute bottom-5 left-5 right-5 z-10 md:bottom-8 md:left-8 md:right-8">
+      <div className="absolute bottom-5 left-5 right-5 z-10 hidden md:block md:bottom-8 md:left-8 md:right-8">
         <p className="font-mono text-xs uppercase text-copper">
           Brand Visual / AI Design / Web Experience
         </p>

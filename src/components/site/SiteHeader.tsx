@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
@@ -35,8 +35,7 @@ export function SiteHeader({
                 alt=""
                 width={40}
                 height={40}
-                className="md:w-12 md:h-12"
-                className="h-full w-full object-contain"
+                className="h-full w-full object-contain md:h-12 md:w-12"
                 priority
               />
             ) : (
@@ -70,13 +69,13 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="hidden justify-self-end sm:grid sm:h-12 sm:w-28 sm:place-items-center md:h-16 md:w-40">
+        <div className="hidden justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40">
           <Image
             src="/brand/infinite-progress-logo.svg"
             alt="无限进步"
             width={120}
             height={30}
-            className="h-auto w-24 sm:w-28 md:w-32"
+            className="h-auto w-[4.5rem] sm:w-28 md:w-32"
             priority
           />
         </div>

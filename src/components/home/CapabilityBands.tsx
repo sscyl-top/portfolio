@@ -320,7 +320,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
   return (
     <section
       id="strength-5"
-      className="relative flex min-h-[100svh] px-5 pb-6 pt-28 md:px-8"
+      className="relative flex min-h-[100svh] px-4 pb-4 pt-22 md:px-8 md:pt-28 md:pb-6"
       data-strength-panel
     >
       <div className="mx-auto flex w-full max-w-[1500px] flex-col">
@@ -335,7 +335,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
             </p>
             <a
               href="mailto:hello@sscyl.top"
-              className="mt-5 whitespace-nowrap text-5xl font-light leading-none tracking-[0.035em] text-white md:text-7xl xl:text-[7.5rem]"
+              className="mt-3 whitespace-nowrap text-4xl font-light leading-none tracking-[0.035em] text-white md:text-7xl xl:text-[7.5rem]"
             >
               hello@sscyl.top
             </a>
@@ -345,11 +345,11 @@ function FinalContactPanel({ active }: { active: boolean }) {
         <div className="relative z-20 mt-8">
           <div
             id="home-cta"
-            className="mx-auto flex max-w-3xl flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center sm:gap-6"
+            className="mx-auto flex max-w-3xl flex-row items-center justify-center gap-2 md:gap-6"
           >
             <Link
               href="/works"
-              className="group inline-flex min-h-12 items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
+              className="group inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full bg-white px-3.5 text-xs font-semibold text-black transition hover:bg-cyan md:min-h-12 md:px-6 md:text-sm md:w-52"
             >
               浏览作品
               <ArrowUpRight
@@ -359,14 +359,14 @@ function FinalContactPanel({ active }: { active: boolean }) {
             </Link>
             <Link
               href="/resume"
-              className="inline-flex min-h-12 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
+              className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
               查看简历
               <FileText aria-hidden="true" className="h-4 w-4" />
             </Link>
             <Link
               href="/resume#hiring-contact"
-              className="inline-flex min-h-12 items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
+              className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
               聘用联系
               <Mail aria-hidden="true" className="h-4 w-4" />
@@ -419,7 +419,7 @@ function StrengthPanel({
   return (
     <section
       id={`strength-${index + 1}`}
-      className="relative flex min-h-screen items-center px-5 py-24 md:px-8"
+      className="relative flex min-h-screen items-center px-4 py-14 md:px-8 md:py-24"
       data-strength-panel
     >
       <div className="mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
@@ -435,7 +435,7 @@ function StrengthPanel({
           </p>
           <h2 className="mt-5 text-5xl font-semibold leading-[1.04] text-white md:text-8xl md:leading-[0.98]">
             {slide.title}
-            <span className="mt-7 block text-4xl leading-[1.05] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:mt-8 md:text-7xl">
+            <span className="mt-3 block text-4xl leading-[1.05] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:mt-8 md:text-7xl">
               {slide.outline}
             </span>
           </h2>
