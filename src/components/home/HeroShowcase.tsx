@@ -281,7 +281,7 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
+      className={`absolute overflow-hidden rounded-lg bg-neutral-900 grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
     >
       {videoSrc ? (
         <video
