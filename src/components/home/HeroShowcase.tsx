@@ -30,17 +30,17 @@ let heroVideos = {
 
 const heroFloatingMediaCards = [
   {
-    className: "z-20 -left-16 top-[32%] hidden w-64 aspect-[1.18/1] md:block xl:-left-20 2xl:-left-28",
+    className: "z-20 -left-16 top-[32%] hidden w-[280px] aspect-[1.18/1] md:block xl:-left-20 2xl:-left-28",
     tone: "mono" as const,
     videoKey: "side1" as const,
   },
   {
-    className: "z-10 left-0 top-[15%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
+    className: "z-10 left-0 top-[15%] hidden w-[250px] aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
   {
-    className: "-right-10 top-[69%] hidden w-96 aspect-[2.2/1] lg:block xl:-right-12 2xl:-right-20",
+    className: "-right-10 top-[69%] hidden w-96 h-[200px] lg:block xl:-right-12 2xl:-right-20",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
