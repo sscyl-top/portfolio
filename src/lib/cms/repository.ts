@@ -1,4 +1,4 @@
-import {
+﻿import {
   getCompositeWorks,
   getFeaturedWorks,
   getPublishedWorks,
@@ -18,6 +18,8 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
+  listFeaturedWorks(): Promise<Work[]>;
+  listCompositeWorks(): Promise<Work[]>;
   listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>>;
   getSiteSettings(): Promise<PublicSiteSettings>;
 };
@@ -92,13 +94,27 @@ export function createCmsRepository(source: CmsReadSource | null) {
       }
       return getPublishedWorks();
     },
-    async listFeaturedWorks() {
+    async listFeaturedWorks(): Promise<Work[]> {
+      if (source) {
+        try {
+          return await source.listFeaturedWorks();
+        } catch {
+          // fall through
+        }
+      }
       const works = await this.listPublishedWorks();
       return works
         .filter((work) => typeof work.featuredPriority === "number")
         .sort((a, b) => (b.featuredPriority ?? 0) - (a.featuredPriority ?? 0));
     },
-    async listCompositeWorks() {
+    async listCompositeWorks(): Promise<Work[]> {
+      if (source) {
+        try {
+          return await source.listCompositeWorks();
+        } catch {
+          // fall through
+        }
+      }
       const works = await this.listPublishedWorks();
       return works
         .filter((work) => work.category === "复合设计" || work.category === "澶嶅悎璁捐")
@@ -108,7 +124,7 @@ export function createCmsRepository(source: CmsReadSource | null) {
       const works = await this.listPublishedWorks();
       return works.find((work) => work.slug === slug) ?? getWorkBySlug(slug);
     },
-    async getRelatedWorks(slug: string) {
+    async getRelatedWorks(slug: string): Promise<Work[]> {
       const current = await this.getWorkBySlug(slug);
 
       if (!current) return [];
@@ -122,7 +138,7 @@ export function createCmsRepository(source: CmsReadSource | null) {
 
       return related.length > 0 ? related : getRelatedWorks(slug);
     },
-    async listVisibleCategories() {
+    async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       if (source) {
         try {
           return await source.listVisibleCategories();
@@ -132,7 +148,7 @@ export function createCmsRepository(source: CmsReadSource | null) {
       }
       return getStaticVisibleCategories();
     },
-    async getSiteSettings() {
+    async getSiteSettings(): Promise<PublicSiteSettings> {
       if (source) {
         try {
           return await source.getSiteSettings();
@@ -165,7 +181,7 @@ export async function createServerCmsRepository() {
 
       return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
     },
-    async listVisibleCategories() {
+    async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
         .from("categories")
         .select("name,sort_order")
@@ -176,6 +192,34 @@ export async function createServerCmsRepository() {
       if (error) throw error;
 
       return data ?? [];
+    },
+    async listFeaturedWorks(): Promise<Work[]> {
+      const { data, error } = await client
+        .from("works")
+        .select(publicWorkSelect)
+        .eq("status", "published")
+        .eq("is_representative", true)
+        .is("deleted_at", null)
+        .order("representative_order", { ascending: false, nullsFirst: false })
+        .order("sort_order", { ascending: false });
+
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+    },
+    async listCompositeWorks(): Promise<Work[]> {
+      const { data, error } = await client
+        .from("works")
+        .select(publicWorkSelect)
+        .eq("status", "published")
+        .eq("is_composite", true)
+        .is("deleted_at", null)
+        .order("composite_order", { ascending: false, nullsFirst: false })
+        .order("sort_order", { ascending: false });
+
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
     },
     async getSiteSettings() {
       const { data, error } = await client.from("site_settings").select("*").single();
