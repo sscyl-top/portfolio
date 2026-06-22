@@ -2,9 +2,6 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Upload } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { buildStorageKey } from "@/lib/cms/admin-model";
-import { detectImageDimensions } from "@/lib/cms/media-metadata";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
@@ -36,66 +33,27 @@ export function UploadForm() {
 
     setUploading(true);
     try {
-      // Step 1: Upload directly to Supabase Storage (bypasses Vercel body limit)
-      const supabase = createSupabaseBrowserClient();
-      const id = crypto.randomUUID();
-      const storageKey = buildStorageKey(file.name, id);
-      const mimeType = file.type || "application/octet-stream";
+      const formData = new FormData();
+      formData.append("file", file);
+      if (altText) formData.append("alt_text", altText);
 
-      const { error: uploadError } = await supabase.storage
-        .from("portfolio-media")
-        .upload(storageKey, file, { contentType: mimeType, upsert: false });
-
-      if (uploadError) {
-        setMessage({ type: "error", text: `文件上传失败：${uploadError.message}` });
-        return;
-      }
-
-      // Step 2: Detect image dimensions locally
-      let width: number | null = null;
-      let height: number | null = null;
-      if (mimeType.startsWith("image/")) {
-        try {
-          const buffer = await file.arrayBuffer();
-          const head = Buffer.from(new Uint8Array(buffer, 0, Math.min(2048, buffer.byteLength)));
-          const dims = detectImageDimensions(mimeType, head);
-          if (dims) {
-            width = dims.width;
-            height = dims.height;
-          }
-        } catch {
-          // dimension detection is best-effort
-        }
-      }
-
-      // Step 3: Register metadata in database via lightweight API call
-      const res = await fetch("/api/media/register", {
+      const res = await fetch("/api/media/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storage_key: storageKey,
-          mime_type: mimeType,
-          original_name: file.name,
-          byte_size: file.size,
-          width,
-          height,
-          alt_text: altText,
-        }),
+        body: formData,
       });
+
       const data = await res.json();
 
       if (!res.ok) {
-        // Rollback: remove the already-uploaded storage file
-        await supabase.storage.from("portfolio-media").remove([storageKey]);
-        setMessage({ type: "error", text: data.error || "数据库保存失败" });
+        setMessage({ type: "error", text: data.error || "上传失败" });
         return;
       }
 
-      setMessage({ type: "ok", text: `${file.name} 上传成功` });
+      setMessage({ type: "ok", text: `${data.name} 上传成功` });
       fileInput.value = "";
       window.location.reload();
     } catch (err) {
-      setMessage({ type: "error", text: `上传失败：${(err as Error).message}` });
+      setMessage({ type: "error", text: `网络错误，请重试` });
     } finally {
       setUploading(false);
     }
@@ -103,7 +61,7 @@ export function UploadForm() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_1fr_auto]">
+      <form onSubmit={handleSubmit} className="mt-6 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_1fr_auto]">
         <input
           ref={fileRef}
           name="file"
