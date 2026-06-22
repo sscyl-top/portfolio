@@ -7,13 +7,13 @@ import type { Points } from "three";
 function ParticleField() {
   const pointsRef = useRef<Points>(null);
   const positions = useMemo(() => {
-    const count = 520;
+    const count = 1200;
     const values = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i += 1) {
-      values[i * 3] = (pseudoRandom(i, 3) - 0.5) * 12;
-      values[i * 3 + 1] = (pseudoRandom(i, 7) - 0.5) * 7;
-      values[i * 3 + 2] = (pseudoRandom(i, 11) - 0.5) * 5;
+      values[i * 3] = (pseudoRandom(i, 3) - 0.5) * 16;
+      values[i * 3 + 1] = (pseudoRandom(i, 7) - 0.5) * 10;
+      values[i * 3 + 2] = (pseudoRandom(i, 11) - 0.5) * 6;
     }
 
     return values;
@@ -46,7 +46,7 @@ function ParticleField() {
 const ambientParticleVertexShader = `
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(15.4 / max(-mvPosition.z, 0.1), 2.0, 7.3);
+    gl_PointSize = clamp(22.0 / max(-mvPosition.z, 0.1), 2.5, 10.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -74,7 +74,7 @@ function pseudoRandom(index: number, salt: number) {
 
 export function AmbientParticles() {
   return (
-    <div className="absolute inset-0 opacity-70 max-md:opacity-30">
+    <div className="absolute inset-0 opacity-70 max-md:opacity-50">
       <Canvas camera={{ position: [0, 0, 5], fov: 55 }} dpr={[1, 1.5]}>
         <ParticleField />
       </Canvas>

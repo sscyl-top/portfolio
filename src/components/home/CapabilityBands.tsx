@@ -58,7 +58,7 @@ const slides: StrengthSlide[] = [
   },
   {
     kicker: "04 / Web delivery",
-    title: "跨部门协同与落地",
+    title: "跨部门协同",
     outline: "WEB + MOTION",
     body: "具备 Web 视觉设计与落地能力，可进行 vibe coding 式页面搭建与设计实现，同时具备短视频剪辑与动效表达能力。",
     shapeLabel: "Particle saturn",
@@ -373,20 +373,20 @@ function FinalContactPanel({ active }: { active: boolean }) {
             </Link>
           </div>
 
-          <div className="mx-auto mt-7 grid max-w-[1420px] grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
+          <div className="mx-auto mt-7 grid max-w-[1420px] grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
             {resume.expertise.map((group) => (
               <div
                 key={group.title}
-                className="min-h-28 rounded-lg border border-white/10 bg-black/55 px-5 py-4 backdrop-blur"
+                className="rounded-lg border border-white/10 bg-black/55 px-3 py-2.5 backdrop-blur"
               >
-                <h3 className="font-mono text-xs uppercase text-cyan/75">
+                <h3 className="font-mono text-[10px] uppercase text-cyan/75">
                   {group.title}
                 </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                   {group.items.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs text-white/62"
+                      className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/62"
                     >
                       {item}
                     </span>
