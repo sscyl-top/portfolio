@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -49,6 +52,8 @@ export default async function RootLayout({
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <SiteHeader siteSettings={settings} />
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

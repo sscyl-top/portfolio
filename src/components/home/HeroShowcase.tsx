@@ -6,7 +6,15 @@ import { ArrowUpRight, Download, Sparkles } from "lucide-react";
 import gsap from "gsap";
 
 import { AmbientParticles } from "@/components/home/AmbientParticles";
-import { resume } from "@/data/portfolio";
+import { resume as staticResume } from "@/data/portfolio";
+
+export type HeroData = {
+  positioning?: string;
+  downloadsPdf?: string;
+};
+
+// merged data available to all sub-components
+let resume = { ...staticResume };
 
 const heroFloatingMediaCards = [
   {
@@ -27,7 +35,16 @@ const heroFloatingMediaCards = [
   },
 ];
 
-export function HeroShowcase() {
+export function HeroShowcase({ data }: { data?: HeroData }) {
+  // merge CMS data on top of static resume for this render
+  resume = {
+    ...staticResume,
+    ...(data ?? {}),
+    downloads: {
+      ...staticResume.downloads,
+      pdf: data?.downloadsPdf ?? staticResume.downloads.pdf,
+    },
+  };
   const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
