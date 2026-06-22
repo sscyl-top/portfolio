@@ -1,8 +1,9 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
 import {
   createTextBlock,
@@ -232,6 +233,17 @@ function MediaForm({
   mediaAssets: MediaOptionRow[];
   work: WorkEditorRow;
 }) {
+  const assetById = new Map(mediaAssets.map((a) => [a.id, a]));
+  const selectedCover = work.cover_media_id
+    ? assetById.get(work.cover_media_id)
+    : null;
+  const selectedHover = work.hover_media_id
+    ? assetById.get(work.hover_media_id)
+    : null;
+  const selectedShare = work.share_media_id
+    ? assetById.get(work.share_media_id)
+    : null;
+
   return (
     <form
       action={updateWorkMedia}
@@ -242,7 +254,7 @@ function MediaForm({
       <div>
         <h3 className="text-xl font-semibold text-white">作品媒体</h3>
         <p className="mt-2 text-sm text-white/45">
-          从媒体库选择封面、悬停预览和分享图；素材先到“媒体库”上传。
+          从媒体库选择封面、悬停预览和分享图；素材先到媒体库上传。
         </p>
       </div>
 
@@ -252,18 +264,21 @@ function MediaForm({
           name="cover_media_id"
           assets={mediaAssets}
           defaultValue={work.cover_media_id ?? ""}
+          selectedAsset={selectedCover ?? null}
         />
         <MediaSelect
           label="悬停媒体"
           name="hover_media_id"
           assets={mediaAssets}
           defaultValue={work.hover_media_id ?? ""}
+          selectedAsset={selectedHover ?? null}
         />
         <MediaSelect
           label="分享媒体"
           name="share_media_id"
           assets={mediaAssets}
           defaultValue={work.share_media_id ?? ""}
+          selectedAsset={selectedShare ?? null}
         />
       </div>
 
@@ -275,21 +290,36 @@ function MediaForm({
     </form>
   );
 }
-
 function MediaSelect({
   assets,
   defaultValue,
   label,
   name,
+  selectedAsset,
 }: {
   assets: MediaOptionRow[];
   defaultValue: string;
   label: string;
   name: string;
+  selectedAsset: MediaOptionRow | null;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <div className="grid gap-2 text-sm">
       <span className="text-white/58">{label}</span>
+
+      {selectedAsset ? (
+        <MediaSelectPreview
+          storageKey={selectedAsset.storage_key}
+          mimeType={selectedAsset.mime_type}
+          alt={selectedAsset.alt_text || selectedAsset.original_name}
+          name={selectedAsset.original_name}
+        />
+      ) : (
+        <span className="grid h-28 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
+          未选择
+        </span>
+      )}
+
       <select
         name={name}
         defaultValue={defaultValue}
@@ -305,7 +335,49 @@ function MediaSelect({
       {assets.length === 0 ? (
         <span className="text-xs text-white/34">媒体库暂无素材。</span>
       ) : null}
-    </label>
+    </div>
+  );
+}
+
+function MediaSelectPreview({
+  storageKey,
+  mimeType,
+  alt,
+  name,
+}: {
+  storageKey: string;
+  mimeType: string;
+  alt: string;
+  name: string;
+}) {
+  const url = buildPublicMediaUrl(storageKey);
+
+  if (mimeType.startsWith("image/")) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={alt}
+        className="h-28 w-full rounded-md border border-white/10 object-cover"
+      />
+    );
+  }
+
+  if (mimeType.startsWith("video/")) {
+    return (
+      <video
+        src={url}
+        muted
+        playsInline
+        className="h-28 w-full rounded-md border border-white/10 object-cover"
+      />
+    );
+  }
+
+  return (
+    <span className="grid h-28 place-items-center rounded-md border border-white/10 bg-black/30 text-xs text-white/40">
+      {name || "file"}
+    </span>
   );
 }
 
