@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 import type { Work } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
@@ -24,17 +24,15 @@ const fanSlots = [
 ];
 
 const CARD_COUNT = 7;
-const TOTAL_VISIBLE = 7;
+const CARD_GAP = 80;
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, CARD_COUNT);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const frameRef = useRef<number | null>(null);
 
-  // Mobile fan
+  // Mobile carousel — simple: centerIndex drives positions, CSS transitions handle animation
   const [centerIndex, setCenterIndex] = useState(3);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const touchStartX = useRef(0);
   const accumulatedDrag = useRef(0);
@@ -43,55 +41,52 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     return () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); };
   }, []);
 
-  const snapTo = (idx: number) => {
+  const snapTo = useCallback((idx: number) => {
     setIsAnimating(true);
-    setDragOffset(0);
-    accumulatedDrag.current = 0;
     setCenterIndex(idx);
-    setTimeout(() => setIsAnimating(false), 400);
-  };
+    setTimeout(() => setIsAnimating(false), 500);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     accumulatedDrag.current = 0;
-    setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isAnimating) return;
-    const dx = e.touches[0].clientX - touchStartX.current;
-    accumulatedDrag.current = dx;
-    setDragOffset(dx);
+    if (isAnimating) return;
+    accumulatedDrag.current = e.touches[0].clientX - touchStartX.current;
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || isAnimating) { setIsDragging(false); return; }
-    setIsDragging(false);
+    if (isAnimating) return;
     const dx = accumulatedDrag.current;
-    if (Math.abs(dx) > 60) {
-      const dir = dx > 0 ? -1 : 1;
-      snapTo(((centerIndex + dir) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
-    } else {
-      snapTo(centerIndex);
+    if (Math.abs(dx) > 40) {
+      if (dx > 0) {
+        // Right swipe -> previous card
+        snapTo(((centerIndex - 1) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
+      } else {
+        // Left swipe -> next card
+        snapTo((centerIndex + 1) % CARD_COUNT);
+      }
     }
   };
 
-  // Build positions relative to center
-  const visibleCards = [];
-  for (let i = 0; i < TOTAL_VISIBLE; i++) {
-    const relPos = i - 3; // -3, -2, -1, 0, 1, 2, 3
-    const absIdx = (((centerIndex + relPos) % CARD_COUNT) + CARD_COUNT) % CARD_COUNT;
-    visibleCards.push({ work: displayWorks[absIdx], realIndex: absIdx, relPos });
-  }
+  // Each card gets a position relative to center (-3 to +3)
+  // relPos = ((realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT) - 3
+  const positionedCards = displayWorks.map((work, realIndex) => {
+    const rawPos = (realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT;
+    const relPos = rawPos - 3; // -3, -2, -1, 0, 1, 2, 3
+    return { work, realIndex, relPos };
+  });
 
   return (
     <section className="relative overflow-hidden px-5 pb-40 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
-        <p className="font-mono text-xs uppercase text-white/45">代表作 / Featured Works</p>
-        <h1 className="mt-4 text-5xl font-semibold text-white md:text-7xl">代表作</h1>
+        <p className="font-mono text-xs uppercase text-white/45">代表作品 / Featured Works</p>
+        <h1 className="mt-4 text-5xl font-semibold text-white md:text-7xl">代表作品</h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55 md:text-lg">
-          从品牌全案、视觉系统到 AIGC 提案能力，先用 7 个关键项目建立第一印象。
+          从品牌全案、视觉系统到 AIGC 提效能力，先用 7 个关键项目建立第一印象。
         </p>
 
         {/* DESKTOP: fan */}
@@ -114,14 +109,22 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerMove={(event) => {
                   const rect = event.currentTarget.getBoundingClientRect(); const target = event.currentTarget;
-                  const nx = ((event.clientX - rect.left) / rect.width - 0.5) * 5.5;
-                  const ny = ((event.clientY - rect.top) / rect.height - 0.5) * -4.5;
+                  const nextX = ((event.clientX - rect.left) / rect.width - 0.5) * 5.5;
+                  const nextY = ((event.clientY - rect.top) / rect.height - 0.5) * -4.5;
                   if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-                  frameRef.current = requestAnimationFrame(() => { target.style.setProperty("--tilt-x", `${ny}deg`); target.style.setProperty("--tilt-y", `${nx}deg`); frameRef.current = null; });
+                  frameRef.current = requestAnimationFrame(() => {
+                    target.style.setProperty("--tilt-x", `${nextY}deg`);
+                    target.style.setProperty("--tilt-y", `${nextX}deg`);
+                    frameRef.current = null;
+                  });
                 }}
-                onPointerLeave={(e) => { e.currentTarget.style.setProperty("--tilt-x", "0deg"); e.currentTarget.style.setProperty("--tilt-y", "0deg"); }}
+                onPointerLeave={(event) => {
+                  event.currentTarget.style.setProperty("--tilt-x", "0deg");
+                  event.currentTarget.style.setProperty("--tilt-y", "0deg");
+                }}
                 className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity,border-color,box-shadow] duration-700 hover:border-white/35 hover:shadow-[0_34px_96px_rgba(0,0,0,0.62)] focus-visible:border-copper"
-                style={cardStyle}>
+                style={cardStyle}
+              >
                 <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
                   <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} hover />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(to_bottom,transparent_42%,rgba(0,0,0,0.84))]" />
@@ -142,44 +145,32 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
           })}
         </div>
 
-        {/* MOBILE: 扇形展开 */}
+        {/* MOBILE: card carousel with stable keys */}
         <div className="relative mt-8 md:hidden select-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}>
-          <div className="relative mx-auto h-[420px] w-full max-w-[320px] overflow-visible">
-            {visibleCards.map(({ work, realIndex, relPos }) => {
+          <div className="relative mx-auto h-[440px] w-full max-w-[320px] overflow-visible">
+            {positionedCards.map(({ work, realIndex, relPos }) => {
               const absPos = Math.abs(relPos);
               const isCenter = relPos === 0;
-              
-              // Position: spread cards left and right
-              const baseX = relPos * 85;
-              const x = baseX + dragOffset;
-              
-              // Scale: center full, edges smaller
-              const scale = isCenter ? 1 : 0.82 - absPos * 0.04;
-              
-              // Y: center lowest, edges higher
-              const y = absPos * 14;
-              
-              // Rotation
-              const rotate = relPos * 4 + dragOffset * 0.03;
-              
-              // Opacity
-              const opacity = isCenter ? 1 : 0.55 - absPos * 0.09;
-              
-              // Z-index
+
+              const x = relPos * CARD_GAP;
+              const scale = isCenter ? 1 : Math.max(0.7, 0.85 - absPos * 0.04);
+              const y = absPos * 16;
+              const rotate = relPos * 4.5;
+              const opacity = isCenter ? 1 : Math.max(0.35, 0.6 - absPos * 0.06);
               const zIdx = isCenter ? 20 : 10 - absPos;
-              
-              const duration = isDragging ? "0s" : "0.4s";
-              
+
               const style: CSSProperties = {
                 position: "absolute",
                 left: "50%",
                 top: 0,
-                width: "80%",
+                width: "78%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-                transition: isCenter && isDragging ? "none" : `transform ${duration} cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${duration} ease`,
+                transition: isAnimating
+                  ? "transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1.2), opacity 0.35s ease"
+                  : "transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1.2), opacity 0.35s ease",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
@@ -218,7 +209,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
             })}
           </div>
 
-          {/* 指示器 */}
+          {/* Indicators */}
           <div className="mt-4 flex items-center justify-center gap-1.5">
             {displayWorks.map((_, i) => (
               <span key={i}
@@ -227,7 +218,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 }`} />
             ))}
           </div>
-          <p className="mt-2 font-mono text-[10px] text-white/25">左右滑动</p>
+          <p className="mt-2 font-mono text-[10px] text-white/25">左右滑动切换</p>
         </div>
       </div>
     </section>
