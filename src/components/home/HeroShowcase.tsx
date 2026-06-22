@@ -269,54 +269,31 @@ function HeroActions() {
 
 export function FloatingImageCard({
   className,
-  tone,
   videoSrc = "",
-  wide = false,
 }: {
   className: string;
-  tone: "mono" | "warm" | "graphite";
+  tone?: "mono" | "warm" | "graphite";
   videoSrc?: string;
   wide?: boolean;
 }) {
-  const tones = {
-    mono: "bg-[radial-gradient(circle_at_52%_36%,rgba(255,255,255,0.32),#0a0a0a_26%),linear-gradient(135deg,#1b1b1b,#050505_68%)]",
-    warm:
-      "bg-[radial-gradient(circle_at_50%_35%,rgba(245,231,206,0.42),#0a0908_24%),radial-gradient(circle_at_48%_70%,rgba(201,72,53,0.28),#0a0908_30%),linear-gradient(135deg,#3b3027,#0a0908_72%)]",
-    graphite:
-      "bg-[radial-gradient(circle_at_62%_42%,rgba(255,255,255,0.24),#050505_28%),radial-gradient(circle_at_32%_60%,rgba(139,215,205,0.18),#050505_24%),linear-gradient(135deg,#202426,#050505_68%)]",
-  };
-
   return (
     <div
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
       className={`absolute overflow-hidden rounded-lg grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
-      style={{
-        backgroundColor: "#2a2a2a",
-      }}
     >
       {videoSrc ? (
         <video
           data-testid="hero-floating-media-video"
           src={videoSrc}
-          style={{ position: "absolute", top: 10, right: 10, bottom: 10, left: 10 }}
+          className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
           playsInline
         />
-      ) : (
-        <div
-          className="absolute rounded overflow-hidden"
-          style={{
-            inset: "10px",
-            ...(tones[tone] ? { backgroundImage: undefined } : {}),
-          }}
-        >
-          <div className={`absolute inset-0 ${tones[tone]}`} />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

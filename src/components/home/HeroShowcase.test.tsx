@@ -30,19 +30,13 @@ describe("HeroShowcase", () => {
     });
   });
 
-  it("renders three floating media cards with opaque solid background (inline style)", () => {
+  it("renders three floating media cards with grayscale default", () => {
     render(<HeroShowcase />);
 
     const cards = screen.getAllByTestId("hero-floating-media-card");
 
     expect(cards).toHaveLength(3);
-    expect(
-      cards.every(
-        (card) =>
-          card.className.includes("grayscale") &&
-          card.style.backgroundColor === "rgb(42, 42, 42)",
-      ),
-    ).toBe(true);
+    expect(cards.every((card) => card.className.includes("grayscale"))).toBe(true);
   });
 
   it("can render uploaded video media in a floating card", () => {
