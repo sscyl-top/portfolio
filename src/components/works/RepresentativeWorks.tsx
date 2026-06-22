@@ -41,10 +41,11 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   }, []);
 
   const snapTo = (idx: number) => {
+    if (isAnimating) return;
     setIsAnimating(true);
     accumulatedDrag.current = 0;
     setCenterIndex(idx);
-    setTimeout(() => setIsAnimating(false), 400);
+    setTimeout(() => setIsAnimating(false), 450);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -67,13 +68,13 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     }
   };
 
-  // Build card slots — fixed positions, content cycles via centerIndex
-  const visibleCards: { work: Work; realIndex: number; relPos: number }[] = [];
-  for (let i = 0; i < CARD_COUNT; i++) {
-    const relPos = i - 3;
-    const absIdx = (((centerIndex + relPos) % CARD_COUNT) + CARD_COUNT) % CARD_COUNT;
-    visibleCards.push({ work: displayWorks[absIdx], realIndex: absIdx, relPos });
-  }
+  // Each card gets a relPos based on its realIndex and current centerIndex
+  // relPos determines visual position: -3=far left ... 0=center ... +3=far right
+  const visibleCards: { work: Work; realIndex: number; relPos: number }[] = displayWorks.map((work, realIndex) => {
+    const rawPos = (realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT;
+    const relPos = rawPos - 3;
+    return { work, realIndex, relPos };
+  });
 
   return (
     <section className="relative overflow-hidden px-5 pb-40 pt-28 md:px-8 md:pt-48">
@@ -166,7 +167,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 top: 0,
                 width: "80%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-                transition: "opacity 0.35s ease",
+                transition: "transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
@@ -174,7 +175,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
               return (
                 <Link
-                  key={`s-${relPos}`}
+                  key={`s-${realIndex}`}
                   href={`/works/${work.slug}`}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
