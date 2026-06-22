@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 
-import { requireAdmin } from "@/lib/admin-session";
+import { getAuthorizedAdmin } from "@/lib/admin-session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
 import { execFile } from "node:child_process";
@@ -33,9 +33,24 @@ async function detectVideoDuration(filePath: string): Promise<number | null> {
   });
 }
 
+// API 路由专用鉴权：失败返回 Response，不抛 redirect
+async function requireAdminApi(): Promise<
+  | { client: Awaited<ReturnType<typeof createSupabaseServerClient>>; error: null }
+  | { client: null; error: Response }
+> {
+  const client = await createSupabaseServerClient();
+  const user = await getAuthorizedAdmin(client);
+  if (!user) {
+    return { client: null, error: Response.json({ error: "未授权，请重新登录" }, { status: 401 }) };
+  }
+  return { client, error: null };
+}
+
 export async function POST(request: Request) {
   // Authenticate
-  const { client: supabase } = await requireAdmin();
+  const auth = await requireAdminApi();
+  if (auth.error) return auth.error;
+  const supabase = auth.client;
 
   try {
     const formData = await request.formData();
@@ -119,9 +134,11 @@ export async function POST(request: Request) {
 
     if (dbError) {
       console.error("Media record insert failed:", dbError);
+      // 清理已上传的 Storage 文件，避免孤儿文件
+      await supabase.storage.from("portfolio-media").remove([storageKey]);
       return Response.json(
-        { error: "记录保存失败，但文件已上传" },
-        { status: 207 },
+        { error: `数据库记录保存失败：${dbError.message}` },
+        { status: 500 },
       );
     }
 
