@@ -75,8 +75,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   // Each card gets a position relative to center (-3 to +3)
   // relPos = ((realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT) - 3
   const positionedCards = displayWorks.map((work, realIndex) => {
-    const rawPos = (realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT;
-    const relPos = rawPos - 3; // -3, -2, -1, 0, 1, 2, 3
+    const rawPos = (realIndex - centerIndex + CARD_COUNT + 4) % CARD_COUNT;
+    const relPos = rawPos - 4; // -4, -3, -2, -1, 0, 1, 2, 3, 4
     return { work, realIndex, relPos };
   });
 
@@ -159,7 +159,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               const scale = isCenter ? 1 : Math.max(0.7, 0.85 - absPos * 0.04);
               const y = absPos * 16;
               const rotate = relPos * 4.5;
-              const opacity = isCenter ? 1 : Math.max(0.35, 0.6 - absPos * 0.06);
+              const isEdge = absPos >= 4;
+              const opacity = isEdge ? 0 : (isCenter ? 1 : Math.max(0.35, 0.6 - absPos * 0.06));
               const zIdx = isCenter ? 20 : 10 - absPos;
 
               const style: CSSProperties = {
@@ -173,7 +174,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                   : "transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1.2), opacity 0.35s ease",
                 zIndex: zIdx,
                 opacity: opacity,
-                pointerEvents: isCenter ? "auto" : "none",
+                pointerEvents: (isCenter && !isEdge) ? "auto" : "none",
               };
 
               return (
