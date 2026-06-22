@@ -33,24 +33,18 @@ async function detectVideoDuration(filePath: string): Promise<number | null> {
   });
 }
 
-// API 路由专用鉴权：失败返回 Response，不抛 redirect
-async function requireAdminApi(): Promise<
-  | { client: Awaited<ReturnType<typeof createSupabaseServerClient>>; error: null }
-  | { client: null; error: Response }
-> {
-  const client = await createSupabaseServerClient();
-  const user = await getAuthorizedAdmin(client);
-  if (!user) {
-    return { client: null, error: Response.json({ error: "未授权，请重新登录" }, { status: 401 }) };
-  }
-  return { client, error: null };
-}
-
 export async function POST(request: Request) {
+  const timestamp = new Date().toISOString();
+  console.log(`\n[${timestamp}] ===== UPLOAD API START =====`);
+
   // Authenticate
-  const auth = await requireAdminApi();
-  if (auth.error) return auth.error;
-  const supabase = auth.client;
+  const supabase = await createSupabaseServerClient();
+  const user = await getAuthorizedAdmin(supabase);
+  if (!user) {
+    console.error(`[${timestamp}] Auth FAILED: no admin user`);
+    return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
+  }
+  console.log(`[${timestamp}] Auth OK: ${user.email}`);
 
   try {
     const formData = await request.formData();
@@ -60,6 +54,7 @@ export async function POST(request: Request) {
     if (!(file instanceof File) || file.size === 0) {
       return Response.json({ error: "请选择一个文件" }, { status: 400 });
     }
+    console.log(`[${timestamp}] File: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
     if (file.size > MAX_UPLOAD_BYTES) {
       return Response.json(
@@ -71,6 +66,7 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const storageKey = buildStorageKey(file.name, id);
     const mimeType = file.type || "application/octet-stream";
+    console.log(`[${timestamp}] Storage key: ${storageKey}`);
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
@@ -81,12 +77,13 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
-      console.error("Supabase storage upload failed:", uploadError);
+      console.error(`[${timestamp}] Storage upload FAILED:`, uploadError);
       return Response.json(
-        { error: "文件上传失败，请稍后重试" },
+        { error: `文件上传失败: ${uploadError.message}` },
         { status: 500 },
       );
     }
+    console.log(`[${timestamp}] Storage upload OK`);
 
     // Detect image dimensions
     let width: number | null = null;
@@ -100,47 +97,37 @@ export async function POST(request: Request) {
         width = dims.width;
         height = dims.height;
       }
-    }
-
-    // Detect video duration via ffprobe when available
-    let durationMs: number | null = null;
-    if (mimeType.startsWith("video/")) {
-      try {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const tempPath = join(tmpdir(), `media-${randomUUID()}.tmp`);
-        try {
-          await writeFile(tempPath, buffer);
-          durationMs = await detectVideoDuration(tempPath);
-        } finally {
-          await unlink(tempPath).catch(() => {});
-        }
-      } catch {
-        // ffprobe unavailable — skip silently
-      }
+      console.log(`[${timestamp}] Image dimensions: ${width}x${height}`);
     }
 
     // Insert media record
-    const { error: dbError } = await supabase.from("media_assets").insert({
-      id,
-      storage_key: storageKey,
-      mime_type: mimeType,
-      original_name: file.name,
-      byte_size: file.size,
-      width,
-      height,
-      duration_ms: durationMs,
-      alt_text: altText || null,
-    });
+    const { data: insertData, error: dbError } = await supabase
+      .from("media_assets")
+      .insert({
+        id,
+        storage_key: storageKey,
+        mime_type: mimeType,
+        original_name: file.name,
+        byte_size: file.size,
+        width,
+        height,
+        alt_text: altText || null,
+      })
+      .select("id, storage_key, original_name")
+      .single();
 
     if (dbError) {
-      console.error("Media record insert failed:", dbError);
-      // 清理已上传的 Storage 文件，避免孤儿文件
+      console.error(`[${timestamp}] DB insert FAILED:`, dbError);
       await supabase.storage.from("portfolio-media").remove([storageKey]);
+      console.log(`[${timestamp}] Cleaned up storage file`);
       return Response.json(
         { error: `数据库记录保存失败：${dbError.message}` },
         { status: 500 },
       );
     }
+
+    console.log(`[${timestamp}] DB insert OK:`, insertData);
+    console.log(`[${timestamp}] ===== UPLOAD API END (success) =====\n`);
 
     return Response.json({
       ok: true,
@@ -149,9 +136,9 @@ export async function POST(request: Request) {
       size: file.size,
     });
   } catch (error) {
-    console.error("Upload API error:", error);
+    console.error(`[${timestamp}] Upload API EXCEPTION:`, error);
     return Response.json(
-      { error: "上传过程中发生错误，请稍后重试" },
+      { error: `上传过程中发生错误: ${(error as Error).message}` },
       { status: 500 },
     );
   }
