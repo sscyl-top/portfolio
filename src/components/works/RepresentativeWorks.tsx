@@ -37,6 +37,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const prevRelPos = useRef<Map<number, number>>(new Map());
   const touchStartX = useRef(0);
   const accumulatedDrag = useRef(0);
+  const hasDragged = useRef(false);
 
   useEffect(() => {
     return () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); };
@@ -56,15 +57,44 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     accumulatedDrag.current = 0;
+    hasDragged.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isAnimating) return;
     accumulatedDrag.current = e.touches[0].clientX - touchStartX.current;
+    if (Math.abs(accumulatedDrag.current) > 5) hasDragged.current = true;
   };
 
   const handleTouchEnd = () => {
     if (isAnimating) return;
+    const dx = accumulatedDrag.current;
+    if (Math.abs(dx) > 40) {
+      const step = dx > 0 ? -1 : 1;
+      snapTo(((centerIndex + step) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
+    }
+  };
+
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const mouseStartX = useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isAnimating) return;
+    setIsMouseDown(true);
+    mouseStartX.current = e.clientX;
+    accumulatedDrag.current = 0;
+    hasDragged.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || isAnimating) return;
+    accumulatedDrag.current = e.clientX - mouseStartX.current;
+    if (Math.abs(accumulatedDrag.current) > 5) hasDragged.current = true;
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDown || isAnimating) { setIsMouseDown(false); return; }
+    setIsMouseDown(false);
     const dx = accumulatedDrag.current;
     if (Math.abs(dx) > 40) {
       const step = dx > 0 ? -1 : 1;
@@ -93,7 +123,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   });
 
   return (
-    <section className="relative overflow-hidden px-5 pb-40 pt-28 md:px-8 md:pt-48">
+    <section className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase text-white/45">代表作 / Featured Works</p>
         <h1 className="mt-4 text-5xl font-semibold text-white md:text-7xl">代表作</h1>
@@ -153,7 +183,11 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         <div className="relative mt-8 md:hidden select-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}>
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}>
           <div className="relative mx-auto h-[420px] w-full max-w-[320px] overflow-visible">
             {visibleCards.map(({ work, realIndex, relPos }) => {
               const absPos = Math.abs(relPos);
@@ -195,6 +229,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 <Link
                   key={`s-${realIndex}`}
                   href={`/works/${work.slug}`}
+                  onClick={(e) => { if (hasDragged.current) e.preventDefault(); }}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
                 >

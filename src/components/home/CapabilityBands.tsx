@@ -58,8 +58,8 @@ const slides: StrengthSlide[] = [
   },
   {
     kicker: "04 / Web delivery",
-    title: "跨部门协同",
-    outline: "与落地  WEB + MOTION",
+    title: "跨部门协同与\n落地",
+    outline: "WEB + MOTION",
     body: "具备 Web 视觉设计与落地能力，可进行 vibe coding 式页面搭建与设计实现，同时具备短视频剪辑与动效表达能力。",
     shapeLabel: "Particle saturn",
   },
@@ -382,11 +382,11 @@ function FinalContactPanel({ active }: { active: boolean }) {
                 <h3 className="font-mono text-[10px] uppercase text-cyan/75">
                   {group.title}
                 </h3>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className={group.title === "Strategy" || group.title === "Creative" ? "mt-2 grid grid-cols-2 gap-1" : "mt-2 flex flex-wrap gap-1.5"}>
                   {group.items.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/62"
+                      className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/62 whitespace-nowrap"
                     >
                       {item}
                     </span>
@@ -434,7 +434,7 @@ function StrengthPanel({
             {slide.kicker}
           </p>
           <h2 className="mt-5 text-5xl font-semibold leading-[1.04] text-white md:text-8xl md:leading-[0.98]">
-            {slide.title}
+            {slide.title.split("\n").map((line, i) => (<span key={i}>{i > 0 && <br />}{line}</span>))}
             <span className="mt-3 block text-4xl leading-[1.05] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:mt-8 md:text-7xl">
               {slide.outline}
             </span>

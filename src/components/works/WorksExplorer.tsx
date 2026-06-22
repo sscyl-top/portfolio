@@ -68,7 +68,7 @@ export function WorksExplorer({
   return (
     <section className="relative px-4 pb-32 pt-24 md:px-8 md:pt-44 md:pb-48">
       <div className="relative mx-auto max-w-[1500px]">
-        <div className="mb-24 text-center">
+        <div className="mb-10 text-center">
           <p className="font-mono text-xs uppercase text-copper">
             Projects / Works Archive
           </p>
