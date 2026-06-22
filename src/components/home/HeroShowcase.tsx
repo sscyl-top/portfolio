@@ -106,6 +106,7 @@ export function HeroShowcase() {
 
 function HeroMainCard() {
   return (
+    <>
     <div
       data-hero-reveal
       className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-3 shadow-2xl shadow-black md:aspect-[16/9] md:p-5"
@@ -132,6 +133,18 @@ function HeroMainCard() {
         </p>
       </div>
     </div>
+    <div className="mt-4 block px-1 md:hidden" data-hero-reveal>
+      <p className="font-mono text-[10px] uppercase text-copper">
+        Brand Visual / AI Design / Web Experience
+      </p>
+      <h1 className="mt-2 text-2xl font-semibold leading-[1.05] text-white">
+        让品牌视觉拥有被记住的数字现场
+      </h1>
+      <p className="mt-3 text-[13px] leading-6 text-white/62">
+        {resume.positioning}
+      </p>
+    </div>
+    </>
   );
 }
 
