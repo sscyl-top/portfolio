@@ -33,6 +33,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   // Mobile carousel
   const [centerIndex, setCenterIndex] = useState(3);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [noTransition, setNoTransition] = useState<Set<number>>(new Set());
+  const prevRelPos = useRef<Map<number, number>>(new Map());
   const touchStartX = useRef(0);
   const accumulatedDrag = useRef(0);
 
@@ -45,6 +47,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     setIsAnimating(true);
     accumulatedDrag.current = 0;
     setCenterIndex(idx);
+    // Clear noTransition after a frame so wrapped cards skip their jump animation
+    setTimeout(() => setNoTransition(new Set()), 50);
     setTimeout(() => setIsAnimating(false), 450);
   };
 
@@ -67,6 +71,18 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
       snapTo(((centerIndex + step) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
     }
   };
+
+  // Detect cards that wrapped around — compute locally during render
+  const _wrapped = new Set<number>();
+  displayWorks.forEach((_, realIndex) => {
+    const rawPos = (realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT;
+    const relPos = rawPos - 3;
+    const prev = prevRelPos.current.get(realIndex);
+    if (prev !== undefined && Math.abs(relPos - prev) > 3) {
+      _wrapped.add(realIndex);
+    }
+    prevRelPos.current.set(realIndex, relPos);
+  });
 
   // Each card gets a relPos based on its realIndex and current centerIndex
   // relPos determines visual position: -3=far left ... 0=center ... +3=far right
@@ -167,7 +183,9 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 top: 0,
                 width: "80%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-                transition: "transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease",
+                transition: _wrapped.has(realIndex)
+                  ? "opacity 0.4s ease"
+                  : "transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
