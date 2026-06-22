@@ -24,6 +24,7 @@ const fanSlots = [
 ];
 
 const CARD_COUNT = 7;
+const TOTAL_VISIBLE = 7;
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, CARD_COUNT);
@@ -32,7 +33,10 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
   // Mobile fan
   const [centerIndex, setCenterIndex] = useState(3);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showCards, setShowCards] = useState(true);
   const touchStartX = useRef(0);
   const accumulatedDrag = useRef(0);
 
@@ -41,35 +45,47 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   }, []);
 
   const snapTo = (idx: number) => {
+    if (isAnimating) return;
     setIsAnimating(true);
+    setDragOffset(0);
     accumulatedDrag.current = 0;
-    setCenterIndex(idx);
-    setTimeout(() => setIsAnimating(false), 400);
+    setShowCards(false);
+    setTimeout(() => {
+      setCenterIndex(idx);
+      setShowCards(true);
+    }, 50);
+    setTimeout(() => setIsAnimating(false), 500);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     accumulatedDrag.current = 0;
+    setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (isAnimating) return;
-    accumulatedDrag.current = e.touches[0].clientX - touchStartX.current;
+    if (!isDragging || isAnimating) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    accumulatedDrag.current = dx;
+    setDragOffset(dx);
   };
 
   const handleTouchEnd = () => {
-    if (isAnimating) return;
+    if (!isDragging || isAnimating) { setIsDragging(false); return; }
+    setIsDragging(false);
     const dx = accumulatedDrag.current;
-    if (Math.abs(dx) > 40) {
+    if (Math.abs(dx) > 60) {
       const dir = dx > 0 ? -1 : 1;
       snapTo(((centerIndex + dir) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
+    } else {
+      snapTo(centerIndex);
     }
   };
 
   // Build positions relative to center
   const visibleCards = [];
-  for (let i = 0; i < CARD_COUNT; i++) {
+  for (let i = 0; i < TOTAL_VISIBLE; i++) {
     const relPos = i - 3; // -3, -2, -1, 0, 1, 2, 3
     const absIdx = (((centerIndex + relPos) % CARD_COUNT) + CARD_COUNT) % CARD_COUNT;
     visibleCards.push({ work: displayWorks[absIdx], realIndex: absIdx, relPos });
@@ -143,7 +159,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               const isCenter = relPos === 0;
               
               // Position: spread cards left and right
-              const x = relPos * 85;
+              const baseX = relPos * 85;
+              const x = baseX + dragOffset;
               
               // Scale: center full, edges smaller
               const scale = isCenter ? 1 : 0.82 - absPos * 0.04;
@@ -152,14 +169,14 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               const y = absPos * 14;
               
               // Rotation
-              const rotate = relPos * 4;
+              const rotate = relPos * 4 + dragOffset * 0.03;
               
               // Opacity
-              const opacity = isCenter ? 1 : 0.55 - absPos * 0.09;
+              const computedOpacity = isCenter ? 1 : 0.55 - absPos * 0.09;
+              const opacity = showCards ? computedOpacity : 0;
               
               // Z-index
               const zIdx = isCenter ? 20 : 10 - absPos;
-              
               
               const style: CSSProperties = {
                 position: "absolute",
@@ -167,7 +184,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 top: 0,
                 width: "80%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-                transition: "transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease",
+                transition: "opacity 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
@@ -175,7 +192,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
               return (
                 <Link
-                  key={`mobile-${relPos}`}
+                  key={realIndex}
                   href={`/works/${work.slug}`}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
