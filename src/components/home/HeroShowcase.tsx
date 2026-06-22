@@ -287,7 +287,7 @@ export function FloatingImageCard({
         <video
           data-testid="hero-floating-media-video"
           src={videoSrc}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-1.5 object-cover rounded"
           autoPlay
           muted
           loop
