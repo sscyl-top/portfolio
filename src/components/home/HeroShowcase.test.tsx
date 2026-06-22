@@ -30,16 +30,18 @@ describe("HeroShowcase", () => {
     });
   });
 
-  it("renders three floating media cards as grayscale until hover", () => {
+  it("renders three floating media cards with opaque backing", () => {
     render(<HeroShowcase />);
 
     const cards = screen.getAllByTestId("hero-floating-media-card");
 
     expect(cards).toHaveLength(3);
     expect(
-      cards.every((card) =>
-        card.className.includes("grayscale") &&
-        card.className.includes("hover:grayscale-0"),
+      cards.every(
+        (card) =>
+          !card.className.includes("grayscale") &&
+          card.className.includes("bg-zinc-900") &&
+          card.className.includes("hover:scale-[1.02]"),
       ),
     ).toBe(true);
   });
