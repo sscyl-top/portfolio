@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
@@ -80,6 +80,42 @@ export default async function WorkDetailPage({
 
         <div className="mt-16 grid gap-6">
           {work.blocks.map((block) => {
+            if (block.type === "media" || block.type === "gallery") {
+              if (block.items.length === 0) return null;
+              return (
+                <section
+                  key={`${block.type}-${block.items[0]?.url ?? "empty"}`}
+                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                >
+                  {block.caption ? (
+                    <p className="text-sm font-medium text-white/54">
+                      {block.caption}
+                    </p>
+                  ) : null}
+                  <div
+                    className={
+                      block.type === "gallery"
+                        ? "grid grid-cols-2 gap-4 md:grid-cols-3"
+                        : ""
+                    }
+                  >
+                    {block.items.map((media, i) => (
+                      <WorkMediaFrame
+                        key={media.url ?? i}
+                        media={media}
+                        tone="graphite"
+                        className={
+                          block.type === "media"
+                            ? "mx-auto max-h-[70vh] w-full rounded-lg"
+                            : "mx-auto max-h-80 w-full rounded-lg"
+                        }
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            }
+
             if (block.type === "text") {
               return (
                 <section

@@ -1,4 +1,4 @@
-export type WorkStatus = "draft" | "published" | "private";
+﻿export type WorkStatus = "draft" | "published" | "private";
 
 export type ContentBlock =
   | {
@@ -11,6 +11,16 @@ export type ContentBlock =
       heading: string;
       alt: string;
       tone: string;
+    }
+  | {
+      type: "media";
+      caption?: string;
+      items: WorkMedia[];
+    }
+  | {
+      type: "gallery";
+      caption?: string;
+      items: WorkMedia[];
     }
   | {
       type: "beforeAfter";

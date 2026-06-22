@@ -333,17 +333,47 @@ function getJoinedName(
   return value?.name;
 }
 
-function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
-  const mappedBlocks = blocks
-    .filter((block) => block.block_type === "text" && block.is_visible !== false)
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((block) => ({
-      type: "text" as const,
-      heading: String(block.payload.heading ?? "内容"),
-      body: String(block.payload.body ?? ""),
-    }));
+type MediaRef = {
+  id: string;
+  storage_key: string;
+  mime_type: string;
+  alt_text: string;
+};
 
-  return mappedBlocks.length > 0 ? mappedBlocks : [];
+function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
+  const { url } = getSupabasePublicConfig();
+
+  return blocks
+    .filter((block) => block.is_visible !== false)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((block) => {
+      if (block.block_type === "text") {
+        return {
+          type: "text" as const,
+          heading: String(block.payload.heading ?? "内容"),
+          body: String(block.payload.body ?? ""),
+        };
+      }
+      if (block.block_type === "media" || block.block_type === "gallery") {
+        const refs: MediaRef[] = Array.isArray(block.payload.media_refs)
+          ? block.payload.media_refs
+          : [];
+        const items = refs.map((ref) => ({
+          alt: ref.alt_text ?? "",
+          mimeType: ref.mime_type ?? "",
+          url: `${url}/storage/v1/object/public/portfolio-media/${encodeURI(ref.storage_key)}`,
+        }));
+        const caption = String(block.payload.caption ?? "");
+
+        return {
+          type: block.block_type as "media" | "gallery",
+          caption: caption || undefined,
+          items,
+        };
+      }
+      return null;
+    })
+    .filter((block): block is NonNullable<typeof block> => block !== null);
 }
 
 function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {

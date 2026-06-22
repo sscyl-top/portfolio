@@ -466,12 +466,28 @@ export async function createGalleryBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { work_id, work_slug, caption, sort_order, is_visible } =
     parsed.data;
+
+  // Enrich payload with media asset references.
+  const { data: rows } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", rawIds)
+    .is("deleted_at", null);
+  const refs = (rows ?? []).map(
+    (r: { id: string; storage_key: string; mime_type: string; alt_text: string }) => ({
+      id: r.id,
+      storage_key: r.storage_key,
+      mime_type: r.mime_type,
+      alt_text: r.alt_text,
+    }),
+  );
+
   const { error } = await client.from("work_blocks").insert({
     work_id,
     block_type: "gallery",
     sort_order,
     is_visible,
-    payload: { media_ids: rawIds, caption },
+    payload: { media_ids: rawIds, caption, media_refs: refs },
   });
 
   if (error) throw new Error(error.message);
