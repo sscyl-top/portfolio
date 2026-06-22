@@ -1,13 +1,10 @@
-﻿import { Save, Search, Trash2, Upload, X } from "lucide-react";
+﻿import { Save, Search, Trash2, X } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import {
-  deleteMediaAsset,
-  updateMediaAltText,
-  uploadMediaAsset,
-} from "./actions";
+import { deleteMediaAsset, updateMediaAltText } from "./actions";
+import { UploadForm } from "./UploadForm";
 
 type MediaAssetRow = {
   id: string;
@@ -79,27 +76,7 @@ export default async function AdminMediaPage({
         bucket。
       </p>
 
-      <form
-        action={uploadMediaAsset}
-        className="mt-6 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_1fr_auto]"
-      >
-        <input
-          name="file"
-          type="file"
-          required
-          accept="image/*,video/*,application/pdf"
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/62 file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-white"
-        />
-        <input
-          name="alt_text"
-          placeholder="替代文本"
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-        />
-        <button className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          <Upload aria-hidden="true" className="h-4 w-4" />
-          上传
-        </button>
-      </form>
+      <UploadForm />
 
       <SearchBar search={search} type={type} sort={sort} />
 
