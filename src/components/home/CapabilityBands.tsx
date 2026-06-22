@@ -59,7 +59,7 @@ const slides: StrengthSlide[] = [
   {
     kicker: "04 / Web delivery",
     title: "跨部门协同",
-    outline: "WEB + MOTION",
+    outline: "与落地  WEB + MOTION",
     body: "具备 Web 视觉设计与落地能力，可进行 vibe coding 式页面搭建与设计实现，同时具备短视频剪辑与动效表达能力。",
     shapeLabel: "Particle saturn",
   },

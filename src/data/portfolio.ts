@@ -123,7 +123,7 @@ export const resume = {
     },
     {
       title: "AI Workflow",
-      items: ["AIGC 场景合成", "多方案提案", "ComfyUI / Midjourney", "视觉精修"],
+      items: ["AIGC 场景合成", "多方案提案", "视觉精修", "ComfyUI / Midjourney"],
     },
     {
       title: "Production",
