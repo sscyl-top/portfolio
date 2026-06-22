@@ -23,6 +23,8 @@ const draftWorkSchema = z.object({
   year: z.string().trim().max(20).default(""),
 });
 
+const paletteColorSchema = z.string().trim().max(7).regex(/^#[0-9a-fA-F]{3,6}$/, "must be hex color (#RGB or #RRGGBB)");
+
 const workUpdateSchema = z.object({
   id: z.string().uuid(),
   title: z.string().trim().min(1).max(120),
@@ -36,6 +38,7 @@ const workUpdateSchema = z.object({
   summary: z.string().trim().max(1000),
   year: z.string().trim().max(20),
   client: z.string().trim().max(120),
+  palette: z.array(paletteColorSchema).default([]),
   status: z.enum(["draft", "published", "private"]),
   sort_order: z.coerce.number().int().default(0),
   is_representative: z.boolean(),
@@ -248,6 +251,10 @@ export async function updateWork(formData: FormData) {
     summary: formData.get("summary") ?? "",
     year: formData.get("year") ?? "",
     client: formData.get("client") ?? "",
+    palette: String(formData.get("palette") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
     status: formData.get("status"),
     sort_order: formData.get("sort_order") || 0,
     is_representative: formData.get("is_representative") === "on",
@@ -358,6 +365,7 @@ export async function updateTextBlock(formData: FormData) {
 
 
 const mediaBlockSchema = z.object({
+  block_id: z.string().uuid().optional(),
   work_id: z.string().uuid(),
   work_slug: z
     .string()
@@ -365,6 +373,19 @@ const mediaBlockSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   media_id: z.string().uuid(),
+  caption: z.string().trim().max(300).default(""),
+  sort_order: z.coerce.number().int().default(0),
+  is_visible: z.boolean(),
+});
+
+const galleryBlockUpdateSchema = z.object({
+  block_id: z.string().uuid(),
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   caption: z.string().trim().max(300).default(""),
   sort_order: z.coerce.number().int().default(0),
   is_visible: z.boolean(),
@@ -397,7 +418,40 @@ export async function createMediaBlock(formData: FormData) {
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
-}export async function deleteWorkBlock(formData: FormData) {
+}
+
+export async function updateMediaBlock(formData: FormData) {
+  const parsed = mediaBlockSchema.safeParse({
+    block_id: formData.get("block_id"),
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    media_id: formData.get("media_id"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success || !parsed.data.block_id) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client
+    .from("work_blocks")
+    .update({
+      sort_order,
+      is_visible,
+      payload: { media_id, caption },
+    })
+    .eq("id", block_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function deleteWorkBlock(formData: FormData) {
   const parsed = z
     .object({
       block_id: z.string().uuid(),
@@ -489,6 +543,52 @@ export async function createGalleryBlock(formData: FormData) {
     is_visible,
     payload: { media_ids: rawIds, caption, media_refs: refs },
   });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function updateGalleryBlock(formData: FormData) {
+  const rawIds = formData.getAll("media_ids").map(String).filter(Boolean);
+  const parsed = galleryBlockUpdateSchema.safeParse({
+    block_id: formData.get("block_id"),
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success || rawIds.length === 0) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug, caption, sort_order, is_visible } =
+    parsed.data;
+
+  const { data: rows } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", rawIds)
+    .is("deleted_at", null);
+  const refs = (rows ?? []).map(
+    (r: { id: string; storage_key: string; mime_type: string; alt_text: string }) => ({
+      id: r.id,
+      storage_key: r.storage_key,
+      mime_type: r.mime_type,
+      alt_text: r.alt_text,
+    }),
+  );
+
+  const { error } = await client
+    .from("work_blocks")
+    .update({
+      sort_order,
+      is_visible,
+      payload: { media_ids: rawIds, caption, media_refs: refs },
+    })
+    .eq("id", block_id);
 
   if (error) throw new Error(error.message);
 

@@ -5,6 +5,8 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
+import { SlugInput } from "./SlugInput";
+
 import {
   createTextBlock,
   clearPrivatePreviewLink,
@@ -15,6 +17,8 @@ import {
   updateWork,
   createGalleryBlock,
   createMediaBlock,
+  updateMediaBlock,
+  updateGalleryBlock,
   updateWorkMedia,
   updateWorkTaxonomy,
 } from "../actions";
@@ -392,7 +396,7 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
       <input type="hidden" name="id" value={work.id} />
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="标题" name="title" defaultValue={work.title} required />
-        <Field label="Slug" name="slug" defaultValue={work.slug} required />
+        <SlugInput defaultValue={work.slug} />
         <Field label="副标题" name="subtitle" defaultValue={work.subtitle} />
         <Field label="年份" name="year" defaultValue={work.year} />
         <Field label="客户" name="client" defaultValue={work.client} />
@@ -413,6 +417,8 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
           className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
         />
       </label>
+
+      <PaletteEditor palette={work.palette} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <label className="grid gap-2 text-sm">
@@ -466,6 +472,40 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function PaletteEditor({ palette }: { palette: string[] }) {
+  const hexString = palette.join(", ");
+
+  return (
+    <label className="grid gap-2 text-sm">
+      <div className="flex items-center gap-3">
+        <span className="text-white/58">色板 Palette</span>
+        <span className="font-mono text-[10px] uppercase text-white/28">
+          逗号分隔的 hex 值，例如 #FF6B35, #1A1A2E
+        </span>
+      </div>
+      {palette.length > 0 ? (
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {palette.map((color, i) => (
+            <span
+              key={i}
+              className="flex h-6 w-6 items-center justify-center rounded border border-white/15 text-[9px] font-mono text-white/60"
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+        </div>
+      ) : null}
+      <textarea
+        name="palette"
+        defaultValue={hexString}
+        rows={2}
+        placeholder="#FF6B35, #1A1A2E, #E2E2E2"
+        className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm font-mono outline-none focus:border-cyan"
+      />
+    </label>
   );
 }
 
@@ -564,7 +604,7 @@ function BlockEditor({
         <div>
           <h3 className="text-xl font-semibold text-white">内容块</h3>
           <p className="mt-2 text-sm text-white/45">
-            当前版本支持文本块与媒体块；图库和 PDF 块会继续接入。
+            当前版本支持文本块、媒体块与图库块编辑；视频和 PDF 块会继续接入。
           </p>
         </div>
       </div>
@@ -827,7 +867,7 @@ function GalleryBlockCard({
 
   return (
     <form
-      action={deleteWorkBlock}
+      action={updateGalleryBlock}
       className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
     >
       <input type="hidden" name="block_id" value={block.id} />
@@ -858,11 +898,52 @@ function GalleryBlockCard({
           ))}
         </div>
       )}
-      <p className="text-sm text-white/45">
-        {caption || "无说明文字"}
-      </p>
+      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
+        <label className="grid gap-2 text-sm">
+          <span className="text-white/58">选择媒体（多选）</span>
+          <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-black/20 p-2">
+            {mediaAssets.length === 0 ? (
+              <span className="text-xs text-white/34">媒体库暂无素材。</span>
+            ) : (
+              mediaAssets.map((asset) => (
+                <label
+                  key={asset.id}
+                  className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-white/5"
+                >
+                  <input
+                    type="checkbox"
+                    name="media_ids"
+                    value={asset.id}
+                    defaultChecked={mediaIds.includes(asset.id)}
+                    className="size-4 accent-cyan"
+                  />
+                  {asset.original_name}
+                </label>
+              ))
+            )}
+          </div>
+        </label>
+        <Field
+          label="排序"
+          name="sort_order"
+          type="number"
+          defaultValue={String(block.sort_order)}
+        />
+        <CheckField
+          label="可见"
+          name="is_visible"
+          defaultChecked={block.is_visible}
+        />
+        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
+          保存块
+        </button>
+      </div>
+      <Field label="说明文字" name="caption" defaultValue={caption} />
       <div className="flex justify-end">
-        <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10">
+        <button
+          formAction={deleteWorkBlock}
+          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
+        >
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
           删除块
         </button>
@@ -909,14 +990,17 @@ function MediaBlockCard({
 
   return (
     <form
-      action={deleteWorkBlock}
+      action={updateMediaBlock}
       className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
     >
       <input type="hidden" name="block_id" value={block.id} />
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm text-white/80">媒体块</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-white/80">媒体块</span>
+          <span className="font-mono text-[10px] uppercase text-white/28">media</span>
+        </div>
         {!asset ? (
           <span className="font-mono text-xs text-red-200/60">
             绑定媒体已删除
@@ -935,11 +1019,44 @@ function MediaBlockCard({
           未选择媒体
         </span>
       )}
-      <p className="text-sm text-white/45">
-        {caption || "无说明文字"}
-      </p>
+      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
+        <label className="grid gap-2 text-sm">
+          <span className="text-white/58">选择媒体</span>
+          <select
+            name="media_id"
+            defaultValue={mediaId}
+            required
+            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          >
+            <option value="">请选择……</option>
+            {mediaAssets.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.original_name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Field
+          label="排序"
+          name="sort_order"
+          type="number"
+          defaultValue={String(block.sort_order)}
+        />
+        <CheckField
+          label="可见"
+          name="is_visible"
+          defaultChecked={block.is_visible}
+        />
+        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
+          保存块
+        </button>
+      </div>
+      <Field label="说明文字" name="caption" defaultValue={caption} />
       <div className="flex justify-end">
-        <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10">
+        <button
+          formAction={deleteWorkBlock}
+          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
+        >
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
           删除块
         </button>
