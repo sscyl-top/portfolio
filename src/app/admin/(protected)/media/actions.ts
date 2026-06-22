@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { buildStorageKey } from "@/lib/cms/admin-model";
+import { detectImageDimensions } from "@/lib/cms/media-metadata";
 
 const maxUploadBytes = 25 * 1024 * 1024;
 
@@ -38,12 +39,30 @@ export async function uploadMediaAsset(formData: FormData) {
 
   if (uploadError) return;
 
+  // Read the first 2 KiB for image dimension detection. Sharp is not
+  // required; PNG/JPEG/GIF/WebP headers are parsed in pure JS.
+  let width: number | null = null;
+  let height: number | null = null;
+  if (mimeType.startsWith("image/")) {
+    const head = Buffer.from(await file.arrayBuffer().then((ab) => {
+      const view = new Uint8Array(ab, 0, Math.min(2048, ab.byteLength));
+      return view;
+    }));
+    const dims = detectImageDimensions(mimeType, head);
+    if (dims) {
+      width = dims.width;
+      height = dims.height;
+    }
+  }
+
   await client.from("media_assets").insert({
     id,
     storage_key: storageKey,
     mime_type: mimeType,
     original_name: file.name,
     byte_size: file.size,
+    width,
+    height,
     alt_text: altText,
   });
 
