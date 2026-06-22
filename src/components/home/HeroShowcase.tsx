@@ -35,7 +35,7 @@ const heroFloatingMediaCards = [
     videoKey: "side1" as const,
   },
   {
-    className: "z-10 left-0 top-[18%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
+    className: "z-10 left-0 top-[10%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
@@ -144,7 +144,7 @@ function HeroMainCard() {
     <>
     <div
       data-hero-reveal
-      className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-3 shadow-2xl shadow-black md:aspect-[16/9] md:p-5"
+      className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-3 shadow-2xl shadow-black md:aspect-[16/9] md:px-5 md:pt-5 md:pb-[40px]"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
 
