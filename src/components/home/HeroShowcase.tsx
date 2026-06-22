@@ -31,20 +31,23 @@ let heroVideos = {
 
 const heroFloatingMediaCards = [
   {
+    // mono: 始终挂在左外侧，宽屏逐渐回缩
     className:
-      "z-20 -left-12 top-[32%] hidden w-[200px] h-[155px] md:block lg:w-[240px] lg:h-[186px] xl:w-[280px] xl:h-[217px] xl:-left-20 2xl:-left-28",
+      "z-20 -left-20 top-[32%] hidden w-[200px] h-[155px] md:block lg:w-[240px] lg:h-[186px] xl:w-[280px] xl:h-[217px] 2xl:-left-28",
     tone: "mono" as const,
     videoKey: "side1" as const,
   },
   {
+    // warm: 窄屏挂左外侧，xl 以上才回缩到边缘内侧
     className:
-      "z-10 left-0 top-[15%] hidden w-[180px] h-[137px] md:block lg:w-[215px] lg:h-[163px] xl:w-[250px] xl:h-[190px] xl:left-2 2xl:left-4",
+      "z-10 -left-6 top-[15%] hidden w-[180px] h-[137px] md:block lg:-left-4 lg:w-[215px] lg:h-[163px] xl:left-2 xl:w-[250px] xl:h-[190px] 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
   {
+    // graphite: lg 起挂在右外侧，宽屏更靠右
     className:
-      "-right-[calc(2.5rem+3vw)] top-[69%] hidden w-72 h-[150px] lg:block xl:w-96 xl:h-[200px] xl:-right-[calc(3rem+3vw)] 2xl:-right-[calc(5rem+3vw)]",
+      "-right-[calc(3rem+3vw)] top-[69%] hidden w-72 h-[150px] lg:block xl:w-96 xl:h-[200px] 2xl:-right-[calc(5rem+3vw)]",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
