@@ -26,6 +26,7 @@ export type CmsReadSource = {
 
 export type PublicSiteSettings = {
   description: string;
+  logoMediaUrl?: string;
   name: string;
   navigation: Array<{ href: string; label: string }>;
   nickname: string;
@@ -222,7 +223,10 @@ export async function createServerCmsRepository() {
       return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
     },
     async getSiteSettings() {
-      const { data, error } = await client.from("site_settings").select("*").single();
+      const { data, error } = await client
+        .from("site_settings")
+        .select("*,logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text)")
+        .single();
 
       if (error) throw error;
 
@@ -258,6 +262,8 @@ type CmsSiteSettingsRow = {
   nickname: string;
   seo_title: string;
   seo_description: string;
+  logo_media_id?: string | null;
+  logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   social_links: Array<{ label: string; url: string }> | null;
 };
 
@@ -276,11 +282,20 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
   };
 }
 
+function toPublicLogoMedia(value: CmsSiteSettingsRow["logo_media"]): string | undefined {
+  const { url } = getSupabasePublicConfig();
+  const media = Array.isArray(value) ? value[0] : value;
+  if (!media?.storage_key) return undefined;
+
+  return `${url}/storage/v1/object/public/portfolio-media/${encodeURI(media.storage_key)}`;
+}
+
 function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
   return {
     description: row.seo_description || settings.description,
+    logoMediaUrl: toPublicLogoMedia(row.logo_media),
     name: row.name || settings.name,
     navigation: settings.navigation,
     nickname: row.nickname || settings.logo,

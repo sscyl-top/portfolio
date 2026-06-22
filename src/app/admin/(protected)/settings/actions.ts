@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -17,6 +17,8 @@ const settingsSchema = z.object({
   font_preset: z.string().trim().min(1).max(80),
   seo_title: z.string().trim().min(1).max(140),
   seo_description: z.string().trim().max(300),
+  logo_media_id: z.string().uuid().nullable(),
+  avatar_media_id: z.string().uuid().nullable(),
   social_links: z.array(socialLinkSchema),
 });
 
@@ -34,6 +36,8 @@ export async function saveSiteSettings(formData: FormData) {
     font_preset: formData.get("font_preset"),
     seo_title: formData.get("seo_title"),
     seo_description: formData.get("seo_description") ?? "",
+    logo_media_id: formData.get("logo_media_id") || null,
+    avatar_media_id: formData.get("avatar_media_id") || null,
     social_links,
   });
 

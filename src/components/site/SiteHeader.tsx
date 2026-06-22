@@ -1,10 +1,8 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
-
-const headerLogoSrc = "";
 
 const defaultSiteSettings: PublicSiteSettings = {
   description: staticSiteSettings.description,
@@ -31,9 +29,9 @@ export function SiteHeader({
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04]">
-            {headerLogoSrc ? (
+            {siteSettings.logoMediaUrl ? (
               <Image
-                src={headerLogoSrc}
+                src={siteSettings.logoMediaUrl}
                 alt=""
                 width={48}
                 height={48}

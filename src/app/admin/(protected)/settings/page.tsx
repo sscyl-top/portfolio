@@ -1,6 +1,7 @@
-import { siteSettings } from "@/data/portfolio";
+﻿import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { saveSiteSettings } from "./actions";
 
 type SettingsRow = {
@@ -10,17 +11,35 @@ type SettingsRow = {
   font_preset: string;
   seo_title: string;
   seo_description: string;
+  logo_media_id: string | null;
+  avatar_media_id: string | null;
   social_links: Array<{ label: string; url: string }>;
+};
+
+type MediaAssetRow = {
+  id: string;
+  storage_key: string;
+  mime_type: string;
+  original_name: string;
+  alt_text: string;
 };
 
 export default async function AdminSettingsPage() {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select(
-      "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links",
-    )
-    .single();
+  const [{ data, error }, { data: rawMedia }] = await Promise.all([
+    supabase
+      .from("site_settings")
+      .select(
+        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,social_links",
+      )
+      .single(),
+    supabase
+      .from("media_assets")
+      .select("id,storage_key,mime_type,original_name,alt_text")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+  ]);
+  const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {
     name: siteSettings.name,
     nickname: siteSettings.logo,
@@ -28,6 +47,8 @@ export default async function AdminSettingsPage() {
     font_preset: "default",
     seo_title: `${siteSettings.name} | ${siteSettings.title}`,
     seo_description: siteSettings.description,
+    logo_media_id: null,
+    avatar_media_id: null,
     social_links: siteSettings.socialLinks.map((link) => ({
       label: link.label,
       url: link.href,
@@ -86,6 +107,21 @@ export default async function AdminSettingsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          <MediaSelectField
+            label="站点 Logo"
+            name="logo_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.logo_media_id ?? ""}
+          />
+          <MediaSelectField
+            label="头像"
+            name="avatar_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.avatar_media_id ?? ""}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="SEO 标题"
             name="seo_title"
@@ -127,6 +163,51 @@ export default async function AdminSettingsPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+
+function MediaSelectField({
+  assets,
+  defaultValue,
+  label,
+  name,
+}: {
+  assets: MediaAssetRow[];
+  defaultValue: string;
+  label: string;
+  name: string;
+}) {
+  const selected = assets.find((a) => a.id === defaultValue);
+
+  return (
+    <label className="grid gap-2 text-sm">
+      <span className="text-white/58">{label}</span>
+      {selected ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={buildPublicMediaUrl(selected.storage_key)}
+          alt={selected.alt_text || selected.original_name}
+          className="h-16 w-full rounded-md border border-white/10 object-contain"
+        />
+      ) : (
+        <span className="grid h-16 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
+          未选择
+        </span>
+      )}
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+      >
+        <option value="">未选择</option>
+        {assets.map((asset) => (
+          <option key={asset.id} value={asset.id}>
+            {asset.original_name}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
