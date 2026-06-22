@@ -7,6 +7,43 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-session";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
+import { execFile } from "node:child_process";
+import { writeFile, unlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+async function detectVideoDuration(file: File): Promise<number | null> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const tempPath = join(tmpdir(), `codex-media-${randomUUID()}.tmp`);
+  try {
+    await writeFile(tempPath, buffer);
+
+    const duration = await new Promise<number | null>((resolve) => {
+      execFile(
+        "ffprobe",
+        [
+          "-v",
+          "quiet",
+          "-show_entries",
+          "format=duration",
+          "-of",
+          "csv=p=0",
+          tempPath,
+        ],
+        { timeout: 15000 },
+        (err, stdout) => {
+          if (err) return resolve(null);
+          const seconds = parseFloat(stdout.trim());
+          resolve(Number.isFinite(seconds) ? Math.round(seconds * 1000) : null);
+        },
+      );
+    });
+
+    return duration;
+  } finally {
+    await unlink(tempPath).catch(() => {});
+  }
+}
 
 const maxUploadBytes = 25 * 1024 * 1024;
 
@@ -55,6 +92,16 @@ export async function uploadMediaAsset(formData: FormData) {
     }
   }
 
+  // Detect video duration via ffprobe when available, skipping on failure.
+  let durationMs: number | null = null;
+  if (mimeType.startsWith("video/")) {
+    try {
+      durationMs = await detectVideoDuration(file);
+    } catch {
+      // ffprobe unavailable or file corrupt — skip silently.
+    }
+  }
+
   await client.from("media_assets").insert({
     id,
     storage_key: storageKey,
@@ -63,6 +110,7 @@ export async function uploadMediaAsset(formData: FormData) {
     byte_size: file.size,
     width,
     height,
+    duration_ms: durationMs,
     alt_text: altText,
   });
 
