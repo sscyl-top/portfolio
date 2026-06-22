@@ -30,17 +30,17 @@ let heroVideos = {
 
 const heroFloatingMediaCards = [
   {
-    className: "z-20 -left-16 top-[32%] hidden w-64 md:block xl:-left-20 2xl:-left-28",
+    className: "z-20 -left-16 top-[32%] hidden w-64 aspect-[1.18/1] md:block xl:-left-20 2xl:-left-28",
     tone: "mono" as const,
     videoKey: "side1" as const,
   },
   {
-    className: "z-10 left-0 top-[23%] hidden w-56 md:block xl:left-2 2xl:left-4",
+    className: "z-10 left-0 top-[23%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
   {
-    className: "-right-10 top-[69%] hidden w-96 lg:block xl:-right-12 2xl:-right-20",
+    className: "-right-10 top-[69%] hidden w-96 aspect-[2.2/1] lg:block xl:-right-12 2xl:-right-20",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
@@ -279,11 +279,11 @@ export function FloatingImageCard({
   wide?: boolean;
 }) {
   const tones = {
-    mono: "bg-[radial-gradient(circle_at_52%_36%,rgba(255,255,255,0.32),transparent_26%),linear-gradient(135deg,#1b1b1b,#050505_68%)]",
+    mono: "bg-[radial-gradient(circle_at_52%_36%,rgba(255,255,255,0.32),#0a0a0a_26%),linear-gradient(135deg,#1b1b1b,#050505_68%)]",
     warm:
-      "bg-[radial-gradient(circle_at_50%_35%,rgba(245,231,206,0.42),transparent_24%),radial-gradient(circle_at_48%_70%,rgba(201,72,53,0.28),transparent_30%),linear-gradient(135deg,#3b3027,#0a0908_72%)]",
+      "bg-[radial-gradient(circle_at_50%_35%,rgba(245,231,206,0.42),#0a0908_24%),radial-gradient(circle_at_48%_70%,rgba(201,72,53,0.28),#0a0908_30%),linear-gradient(135deg,#3b3027,#0a0908_72%)]",
     graphite:
-      "bg-[radial-gradient(circle_at_62%_42%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_32%_60%,rgba(139,215,205,0.18),transparent_24%),linear-gradient(135deg,#202426,#050505_68%)]",
+      "bg-[radial-gradient(circle_at_62%_42%,rgba(255,255,255,0.24),#050505_28%),radial-gradient(circle_at_32%_60%,rgba(139,215,205,0.18),#050505_24%),linear-gradient(135deg,#202426,#050505_68%)]",
   };
 
   return (
@@ -291,13 +291,13 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg border border-white shadow-2xl shadow-black grayscale transition duration-500 hover:grayscale-0 ${className}`}
+      className={`absolute overflow-hidden rounded-lg border border-white shadow-2xl shadow-black bg-black grayscale transition duration-500 hover:grayscale-0 ${className}`}
     >
       {videoSrc ? (
         <video
           data-testid="hero-floating-media-video"
           src={videoSrc}
-          className={`${wide ? "aspect-[2.2/1]" : "aspect-[1.18/1]"} h-full w-full object-cover`}
+          className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
