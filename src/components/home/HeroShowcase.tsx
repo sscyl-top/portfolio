@@ -31,17 +31,20 @@ let heroVideos = {
 
 const heroFloatingMediaCards = [
   {
-    className: "z-20 -left-16 top-[32%] hidden w-[280px] h-[217px] md:block xl:-left-20 2xl:-left-28",
+    className:
+      "z-20 -left-12 top-[32%] hidden w-[200px] h-[155px] md:block lg:w-[240px] lg:h-[186px] xl:w-[280px] xl:h-[217px] xl:-left-20 2xl:-left-28",
     tone: "mono" as const,
     videoKey: "side1" as const,
   },
   {
-    className: "z-10 left-0 top-[15%] hidden w-[250px] h-[190px] md:block xl:left-2 2xl:left-4",
+    className:
+      "z-10 left-0 top-[15%] hidden w-[180px] h-[137px] md:block lg:w-[215px] lg:h-[163px] xl:w-[250px] xl:h-[190px] xl:left-2 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
   {
-    className: "-right-[calc(2.5rem+3vw)] top-[69%] hidden w-96 h-[200px] lg:block xl:-right-[calc(3rem+3vw)] 2xl:-right-[calc(5rem+3vw)]",
+    className:
+      "-right-[calc(2.5rem+3vw)] top-[69%] hidden w-72 h-[150px] lg:block xl:w-96 xl:h-[200px] xl:-right-[calc(3rem+3vw)] 2xl:-right-[calc(5rem+3vw)]",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
