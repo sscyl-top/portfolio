@@ -92,8 +92,6 @@ export const categories = [
   "TVC广告",
   "包装设计",
   "电商设计",
-  "工作流搭建",
-  "Agent设计",
   "早期设计",
   "工作案例",
 ];

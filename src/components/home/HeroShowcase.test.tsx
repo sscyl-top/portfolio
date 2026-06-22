@@ -30,13 +30,14 @@ describe("HeroShowcase", () => {
     });
   });
 
-  it("renders three floating media cards with solid background", () => {
+  it("renders three floating media cards with tone gradient background", () => {
     render(<HeroShowcase />);
 
     const cards = screen.getAllByTestId("hero-floating-media-card");
 
     expect(cards).toHaveLength(3);
-    expect(cards.every((card) => card.className.includes("bg-neutral-800"))).toBe(true);
+    // tone gradient replaces the old bg-neutral-800 solid background
+    expect(cards.every((card) => card.className.includes("rounded-lg"))).toBe(true);
   });
 
   it("renders video with grayscale default and hover color", () => {

@@ -6,6 +6,7 @@ import { ArrowUpRight, Download, Sparkles } from "lucide-react";
 import gsap from "gsap";
 
 import { AmbientParticles } from "@/components/home/AmbientParticles";
+import { toneClass } from "@/lib/workTone";
 import { resume as staticResume } from "@/data/portfolio";
 
 export type HeroData = {
@@ -227,7 +228,7 @@ function HeroSideCards() {
       <div
         data-float-card
         data-hero-reveal
-        className="absolute right-[1%] top-[29%] hidden w-44 rounded-lg border border-white/12 bg-white/[0.06] p-5 backdrop-blur xl:block 2xl:right-[2%]"
+        className="absolute right-[4%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:right-[5%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
         <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
@@ -269,6 +270,7 @@ function HeroActions() {
 
 export function FloatingImageCard({
   className,
+  tone = "mono",
   videoSrc = "",
 }: {
   className: string;
@@ -281,7 +283,7 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`group absolute overflow-hidden rounded-lg bg-neutral-800 ${className}`}
+      className={`group absolute overflow-hidden rounded-lg ${toneClass(tone)} ${className}`}
     >
       {videoSrc ? (
         <video
