@@ -23,9 +23,17 @@ export async function savePageSettings(formData: FormData) {
   if (!parsed.success) return;
 
   const { client } = await requireAdmin();
+
+  // Preserve existing modules (hero video config etc.) — only update title/SEO
+  const { data: existing } = await client
+    .from("pages")
+    .select("modules")
+    .eq("slug", parsed.data.slug)
+    .single();
+
   const { error } = await client.from("pages").upsert({
     ...parsed.data,
-    modules: [],
+    modules: existing?.modules ?? [],
   }, { onConflict: "slug" });
 
   if (error) throw new Error(error.message);

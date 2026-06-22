@@ -42,6 +42,7 @@ export async function saveResume(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/resume");
   revalidatePath("/admin/resume");
 }

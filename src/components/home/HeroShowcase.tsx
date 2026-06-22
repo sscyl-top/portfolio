@@ -11,26 +11,38 @@ import { resume as staticResume } from "@/data/portfolio";
 export type HeroData = {
   positioning?: string;
   downloadsPdf?: string;
+  mainVideoUrl?: string;
+  sideCard1VideoUrl?: string;
+  sideCard2VideoUrl?: string;
+  sideCard3VideoUrl?: string;
 };
 
 // merged data available to all sub-components
 let resume = { ...staticResume };
 
+// Video URLs set from CMS data — updated on each render
+let heroVideos = {
+  main: "",
+  side1: "",
+  side2: "",
+  side3: "",
+};
+
 const heroFloatingMediaCards = [
   {
     className: "z-20 -left-16 top-[32%] hidden w-64 md:block xl:-left-20 2xl:-left-28",
     tone: "mono" as const,
-    videoSrc: "",
+    videoKey: "side1" as const,
   },
   {
     className: "z-10 left-0 top-[23%] hidden w-56 md:block xl:left-2 2xl:left-4",
     tone: "warm" as const,
-    videoSrc: "",
+    videoKey: "side2" as const,
   },
   {
     className: "-right-10 top-[69%] hidden w-96 lg:block xl:-right-12 2xl:-right-20",
     tone: "graphite" as const,
-    videoSrc: "",
+    videoKey: "side3" as const,
     wide: true,
   },
 ];
@@ -44,6 +56,12 @@ export function HeroShowcase({ data }: { data?: HeroData }) {
       ...staticResume.downloads,
       pdf: data?.downloadsPdf ?? staticResume.downloads.pdf,
     },
+  };
+  heroVideos = {
+    main: data?.mainVideoUrl ?? "",
+    side1: data?.sideCard1VideoUrl ?? "",
+    side2: data?.sideCard2VideoUrl ?? "",
+    side3: data?.sideCard3VideoUrl ?? "",
   };
   const rootRef = useRef<HTMLElement>(null);
 
@@ -129,14 +147,35 @@ function HeroMainCard() {
       className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-3 shadow-2xl shadow-black md:aspect-[16/9] md:p-5"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
+
+      {/* Background video (when configured via CMS) */}
+      {heroVideos.main ? (
+        <video
+          data-testid="hero-main-video"
+          src={heroVideos.main}
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : null}
+
+      {/* Dark overlay for text readability when video is present */}
+      {heroVideos.main ? (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      ) : null}
+
       <div className="relative z-10 flex items-center justify-between font-mono text-[9px] uppercase text-white/50 md:text-xs">
         <span>CT DESIGN SYSTEM</span>
-        <span>VIDEO SLOT / YR26</span>
+        <span>{heroVideos.main ? "LIVE VIDEO" : "VIDEO SLOT / YR26"}</span>
       </div>
 
-      <div className="absolute left-4 top-12 hidden rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:block md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
-        Upload video here
-      </div>
+      {!heroVideos.main ? (
+        <div className="absolute left-4 top-12 hidden rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:block md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
+          Upload video here
+        </div>
+      ) : null}
 
       <div className="absolute bottom-5 left-5 right-5 z-10 hidden md:block md:bottom-8 md:left-8 md:right-8">
         <p className="font-mono text-xs uppercase text-copper">
@@ -173,12 +212,17 @@ function HeroSideCards() {
           key={card.tone}
           className={card.className}
           tone={card.tone}
-          videoSrc={card.videoSrc}
+          videoSrc={heroVideos[card.videoKey]}
           wide={card.wide}
         />
       ))}
       <HeroActions />
-      <FloatingImageCard {...heroFloatingMediaCards[2]} />
+      <FloatingImageCard
+        className={heroFloatingMediaCards[2].className}
+        tone={heroFloatingMediaCards[2].tone}
+        videoSrc={heroVideos[heroFloatingMediaCards[2].videoKey]}
+        wide={heroFloatingMediaCards[2].wide}
+      />
 
       <div
         data-float-card

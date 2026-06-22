@@ -1,0 +1,19 @@
+-- Hero Video Management
+-- No schema change required — hero video configuration is stored in the
+-- existing pages.modules jsonb field for the 'home' page row.
+--
+-- Expected modules structure for the 'home' page:
+-- [
+--   {
+--     "id": "hero-videos",
+--     "type": "hero_videos",
+--     "sort_order": 0,
+--     "is_visible": true,
+--     "settings": {
+--       "mainVideoMediaId": "<uuid or null>",
+--       "sideCard1MediaId": "<uuid or null>",
+--       "sideCard2MediaId": "<uuid or null>",
+--       "sideCard3MediaId": "<uuid or null>"
+--     }
+--   }
+-- ]
