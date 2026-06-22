@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Check, Filter, Search, X as XIcon } from "lucide-react";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
 type MediaOption = {
@@ -10,6 +11,9 @@ type MediaOption = {
   original_name: string;
   alt_text: string;
 };
+
+type MediaType = "all" | "image" | "video" | "other";
+type SortMode = "newest" | "oldest" | "name";
 
 type Props = {
   assets: MediaOption[];
@@ -29,12 +33,67 @@ export function MediaPicker({
   const [selected, setSelected] = useState<Set<string>>(
     new Set(defaultValue),
   );
+  const [search, setSearch] = useState("");
+  const [mediaType, setMediaType] = useState<MediaType>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
+
+  // --- filtering ---
+  const filtered = useMemo(() => {
+    let result = assets;
+
+    // type filter
+    if (mediaType === "image") {
+      result = result.filter((a) => a.mime_type.startsWith("image/"));
+    } else if (mediaType === "video") {
+      result = result.filter((a) => a.mime_type.startsWith("video/"));
+    } else if (mediaType === "other") {
+      result = result.filter(
+        (a) =>
+          !a.mime_type.startsWith("image/") && !a.mime_type.startsWith("video/"),
+      );
+    }
+
+    // text search
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(
+        (a) =>
+          a.original_name.toLowerCase().includes(q) ||
+          (a.alt_text ?? "").toLowerCase().includes(q),
+      );
+    }
+
+    // sort
+    if (sortMode === "name") {
+      result = [...result].sort((a, b) =>
+        a.original_name.localeCompare(b.original_name),
+      );
+    }
+    // "newest" = keep original order (DB returns created_at desc)
+    // "oldest" = reverse
+    if (sortMode === "oldest") {
+      result = [...result].reverse();
+    }
+
+    return result;
+  }, [assets, search, mediaType, sortMode]);
+
+  const isFiltered = search !== "" || mediaType !== "all";
+
+  // --- selection helpers ---
+  const selectAll = () => {
+    if (mode === "single") return;
+    setSelected(new Set(filtered.map((a) => a.id)));
+  };
+
+  const clearAll = () => {
+    setSelected(new Set());
+  };
 
   const toggle = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (mode === "single") {
-        // Radio-like: only one at a time, click again to deselect
         if (next.has(id)) {
           next.clear();
         } else {
@@ -42,7 +101,6 @@ export function MediaPicker({
           next.add(id);
         }
       } else {
-        // Checkbox-like
         if (next.has(id)) {
           next.delete(id);
         } else {
@@ -53,28 +111,125 @@ export function MediaPicker({
     });
   };
 
+  // --- hidden inputs for FormData ---
+  const hiddenInputs =
+    mode === "single" ? (
+      <input
+        type="hidden"
+        name={fieldName}
+        value={[...selected][0] ?? ""}
+      />
+    ) : (
+      [...selected].map((id) => (
+        <input key={id} type="hidden" name={fieldName} value={id} />
+      ))
+    );
+
   return (
     <div>
-      {/* Hidden inputs for FormData submission */}
-      {mode === "single" ? (
-        <input
-          type="hidden"
-          name={fieldName}
-          value={[...selected][0] ?? ""}
-        />
-      ) : (
-        [...selected].map((id) => (
-          <input key={id} type="hidden" name={fieldName} value={id} />
-        ))
-      )}
+      {hiddenInputs}
 
-      {assets.length === 0 ? (
-        <p className="border-y border-white/10 py-8 text-center text-sm text-white/34">
-          媒体库暂无素材，请先上传。
+      {/* ── search + toolbar ── */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {/* search */}
+        <div className="relative flex-1 min-w-0 max-w-xs">
+          <Search
+            aria-hidden="true"
+            className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索文件名或描述……"
+            className="h-9 w-full rounded-md border border-white/10 bg-black/20 pl-9 pr-8 text-sm outline-none placeholder:text-white/25 focus:border-cyan"
+          />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white"
+            >
+              <XIcon aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
+
+        {/* type filter */}
+        <div className="relative">
+          <Filter
+            aria-hidden="true"
+            className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30"
+          />
+          <select
+            value={mediaType}
+            onChange={(e) => setMediaType(e.target.value as MediaType)}
+            className="h-9 appearance-none rounded-md border border-white/10 bg-black/20 pl-7 pr-6 text-xs outline-none focus:border-cyan"
+          >
+            <option value="all">全部类型</option>
+            <option value="image">图片</option>
+            <option value="video">视频</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+
+        {/* sort */}
+        <select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as SortMode)}
+          className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+        >
+          <option value="newest">最新优先</option>
+          <option value="oldest">最早优先</option>
+          <option value="name">名称 A-Z</option>
+        </select>
+
+        {/* selection actions (multi only) */}
+        {mode === "multi" ? (
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={selectAll}
+              className="rounded-md border border-white/15 px-2.5 py-1 text-xs text-white/50 transition hover:border-cyan/40 hover:text-cyan"
+            >
+              全选
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-md border border-white/15 px-2.5 py-1 text-xs text-white/50 transition hover:border-white/30 hover:text-white"
+            >
+              取消
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── results summary ── */}
+      <p className="mb-3 text-xs text-white/34">
+        {filtered.length}{" "}
+        {isFiltered ? `/ ${assets.length} 个结果` : "个素材"}
+        {isFiltered ? "（已筛选）" : ""}
+        {selected.size > 0 ? ` · 已选 ${selected.size} 项` : ""}
+        {selected.size > 0 ? (
+          <button
+            type="button"
+            onClick={clearAll}
+            className="ml-2 underline transition hover:text-white"
+          >
+            清除选择
+          </button>
+        ) : null}
+      </p>
+
+      {/* ── grid ── */}
+      {filtered.length === 0 ? (
+        <p className="border-y border-white/10 py-12 text-center text-sm text-white/34">
+          {isFiltered ? "没有匹配的媒体文件。" : "媒体库暂无素材，请先上传。"}
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          {assets.map((asset) => {
+          {filtered.map((asset) => {
             const isSelected = selected.has(asset.id);
             const isImage = asset.mime_type.startsWith("image/");
             const isVideo = asset.mime_type.startsWith("video/");
@@ -113,7 +268,7 @@ export function MediaPicker({
                   </span>
                 )}
 
-                {/* Selection overlay */}
+                {/* overlay badge */}
                 <span
                   className={`absolute inset-0 flex items-end p-1.5 transition ${
                     isSelected
@@ -128,11 +283,15 @@ export function MediaPicker({
                         : "bg-black/60 text-white/70"
                     }`}
                   >
-                    {isSelected
-                      ? mode === "single"
-                        ? "已选"
-                        : "✓"
-                      : asset.original_name.slice(0, 10)}
+                    {isSelected ? (
+                      mode === "single" ? (
+                        "已选"
+                      ) : (
+                        <Check aria-hidden="true" className="inline h-2.5 w-2.5" />
+                      )
+                    ) : (
+                      asset.original_name.slice(0, 10)
+                    )}
                   </span>
                 </span>
               </button>
@@ -140,19 +299,6 @@ export function MediaPicker({
           })}
         </div>
       )}
-
-      {selected.size > 0 ? (
-        <p className="mt-2 text-xs text-white/38">
-          已选 {selected.size} 项 ·{" "}
-          <button
-            type="button"
-            onClick={() => setSelected(new Set())}
-            className="underline transition hover:text-white"
-          >
-            清除选择
-          </button>
-        </p>
-      ) : null}
     </div>
   );
 }

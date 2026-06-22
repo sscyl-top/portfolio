@@ -25,9 +25,9 @@ type MediaAssetRow = {
 export default async function AdminMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; sort?: string }>;
 }) {
-  const { search = "", type = "" } = await searchParams;
+  const { search = "", type = "", sort = "newest" } = await searchParams;
 
   const supabase = await createSupabaseServerClient();
   let query = supabase
@@ -35,8 +35,19 @@ export default async function AdminMediaPage({
     .select(
       "id,storage_key,mime_type,original_name,byte_size,alt_text,width,height,created_at",
     )
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .is("deleted_at", null);
+
+  // apply ordering
+  if (sort === "name") {
+    query = query.order("original_name", { ascending: true });
+  } else if (sort === "size") {
+    query = query.order("byte_size", { ascending: false });
+  } else if (sort === "oldest") {
+    query = query.order("created_at", { ascending: true });
+  } else {
+    // default: newest first
+    query = query.order("created_at", { ascending: false });
+  }
 
   if (search) {
     query = query.ilike("original_name", `%${search}%`);
@@ -90,7 +101,7 @@ export default async function AdminMediaPage({
         </button>
       </form>
 
-      <SearchBar search={search} type={type} />
+      <SearchBar search={search} type={type} sort={sort} />
 
       {error ? (
         <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
@@ -109,7 +120,7 @@ export default async function AdminMediaPage({
   );
 }
 
-function SearchBar({ search, type }: { search: string; type: string }) {
+function SearchBar({ search, type, sort }: { search: string; type: string; sort: string }) {
   return (
     <form className="mt-4 flex flex-wrap items-center gap-2">
       <div className="relative flex-1 min-w-0 max-w-xs">
@@ -134,10 +145,20 @@ function SearchBar({ search, type }: { search: string; type: string }) {
         <option value="video">视频</option>
         <option value="other">其他</option>
       </select>
+      <select
+        name="sort"
+        defaultValue={sort}
+        className="h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+      >
+        <option value="newest">最新优先</option>
+        <option value="oldest">最早优先</option>
+        <option value="name">名称 A-Z</option>
+        <option value="size">大小 ↓</option>
+      </select>
       <button className="inline-flex h-10 items-center gap-1.5 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
         筛选
       </button>
-      {(search || type) ? (
+      {(search || type || sort !== "newest") ? (
         <a
           href="/admin/media"
           className="inline-flex h-10 items-center gap-1 rounded-md px-3 text-sm text-white/45 transition hover:text-white"
