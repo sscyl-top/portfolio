@@ -293,8 +293,9 @@ export function FloatingImageCard({
       data-testid="hero-floating-media-card"
       className={`absolute overflow-hidden rounded-lg grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
       style={{
-        backgroundColor: "#252525",
-        boxShadow: "0 0 48px -12px rgba(255,255,255,0.22)",
+        backgroundColor: "#2a2a2a",
+        boxShadow:
+          "0 0 80px -16px rgba(255,255,255,0.28), 0 0 0 1px rgba(255,255,255,0.15)",
       }}
     >
       {videoSrc ? (

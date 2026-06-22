@@ -40,7 +40,7 @@ describe("HeroShowcase", () => {
       cards.every(
         (card) =>
           card.className.includes("grayscale") &&
-          card.style.backgroundColor === "rgb(37, 37, 37)",
+          card.style.backgroundColor === "rgb(42, 42, 42)",
       ),
     ).toBe(true);
   });
