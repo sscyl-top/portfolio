@@ -22,4 +22,5 @@
 - ✅ P0: 媒体块/图库块编辑（updateMediaBlock / updateGalleryBlock）
 - ✅ P1: Palette 颜色编辑器 + Slug 自动生成
 - ✅ P2: VideoBlockCard + BeforeAfterBlockCard 编辑组件；所有 5 种块类型编辑可用 (text/media/gallery/video/before_after)
-- 下一波待办：媒体库搜索筛选增强 / PDF 块类型编辑 / 图片预览选择器
+- ✅ PDF 块类型：pdfBlockSchema + createPdfBlock + updatePdfBlock + PdfBlockCard，6 种块类型全部可编辑
+- 下一波待办：前台页面渲染 PDF 块、媒体库增强

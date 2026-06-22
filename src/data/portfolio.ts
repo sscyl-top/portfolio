@@ -28,6 +28,16 @@ export type ContentBlock =
       beforeLabel: string;
       afterLabel: string;
       note: string;
+    }
+  | {
+      type: "video";
+      caption?: string;
+      items: WorkMedia[];
+    }
+  | {
+      type: "pdf";
+      caption?: string;
+      items: WorkMedia[];
     };
 
 export type Work = {

@@ -449,12 +449,24 @@ export async function createMediaBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client.from("work_blocks").insert({
     work_id,
     block_type: "media",
     sort_order,
     is_visible,
-    payload: { media_id, caption },
+    payload: { media_id, caption, media_ref },
   });
 
   if (error) throw new Error(error.message);
@@ -479,12 +491,24 @@ export async function updateMediaBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
-      payload: { media_id, caption },
+      payload: { media_id, caption, media_ref },
     })
     .eq("id", block_id);
 
@@ -538,12 +562,24 @@ export async function createVideoBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client.from("work_blocks").insert({
     work_id,
     block_type: "video",
     sort_order,
     is_visible,
-    payload: { media_id, caption },
+    payload: { media_id, caption, media_ref },
   });
 
   if (error) throw new Error(error.message);
@@ -568,9 +604,21 @@ export async function updateVideoBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client
     .from("work_blocks")
-    .update({ sort_order, is_visible, payload: { media_id, caption } })
+    .update({ sort_order, is_visible, payload: { media_id, caption, media_ref } })
     .eq("id", block_id);
 
   if (error) throw new Error(error.message);
@@ -594,12 +642,24 @@ export async function createPdfBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client.from("work_blocks").insert({
     work_id,
     block_type: "pdf",
     sort_order,
     is_visible,
-    payload: { media_id, caption },
+    payload: { media_id, caption, media_ref },
   });
 
   if (error) throw new Error(error.message);
@@ -624,9 +684,21 @@ export async function updatePdfBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", media_id)
+    .is("deleted_at", null)
+    .single();
+
+  const media_ref = asset
+    ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+    : null;
+
   const { error } = await client
     .from("work_blocks")
-    .update({ sort_order, is_visible, payload: { media_id, caption } })
+    .update({ sort_order, is_visible, payload: { media_id, caption, media_ref } })
     .eq("id", block_id);
 
   if (error) throw new Error(error.message);
@@ -651,12 +723,31 @@ export async function createBeforeAfterBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: assets } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", [before_media_id, after_media_id])
+    .is("deleted_at", null);
+
+  const assetById = new Map(
+    (assets ?? []).map((a: { id: string; storage_key: string; mime_type: string; alt_text: string }) => [a.id, a]),
+  );
+  const mediaRef = (id: string) => {
+    const a = assetById.get(id);
+    return a ? { id: a.id, storage_key: a.storage_key, mime_type: a.mime_type, alt_text: a.alt_text } : null;
+  };
+
   const { error } = await client.from("work_blocks").insert({
     work_id,
     block_type: "before_after",
     sort_order,
     is_visible,
-    payload: { before_media_id, after_media_id, caption },
+    payload: {
+      before_media_id, after_media_id, caption,
+      before_media_ref: mediaRef(before_media_id),
+      after_media_ref: mediaRef(after_media_id),
+    },
   });
 
   if (error) throw new Error(error.message);
@@ -682,12 +773,31 @@ export async function updateBeforeAfterBlock(formData: FormData) {
   const { client } = await requireAdmin();
   const { block_id, work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
     parsed.data;
+
+  const { data: assets } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", [before_media_id, after_media_id])
+    .is("deleted_at", null);
+
+  const assetById = new Map(
+    (assets ?? []).map((a: { id: string; storage_key: string; mime_type: string; alt_text: string }) => [a.id, a]),
+  );
+  const mediaRef = (id: string) => {
+    const a = assetById.get(id);
+    return a ? { id: a.id, storage_key: a.storage_key, mime_type: a.mime_type, alt_text: a.alt_text } : null;
+  };
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
-      payload: { before_media_id, after_media_id, caption },
+      payload: {
+        before_media_id, after_media_id, caption,
+        before_media_ref: mediaRef(before_media_id),
+        after_media_ref: mediaRef(after_media_id),
+      },
     })
     .eq("id", block_id);
 

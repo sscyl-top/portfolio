@@ -158,17 +158,43 @@ export default async function WorkDetailPage({
               );
             }
 
+            if (block.type === "video" || block.type === "pdf") {
+              if (block.items.length === 0) return null;
+              const label = block.type === "video" ? "视频" : "PDF";
+              return (
+                <section
+                  key={`${block.type}-${block.items[0]?.url ?? "empty"}`}
+                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                >
+                  {block.caption ? (
+                    <p className="text-sm font-medium text-white/54">
+                      {block.caption}
+                    </p>
+                  ) : null}
+                  <div className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-4 py-3">
+                    <span className="font-mono text-xs text-white/45">{label} 文件</span>
+                    <a
+                      href={block.items[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-cyan/35 px-3 py-1.5 text-xs text-cyan transition hover:bg-cyan/10"
+                    >
+                      <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                      查看
+                    </a>
+                  </div>
+                </section>
+              );
+            }
+
             return (
               <section
-                key={block.heading}
+                key={block.type}
                 className="rounded-lg border border-white/10 bg-white/[0.035] p-6"
               >
-                <h2 className="text-2xl font-semibold text-white">
-                  {block.heading}
-                </h2>
                 <div className="mt-6 min-h-96 rounded-lg border border-white/10 bg-[linear-gradient(135deg,#111,#3a3935_50%,#050505)]" />
                 <p className="mt-4 font-mono text-xs text-white/38">
-                  {block.alt}
+                  {block.type} 块
                 </p>
               </section>
             );

@@ -355,8 +355,22 @@ type MediaRef = {
   alt_text: string;
 };
 
+function toRefs(raw: unknown): MediaRef[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") return [raw as MediaRef];
+  return [];
+}
+
 function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
   const { url } = getSupabasePublicConfig();
+
+  const toMedia = (ref: MediaRef) => ({
+    alt: ref.alt_text ?? "",
+    mimeType: ref.mime_type ?? "",
+    url: `${url}/storage/v1/object/public/portfolio-media/${encodeURI(ref.storage_key)}`,
+  });
+
+  const toItems = (refs: MediaRef[]) => refs.map(toMedia);
 
   return blocks
     .filter((block) => block.is_visible !== false)
@@ -370,20 +384,41 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
         };
       }
       if (block.block_type === "media" || block.block_type === "gallery") {
-        const refs: MediaRef[] = Array.isArray(block.payload.media_refs)
-          ? block.payload.media_refs
-          : [];
-        const items = refs.map((ref) => ({
-          alt: ref.alt_text ?? "",
-          mimeType: ref.mime_type ?? "",
-          url: `${url}/storage/v1/object/public/portfolio-media/${encodeURI(ref.storage_key)}`,
-        }));
+        const refs = toRefs(block.payload.media_refs ?? block.payload.media_ref);
+        const items = toItems(refs);
         const caption = String(block.payload.caption ?? "");
 
         return {
           type: block.block_type as "media" | "gallery",
           caption: caption || undefined,
           items,
+        };
+      }
+      if (block.block_type === "video") {
+        const ref = block.payload.media_ref as MediaRef | null;
+        const items = ref ? [toMedia(ref)] : [];
+        const caption = String(block.payload.caption ?? "");
+
+        return { type: "video" as const, caption: caption || undefined, items };
+      }
+      if (block.block_type === "pdf") {
+        const ref = block.payload.media_ref as MediaRef | null;
+        const items = ref ? [toMedia(ref)] : [];
+        const caption = String(block.payload.caption ?? "");
+
+        return { type: "pdf" as const, caption: caption || undefined, items };
+      }
+      if (block.block_type === "before_after") {
+        const beforeRef = block.payload.before_media_ref as MediaRef | null;
+        const afterRef = block.payload.after_media_ref as MediaRef | null;
+        const caption = String(block.payload.caption ?? "");
+
+        return {
+          type: "beforeAfter" as const,
+          heading: caption || "Before / After",
+          beforeLabel: beforeRef ? (beforeRef.alt_text || "Before") : "Before",
+          afterLabel: afterRef ? (afterRef.alt_text || "After") : "After",
+          note: "",
         };
       }
       return null;
