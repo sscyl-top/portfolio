@@ -7,6 +7,7 @@ import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // 60秒超时
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 

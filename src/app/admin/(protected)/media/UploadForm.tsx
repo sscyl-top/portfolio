@@ -37,10 +37,15 @@ export function UploadForm() {
       formData.append("file", file);
       if (altText) formData.append("alt_text", altText);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+
       const res = await fetch("/api/media/upload", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -53,7 +58,11 @@ export function UploadForm() {
       fileInput.value = "";
       window.location.reload();
     } catch (err) {
-      setMessage({ type: "error", text: `网络错误，请重试` });
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setMessage({ type: "error", text: "上传超时（5分钟），请检查网络或文件是否过大" });
+      } else {
+        setMessage({ type: "error", text: `网络错误，请重试: ${(err as Error).message}` });
+      }
     } finally {
       setUploading(false);
     }
