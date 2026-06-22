@@ -1,6 +1,6 @@
 "use client";
 
-import { Send } from "lucide-react";
+import { AlertCircle, CheckCircle, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 type ContactFormProps = {
@@ -16,8 +16,15 @@ type ContactFormProps = {
   messagePlaceholder: string;
 };
 
+type FieldError = { name?: string; email?: string; message?: string };
+
 const fieldClass =
-  "mt-2 min-h-10 w-full rounded-lg border border-white/10 bg-black/25 px-3.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+  "mt-2 min-h-10 w-full rounded-lg border bg-black/25 px-3.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+
+const errorFieldClass =
+  "mt-2 min-h-10 w-full rounded-lg border bg-black/25 px-3.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40 border-red-400/40";
+
+const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
 export function ContactForm({
   id,
@@ -35,13 +42,39 @@ export function ContactForm({
     "idle" | "pending" | "success" | "error"
   >("idle");
   const [feedback, setFeedback] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldError>({});
+
+  function validate(form: HTMLFormElement): boolean {
+    const fd = new FormData(form);
+    const errors: FieldError = {};
+
+    const name = (fd.get("name") as string)?.trim();
+    const email = (fd.get("email") as string)?.trim();
+    const message = (fd.get("message") as string)?.trim();
+
+    if (!name || name.length < 2) {
+      errors.name = "请填写姓名（至少2个字符）";
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "请填写有效的邮箱地址";
+    }
+    if (!message || message.length < 10) {
+      errors.message = `请填写${messageLabel}（至少10个字符）`;
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+
+    if (!validate(form)) return;
+
     setStatus("pending");
     setFeedback("");
 
-    const form = event.currentTarget;
     const body = Object.fromEntries(new FormData(form));
 
     try {
@@ -50,16 +83,31 @@ export function ContactForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as {
+        error?: string;
+        fieldErrors?: Record<string, string>;
+      };
 
-      if (!response.ok) throw new Error(result.error || "消息提交失败");
+      if (!response.ok) {
+        if (result.fieldErrors) {
+          const mapped: FieldError = {};
+          if (result.fieldErrors.name) mapped.name = result.fieldErrors.name;
+          if (result.fieldErrors.email) mapped.email = result.fieldErrors.email;
+          if (result.fieldErrors.message) mapped.message = result.fieldErrors.message;
+          setFieldErrors(mapped);
+          setStatus("idle");
+          return;
+        }
+        throw new Error(result.error || "消息提交失败");
+      }
 
       form.reset();
+      setFieldErrors({});
       setStatus("success");
       setFeedback("消息已发送，我会尽快回复。");
     } catch (error) {
       setStatus("error");
-      setFeedback(error instanceof Error ? error.message : "消息提交失败");
+      setFeedback(error instanceof Error ? error.message : "消息提交失败，请稍后再试");
     }
   }
 
@@ -98,23 +146,37 @@ export function ContactForm({
         <label className="text-sm text-white/68">
           姓名
           <input
-            className={fieldClass}
+            className={fieldErrors.name ? errorFieldClass : fieldClass}
             name="name"
             placeholder="您的姓名"
             autoComplete="name"
             maxLength={80}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, name: undefined }))}
           />
+          {fieldErrors.name ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.name}
+            </p>
+          ) : null}
         </label>
         <label className="text-sm text-white/68">
           邮箱
           <input
-            className={fieldClass}
+            className={fieldErrors.email ? errorFieldClass : fieldClass}
             type="email"
             name="email"
             placeholder="your@email.com"
             autoComplete="email"
             maxLength={160}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, email: undefined }))}
           />
+          {fieldErrors.email ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.email}
+            </p>
+          ) : null}
         </label>
         <label className="text-sm text-white/68 sm:col-span-2">
           公司
@@ -147,11 +209,18 @@ export function ContactForm({
         <label className="text-sm text-white/68 sm:col-span-2">
           {messageLabel}
           <textarea
-            className={`${fieldClass} min-h-20 resize-y py-2.5`}
+            className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-20 resize-y py-2.5`}
             name="message"
             placeholder={messagePlaceholder}
             maxLength={3000}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, message: undefined }))}
           />
+          {fieldErrors.message ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.message}
+            </p>
+          ) : null}
         </label>
         <label className="text-sm text-white/68 sm:col-span-2">
           备注
@@ -175,10 +244,21 @@ export function ContactForm({
           <p
             aria-live="polite"
             className={`mt-3 min-h-5 text-center text-xs ${
-              status === "error" ? "text-red-300" : "text-cyan/75"
+              status === "error"
+                ? "text-red-300"
+                : status === "success"
+                  ? "text-emerald-300"
+                  : "text-cyan/75"
             }`}
           >
-            {feedback}
+            {status === "success" ? (
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle aria-hidden="true" className="h-3 w-3" />
+                {feedback}
+              </span>
+            ) : (
+              feedback
+            )}
           </p>
         </div>
       </form>

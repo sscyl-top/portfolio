@@ -7,10 +7,13 @@ import {
   Trophy,
 } from "lucide-react";
 
-import { resume } from "@/data/portfolio";
+import { resume as staticResume } from "@/data/portfolio";
 import { ContactFinale } from "@/components/resume/ContactFinale";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getBackendReadiness } from "@/lib/supabase/config";
 
-export default function ResumePage() {
+export default async function ResumePage() {
+  const resume = await getResumeData();
   return (
     <main className="relative isolate overflow-hidden bg-[#050505]">
       <div className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-62" />
@@ -304,4 +307,44 @@ function ResumeSection({
       <div>{children}</div>
     </section>
   );
+}
+
+/** 合并 CMS 动态数据与静态简历数据 */
+async function getResumeData() {
+  try {
+    const readiness = getBackendReadiness();
+    if (!readiness.cms) throw new Error("CMS not available");
+
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("resumes")
+      .select(
+        "name,alias,role,positioning,location,email,phone,zcool_url,wechat_id,strengths",
+      )
+      .single();
+
+    if (!data) return staticResume;
+
+    // merge: CMS provides basic profile + strengths
+    // everything else (experience, education, campus, expertise, highlights) stays static
+    return {
+      ...staticResume,
+      name: data.name || staticResume.name,
+      alias: data.alias || staticResume.alias,
+      role: data.role || staticResume.role,
+      positioning: data.positioning || staticResume.positioning,
+      location: data.location || staticResume.location,
+      contact: {
+        ...staticResume.contact,
+        email: data.email || staticResume.contact.email,
+        phone: data.phone || staticResume.contact.phone,
+        zcool: data.zcool_url || staticResume.contact.zcool,
+      },
+      strengths: Array.isArray(data.strengths) && data.strengths.length > 0
+        ? data.strengths
+        : staticResume.strengths,
+    };
+  } catch {
+    return staticResume;
+  }
 }
