@@ -437,3 +437,45 @@ export async function seedStaticPortfolio() {
 export async function suggestSlug(title: string) {
   return createStableSlug(title, "new-work");
 }
+
+
+export async function createGalleryBlock(formData: FormData) {
+  const rawIds = formData.getAll("media_ids").map(String).filter(Boolean);
+  const parsed = z
+    .object({
+      work_id: z.string().uuid(),
+      work_slug: z
+        .string()
+        .trim()
+        .min(1)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      caption: z.string().trim().max(300).default(""),
+      sort_order: z.coerce.number().int().default(0),
+      is_visible: z.boolean(),
+    })
+    .safeParse({
+      work_id: formData.get("work_id"),
+      work_slug: formData.get("work_slug"),
+      caption: formData.get("caption") ?? "",
+      sort_order: formData.get("sort_order") || 0,
+      is_visible: formData.get("is_visible") === "on",
+    });
+
+  if (!parsed.success || rawIds.length === 0) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client.from("work_blocks").insert({
+    work_id,
+    block_type: "gallery",
+    sort_order,
+    is_visible,
+    payload: { media_ids: rawIds, caption },
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}

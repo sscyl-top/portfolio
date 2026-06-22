@@ -13,6 +13,7 @@ import {
   generatePrivatePreviewLink,
   updateTextBlock,
   updateWork,
+  createGalleryBlock,
   createMediaBlock,
   updateWorkMedia,
   updateWorkTaxonomy,
@@ -642,6 +643,48 @@ function BlockEditor({
           </button>
         </div>
         <Field label="说明文字" name="caption" defaultValue="" />
+      </form>
+      <form
+        action={createGalleryBlock}
+        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+      >
+        <input type="hidden" name="work_id" value={work.id} />
+        <input type="hidden" name="work_slug" value={work.slug} />
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-white/80">新增图库块</span>
+          <span className="font-mono text-[10px] uppercase text-white/28">gallery</span>
+        </div>
+        <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
+          <label className="grid gap-2 text-sm">
+            <span className="text-white/58">选择媒体（多选）</span>
+            <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-black/20 p-2">
+              {mediaAssets.length === 0 ? (
+                <span className="text-xs text-white/34">媒体库暂无素材。</span>
+              ) : (
+                mediaAssets.map((asset) => (
+                  <label
+                    key={asset.id}
+                    className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-white/5"
+                  >
+                    <input
+                      type="checkbox"
+                      name="media_ids"
+                      value={asset.id}
+                      className="size-4 accent-cyan"
+                    />
+                    {asset.original_name}
+                  </label>
+                ))
+              )}
+            </div>
+          </label>
+          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
+          <CheckField label="可见" name="is_visible" defaultChecked />
+          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+            添加图库块
+          </button>
+        </div>
+        <Field label="说明文字" name="caption" defaultValue="" />
       </form><div className="mt-4 grid gap-4">
         {blocks.length === 0 ? (
           <div className="grid min-h-40 place-items-center border-y border-white/10 text-sm text-white/38">
@@ -757,6 +800,70 @@ function Field({
   );
 }
 
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function GalleryBlockCard({
+  block,
+  mediaAssets,
+  work,
+}: {
+  block: WorkBlockRow;
+  mediaAssets: MediaOptionRow[];
+  work: WorkEditorRow;
+}) {
+  const mediaIds: string[] = Array.isArray(block.payload.media_ids)
+    ? block.payload.media_ids
+    : [];
+  const caption = String(block.payload.caption ?? "");
+  const assets = mediaIds
+    .map((id) => mediaAssets.find((a) => a.id === id))
+    .filter((a): a is MediaOptionRow => Boolean(a));
+
+  return (
+    <form
+      action={deleteWorkBlock}
+      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+    >
+      <input type="hidden" name="block_id" value={block.id} />
+      <input type="hidden" name="work_id" value={work.id} />
+      <input type="hidden" name="work_slug" value={work.slug} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-white/80">图库块</span>
+          <span className="font-mono text-xs text-white/34">
+            {mediaIds.length} 张素材
+          </span>
+        </div>
+      </div>
+      {assets.length === 0 ? (
+        <span className="grid h-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
+          未选择媒体或已删除
+        </span>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          {assets.map((asset) => (
+            <MediaSelectPreview
+              key={asset.id}
+              storageKey={asset.storage_key}
+              mimeType={asset.mime_type}
+              alt={asset.alt_text || asset.original_name}
+              name={asset.original_name}
+            />
+          ))}
+        </div>
+      )}
+      <p className="text-sm text-white/45">
+        {caption || "无说明文字"}
+      </p>
+      <div className="flex justify-end">
+        <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10">
+          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          删除块
+        </button>
+      </div>
+    </form>
+  );
+}
 function CheckField({
   label,
   name,
