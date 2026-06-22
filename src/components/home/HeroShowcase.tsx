@@ -305,7 +305,7 @@ export function FloatingImageCard({
         />
       ) : (
         <div
-          className={`${wide ? "aspect-[2.2/1]" : "aspect-[1.18/1]"} ${
+          className={`absolute inset-0 ${
             tones[tone]
           }`}
         />
