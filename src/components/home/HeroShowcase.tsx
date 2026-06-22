@@ -281,13 +281,13 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg bg-neutral-800 grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
+      className={`group absolute overflow-hidden rounded-lg bg-neutral-800 ${className}`}
     >
       {videoSrc ? (
         <video
           data-testid="hero-floating-media-video"
           src={videoSrc}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover grayscale transition duration-500 group-hover:grayscale-0"
           autoPlay
           muted
           loop

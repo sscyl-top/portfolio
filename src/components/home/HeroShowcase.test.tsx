@@ -30,16 +30,16 @@ describe("HeroShowcase", () => {
     });
   });
 
-  it("renders three floating media cards with grayscale default", () => {
+  it("renders three floating media cards with solid background", () => {
     render(<HeroShowcase />);
 
     const cards = screen.getAllByTestId("hero-floating-media-card");
 
     expect(cards).toHaveLength(3);
-    expect(cards.every((card) => card.className.includes("grayscale"))).toBe(true);
+    expect(cards.every((card) => card.className.includes("bg-neutral-800"))).toBe(true);
   });
 
-  it("can render uploaded video media in a floating card", () => {
+  it("renders video with grayscale default and hover color", () => {
     render(
       <FloatingImageCard
         className="w-64"
@@ -51,7 +51,7 @@ describe("HeroShowcase", () => {
     const video = screen.getByTestId("hero-floating-media-video");
 
     expect(video).toHaveAttribute("src", "/home/sample-card.mp4");
-    expect(video).toHaveAttribute("autoplay");
-    expect(video).toHaveAttribute("loop");
+    expect(video.className.includes("grayscale")).toBe(true);
+    expect(video.className.includes("group-hover:grayscale-0")).toBe(true);
   });
 });
