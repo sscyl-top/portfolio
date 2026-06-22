@@ -386,7 +386,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
                   {group.items.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/62 whitespace-nowrap"
+                      className="inline-block rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-white/62 whitespace-nowrap w-fit justify-self-start"
                     >
                       {item}
                     </span>
