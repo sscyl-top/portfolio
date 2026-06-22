@@ -1,4 +1,4 @@
-import {
+﻿import {
   FolderKanban,
   Home,
   Images,
@@ -14,6 +14,7 @@ export const adminNavigation = [
   { label: "作品", href: "/admin/works", icon: FolderKanban },
   { label: "分类与标签", href: "/admin/categories", icon: Tags },
   { label: "媒体库", href: "/admin/media", icon: Images },
+  { label: "简历", href: "/admin/resume", icon: Layers3 },
   { label: "页面", href: "/admin/pages", icon: Layers3 },
   { label: "联系消息", href: "/admin/messages", icon: Mail },
   { label: "网站设置", href: "/admin/settings", icon: Settings },
