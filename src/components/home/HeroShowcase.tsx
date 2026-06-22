@@ -291,10 +291,9 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg ${className}`}
+      className={`absolute overflow-hidden rounded-lg grayscale transition-all duration-500 hover:grayscale-0 ${className}`}
       style={{
         backgroundColor: "#252525",
-        border: "2px solid rgba(255,255,255,0.85)",
         boxShadow: "0 0 48px -12px rgba(255,255,255,0.22)",
       }}
     >
@@ -319,10 +318,6 @@ export function FloatingImageCard({
           <div className={`absolute inset-0 ${tones[tone]}`} />
         </div>
       )}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-lg"
-        style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)" }}
-      />
     </div>
   );
 }

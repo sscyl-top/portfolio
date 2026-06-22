@@ -39,7 +39,7 @@ describe("HeroShowcase", () => {
     expect(
       cards.every(
         (card) =>
-          !card.className.includes("grayscale") &&
+          card.className.includes("grayscale") &&
           card.style.backgroundColor === "rgb(37, 37, 37)",
       ),
     ).toBe(true);
