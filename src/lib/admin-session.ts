@@ -30,7 +30,7 @@ export async function requireAdmin() {
   const client = await createSupabaseServerClient();
   const user = await getAuthorizedAdmin(client);
 
-  if (!user) redirect("/admin?error=unauthorized");
+  if (!user) redirect("/admin/login?error=unauthorized");
 
   return { client, user };
 }
