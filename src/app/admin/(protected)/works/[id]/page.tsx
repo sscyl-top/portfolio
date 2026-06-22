@@ -803,34 +803,38 @@ function BlockEditor({
           blocks={blocks}
           workId={work.id}
           workSlug={work.slug}
-          renderBlock={(id) => {
-            const block = blocks.find((b) => b.id === id);
-            if (!block) return null;
-            if (block.block_type === "text") {
-              return <TextBlockForm block={block} work={work} />;
-            }
-            if (block.block_type === "media") {
-              return <MediaBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
-            }
-            if (block.block_type === "gallery") {
-              return <GalleryBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
-            }
-            if (block.block_type === "video") {
-              return <VideoBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
-            }
-            if (block.block_type === "before_after") {
-              return <BeforeAfterBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
-            }
-            if (block.block_type === "pdf") {
-              return <PdfBlockCard block={block} mediaAssets={mediaAssets} work={work} />;
-            }
-            return (
-              <div className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50">
-                {block.block_type} 块暂未开放编辑。
-              </div>
-            );
-          }}
-        />
+        >
+          {Object.fromEntries(
+            blocks.map((block) => [
+              block.id,
+              (() => {
+                if (block.block_type === "text") {
+                  return <TextBlockForm key={block.id} block={block} work={work} />;
+                }
+                if (block.block_type === "media") {
+                  return <MediaBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
+                }
+                if (block.block_type === "gallery") {
+                  return <GalleryBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
+                }
+                if (block.block_type === "video") {
+                  return <VideoBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
+                }
+                if (block.block_type === "before_after") {
+                  return <BeforeAfterBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
+                }
+                if (block.block_type === "pdf") {
+                  return <PdfBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
+                }
+                return (
+                  <div key={block.id} className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50">
+                    {block.block_type} 块暂未开放编辑。
+                  </div>
+                );
+              })(),
+            ]),
+          )}
+        </BlockListWrapper>
       )}
     </section>
   );

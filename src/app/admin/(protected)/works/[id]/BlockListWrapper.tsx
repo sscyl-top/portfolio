@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, ReactNode } from "react";
 import { GripVertical } from "lucide-react";
 import { reorderWorkBlocks } from "../actions";
 
@@ -12,12 +12,12 @@ export function BlockListWrapper({
   blocks,
   workId,
   workSlug,
-  renderBlock,
+  children,
 }: {
   blocks: BlockItem[];
   workId: string;
   workSlug: string;
-  renderBlock: (id: string) => React.ReactNode;
+  children: Record<string, ReactNode>;
 }) {
   const [orderedIds, setOrderedIds] = useState(blocks.map((b) => b.id));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -98,7 +98,7 @@ export function BlockListWrapper({
             } ${isOver ? "rounded-lg ring-2 ring-cyan/40 ring-offset-2 ring-offset-[#07090b]" : ""}`}
           >
             <div className="pt-5">{makeHandle(index)}</div>
-            <div className="flex-1 min-w-0">{renderBlock(id)}</div>
+            <div className="flex-1 min-w-0">{children[id] ?? null}</div>
           </div>
         );
       })}
