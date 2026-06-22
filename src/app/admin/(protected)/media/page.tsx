@@ -1,4 +1,4 @@
-﻿import { Save, Trash2, Upload } from "lucide-react";
+﻿import { Save, Search, Trash2, Upload, X } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -22,16 +22,40 @@ type MediaAssetRow = {
 };
 
 
-export default async function AdminMediaPage() {
+export default async function AdminMediaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; type?: string }>;
+}) {
+  const { search = "", type = "" } = await searchParams;
+
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("media_assets")
     .select(
       "id,storage_key,mime_type,original_name,byte_size,alt_text,width,height,created_at",
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+
+  if (search) {
+    query = query.ilike("original_name", `%${search}%`);
+  }
+  if (type === "image") {
+    query = query.like("mime_type", "image/%");
+  } else if (type === "video") {
+    query = query.like("mime_type", "video/%");
+  } else if (type === "other") {
+    query = query.not("mime_type", "like", "image/%").not("mime_type", "like", "video/%");
+  }
+
+  const { data, error } = await query;
   const assets = (data ?? []) as MediaAssetRow[];
+  const totalQuery = supabase
+    .from("media_assets")
+    .select("id", { count: "exact", head: true })
+    .is("deleted_at", null);
+  const { count: total } = await totalQuery;
 
   return (
     <div>
@@ -66,22 +90,81 @@ export default async function AdminMediaPage() {
         </button>
       </form>
 
+      <SearchBar search={search} type={type} />
+
       {error ? (
         <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
           媒体读取失败：{error.message}
         </p>
       ) : (
-        <MediaList assets={assets} />
+        <>
+          <p className="mt-3 text-sm text-white/38">
+            {assets.length} / {total ?? 0} 个文件
+            {(search || type) ? "（已筛选）" : ""}
+          </p>
+          <MediaList assets={assets} search={search} type={type} />
+        </>
       )}
     </div>
   );
 }
 
-function MediaList({ assets }: { assets: MediaAssetRow[] }) {
+function SearchBar({ search, type }: { search: string; type: string }) {
+  return (
+    <form className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="relative flex-1 min-w-0 max-w-xs">
+        <Search
+          aria-hidden="true"
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30"
+        />
+        <input
+          name="search"
+          defaultValue={search}
+          placeholder="搜索文件名……"
+          className="h-10 w-full rounded-md border border-white/10 bg-black/20 pl-10 pr-3 text-sm outline-none focus:border-cyan"
+        />
+      </div>
+      <select
+        name="type"
+        defaultValue={type}
+        className="h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+      >
+        <option value="">全部类型</option>
+        <option value="image">图片</option>
+        <option value="video">视频</option>
+        <option value="other">其他</option>
+      </select>
+      <button className="inline-flex h-10 items-center gap-1.5 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+        筛选
+      </button>
+      {(search || type) ? (
+        <a
+          href="/admin/media"
+          className="inline-flex h-10 items-center gap-1 rounded-md px-3 text-sm text-white/45 transition hover:text-white"
+        >
+          <X aria-hidden="true" className="h-4 w-4" />
+          清除
+        </a>
+      ) : null}
+    </form>
+  );
+}
+
+function MediaList({
+  assets,
+  search,
+  type,
+}: {
+  assets: MediaAssetRow[];
+  search: string;
+  type: string;
+}) {
   if (assets.length === 0) {
+    const hint =
+      search || type ? "没有匹配的媒体文件。" : "暂无媒体文件。";
     return (
       <div className="mt-6 grid min-h-64 place-items-center border-y border-white/10 text-sm text-white/38">
-        暂无媒体文件。
+        {hint}
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { MediaPicker } from "@/components/admin/MediaPicker";
 
 import { SlugInput } from "./SlugInput";
 
@@ -660,22 +661,12 @@ function BlockEditor({
           <span className="text-sm font-medium text-white/80">新增媒体块</span>
           <span className="font-mono text-[10px] uppercase text-white/28">media</span>
         </div>
-        <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-          <label className="grid gap-2 text-sm">
-            <span className="text-white/58">选择媒体</span>
-            <select
-              name="media_id"
-              required
-              className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-            >
-              <option value="">请选择……</option>
-              {mediaAssets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.original_name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <MediaPicker
+          assets={mediaAssets}
+          mode="single"
+          fieldName="media_id"
+        />
+        <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
           <CheckField label="可见" name="is_visible" defaultChecked />
           <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
@@ -694,30 +685,12 @@ function BlockEditor({
           <span className="text-sm font-medium text-white/80">新增图库块</span>
           <span className="font-mono text-[10px] uppercase text-white/28">gallery</span>
         </div>
-        <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-          <label className="grid gap-2 text-sm">
-            <span className="text-white/58">选择媒体（多选）</span>
-            <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-black/20 p-2">
-              {mediaAssets.length === 0 ? (
-                <span className="text-xs text-white/34">媒体库暂无素材。</span>
-              ) : (
-                mediaAssets.map((asset) => (
-                  <label
-                    key={asset.id}
-                    className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-white/5"
-                  >
-                    <input
-                      type="checkbox"
-                      name="media_ids"
-                      value={asset.id}
-                      className="size-4 accent-cyan"
-                    />
-                    {asset.original_name}
-                  </label>
-                ))
-              )}
-            </div>
-          </label>
+        <MediaPicker
+          assets={mediaAssets}
+          mode="multi"
+          fieldName="media_ids"
+        />
+        <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
           <CheckField label="可见" name="is_visible" defaultChecked />
           <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
@@ -899,30 +872,12 @@ function GalleryBlockCard({
         </div>
       )}
       <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <label className="grid gap-2 text-sm">
-          <span className="text-white/58">选择媒体（多选）</span>
-          <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-black/20 p-2">
-            {mediaAssets.length === 0 ? (
-              <span className="text-xs text-white/34">媒体库暂无素材。</span>
-            ) : (
-              mediaAssets.map((asset) => (
-                <label
-                  key={asset.id}
-                  className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-white/5"
-                >
-                  <input
-                    type="checkbox"
-                    name="media_ids"
-                    value={asset.id}
-                    defaultChecked={mediaIds.includes(asset.id)}
-                    className="size-4 accent-cyan"
-                  />
-                  {asset.original_name}
-                </label>
-              ))
-            )}
-          </div>
-        </label>
+        <MediaPicker
+          assets={mediaAssets}
+          mode="multi"
+          fieldName="media_ids"
+          defaultValue={mediaIds}
+        />
         <Field
           label="排序"
           name="sort_order"
@@ -1020,22 +975,12 @@ function MediaBlockCard({
         </span>
       )}
       <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <label className="grid gap-2 text-sm">
-          <span className="text-white/58">选择媒体</span>
-          <select
-            name="media_id"
-            defaultValue={mediaId}
-            required
-            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-          >
-            <option value="">请选择……</option>
-            {mediaAssets.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.original_name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MediaPicker
+          assets={mediaAssets}
+          mode="single"
+          fieldName="media_id"
+          defaultValue={mediaId ? [mediaId] : []}
+        />
         <Field
           label="排序"
           name="sort_order"
