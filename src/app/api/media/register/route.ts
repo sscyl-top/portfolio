@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 interface RegisterPayload {
   storage_key: string;
@@ -14,6 +15,7 @@ interface RegisterPayload {
 }
 
 export async function POST(request: Request) {
+  // Step 1: Auth check using session-based client
   const supabase = await createSupabaseServerClient();
   const user = await getAuthorizedAdmin(supabase);
   if (!user) {
@@ -23,7 +25,6 @@ export async function POST(request: Request) {
   try {
     const body: RegisterPayload = await request.json();
 
-    // Validate required fields
     if (
       !body.storage_key ||
       !body.mime_type ||
@@ -33,9 +34,11 @@ export async function POST(request: Request) {
       return Response.json({ error: "缺少必要的元数据字段" }, { status: 400 });
     }
 
+    // Step 2: Insert into DB using service role (bypasses RLS)
+    const service = createSupabaseServiceClient();
     const id = randomUUID();
 
-    const { error: dbError } = await supabase
+    const { error: dbError } = await service
       .from("media_assets")
       .insert({
         id,
