@@ -69,7 +69,7 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="hidden justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40">
+        <div className="justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40">
           <Image
             src="/brand/infinite-progress-logo.svg"
             alt="无限进步"
