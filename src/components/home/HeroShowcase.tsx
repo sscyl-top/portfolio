@@ -35,7 +35,7 @@ const heroFloatingMediaCards = [
     videoKey: "side1" as const,
   },
   {
-    className: "z-10 left-0 top-[30%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
+    className: "z-10 left-0 top-[18%] hidden w-56 aspect-[1.18/1] md:block xl:left-2 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
