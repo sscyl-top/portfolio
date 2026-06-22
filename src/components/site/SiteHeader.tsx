@@ -22,26 +22,27 @@ export function SiteHeader({
 }) {
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/45 backdrop-blur-xl">
-      <nav className="mx-auto grid h-24 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-5 md:px-8">
+      <nav className="mx-auto grid h-16 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-4 md:h-24 md:px-8">
         <Link
           href="/"
           className="group flex min-w-0 items-center gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04]">
+          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04] md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               <Image
                 src={siteSettings.logoMediaUrl}
                 alt=""
-                width={48}
-                height={48}
+                width={40}
+                height={40}
+                className="md:w-12 md:h-12"
                 className="h-full w-full object-contain"
                 priority
               />
             ) : (
               <span
                 aria-hidden="true"
-                className="h-7 w-7 rounded-md border border-dashed border-white/24 bg-[radial-gradient(circle_at_50%_42%,rgba(255,255,255,0.28),transparent_38%),linear-gradient(135deg,rgba(139,215,205,0.18),rgba(201,162,127,0.16))]"
+                className="h-6 w-6 rounded-md border border-dashed border-white/24 bg-[radial-gradient(circle_at_50%_42%,rgba(255,255,255,0.28),transparent_38%),linear-gradient(135deg,rgba(139,215,205,0.18),rgba(201,162,127,0.16))] md:h-7 md:w-7"
               />
             )}
           </span>
@@ -61,7 +62,7 @@ export function SiteHeader({
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative px-5 py-3 text-base text-white/62 transition after:absolute after:inset-x-5 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 max-sm:px-3 max-sm:text-sm"
+                className="relative px-4 py-2.5 text-[15px] text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
@@ -69,13 +70,13 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="hidden justify-self-end md:grid md:h-16 md:w-40 md:place-items-center">
+        <div className="hidden justify-self-end sm:grid sm:h-12 sm:w-28 sm:place-items-center md:h-16 md:w-40">
           <Image
             src="/brand/infinite-progress-logo.svg"
             alt="无限进步"
             width={120}
             height={30}
-            className="h-auto w-32"
+            className="h-auto w-24 sm:w-28 md:w-32"
             priority
           />
         </div>

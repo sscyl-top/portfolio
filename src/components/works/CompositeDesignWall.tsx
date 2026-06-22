@@ -92,21 +92,21 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
   }
 
   return (
-    <section className="relative overflow-hidden px-5 pb-10 pt-48 md:px-8">
+    <section className="relative overflow-hidden px-4 pb-8 pt-24 md:px-8 md:pt-48 md:pb-10">
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-28 text-center">
+        <div className="mb-16 text-center md:mb-28">
           <p className="font-mono text-xs uppercase text-copper">
             Composite Design / Visual Flow
           </p>
-          <h2 className="mt-4 text-5xl font-semibold text-white md:text-7xl">
+          <h2 className="mt-3 text-4xl font-semibold text-white md:text-7xl">
             复合设计
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/56">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/56 md:text-base md:leading-8">
             用更密集的作品墙展示图案、装备、曲面贴花和多介质延展。当前为开发占位，后续可在后台替换图片与项目内容。
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4 md:gap-4">
           {displayWorks.map((work, index) => {
             const column = index % 4;
             const direction = column % 2 === 0 ? -1 : 1;
@@ -123,7 +123,7 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
                     "transform 420ms cubic-bezier(.2,.8,.2,1), border-color 300ms ease, background-color 300ms ease",
                 }}
               >
-                <article className="relative h-[300px] overflow-hidden rounded-md">
+                <article className="relative h-[200px] overflow-hidden rounded-md md:h-[300px]">
                   <div
                     className={`absolute inset-0 opacity-72 saturate-[0.72] transition duration-700 group-hover:scale-105 group-hover:opacity-0 ${toneClass(
                       work.coverTone,
@@ -170,7 +170,7 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-48 min-h-[680px] px-0 pb-8 pt-10 md:pt-16"
+          className="portfolio-cta-panel relative mt-24 min-h-[480px] px-0 pb-6 pt-8 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(0,0,0,0.72),transparent_42%)]" />
 
@@ -233,7 +233,7 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
             )}
           </div>
 
-          <div className="relative z-40 mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-end text-center">
+          <div className="relative z-40 mx-auto flex min-h-[440px] max-w-6xl flex-col items-center justify-end text-center md:min-h-[620px]">
             <div className="flex w-full flex-col items-center justify-center gap-5 pb-6 sm:w-auto sm:flex-row sm:gap-9 md:pb-5">
               <Link
                 href="/resume"

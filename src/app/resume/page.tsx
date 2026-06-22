@@ -1,4 +1,4 @@
-﻿import {
+import {
   Download,
   GraduationCap,
   Mail,
@@ -15,7 +15,7 @@ export default function ResumePage() {
     <main className="relative isolate overflow-hidden bg-[#050505]">
       <div className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-62" />
       <div className="works-route-blob works-route-blob-b pointer-events-none fixed z-0 h-[900px] w-[900px] rounded-full opacity-56" />
-      <section className="relative min-h-screen overflow-hidden px-5 pb-20 pt-28 md:px-8">
+      <section className="relative min-h-screen overflow-hidden px-4 pb-14 pt-22 md:px-8 md:pt-28">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_18%_22%,rgba(201,162,127,0.12),transparent_26%),radial-gradient(circle_at_78%_48%,rgba(139,215,205,0.1),transparent_30%)]" />
         <div className="absolute inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:96px_96px] opacity-20" />
 
@@ -26,7 +26,7 @@ export default function ResumePage() {
               <p>{resume.role}</p>
               <p>Portfolio / Resume 2026</p>
             </div>
-            <div className="grid gap-3 text-sm text-white/64 md:justify-items-end">
+            <div className="grid gap-2 text-[13px] text-white/64 md:justify-items-end md:text-sm">
               <a
                 className="inline-flex items-center gap-2 transition hover:text-white"
                 href={`mailto:${resume.contact.email}`}
@@ -49,20 +49,20 @@ export default function ResumePage() {
           </div>
 
           <div className="py-10 md:-translate-y-14">
-            <p className="font-mono text-sm uppercase text-copper">
+            <p className="font-mono text-xs uppercase text-copper md:text-sm">
               HI, I&apos;M {resume.name}
             </p>
-            <h1 className="mt-5 max-w-5xl text-6xl font-semibold leading-[0.84] text-white md:text-8xl lg:text-9xl">
+            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-white md:text-8xl lg:text-9xl">
               BRAND
               <span className="block text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.62)]">
                 VISUAL
               </span>
             </h1>
-            <div className="mt-8 flex max-w-4xl flex-wrap gap-2">
+            <div className="mt-5 flex max-w-4xl flex-wrap gap-1.5 md:mt-8 md:gap-2">
               {resume.highlights.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 font-mono text-xs text-white/56"
+                  className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 font-mono text-[11px] text-white/56 md:px-4 md:py-2 md:text-xs"
                 >
                   {item}
                 </span>
@@ -71,14 +71,14 @@ export default function ResumePage() {
           </div>
 
           <div className="grid gap-6 border-t border-white/10 pt-8 md:-translate-y-16 lg:grid-cols-[1fr_auto] lg:items-end">
-            <p className="max-w-3xl text-lg leading-8 text-white/66">
+            <p className="max-w-3xl text-[15px] leading-7 text-white/66 md:text-lg md:leading-8">
               我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。
             </p>
             <div className="flex flex-wrap gap-3">
               <a
                 href={resume.downloads.pdf}
                 download
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-copper"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-[13px] font-medium text-black transition hover:bg-copper md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
                 下载简历 PDF
@@ -86,7 +86,7 @@ export default function ResumePage() {
               <a
                 href={resume.downloads.jpg}
                 download
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/72 transition hover:border-white/40 hover:text-white"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 px-4 py-2.5 text-[13px] text-white/72 transition hover:border-white/40 hover:text-white md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
                 下载简历 JPG
@@ -96,7 +96,7 @@ export default function ResumePage() {
         </div>
       </section>
 
-      <section className="relative z-10 px-5 py-20 md:px-8">
+      <section className="relative z-10 px-4 py-14 md:px-8 md:py-20">
         <div className="mx-auto max-w-7xl space-y-6">
           <ResumeSection title="核心优势" subtitle="Core strengths">
             <div className="space-y-4">
@@ -172,13 +172,13 @@ export default function ResumePage() {
             <div className="border-t border-white/10 pt-4">
               <div
                 data-testid="education-school-summary"
-                className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-start"
+                className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4 md:items-start"
               >
                 <div>
                   <p className="font-mono text-xs uppercase text-white/36">
                     {resume.education.schoolEnglish}
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-white">
+                  <h3 className="mt-1.5 text-xl font-semibold text-white md:text-2xl">
                     {resume.education.school}
                   </h3>
                 </div>
@@ -186,7 +186,7 @@ export default function ResumePage() {
                   <p className="font-mono text-xs text-white/38">
                     {resume.education.majorEnglish}
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-white">
+                  <h3 className="mt-1.5 text-xl font-semibold text-white md:text-2xl">
                     {resume.education.major}
                   </h3>
                 </div>
@@ -203,7 +203,7 @@ export default function ResumePage() {
                   <article
                     key={`${achievement.label}-${achievement.value}`}
                     data-testid="education-achievement"
-                    className="flex h-24 flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-3.5"
+                    className="flex h-20 flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-3 md:h-24 md:p-3.5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-mono text-[10px] uppercase text-white/34">
@@ -253,7 +253,7 @@ export default function ResumePage() {
               {resume.education.activities.map((activity) => (
                 <article
                   key={`${activity.period}-${activity.title}`}
-                  className="grid gap-2 border-b border-white/10 py-4 md:grid-cols-[7.5rem_11rem_1fr] md:gap-5"
+                  className="grid gap-1.5 border-b border-white/10 py-3 md:grid-cols-[7.5rem_11rem_1fr] md:gap-5 md:py-4"
                 >
                   <p className="font-mono text-xs text-copper">
                     {activity.period}
@@ -295,11 +295,11 @@ function ResumeSection({
   return (
     <section
       data-testid={testId}
-      className="grid gap-8 rounded-lg border border-white/10 bg-white/[0.035] p-6 md:grid-cols-[0.35fr_1fr] md:p-8"
+      className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[0.35fr_1fr] md:gap-8 md:p-8"
     >
       <div>
         <p className="font-mono text-xs uppercase text-copper">{subtitle}</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">{title}</h2>
       </div>
       <div>{children}</div>
     </section>

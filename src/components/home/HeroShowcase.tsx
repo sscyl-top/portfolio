@@ -64,11 +64,11 @@ export function HeroShowcase() {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-screen overflow-hidden px-5 pb-20 pt-32 md:px-8"
+      className="relative min-h-screen overflow-hidden px-4 pb-16 pt-24 md:px-8 md:pt-32"
     >
       <AmbientParticles />
       <div className="grain" />
-      <div className="absolute inset-x-0 top-24 z-10 border-y border-white/10 bg-white/[0.025] py-3">
+      <div className="absolute inset-x-0 top-16 z-10 border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
         <div className="ticker-viewport font-mono text-xs text-white/40">
           <div className="ticker-track">
             {[0, 1].map((group) => (
@@ -91,12 +91,12 @@ export function HeroShowcase() {
 
           <div
             data-hero-reveal
-            className="mx-auto mt-10 grid max-w-[1420px] gap-6 md:grid-cols-[1fr_auto] md:items-end"
+            className="mx-auto mt-8 grid max-w-[1420px] gap-4 md:mt-10 md:grid-cols-[1fr_auto] md:items-end"
           >
-            <p className="font-mono text-sm font-semibold uppercase text-white/82">
+            <p className="font-mono text-xs font-semibold uppercase text-white/82 md:text-sm">
               AI / 3D / Motion Design Studio
             </p>
-            <span className="font-mono text-sm text-white/68">YR26</span>
+            <span className="font-mono text-xs text-white/68 md:text-sm">YR26</span>
           </div>
         </div>
       </div>
@@ -108,26 +108,26 @@ function HeroMainCard() {
   return (
     <div
       data-hero-reveal
-      className="relative mx-auto aspect-[16/9] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-5 shadow-2xl shadow-black"
+      className="relative mx-auto aspect-[4/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-4 shadow-2xl shadow-black md:aspect-[16/9] md:p-5"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
-      <div className="relative z-10 flex items-center justify-between font-mono text-xs uppercase text-white/50">
+      <div className="relative z-10 flex items-center justify-between font-mono text-[10px] uppercase text-white/50 md:text-xs">
         <span>CT DESIGN SYSTEM</span>
         <span>VIDEO SLOT / YR26</span>
       </div>
 
-      <div className="absolute left-5 top-14 rounded-full border border-white/12 bg-black/35 px-4 py-2 font-mono text-xs uppercase text-white/58">
+      <div className="absolute left-4 top-12 rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
         Upload video here
       </div>
 
-      <div className="absolute bottom-8 left-8 right-8 z-10">
+      <div className="absolute bottom-5 left-5 right-5 z-10 md:bottom-8 md:left-8 md:right-8">
         <p className="font-mono text-xs uppercase text-copper">
           Brand Visual / AI Design / Web Experience
         </p>
-        <h1 className="mt-4 max-w-2xl text-3xl font-semibold leading-[1.02] text-white md:text-5xl">
+        <h1 className="mt-3 max-w-2xl text-2xl font-semibold leading-[1.05] text-white md:text-5xl">
           让品牌视觉拥有可被记住的数字现场
         </h1>
-        <p className="mt-5 max-w-xl text-sm leading-7 text-white/62 md:text-base">
+        <p className="mt-4 max-w-xl text-[13px] leading-6 text-white/62 md:text-base">
           {resume.positioning}
         </p>
       </div>
