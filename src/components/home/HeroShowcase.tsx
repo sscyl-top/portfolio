@@ -291,7 +291,7 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg border border-white/20 bg-zinc-900 shadow-2xl shadow-black/70 transition duration-500 hover:scale-[1.02] ${className}`}
+      className={`absolute overflow-hidden rounded-lg border border-white/50 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(255,255,255,0.18)] transition duration-500 hover:scale-[1.02] ${className}`}
     >
       {videoSrc ? (
         <video
@@ -310,7 +310,7 @@ export function FloatingImageCard({
           }`}
         />
       )}
-      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
+      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10" />
     </div>
   );
 }
