@@ -30,7 +30,7 @@ describe("HeroShowcase", () => {
     });
   });
 
-  it("renders three floating media cards with opaque backing", () => {
+  it("renders three floating media cards with opaque solid background (inline style)", () => {
     render(<HeroShowcase />);
 
     const cards = screen.getAllByTestId("hero-floating-media-card");
@@ -40,8 +40,7 @@ describe("HeroShowcase", () => {
       cards.every(
         (card) =>
           !card.className.includes("grayscale") &&
-          card.className.includes("bg-zinc-900") &&
-          card.className.includes("hover:scale-[1.02]"),
+          card.style.backgroundColor === "rgb(37, 37, 37)",
       ),
     ).toBe(true);
   });

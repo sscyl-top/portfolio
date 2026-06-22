@@ -291,24 +291,38 @@ export function FloatingImageCard({
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
-      className={`absolute overflow-hidden rounded-lg border-2 border-white/80 bg-zinc-900 shadow-[0_0_40px_-10px_rgba(255,255,255,0.2)] transition duration-500 hover:scale-[1.02] ${className}`}
+      className={`absolute overflow-hidden rounded-lg ${className}`}
+      style={{
+        backgroundColor: "#252525",
+        border: "2px solid rgba(255,255,255,0.85)",
+        boxShadow: "0 0 48px -12px rgba(255,255,255,0.22)",
+      }}
     >
       {videoSrc ? (
         <video
           data-testid="hero-floating-media-video"
           src={videoSrc}
-          className="absolute inset-1 object-cover rounded"
+          style={{ position: "absolute", top: 10, right: 10, bottom: 10, left: 10 }}
           autoPlay
           muted
           loop
           playsInline
         />
       ) : (
-        <div className="absolute inset-1 overflow-hidden rounded">
+        <div
+          className="absolute rounded overflow-hidden"
+          style={{
+            inset: "10px",
+            ...(tones[tone] ? { backgroundImage: undefined } : {}),
+          }}
+        >
           <div className={`absolute inset-0 ${tones[tone]}`} />
         </div>
       )}
-      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10" />
+      <div
+        className="pointer-events-none absolute inset-0 rounded-lg"
+        style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)" }}
+      />
     </div>
   );
 }
