@@ -24,19 +24,17 @@ const fanSlots = [
 ];
 
 const CARD_COUNT = 7;
-const TOTAL_VISIBLE = 7;
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, CARD_COUNT);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const frameRef = useRef<number | null>(null);
 
-  // Mobile fan
+  // Mobile carousel
   const [centerIndex, setCenterIndex] = useState(3);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showCards, setShowCards] = useState(true);
+  const [slideDir, setSlideDir] = useState<"left" | "right" | null>(null);
+  const [containerOffset, setContainerOffset] = useState(0);
   const touchStartX = useRef(0);
   const accumulatedDrag = useRef(0);
 
@@ -44,49 +42,46 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     return () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); };
   }, []);
 
-  const snapTo = (idx: number) => {
+  const snapTo = (idx: number, dir: "left" | "right") => {
     if (isAnimating) return;
     setIsAnimating(true);
-    setDragOffset(0);
-    accumulatedDrag.current = 0;
-    setShowCards(false);
+    setSlideDir(dir);
+    setContainerOffset(dir === "left" ? -30 : 30);
     setTimeout(() => {
       setCenterIndex(idx);
-      setShowCards(true);
-    }, 50);
-    setTimeout(() => setIsAnimating(false), 500);
+      setContainerOffset(0);
+      setTimeout(() => {
+        setIsAnimating(false);
+        setSlideDir(null);
+      }, 400);
+    }, 80);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
     accumulatedDrag.current = 0;
-    setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isAnimating) return;
-    const dx = e.touches[0].clientX - touchStartX.current;
-    accumulatedDrag.current = dx;
-    setDragOffset(dx);
+    if (isAnimating) return;
+    accumulatedDrag.current = e.touches[0].clientX - touchStartX.current;
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || isAnimating) { setIsDragging(false); return; }
-    setIsDragging(false);
+    if (isAnimating) return;
     const dx = accumulatedDrag.current;
-    if (Math.abs(dx) > 60) {
-      const dir = dx > 0 ? -1 : 1;
-      snapTo(((centerIndex + dir) % CARD_COUNT + CARD_COUNT) % CARD_COUNT);
-    } else {
-      snapTo(centerIndex);
+    if (Math.abs(dx) > 40) {
+      const dir = dx > 0 ? "right" : "left";
+      const step = dx > 0 ? -1 : 1;
+      snapTo(((centerIndex + step) % CARD_COUNT + CARD_COUNT) % CARD_COUNT, dir);
     }
   };
 
-  // Build positions relative to center
-  const visibleCards = [];
-  for (let i = 0; i < TOTAL_VISIBLE; i++) {
-    const relPos = i - 3; // -3, -2, -1, 0, 1, 2, 3
+  // Build positions — fixed relPos slots, content cycles
+  const visibleCards: { work: Work; realIndex: number; relPos: number }[] = [];
+  for (let i = 0; i < CARD_COUNT; i++) {
+    const relPos = i - 3;
     const absIdx = (((centerIndex + relPos) % CARD_COUNT) + CARD_COUNT) % CARD_COUNT;
     visibleCards.push({ work: displayWorks[absIdx], realIndex: absIdx, relPos });
   }
@@ -153,14 +148,13 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}>
-          <div className="relative mx-auto h-[420px] w-full max-w-[320px] overflow-visible">
+          <div className="relative mx-auto h-[420px] w-full max-w-[320px] overflow-visible" style={{ transform: `translateX(${containerOffset}px)`, transition: containerOffset === 0 ? "transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2)" : "none" }}>
             {visibleCards.map(({ work, realIndex, relPos }) => {
               const absPos = Math.abs(relPos);
               const isCenter = relPos === 0;
               
               // Position: spread cards left and right
-              const baseX = relPos * 85;
-              const x = baseX + dragOffset;
+              const x = relPos * 85;
               
               // Scale: center full, edges smaller
               const scale = isCenter ? 1 : 0.82 - absPos * 0.04;
@@ -169,11 +163,10 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               const y = absPos * 14;
               
               // Rotation
-              const rotate = relPos * 4 + dragOffset * 0.03;
+              const rotate = relPos * 4;
               
               // Opacity
-              const computedOpacity = isCenter ? 1 : 0.55 - absPos * 0.09;
-              const opacity = showCards ? computedOpacity : 0;
+              const opacity = isCenter ? 1 : 0.55 - absPos * 0.09;
               
               // Z-index
               const zIdx = isCenter ? 20 : 10 - absPos;
@@ -184,7 +177,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 top: 0,
                 width: "80%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-                transition: "opacity 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                transition: "opacity 0.3s ease",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
@@ -192,7 +185,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
               return (
                 <Link
-                  key={realIndex}
+                  key={`slot-${relPos}`}
                   href={`/works/${work.slug}`}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
