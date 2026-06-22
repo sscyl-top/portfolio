@@ -391,6 +391,35 @@ const galleryBlockUpdateSchema = z.object({
   is_visible: z.boolean(),
 });
 
+const videoBlockSchema = z.object({
+  block_id: z.string().uuid().optional(),
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  media_id: z.string().uuid(),
+  caption: z.string().trim().max(300).default(""),
+  sort_order: z.coerce.number().int().default(0),
+  is_visible: z.boolean(),
+});
+
+const beforeAfterBlockSchema = z.object({
+  block_id: z.string().uuid().optional(),
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  before_media_id: z.string().uuid(),
+  after_media_id: z.string().uuid(),
+  caption: z.string().trim().max(300).default(""),
+  sort_order: z.coerce.number().int().default(0),
+  is_visible: z.boolean(),
+});
+
 export async function createMediaBlock(formData: FormData) {
   const parsed = mediaBlockSchema.safeParse({
     work_id: formData.get("work_id"),
@@ -472,7 +501,125 @@ export async function deleteWorkBlock(formData: FormData) {
 
   const { client } = await requireAdmin();
   const { block_id, work_id, work_slug } = parsed.data;
-  const { error } = await client.from("work_blocks").delete().eq("id", block_id);
+  const { error } = await client.from("work_blocks").delete()    .eq("id", block_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function createVideoBlock(formData: FormData) {
+  const parsed = videoBlockSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    media_id: formData.get("media_id"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client.from("work_blocks").insert({
+    work_id,
+    block_type: "video",
+    sort_order,
+    is_visible,
+    payload: { media_id, caption },
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function updateVideoBlock(formData: FormData) {
+  const parsed = videoBlockSchema.safeParse({
+    block_id: formData.get("block_id"),
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    media_id: formData.get("media_id"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success || !parsed.data.block_id) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client
+    .from("work_blocks")
+    .update({ sort_order, is_visible, payload: { media_id, caption } })
+    .eq("id", block_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function createBeforeAfterBlock(formData: FormData) {
+  const parsed = beforeAfterBlockSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    before_media_id: formData.get("before_media_id"),
+    after_media_id: formData.get("after_media_id"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client.from("work_blocks").insert({
+    work_id,
+    block_type: "before_after",
+    sort_order,
+    is_visible,
+    payload: { before_media_id, after_media_id, caption },
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+export async function updateBeforeAfterBlock(formData: FormData) {
+  const parsed = beforeAfterBlockSchema.safeParse({
+    block_id: formData.get("block_id"),
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+    before_media_id: formData.get("before_media_id"),
+    after_media_id: formData.get("after_media_id"),
+    caption: formData.get("caption") ?? "",
+    sort_order: formData.get("sort_order") || 0,
+    is_visible: formData.get("is_visible") === "on",
+  });
+
+  if (!parsed.success || !parsed.data.block_id) return;
+
+  const { client } = await requireAdmin();
+  const { block_id, work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
+    parsed.data;
+  const { error } = await client
+    .from("work_blocks")
+    .update({
+      sort_order,
+      is_visible,
+      payload: { before_media_id, after_media_id, caption },
+    })
+    .eq("id", block_id);
 
   if (error) throw new Error(error.message);
 
