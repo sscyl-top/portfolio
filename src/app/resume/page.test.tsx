@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 import ResumePage from "./page";
 
 describe("ResumePage education", () => {
-  it("keeps campus experience and renders a six-card education grid", () => {
-    render(<ResumePage />);
+  it("keeps campus experience and renders a six-card education grid", async () => {
+    const ui = await ResumePage();
+    render(ui);
 
     expect(screen.getByText("校园经历")).toBeInTheDocument();
 

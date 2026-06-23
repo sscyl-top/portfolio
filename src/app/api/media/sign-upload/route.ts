@@ -24,10 +24,20 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { filename } = body;
+    const { filename, fileSize } = body;
 
     if (!filename) {
       return Response.json({ error: "缺少文件名" }, { status: 400 });
+    }
+
+    // 10GB 单文件上限
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024;
+    const size = typeof fileSize === "number" ? fileSize : 0;
+    if (size > MAX_FILE_SIZE) {
+      return Response.json(
+        { error: `单文件大小不能超过 10GB（当前 ${Math.round(size / 1024 / 1024 / 1024)}GB）` },
+        { status: 413 },
+      );
     }
 
     const id = randomUUID();

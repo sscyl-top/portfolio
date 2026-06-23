@@ -9,7 +9,6 @@ import {
   FileText,
   Type,
   Columns2,
-  X,
   UploadCloud,
   Trash2,
   Pencil,
@@ -19,6 +18,7 @@ import {
   Crop,
   Images,
   Layers,
+  Crosshair,
 } from "lucide-react";
 import {
   reorderWorkBlocks,
@@ -69,12 +69,13 @@ const BLOCK_TYPE_META = {
 
 // ── 布局类型 ─────────────────────────────────────────────
 
-type LayoutWidth = "full" | "contained" | "narrow";
+type LayoutWidth = "full" | "contained" | "narrow" | "free";
 
 const LAYOUT_WIDTH_OPTIONS = [
   { value: "full"      as const, label: "通栏",  desc: "满宽显示" },
   { value: "contained" as const, label: "约束",  desc: "最大1100px居中" },
   { value: "narrow"    as const, label: "窄版",  desc: "最大768px居中" },
+  { value: "free"      as const, label: "自由",  desc: "类 PPT 自由定位" },
 ];
 
 const LAYOUT_ALIGN_OPTIONS = [
@@ -88,24 +89,33 @@ const GALLERY_COLUMN_OPTIONS = [
   { value: 4 as const, label: "4列" },
 ];
 
+type FreeLayout = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
 /** 从 payload 中安全读取 layout 字段 */
 function getLayout(payload: Record<string, unknown>): {
   width: LayoutWidth;
   align: "left" | "center";
   columns: 2 | 3 | 4;
+  free?: FreeLayout;
 } {
   const l = (payload.layout ?? {}) as Record<string, unknown>;
   return {
     width:  (l.width  as LayoutWidth) ?? "contained",
     align:  (l.align  as "left" | "center") ?? "left",
     columns: (l.columns as 2 | 3 | 4) ?? 3,
+    free:   l.free as FreeLayout | undefined,
   };
 }
 
 /** 将 layout 合并写回 payload */
 function withLayout(
   payload: Record<string, unknown>,
-  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 }>,
+  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4; free?: FreeLayout }>,
 ): Record<string, unknown> {
   return {
     ...payload,
@@ -191,10 +201,46 @@ function LayoutBar({
 
       {/* 布局说明 */}
       <span className="ml-auto text-[10px] text-white/20">
-        {layout.width === "full" ? "满宽通栏" : layout.width === "contained" ? "约束宽度居中" : "窄版居中"}
+        {layout.width === "full" ? "满宽通栏" : layout.width === "contained" ? "约束宽度居中" : layout.width === "free" ? "自由定位" : "窄版居中"}
         {blockType === "gallery" ? ` · ${layout.columns}列` : ""}
         {blockType === "text" ? ` · ${layout.align === "center" ? "居中" : "左对齐"}` : ""}
       </span>
+    </div>
+  );
+}
+
+// ── 自由定位编辑器 ─────────────────────────────────────────
+
+function FreePositionPanel({
+  free,
+  onChange,
+}: {
+  free?: FreeLayout;
+  onChange: (patch: Partial<FreeLayout>) => void;
+}) {
+  const values = {
+    x: free?.x ?? 0,
+    y: free?.y ?? 0,
+    w: free?.w ?? 50,
+    h: free?.h ?? 50,
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-4 py-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-white/25">自由定位 (%)</span>
+      {(["x", "y", "w", "h"] as const).map((key) => (
+        <label key={key} className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-white/40">{key.toUpperCase()}</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={values[key]}
+            onChange={(e) => onChange({ [key]: Number(e.target.value) })}
+            className="h-7 w-16 rounded-md border border-white/10 bg-black/20 px-2 text-xs text-white/80 outline-none focus:border-cyan"
+          />
+        </label>
+      ))}
     </div>
   );
 }
@@ -207,6 +253,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
@@ -229,18 +276,19 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [, startTransition] = useTransition();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlocks([...initialBlocks].sort((a, b) => a.sort_order - b.sort_order));
   }, [initialBlocks]);
 
   // ── 持久化顺序 ───────────────────────────────────────────
 
   const persistOrder = useCallback(
-    (newBlocks: VisualBlock[]) => {
+    (orderedBlocks: VisualBlock[]) => {
       startTransition(() => {
         void reorderWorkBlocks(
           workId,
           workSlug,
-          newBlocks.map((b) => b.id),
+          orderedBlocks.map((b) => b.id),
         );
       });
     },
@@ -292,17 +340,16 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           });
         }
 
-        setBlocks((prev) => {
-          const updated = [...prev];
-          updated.forEach((b) => {
-            if (b.sort_order >= insertAt) b.sort_order += results.length;
-          });
-          const merged = [...updated, ...newBlocks].sort((a, b) => a.sort_order - b.sort_order);
-          merged.forEach((b, i) => { b.sort_order = i; });
-          return merged;
+        const merged = [...blocks];
+        merged.forEach((b) => {
+          if (b.sort_order >= insertAt) b.sort_order += results.length;
         });
+        merged.push(...newBlocks);
+        merged.sort((a, b) => a.sort_order - b.sort_order);
+        merged.forEach((b, i) => { b.sort_order = i; });
 
-        persistOrder(newBlocks);
+        setBlocks(merged);
+        persistOrder(merged);
         router.refresh();
       } catch (err) {
         console.error("Upload failed:", err);
@@ -311,7 +358,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         setUploadProgress({});
       }
     },
-    [workId, workSlug, router, persistOrder],
+    [workId, workSlug, router, persistOrder, blocks],
   );
 
   // ── 上传多张图片创建图库块 ───────────────────────────────
@@ -343,14 +390,16 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           payload,
         };
 
-        setBlocks((prev) => {
-          const updated = [...prev];
-          updated.forEach((b) => {
-            if (b.sort_order >= insertAt) b.sort_order += 1;
-          });
-          return [...updated, newBlock].sort((a, b) => a.sort_order - b.sort_order);
+        const merged = [...blocks];
+        merged.forEach((b) => {
+          if (b.sort_order >= insertAt) b.sort_order += 1;
         });
+        merged.push(newBlock);
+        merged.sort((a, b) => a.sort_order - b.sort_order);
+        merged.forEach((b, i) => { b.sort_order = i; });
 
+        setBlocks(merged);
+        persistOrder(merged);
         router.refresh();
       } catch (err) {
         console.error("Create gallery failed:", err);
@@ -359,7 +408,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         setUploadProgress({});
       }
     },
-    [workId, workSlug, router],
+    [workId, workSlug, router, persistOrder, blocks],
   );
 
   // ── 上传图片并追加到图库块 ───────────────────────────────
@@ -522,7 +571,15 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [workId, workSlug, router, blocks, croppingBlockId],
   );
 
-  // ── 拖拽文件事件 ─────────────────────────────────────────
+  // ── 拖拽辅助 ─────────────────────────────────────────────
+
+  const isFileDrag = useCallback((e: React.DragEvent) => {
+    return Array.from(e.dataTransfer.types).includes("Files");
+  }, []);
+
+  const isBlockDrag = useCallback((e: React.DragEvent) => {
+    return Array.from(e.dataTransfer.types).includes("block-id");
+  }, []);
 
   const handleFilesDrop = useCallback(
     async (files: File[], insertAt: number) => {
@@ -551,6 +608,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     const handleDrop = () => {
       setIsDraggingFile(false);
       setDragOverIndex(null);
+      setDraggedBlockId(null);
     };
     document.addEventListener("dragenter", handleDragEnter);
     document.addEventListener("dragleave", handleDragLeave);
@@ -562,20 +620,53 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     };
   }, []);
 
-  const onDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (e.dataTransfer.types.includes("Files")) setDragOverIndex(index);
-  }, []);
+  const moveBlockToIndex = useCallback(
+    (blockId: string, targetIndex: number) => {
+      const sourceIndex = blocks.findIndex((b) => b.id === blockId);
+      if (sourceIndex === -1) return;
+
+      const reordered = [...blocks];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      const adjustedTarget = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+      reordered.splice(adjustedTarget, 0, moved);
+      reordered.forEach((b, i) => { b.sort_order = i; });
+
+      setBlocks(reordered);
+      persistOrder(reordered);
+    },
+    [blocks, persistOrder],
+  );
+
+  const onDragOver = useCallback(
+    (e: React.DragEvent, index: number) => {
+      e.preventDefault();
+      if (isFileDrag(e) || isBlockDrag(e)) {
+        setDragOverIndex(index);
+      }
+    },
+    [isFileDrag, isBlockDrag],
+  );
 
   const onDropAt = useCallback(
     async (e: React.DragEvent, insertAt: number) => {
       e.preventDefault();
       setDragOverIndex(null);
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length === 0) return;
-      await handleFilesDrop(files, insertAt);
+
+      if (isBlockDrag(e)) {
+        const blockId = e.dataTransfer.getData("block-id");
+        if (!blockId) return;
+        moveBlockToIndex(blockId, insertAt);
+        setDraggedBlockId(null);
+        return;
+      }
+
+      if (isFileDrag(e)) {
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+        await handleFilesDrop(files, insertAt);
+      }
     },
-    [handleFilesDrop],
+    [handleFilesDrop, isBlockDrag, isFileDrag, moveBlockToIndex],
   );
 
   // ── 文件输入变化（"上传文件"按钮 / 更换媒体）────────────
@@ -861,8 +952,15 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 isEditing={editingBlockId === block.id}
                 onEdit={() => setEditingBlockId(editingBlockId === block.id ? null : block.id)}
                 onDelete={() => handleDeleteBlock(block.id)}
-                onDragOver={(e) => onDragOver(e, index)}
-                onDrop={(e) => onDropAt(e, index)}
+                onDragOver={(e) => {
+                  // 块级拖拽排序仅通过 InsertTrigger 间隙完成，避免块卡片本身拦截
+                  if (isBlockDrag(e)) return;
+                  onDragOver(e, index);
+                }}
+                onDrop={(e) => {
+                  if (isBlockDrag(e)) return;
+                  void onDropAt(e, index);
+                }}
                 dragOverIndex={dragOverIndex}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
@@ -1025,8 +1123,14 @@ function BlockCard({
             : "border-white/10 bg-white/[0.02] hover:border-white/20"
       }`}
       draggable
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={() => setIsDragging(false)}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("block-id", block.id);
+        e.dataTransfer.effectAllowed = "move";
+        setIsDragging(true);
+      }}
+      onDragEnd={() => {
+        setIsDragging(false);
+      }}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -1076,6 +1180,16 @@ function BlockCard({
           layout={getLayout(block.payload)}
           onChange={(patch) => {
             const newPayload = withLayout(block.payload, patch);
+            onUpdatePayload(newPayload);
+          }}
+        />
+      ) : null}
+      {isEditing && getLayout(block.payload).width === "free" && (block.block_type === "media" || block.block_type === "video") ? (
+        <FreePositionPanel
+          free={getLayout(block.payload).free}
+          onChange={(patch) => {
+            const current = getLayout(block.payload).free ?? { x: 0, y: 0, w: 50, h: 50 };
+            const newPayload = withLayout(block.payload, { free: { ...current, ...patch } });
             onUpdatePayload(newPayload);
           }}
         />
@@ -1226,51 +1340,157 @@ function InlineMediaEditor({
   const isImage = block.block_type === "media";
 
   const [caption, setCaption] = useState(String(payload.caption ?? ""));
+  const initialFocal = payload.focal_point as { x?: number; y?: number } | undefined;
+  const [focal, setFocal] = useState({
+    x: initialFocal?.x ?? 50,
+    y: initialFocal?.y ?? 50,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const focalDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const payloadRef = useRef(payload);
+
+  useEffect(() => {
+    payloadRef.current = payload;
+  }, [payload]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onUpdatePayload({ ...payload, caption });
+      onUpdatePayload({ ...payloadRef.current, caption });
     }, 600);
     return () => clearTimeout(timer);
-  }, [caption]);
+  }, [caption, onUpdatePayload]);
+
+  const updateFocalPayload = useCallback(
+    (newFocal: { x: number; y: number }) => {
+      if (focalDebounceRef.current) clearTimeout(focalDebounceRef.current);
+      focalDebounceRef.current = setTimeout(() => {
+        onUpdatePayload({ ...payloadRef.current, focal_point: newFocal });
+      }, 400);
+    },
+    [onUpdatePayload],
+  );
+
+  const handleFocalMove = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!imageContainerRef.current) return;
+      const rect = imageContainerRef.current.getBoundingClientRect();
+      const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+      setFocal({ x, y });
+      updateFocalPayload({ x, y });
+    },
+    [updateFocalPayload],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isImage) return;
+      setIsDragging(true);
+      handleFocalMove(e.clientX, e.clientY);
+    },
+    [isImage, handleFocalMove],
+  );
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleFocalMove(e.clientX, e.clientY);
+    const onUp = () => setIsDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isDragging, handleFocalMove]);
+
+  const resetFocal = useCallback(() => {
+    setFocal({ x: 50, y: 50 });
+    updateFocalPayload({ x: 50, y: 50 });
+  }, [updateFocalPayload]);
+
+  const hasCustomFocal =
+    Math.abs(focal.x - 50) > 0.5 || Math.abs(focal.y - 50) > 0.5;
 
   return (
     <div className="space-y-3">
       {/* 媒体预览 */}
       <div className="relative group/media">
-        {url && isImage ? (
-          <img
-            src={url}
-            alt={caption}
-            className="max-h-80 w-full rounded-md object-cover"
-          />
-        ) : url && block.block_type === "video" ? (
-          <video src={url} controls className="max-h-80 w-full rounded-md object-cover" />
-        ) : asset ? (
-          <div className="flex items-center gap-3 rounded-md bg-white/5 p-4">
-            <FileText className="h-10 w-10 text-orange-400/60" />
-            <div>
-              <p className="text-sm text-white/80">{asset.original_name}</p>
-              <p className="text-xs text-white/40">{(asset as MediaAsset & { byte_size?: number }).byte_size ? `${Math.round(((asset as MediaAsset & { byte_size: number }).byte_size as number) / 1024)} KB` : ""}</p>
+        <div
+          ref={imageContainerRef}
+          className={isImage && url ? "relative cursor-crosshair" : ""}
+          onMouseDown={isImage && url ? handleMouseDown : undefined}
+        >
+          {url && isImage ? (
+            <img
+              src={url}
+              alt={caption}
+              className="max-h-80 w-full rounded-md object-cover"
+              style={{ objectPosition: `${focal.x}% ${focal.y}%` }}
+              draggable={false}
+            />
+          ) : url && block.block_type === "video" ? (
+            <video src={url} controls className="max-h-80 w-full rounded-md object-cover" />
+          ) : asset ? (
+            <div className="flex items-center gap-3 rounded-md bg-white/5 p-4">
+              <FileText className="h-10 w-10 text-orange-400/60" />
+              <div>
+                <p className="text-sm text-white/80">{asset.original_name}</p>
+                <p className="text-xs text-white/40">{(asset as MediaAsset & { byte_size?: number }).byte_size ? `${Math.round(((asset as MediaAsset & { byte_size: number }).byte_size as number) / 1024)} KB` : ""}</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex h-32 items-center justify-center rounded-md bg-white/5 text-sm text-white/30">
-            未选择媒体
-          </div>
-        )}
+          ) : (
+            <div className="flex h-32 items-center justify-center rounded-md bg-white/5 text-sm text-white/30">
+              未选择媒体
+            </div>
+          )}
+
+          {/* 焦点位置指示器 */}
+          {isImage && url ? (
+            <div
+              className="pointer-events-none absolute z-10"
+              style={{
+                left: `${focal.x}%`,
+                top: `${focal.y}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition ${
+                  isDragging
+                    ? "border-cyan bg-cyan/30 scale-110"
+                    : "border-white/80 bg-black/40"
+                }`}
+              >
+                <Crosshair className="h-3.5 w-3.5 text-white" />
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {/* 操作按钮（悬浮在预览图上） */}
         <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition group-hover/media:opacity-100">
           {isImage ? (
-            <button
-              type="button"
-              onClick={onCropImage}
-              className="rounded-md bg-black/60 p-2 text-white/70 transition hover:bg-black/80 hover:text-white"
-              title="裁剪图片"
-            >
-              <Crop className="h-4 w-4" />
-            </button>
+            <>
+              {hasCustomFocal ? (
+                <button
+                  type="button"
+                  onClick={resetFocal}
+                  className="rounded-md bg-black/60 p-2 text-white/70 transition hover:bg-black/80 hover:text-white"
+                  title="重置位置"
+                >
+                  <Crosshair className="h-4 w-4" />
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={onCropImage}
+                className="rounded-md bg-black/60 p-2 text-white/70 transition hover:bg-black/80 hover:text-white"
+                title="裁剪图片"
+              >
+                <Crop className="h-4 w-4" />
+              </button>
+            </>
           ) : null}
           <button
             type="button"
@@ -1282,6 +1502,14 @@ function InlineMediaEditor({
           </button>
         </div>
       </div>
+
+      {/* 焦点位置提示 */}
+      {isImage && url ? (
+        <p className="text-[10px] text-white/30">
+          在图片上拖动可调整焦点位置（影响满宽裁剪时的可见区域）
+          {hasCustomFocal ? ` · 当前 ${Math.round(focal.x)}% / ${Math.round(focal.y)}%` : ""}
+        </p>
+      ) : null}
 
       {/* 说明文字编辑 */}
       <div>
@@ -1319,6 +1547,7 @@ function InlineGalleryEditor({
   const displayAssets = refs.length > 0 ? refs : mediaAssets.filter((a) => mediaIds.includes(a.id));
 
   const [caption, setCaption] = useState(String(payload.caption ?? ""));
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1327,19 +1556,48 @@ function InlineGalleryEditor({
     return () => clearTimeout(timer);
   }, [caption]);
 
+  const reorder = (from: number, to: number) => {
+    if (from === to) return;
+    const nextIds = [...mediaIds];
+    const nextRefs = [...refs];
+    const [movedId] = nextIds.splice(from, 1);
+    const [movedRef] = nextRefs.splice(from, 1);
+    nextIds.splice(to, 0, movedId);
+    nextRefs.splice(to, 0, movedRef);
+    onUpdatePayload({ ...payload, media_ids: nextIds, media_refs: nextRefs });
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
-        图库 · {displayAssets.length} 张图片
+        图库 · {displayAssets.length} 张图片（拖拽图片可排序）
       </p>
       <div className="grid grid-cols-3 gap-2">
         {displayAssets.map((asset: { id?: string; storage_key: string }, i: number) => (
-          <img
+          <div
             key={asset.id ?? i}
-            src={buildPublicMediaUrl(asset.storage_key)}
-            alt=""
-            className="aspect-square rounded-md object-cover"
-          />
+            draggable
+            onDragStart={() => setDragIndex(i)}
+            onDragOver={(e) => {
+              e.preventDefault();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = dragIndex;
+              if (from === null) return;
+              reorder(from, i);
+              setDragIndex(null);
+            }}
+            className={`group relative aspect-square cursor-move overflow-hidden rounded-md border-2 ${
+              dragIndex === i ? "border-cyan opacity-50" : "border-transparent hover:border-cyan/40"
+            }`}
+          >
+            <img
+              src={buildPublicMediaUrl(asset.storage_key)}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
         ))}
         {/* 添加更多图片按钮 */}
         <label className="flex aspect-square cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-white/15 text-white/20 transition hover:border-cyan/30 hover:text-cyan/60">
@@ -1499,14 +1757,29 @@ function BlockPreview({
     const mediaId = String(payload.media_id ?? "");
     const asset = mediaAssets.find((a) => a.id === mediaId);
     const url = asset ? buildPublicMediaUrl(asset.storage_key) : null;
+    const layout = getLayout(payload);
+    const freeStyle = layout.width === "free" && layout.free
+      ? {
+          position: "absolute" as const,
+          left: `${layout.free.x}%`,
+          top: `${layout.free.y}%`,
+          width: `${layout.free.w}%`,
+          height: `${layout.free.h}%`,
+        }
+      : undefined;
     return (
-      <div>
+      <div className={freeStyle ? "relative h-64 w-full rounded-md border border-white/10" : undefined}>
         {url ? (
-          <img src={url} alt={String(payload.caption ?? "")} className="max-h-64 rounded-md object-cover" />
+          <img
+            src={url}
+            alt={String(payload.caption ?? "")}
+            className={freeStyle ? "rounded-md object-contain" : "max-h-64 rounded-md object-cover"}
+            style={freeStyle}
+          />
         ) : (
           <div className="flex h-32 items-center justify-center rounded-md bg-white/5 text-sm text-white/30">未选择媒体</div>
         )}
-        {payload.caption ? <p className="mt-2 text-sm text-white/50">{String(payload.caption)}</p> : null}
+        {payload.caption && !freeStyle ? <p className="mt-2 text-sm text-white/50">{String(payload.caption)}</p> : null}
       </div>
     );
   }

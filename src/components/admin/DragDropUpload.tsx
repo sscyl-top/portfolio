@@ -15,7 +15,7 @@ export function DragDropUpload({
   onUpload,
   accept = "image/*,video/*,application/pdf",
   multiple = true,
-  maxSize = 25 * 1024 * 1024,
+  maxSize = 10 * 1024 * 1024 * 1024,
   children,
   className = "",
 }: DragDropUploadProps) {

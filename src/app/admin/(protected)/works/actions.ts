@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -11,6 +11,28 @@ import {
   hashPrivatePreviewToken,
 } from "@/lib/cms/private-preview";
 import { seedStaticPortfolioData } from "@/lib/cms/seed-static-portfolio";
+import {
+  archiveWorkVersion,
+  listWorkVersions,
+  rollbackWorkVersion,
+} from "@/lib/cms/versions";
+
+/**
+ * 静默自动归档：在修改作品成功后调用。
+ * 失败时只记录日志，不阻断主操作。
+ */
+async function autoArchiveAfterChange(
+  client: Awaited<ReturnType<typeof requireAdmin>>["client"],
+  workId: string,
+  adminUserId: string,
+  label?: string,
+) {
+  try {
+    await archiveWorkVersion(client, workId, adminUserId, label, "auto");
+  } catch (err) {
+    console.error("[autoArchive] 自动归档失败:", err);
+  }
+}
 
 const draftWorkSchema = z.object({
   title: z.string().trim().min(1).max(120),
@@ -51,6 +73,7 @@ const workUpdateSchema = z.object({
   composite_order: z.coerce.number().int().nullable(),
   seo_title: z.string().trim().max(120),
   seo_description: z.string().trim().max(300),
+  scheduled_publish_at: z.string().datetime().nullable().default(null),
 });
 
 const textBlockSchema = z.object({
@@ -193,11 +216,13 @@ export async function updateWorkMedia(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, ...values } = parsed.data;
   const { error } = await client.from("works").update(values).eq("id", work_id);
 
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, work_id, user.id, "更新作品媒体");
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${work_id}`);
@@ -215,7 +240,7 @@ export async function updateWorkTaxonomy(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, category_ids, tag_ids } = parsed.data;
   const [{ error: categoryDeleteError }, { error: tagDeleteError }] =
     await Promise.all([
@@ -243,6 +268,8 @@ export async function updateWorkTaxonomy(formData: FormData) {
 
   if (categoryInsertError) throw new Error(categoryInsertError.message);
   if (tagInsertError) throw new Error(tagInsertError.message);
+
+  await autoArchiveAfterChange(client, work_id, user.id, "更新作品分类与标签");
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${work_id}`);
@@ -275,6 +302,9 @@ export async function updateWork(formData: FormData) {
       : null,
     seo_title: formData.get("seo_title") ?? "",
     seo_description: formData.get("seo_description") ?? "",
+    scheduled_publish_at: formData.get("scheduled_publish_at")
+      ? new Date(String(formData.get("scheduled_publish_at"))).toISOString()
+      : null,
   });
 
   if (!parsed.success) return;
@@ -283,13 +313,16 @@ export async function updateWork(formData: FormData) {
   const published_at =
     values.status === "published" ? new Date().toISOString() : null;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
+
   const { error } = await client
     .from("works")
     .update({ ...values, published_at })
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, id, user.id, "更新作品元数据");
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${id}`);
@@ -323,7 +356,7 @@ export async function createTextBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, heading, body, sort_order, is_visible } =
     parsed.data;
   const { error } = await client.from("work_blocks").insert({
@@ -335,6 +368,8 @@ export async function createTextBlock(formData: FormData) {
   });
 
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, work_id, user.id, "创建文本块");
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -353,7 +388,7 @@ export async function updateTextBlock(formData: FormData) {
 
   if (!parsed.success || !parsed.data.block_id) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, heading, body, sort_order, is_visible } =
     parsed.data;
   const { error } = await client
@@ -366,6 +401,8 @@ export async function updateTextBlock(formData: FormData) {
     .eq("id", block_id);
 
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, work_id, user.id, "更新文本块");
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -454,7 +491,7 @@ export async function createMediaBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -479,6 +516,8 @@ export async function createMediaBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "创建媒体块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -496,7 +535,7 @@ export async function updateMediaBlock(formData: FormData) {
 
   if (!parsed.success || !parsed.data.block_id) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -522,6 +561,8 @@ export async function updateMediaBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "更新媒体块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -545,11 +586,13 @@ export async function deleteWorkBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug } = parsed.data;
   const { error } = await client.from("work_blocks").delete()    .eq("id", block_id);
 
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, work_id, user.id, "删除内容块");
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -567,7 +610,7 @@ export async function createVideoBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -592,6 +635,8 @@ export async function createVideoBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "创建视频块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -609,7 +654,7 @@ export async function updateVideoBlock(formData: FormData) {
 
   if (!parsed.success || !parsed.data.block_id) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -631,6 +676,8 @@ export async function updateVideoBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "更新视频块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -647,7 +694,7 @@ export async function createPdfBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -672,6 +719,8 @@ export async function createPdfBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "创建 PDF 块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -689,7 +738,7 @@ export async function updatePdfBlock(formData: FormData) {
 
   if (!parsed.success || !parsed.data.block_id) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -711,6 +760,8 @@ export async function updatePdfBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "更新 PDF 块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -728,7 +779,7 @@ export async function createBeforeAfterBlock(formData: FormData) {
 
   if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -760,6 +811,8 @@ export async function createBeforeAfterBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "创建 Before/After 块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -778,7 +831,7 @@ export async function updateBeforeAfterBlock(formData: FormData) {
 
   if (!parsed.success || !parsed.data.block_id) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, before_media_id, after_media_id, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -811,6 +864,8 @@ export async function updateBeforeAfterBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "更新 Before/After 块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -827,12 +882,239 @@ export async function suggestSlug(title: string) {
   return createStableSlug(title, "new-work");
 }
 
+const createWorkFromMediaSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  year: z.string().trim().max(20).default(""),
+  media_ids: z.array(z.string().uuid()).min(1, "至少上传一个媒体文件"),
+});
+
+/**
+ * 站酷式快速发布：从拖拽上传的媒体一键创建作品草稿。
+ * 第一个媒体设为封面，其余按顺序生成对应内容块。
+ */
+export async function createWorkFromMedia(formData: FormData) {
+  const rawIds = formData.getAll("media_ids").map(String).filter(Boolean);
+  const parsed = createWorkFromMediaSchema.safeParse({
+    title: formData.get("title"),
+    slug: formData.get("slug"),
+    year: formData.get("year") ?? "",
+    media_ids: rawIds,
+  });
+
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { title, slug, year, media_ids } = parsed.data;
+
+  const { data: work, error } = await client
+    .from("works")
+    .insert({
+      title,
+      slug,
+      year,
+      status: "draft",
+      palette: [],
+      sort_order: 0,
+      cover_media_id: media_ids[0],
+    })
+    .select("id")
+    .single();
+
+  if (error || !work) throw new Error(error?.message ?? "作品创建失败");
+
+  const { data: assets } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", media_ids)
+    .is("deleted_at", null);
+
+  const assetById = new Map(
+    (assets ?? []).map((a: { id: string; storage_key: string; mime_type: string; alt_text: string }) => [a.id, a]),
+  );
+
+  const blockRows = media_ids.map((id, index) => {
+    const asset = assetById.get(id);
+    const mimeType = asset?.mime_type ?? "";
+    const blockType = mimeType.startsWith("video/")
+      ? "video"
+      : mimeType === "application/pdf"
+        ? "pdf"
+        : "media";
+
+    const mediaRef = asset
+      ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+      : null;
+
+    return {
+      work_id: work.id,
+      block_type: blockType,
+      sort_order: index,
+      is_visible: true,
+      payload: { media_id: id, caption: "", media_ref: mediaRef },
+    };
+  });
+
+  if (blockRows.length > 0) {
+    const { error: blockError } = await client.from("work_blocks").insert(blockRows);
+    if (blockError) throw new Error(blockError.message);
+  }
+
+  revalidatePath("/admin/works");
+  redirect(`/admin/works/${work.id}`);
+}
+
+const createWorkFromWizardSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  subtitle: z.string().trim().max(160).default(""),
+  summary: z.string().trim().max(1000).default(""),
+  year: z.string().trim().max(20).default(""),
+  client: z.string().trim().max(120).default(""),
+  palette: z.string().trim().default(""),
+  status: z.enum(["draft", "published", "private"]).default("draft"),
+  media_ids: z.array(z.string().uuid()).min(1, "至少上传一个媒体文件"),
+  category_ids: z.array(z.string().uuid()).default([]),
+  tag_ids: z.array(z.string().uuid()).default([]),
+});
+
+/**
+ * 站酷式三步向导：从媒体、元数据创建作品。
+ * 第一个媒体设为封面，其余按顺序生成内容块；同时写入分类与标签。
+ */
+export async function createWorkFromWizard(formData: FormData) {
+  const rawIds = formData.getAll("media_ids").map(String).filter(Boolean);
+  const parsed = createWorkFromWizardSchema.safeParse({
+    title: formData.get("title"),
+    slug: formData.get("slug"),
+    subtitle: formData.get("subtitle") ?? "",
+    summary: formData.get("summary") ?? "",
+    year: formData.get("year") ?? "",
+    client: formData.get("client") ?? "",
+    palette: formData.get("palette") ?? "",
+    status: formData.get("status"),
+    media_ids: rawIds,
+    category_ids: formData.getAll("category_ids").map(String).filter(Boolean),
+    tag_ids: formData.getAll("tag_ids").map(String).filter(Boolean),
+  });
+
+  if (!parsed.success) return;
+
+  const { client, user } = await requireAdmin();
+  const {
+    title,
+    slug,
+    subtitle,
+    summary,
+    year,
+    client: workClient,
+    palette,
+    status,
+    media_ids,
+    category_ids,
+    tag_ids,
+  } = parsed.data;
+
+  const paletteColors = palette
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^#[0-9a-fA-F]{3,6}$/.test(s));
+
+  const published_at = status === "published" ? new Date().toISOString() : null;
+
+  const { data: work, error } = await client
+    .from("works")
+    .insert({
+      title,
+      slug,
+      subtitle,
+      summary,
+      year,
+      client: workClient,
+      status,
+      palette: paletteColors,
+      sort_order: 0,
+      cover_media_id: media_ids[0],
+      published_at,
+    })
+    .select("id")
+    .single();
+
+  if (error || !work) throw new Error(error?.message ?? "作品创建失败");
+
+  const { data: assets } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .in("id", media_ids)
+    .is("deleted_at", null);
+
+  const assetById = new Map(
+    (assets ?? []).map((a: { id: string; storage_key: string; mime_type: string; alt_text: string }) => [a.id, a]),
+  );
+
+  const blockRows = media_ids.map((id, index) => {
+    const asset = assetById.get(id);
+    const mimeType = asset?.mime_type ?? "";
+    const blockType = mimeType.startsWith("video/")
+      ? "video"
+      : mimeType === "application/pdf"
+        ? "pdf"
+        : "media";
+
+    const mediaRef = asset
+      ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
+      : null;
+
+    return {
+      work_id: work.id,
+      block_type: blockType,
+      sort_order: index,
+      is_visible: true,
+      payload: { media_id: id, caption: "", media_ref: mediaRef },
+    };
+  });
+
+  if (blockRows.length > 0) {
+    const { error: blockError } = await client.from("work_blocks").insert(blockRows);
+    if (blockError) throw new Error(blockError.message);
+  }
+
+  if (category_ids.length > 0) {
+    const { error: catError } = await client
+      .from("work_categories")
+      .insert(category_ids.map((category_id) => ({ work_id: work.id, category_id })));
+    if (catError) throw new Error(catError.message);
+  }
+
+  if (tag_ids.length > 0) {
+    const { error: tagError } = await client
+      .from("work_tags")
+      .insert(tag_ids.map((tag_id) => ({ work_id: work.id, tag_id })));
+    if (tagError) throw new Error(tagError.message);
+  }
+
+  await autoArchiveAfterChange(client, work.id, user.id, "向导创建作品");
+
+  revalidatePath("/admin/works");
+  redirect(`/admin/works/${work.id}`);
+}
+
 export async function reorderWorkBlocks(
   workId: string,
   workSlug: string,
   blockIds: string[],
 ) {
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
 
   const updates = blockIds.map((id, index) =>
     client.from("work_blocks").update({ sort_order: index }).eq("id", id).eq("work_id", workId),
@@ -840,6 +1122,8 @@ export async function reorderWorkBlocks(
   const results = await Promise.all(updates);
   const error = results.find((r) => r.error);
   if (error?.error) throw new Error(error.error.message);
+
+  await autoArchiveAfterChange(client, workId, user.id, "重新排序内容块");
 
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
@@ -870,7 +1154,7 @@ export async function createGalleryBlock(formData: FormData) {
 
   if (!parsed.success || rawIds.length === 0) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { work_id, work_slug, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -899,6 +1183,8 @@ export async function createGalleryBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "创建图库块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -916,7 +1202,7 @@ export async function updateGalleryBlock(formData: FormData) {
 
   if (!parsed.success || rawIds.length === 0) return;
 
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, caption, sort_order, is_visible } =
     parsed.data;
 
@@ -945,6 +1231,8 @@ export async function updateGalleryBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, work_id, user.id, "更新图库块");
+
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
@@ -957,9 +1245,9 @@ export async function createBlockDirect(
   payload: Record<string, unknown>,
   sortOrder: number,
 ) {
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
 
-  let enrichedPayload = { ...payload };
+  const enrichedPayload = { ...payload };
   if (["media", "video", "pdf"].includes(blockType) && payload.media_id) {
     const { data: asset } = await client
       .from("media_assets")
@@ -1005,6 +1293,8 @@ export async function createBlockDirect(
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, workId, user.id, `直接创建 ${blockType} 块`);
+
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
   return { id: (data as { id: string }).id };
@@ -1015,9 +1305,12 @@ export async function deleteBlockDirect(
   workId: string,
   workSlug: string,
 ) {
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
   const { error } = await client.from("work_blocks").delete().eq("id", blockId);
   if (error) throw new Error(error.message);
+
+  await autoArchiveAfterChange(client, workId, user.id, "直接删除内容块");
+
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
 }
@@ -1028,11 +1321,11 @@ export async function updateBlockDirect(
   blockId: string,
   payload: Record<string, unknown>,
 ) {
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
 
   // Re-enrich media_ref if this is a media/video/pdf block with media_id
   const blockType = payload._block_type as string | undefined;
-  let enrichedPayload = { ...payload };
+  const enrichedPayload = { ...payload };
   delete enrichedPayload._block_type;
 
   if (["media", "video", "pdf"].includes(blockType ?? "") && enrichedPayload.media_id) {
@@ -1060,6 +1353,8 @@ export async function updateBlockDirect(
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, workId, user.id, `直接更新 ${blockType ?? "内容"} 块`);
+
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
 }
@@ -1073,7 +1368,7 @@ export async function updateBlockMediaRef(
   blockId: string,
   mediaId: string,
 ) {
-  const { client } = await requireAdmin();
+  const { client, user } = await requireAdmin();
 
   // 获取新的 media asset 信息
   const { data: asset } = await client
@@ -1115,6 +1410,237 @@ export async function updateBlockMediaRef(
 
   if (error) throw new Error(error.message);
 
+  await autoArchiveAfterChange(client, workId, user.id, "更新块媒体引用");
+
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
+}
+
+// ── 版本控制 Server Actions ────────────────────────────────
+
+const versionActionSchema = z.object({
+  work_id: z.string().uuid(),
+  work_slug: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+});
+
+/**
+ * 手动保存当前作品状态为一个版本。
+ */
+export async function archiveWorkVersionAction(formData: FormData) {
+  const parsed = versionActionSchema.safeParse({
+    work_id: formData.get("work_id"),
+    work_slug: formData.get("work_slug"),
+  });
+  if (!parsed.success) return;
+
+  const { client, user } = await requireAdmin();
+  const label = String(formData.get("label") ?? "").trim() || undefined;
+
+  const versionNumber = await archiveWorkVersion(
+    client,
+    parsed.data.work_id,
+    user.id,
+    label,
+    "manual",
+  );
+  if (!versionNumber) throw new Error("作品不存在，无法保存版本");
+
+  revalidatePath(`/admin/works/${parsed.data.work_id}`);
+}
+
+/**
+ * 查询作品的版本列表。
+ */
+export async function listWorkVersionsAction(workId: string) {
+  const parsed = z.string().uuid().safeParse(workId);
+  if (!parsed.success) throw new Error("无效的作品 ID");
+
+  const { client } = await requireAdmin();
+  return listWorkVersions(client, parsed.data);
+}
+
+/**
+ * 回滚到指定版本（目标版本号低于或等于当前版本）。
+ */
+export async function rollbackWorkVersionAction(formData: FormData) {
+  const parsed = z
+    .object({
+      work_id: z.string().uuid(),
+      work_slug: z
+        .string()
+        .trim()
+        .min(1)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      version_number: z.coerce.number().int().min(1),
+    })
+    .safeParse({
+      work_id: formData.get("work_id"),
+      work_slug: formData.get("work_slug"),
+      version_number: formData.get("version_number"),
+    });
+
+  if (!parsed.success) return;
+
+  const { client, user } = await requireAdmin();
+  const { work_id, work_slug, version_number } = parsed.data;
+
+  await rollbackWorkVersion(client, work_id, version_number, user.id);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
+}
+
+// ── 批量操作 Server Actions ────────────────────────────────
+
+const batchWorkIdsSchema = z.object({
+  work_ids: z.array(z.string().uuid()).min(1),
+});
+
+/**
+ * 批量删除作品（软删除）。
+ */
+export async function batchDeleteWorks(formData: FormData) {
+  const parsed = batchWorkIdsSchema.safeParse({
+    work_ids: formData.getAll("work_ids").map(String).filter(Boolean),
+  });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { error } = await client
+    .from("works")
+    .update({ deleted_at: new Date().toISOString() })
+    .in("id", parsed.data.work_ids);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+}
+
+/**
+ * 批量修改作品状态。
+ */
+export async function batchUpdateWorkStatus(formData: FormData) {
+  const parsed = z
+    .object({
+      work_ids: z.array(z.string().uuid()).min(1),
+      status: z.enum(["draft", "published", "private"]),
+    })
+    .safeParse({
+      work_ids: formData.getAll("work_ids").map(String).filter(Boolean),
+      status: formData.get("status"),
+    });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const published_at =
+    parsed.data.status === "published" ? new Date().toISOString() : null;
+
+  const { error } = await client
+    .from("works")
+    .update({ status: parsed.data.status, published_at })
+    .in("id", parsed.data.work_ids);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  parsed.data.work_ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+}
+
+/**
+ * 检查并发布所有到达 scheduled_publish_at 时间的草稿作品。
+ */
+export async function publishScheduledWorks() {
+  const { client } = await requireAdmin();
+
+  const now = new Date().toISOString();
+  const { data: dueWorks, error: fetchError } = await client
+    .from("works")
+    .select("id,slug")
+    .eq("status", "draft")
+    .lte("scheduled_publish_at", now)
+    .is("deleted_at", null);
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!dueWorks || dueWorks.length === 0) return;
+
+  const ids = (dueWorks as Array<{ id: string; slug: string }>).map((w) => w.id);
+  const { error: updateError } = await client
+    .from("works")
+    .update({ status: "published", published_at: now })
+    .in("id", ids);
+
+  if (updateError) throw new Error(updateError.message);
+
+  revalidatePath("/admin/works");
+  ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+}
+
+/**
+ * 批量设置作品展示属性（代表作 / 复合设计）。
+ */
+export async function batchUpdateWorkPlacement(formData: FormData) {
+  const parsed = z
+    .object({
+      work_ids: z.array(z.string().uuid()).min(1),
+      field: z.enum(["is_representative", "is_composite"]),
+      value: z.coerce.boolean(),
+    })
+    .safeParse({
+      work_ids: formData.getAll("work_ids").map(String).filter(Boolean),
+      field: formData.get("field"),
+      value: formData.get("value"),
+    });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const update =
+    parsed.data.field === "is_representative"
+      ? { is_representative: parsed.data.value }
+      : { is_composite: parsed.data.value };
+
+  const { error } = await client
+    .from("works")
+    .update(update)
+    .in("id", parsed.data.work_ids);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  parsed.data.work_ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+}
+
+/**
+ * 从当前版本前进到更高版本号。
+ * 与回滚共用同一套底层逻辑：先备份当前状态，再还原目标快照。
+ */
+export async function restoreForwardWorkVersionAction(formData: FormData) {
+  const parsed = z
+    .object({
+      work_id: z.string().uuid(),
+      work_slug: z
+        .string()
+        .trim()
+        .min(1)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      version_number: z.coerce.number().int().min(1),
+    })
+    .safeParse({
+      work_id: formData.get("work_id"),
+      work_slug: formData.get("work_slug"),
+      version_number: formData.get("version_number"),
+    });
+
+  if (!parsed.success) return;
+
+  const { client, user } = await requireAdmin();
+  const { work_id, work_slug, version_number } = parsed.data;
+
+  await rollbackWorkVersion(client, work_id, version_number, user.id);
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
 }

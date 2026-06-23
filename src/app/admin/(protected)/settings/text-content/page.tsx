@@ -1,17 +1,27 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-session";
 
-import {
-  createTextContent,
-  deleteTextContent,
-} from "./actions";
+import { createTextContent } from "./actions";
+import { DeleteTextContentButton } from "./DeleteTextContentButton";
 
 export const dynamic = "force-dynamic";
+
+type TextContentItem = {
+  id: string;
+  key: string;
+  content: string;
+  page: string;
+  section: string | null;
+  font_size: string | null;
+  font_family: string | null;
+  font_weight: string | null;
+  color: string | null;
+};
 
 export default async function TextContentPage() {
   await requireAdmin();
 
-  let items: any[] = [];
+  let items: TextContentItem[] = [];
   let error: { message: string } | null = null;
 
   try {
@@ -28,10 +38,11 @@ export default async function TextContentPage() {
       console.error("Failed to fetch text_content:", result.error);
       error = result.error;
     }
-    items = result.data ?? [];
-  } catch (e: any) {
+    items = (result.data ?? []) as TextContentItem[];
+  } catch (e: unknown) {
     console.error("text_content fetch error:", e);
-    error = { message: e.message || "未知错误" };
+    const message = e instanceof Error ? e.message : "未知错误";
+    error = { message };
   }
 
   const grouped = items.reduce<Record<string, typeof items>>(
@@ -111,25 +122,7 @@ export default async function TextContentPage() {
                           {item.font_weight ?? "-"}
                         </td>
                         <td className="px-4 py-2">
-                          <form
-                            action={deleteTextContent.bind(null, item.id)}
-                            onSubmit={(e) => {
-                              if (
-                                !confirm(
-                                  `确定删除「${item.key}」？此操作可软删除恢复。`
-                                )
-                              ) {
-                                e.preventDefault();
-                              }
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              删除
-                            </button>
-                          </form>
+                          <DeleteTextContentButton id={item.id} label={item.key} />
                         </td>
                       </tr>
                     ))}

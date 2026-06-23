@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Insert media record
-    const { data: insertData, error: dbError } = await service
+    const { error: dbError } = await service
       .from("media_assets")
       .insert({
         id,

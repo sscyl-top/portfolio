@@ -3,7 +3,7 @@
  * 复用 MediaPicker 的上传逻辑，供 VisualBlockEditor 使用
  */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
 
 export type UploadProgress = Record<string, number>;
 
@@ -22,6 +22,12 @@ async function uploadSingleFile(
   file: File,
   onProgress: (filename: string, pct: number) => void,
 ): Promise<UploadResult> {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(
+      `「${file.name}」超过 10GB 单文件限制（${(file.size / 1024 / 1024 / 1024).toFixed(2)}GB）`,
+    );
+  }
+
   onProgress(file.name, 0);
 
   // Step 1: 请求签名上传 URL

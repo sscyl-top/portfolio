@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-import { createDraftWork } from "./actions";
+import { WorkWizard } from "@/components/admin/WorkWizard";
+import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
+import { publishScheduledWorks } from "./actions";
 
 type AdminWorkRow = {
   id: string;
@@ -16,30 +17,64 @@ type AdminWorkRow = {
   updated_at: string;
 };
 
+type TaxonomyRow = {
+  id: string;
+  name: string;
+};
+
+type Section = "all" | "representative" | "composite";
+type StatusFilter = "all" | "draft" | "published" | "private";
+
 export default async function AdminWorksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ seeded?: string; seedError?: string; section?: string }>;
+  searchParams: Promise<{
+    seeded?: string;
+    seedError?: string;
+    section?: string;
+    status?: string;
+    q?: string;
+  }>;
 }) {
-  const { seeded, seedError, section: rawSection = "all" } = await searchParams;
+  const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "" } = await searchParams;
   const section: Section = ["all", "representative", "composite"].includes(rawSection ?? "all")
     ? (rawSection as Section)
     : "all";
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("works")
-    .select(
-      "id,title,slug,status,year,sort_order,is_representative,is_composite,updated_at",
-    )
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: false })
-    .order("updated_at", { ascending: false });
-  const works = (data ?? []) as AdminWorkRow[];
+  const status: StatusFilter = ["all", "draft", "published", "private"].includes(rawStatus ?? "all")
+    ? (rawStatus as StatusFilter)
+    : "all";
+  const query = q.trim().toLowerCase();
 
-  // 根据 section 筛选作品
+  const supabase = await createSupabaseServerClient();
+  const [
+    { data, error },
+    { data: categoriesData },
+    { data: tagsData },
+  ] = await Promise.all([
+    supabase
+      .from("works")
+      .select(
+        "id,title,slug,status,year,sort_order,is_representative,is_composite,updated_at",
+      )
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: false })
+      .order("updated_at", { ascending: false }),
+    supabase.from("categories").select("id,name").is("deleted_at", null).order("sort_order", { ascending: true }),
+    supabase.from("tags").select("id,name").is("deleted_at", null).order("name", { ascending: true }),
+  ]);
+  const works = (data ?? []) as AdminWorkRow[];
+  const categories = (categoriesData ?? []) as TaxonomyRow[];
+  const tags = (tagsData ?? []) as TaxonomyRow[];
+
+  // 根据 section / status / query 筛选作品
   const filteredWorks = works.filter((work) => {
-    if (section === "representative") return work.is_representative;
-    if (section === "composite") return work.is_composite;
+    if (section === "representative" && !work.is_representative) return false;
+    if (section === "composite" && !work.is_composite) return false;
+    if (status !== "all" && work.status !== status) return false;
+    if (query) {
+      const haystack = `${work.title} ${work.slug} ${work.year}`.toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
     return true;
   });
 
@@ -79,134 +114,76 @@ export default async function AdminWorksPage({
       {/* 板块筛选选项卡 */}
       <SectionTabs currentSection={section} worksCount={works.length} filteredCount={filteredWorks.length} />
 
-      <form
-        action={createDraftWork}
-        className="mt-6 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_0.8fr_0.35fr_auto]"
-      >
-        {/* 根据当前板块预设置作品属性 */}
-        {section === "representative" ? (
-          <input type="hidden" name="is_representative" value="true" />
-        ) : null}
-        {section === "composite" ? (
-          <input type="hidden" name="is_composite" value="true" />
-        ) : null}
-        
-        <input
-          name="title"
-          required
-          placeholder="作品标题"
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-        />
-        <input
-          name="slug"
-          required
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          placeholder="url-slug"
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 font-mono text-sm outline-none focus:border-cyan"
-        />
-        <input
-          name="year"
-          placeholder="年份"
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-        />
-        <button className="min-h-10 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          新建草稿
-        </button>
-      </form>
+      <WorkWizard categories={categories} tags={tags} />
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <FilterBar currentStatus={status} query={query} />
+        <form action={publishScheduledWorks}>
+          <button
+            type="submit"
+            className="min-h-10 rounded-md border border-white/10 px-4 text-sm text-white/70 transition hover:border-cyan/30 hover:text-cyan"
+          >
+            发布到期草稿
+          </button>
+        </form>
+      </div>
 
       {error ? (
         <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
           作品读取失败：{error.message}
         </p>
       ) : (
-        <WorkTable works={filteredWorks} />
+        <WorkBatchManager works={filteredWorks} />
       )}
     </div>
   );
 }
 
-function WorkTable({ works }: { works: AdminWorkRow[] }) {
-  if (works.length === 0) {
-    return (
-      <div className="mt-6 grid min-h-64 place-items-center border-y border-white/10 text-sm text-white/38">
-        暂无 CMS 作品。可以先导入当前作品，或新建一个草稿。
-      </div>
-    );
-  }
+function FilterBar({
+  currentStatus,
+  query,
+}: {
+  currentStatus: StatusFilter;
+  query: string;
+}) {
+  const statusOptions: { value: StatusFilter; label: string }[] = [
+    { value: "all", label: "全部状态" },
+    { value: "draft", label: "草稿" },
+    { value: "published", label: "已发布" },
+    { value: "private", label: "私密" },
+  ];
 
   return (
-    <div className="mt-6 overflow-x-auto border-y border-white/10">
-      <table className="min-w-full text-left text-sm">
-        <thead className="font-mono text-[10px] uppercase text-white/36">
-          <tr>
-            <th className="py-3 pr-4 font-normal">Title</th>
-            <th className="px-4 py-3 font-normal">Status</th>
-            <th className="px-4 py-3 font-normal">Year</th>
-            <th className="px-4 py-3 font-normal">Placement</th>
-            <th className="py-3 pl-4 font-normal">Public URL</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/10">
-          {works.map((work) => (
-            <tr key={work.id} className="align-top">
-              <td className="py-4 pr-4">
-                <Link
-                  href={`/admin/works/${work.id}`}
-                  className="font-medium text-white transition hover:text-cyan"
-                >
-                  {work.title}
-                </Link>
-                <p className="mt-1 font-mono text-xs text-white/36">
-                  {work.slug}
-                </p>
-              </td>
-              <td className="px-4 py-4">
-                <StatusBadge status={work.status} />
-              </td>
-              <td className="px-4 py-4 text-white/56">{work.year || "-"}</td>
-              <td className="px-4 py-4 text-white/56">
-                {[
-                  work.is_representative ? "代表作" : null,
-                  work.is_composite ? "复合设计" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" / ") || "-"}
-              </td>
-              <td className="py-4 pl-4">
-                {work.status === "published" ? (
-                  <Link
-                    href={`/works/${work.slug}`}
-                    className="text-cyan hover:text-white"
-                  >
-                    查看
-                  </Link>
-                ) : (
-                  <span className="text-white/28">未公开</span>
-                )}
-              </td>
-            </tr>
+    <div className="mt-6 flex flex-wrap items-center gap-3">
+      <form className="contents">
+        <select
+          name="status"
+          defaultValue={currentStatus}
+          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+        >
+          {statusOptions.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
-        </tbody>
-      </table>
+        </select>
+        <input
+          name="q"
+          type="search"
+          defaultValue={query}
+          placeholder="搜索标题 / slug / 年份"
+          className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan sm:min-w-64"
+        />
+        <button
+          type="submit"
+          className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10"
+        >
+          筛选
+        </button>
+      </form>
     </div>
   );
 }
-
-function StatusBadge({ status }: { status: AdminWorkRow["status"] }) {
-  const label = {
-    draft: "草稿",
-    published: "已发布",
-    private: "私密",
-  }[status];
-
-  return (
-    <span className="rounded-full border border-white/12 px-2.5 py-1 text-xs text-white/62">
-      {label}
-    </span>
-  );
-}
-
-type Section = "all" | "representative" | "composite";
 
 function SectionTabs({
   currentSection,

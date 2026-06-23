@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/portfolio-media/**",
         protocol: "https",
       },
+      {
+        hostname: "*.supabase.in",
+        pathname: "/storage/v1/object/public/portfolio-media/**",
+        protocol: "https",
+      },
     ],
   },
 };

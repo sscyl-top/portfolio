@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -20,11 +20,16 @@ function layoutWidthClass(layout?: BlockLayout): string {
     return "max-w-6xl mx-auto";
   }
   if (layout.width === "narrow") return "max-w-3xl mx-auto";
+  if (layout.width === "free") return "relative mx-auto max-w-6xl min-h-[520px]";
   return ""; // full: 无约束
 }
 
 /** 根据 layout 返回 section 的额外 class */
 function layoutSectionClass(layout?: BlockLayout): string {
+  if (layout?.width === "free") {
+    // 自由定位：作为画布容器，内部元素绝对定位
+    return "rounded-lg border border-white/10 bg-white/[0.035] p-0 overflow-hidden";
+  }
   if (layout?.width === "full") {
     // 满宽：去掉边框/圆角/背景，让内容真正通栏
     return "border-0 bg-transparent p-0";
@@ -139,6 +144,8 @@ export default async function WorkDetailPage({
               if (block.items.length === 0) return null;
               const lw = layoutWidthClass(block.layout);
               const ls = layoutSectionClass(block.layout);
+              const isFree = block.layout?.width === "free";
+              const free = block.layout?.free;
               const galCols =
                 block.type === "gallery"
                   ? (block.layout?.columns === 2 ? "grid-cols-2"
@@ -150,7 +157,7 @@ export default async function WorkDetailPage({
                   key={`${block.type}-${block.items[0]?.url ?? "empty"}`}
                   className={`grid gap-5 ${ls} ${lw}`}
                 >
-                  {block.caption ? (
+                  {block.caption && !isFree ? (
                     <p className="text-sm font-medium text-white/54">
                       {block.caption}
                     </p>
@@ -159,7 +166,9 @@ export default async function WorkDetailPage({
                     className={
                       block.type === "gallery"
                         ? `grid gap-4 ${galCols}`
-                        : ""
+                        : isFree
+                          ? "relative h-full w-full"
+                          : ""
                     }
                   >
                     {block.items.map((media, i) => (
@@ -168,9 +177,26 @@ export default async function WorkDetailPage({
                         media={media}
                         tone="graphite"
                         className={
-                          block.type === "media"
-                            ? `w-full rounded-lg ${block.layout?.width === "full" ? "h-[70vh] object-cover" : "max-h-[70vh]"}`
-                            : "w-full rounded-lg"
+                          isFree
+                            ? "absolute rounded-lg"
+                            : block.type === "media"
+                              ? `w-full rounded-lg ${block.layout?.width === "full" ? "h-[70vh] object-cover" : "max-h-[70vh]"}`
+                              : "w-full rounded-lg"
+                        }
+                        objectPosition={
+                          block.type === "media" && block.focalPoint
+                            ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
+                            : undefined
+                        }
+                        style={
+                          isFree && free
+                            ? {
+                                left: `${free.x}%`,
+                                top: `${free.y}%`,
+                                width: `${free.w}%`,
+                                height: `${free.h}%`,
+                              }
+                            : undefined
                         }
                       />
                     ))}

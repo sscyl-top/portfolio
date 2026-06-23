@@ -1,4 +1,5 @@
-﻿import {
+import {
+  BarChart3,
   FolderKanban,
   Home,
   Images,
@@ -13,6 +14,7 @@ import Link from "next/link";
 
 export const adminNavigation = [
   { label: "控制台", href: "/admin", icon: Home },
+  { label: "数据分析", href: "/admin/analytics", icon: BarChart3 },
   { label: "作品", href: "/admin/works", icon: FolderKanban },
   { label: "分类与标签", href: "/admin/categories", icon: Tags },
   { label: "媒体库", href: "/admin/media", icon: Images },

@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     }
 
     // Insert media record (service_role bypasses RLS)
-    const { data: insertData, error: dbError } = await service
+    const { error: dbError } = await service
       .from("media_assets")
       .insert({
         id,

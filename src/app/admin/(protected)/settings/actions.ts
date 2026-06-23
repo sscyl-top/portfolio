@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -19,6 +19,7 @@ const settingsSchema = z.object({
   seo_description: z.string().trim().max(300),
   logo_media_id: z.string().uuid().nullable(),
   avatar_media_id: z.string().uuid().nullable(),
+  share_media_id: z.string().uuid().nullable(),
   social_links: z.array(socialLinkSchema),
 });
 
@@ -38,6 +39,7 @@ export async function saveSiteSettings(formData: FormData) {
     seo_description: formData.get("seo_description") ?? "",
     logo_media_id: formData.get("logo_media_id") || null,
     avatar_media_id: formData.get("avatar_media_id") || null,
+    share_media_id: formData.get("share_media_id") || null,
     social_links,
   });
 

@@ -1,7 +1,10 @@
-﻿import { siteSettings } from "@/data/portfolio";
+import QRCode from "qrcode";
+
+import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { saveSiteSettings } from "./actions";
 
 type SettingsRow = {
@@ -13,6 +16,7 @@ type SettingsRow = {
   seo_description: string;
   logo_media_id: string | null;
   avatar_media_id: string | null;
+  share_media_id: string | null;
   social_links: Array<{ label: string; url: string }>;
 };
 
@@ -24,13 +28,15 @@ type MediaAssetRow = {
   alt_text: string;
 };
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sscyl.top";
+
 export default async function AdminSettingsPage() {
   const supabase = await createSupabaseServerClient();
   const [{ data, error }, { data: rawMedia }] = await Promise.all([
     supabase
       .from("site_settings")
       .select(
-        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,social_links",
+        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,social_links",
       )
       .single(),
     supabase
@@ -49,6 +55,7 @@ export default async function AdminSettingsPage() {
     seo_description: siteSettings.description,
     logo_media_id: null,
     avatar_media_id: null,
+    share_media_id: null,
     social_links: siteSettings.socialLinks.map((link) => ({
       label: link.label,
       url: link.href,
@@ -59,6 +66,19 @@ export default async function AdminSettingsPage() {
     settings.social_links.length > 0
       ? settings.social_links
       : [{ label: "", url: "" }];
+
+  const shareAsset = mediaAssets.find((a) => a.id === settings.share_media_id);
+  const shareImageUrl = shareAsset
+    ? buildPublicMediaUrl(shareAsset.storage_key)
+    : undefined;
+  const qrDataUrl = await QRCode.toDataURL(BASE_URL, {
+    width: 128,
+    margin: 2,
+    color: {
+      dark: "#ffffff",
+      light: "#050505",
+    },
+  });
 
   return (
     <div>
@@ -106,18 +126,24 @@ export default async function AdminSettingsPage() {
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <MediaSelectField
+        <div className="grid gap-4 md:grid-cols-3">
+          <SettingsMediaField
             label="站点 Logo"
             name="logo_media_id"
             assets={mediaAssets}
             defaultValue={settings.logo_media_id ?? ""}
           />
-          <MediaSelectField
+          <SettingsMediaField
             label="头像"
             name="avatar_media_id"
             assets={mediaAssets}
             defaultValue={settings.avatar_media_id ?? ""}
+          />
+          <SettingsMediaField
+            label="分享缩略图"
+            name="share_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.share_media_id ?? ""}
           />
         </div>
 
@@ -133,6 +159,43 @@ export default async function AdminSettingsPage() {
             defaultValue={settings.seo_description}
           />
         </div>
+
+        <section className="rounded-md border border-white/10 bg-black/20 p-4">
+          <h3 className="text-sm font-medium text-white/80">分享卡片预览</h3>
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+            {shareImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={shareImageUrl}
+                alt="分享缩略图"
+                className="h-24 w-40 rounded-md border border-white/10 object-cover"
+              />
+            ) : (
+              <span className="grid h-24 w-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
+                未选择分享图
+              </span>
+            )}
+            <div className="flex-1">
+              <p className="text-base font-semibold text-white">
+                {settings.name}
+              </p>
+              <p className="mt-1 line-clamp-2 text-sm text-white/58">
+                {settings.seo_description || settings.seo_title}
+              </p>
+              <p className="mt-2 break-all font-mono text-[10px] text-white/34">
+                {shareImageUrl ?? "无分享图 URL"}
+              </p>
+            </div>
+            <div className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt="站点二维码"
+                className="h-28 w-28 rounded-md border border-white/10"
+              />
+            </div>
+          </div>
+        </section>
 
         <section>
           <h3 className="text-sm font-medium text-white/80">社交链接</h3>
@@ -163,51 +226,6 @@ export default async function AdminSettingsPage() {
         </div>
       </form>
     </div>
-  );
-}
-
-
-function MediaSelectField({
-  assets,
-  defaultValue,
-  label,
-  name,
-}: {
-  assets: MediaAssetRow[];
-  defaultValue: string;
-  label: string;
-  name: string;
-}) {
-  const selected = assets.find((a) => a.id === defaultValue);
-
-  return (
-    <label className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
-      {selected ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={buildPublicMediaUrl(selected.storage_key)}
-          alt={selected.alt_text || selected.original_name}
-          className="h-16 w-full rounded-md border border-white/10 object-contain"
-        />
-      ) : (
-        <span className="grid h-16 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择
-        </span>
-      )}
-      <select
-        name={name}
-        defaultValue={defaultValue}
-        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-      >
-        <option value="">未选择</option>
-        {assets.map((asset) => (
-          <option key={asset.id} value={asset.id}>
-            {asset.original_name}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 

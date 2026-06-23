@@ -164,6 +164,7 @@ export function ContactForm({
         {/* ── 短字段：标签左 / 输入右（统一模式）── */}
         <InlineField label="姓名">
           <input
+            aria-label="姓名"
             className={fieldErrors.name ? errorFieldClass : fieldClass}
             name="name"
             placeholder="您的姓名"
@@ -181,6 +182,7 @@ export function ContactForm({
 
         <InlineField label="邮箱">
           <input
+            aria-label="邮箱"
             className={fieldErrors.email ? errorFieldClass : fieldClass}
             type="email"
             name="email"
@@ -199,6 +201,7 @@ export function ContactForm({
 
         <InlineField label="公司">
           <input
+            aria-label="公司"
             className={fieldClass}
             name="company"
             placeholder="您的公司名称"
@@ -209,6 +212,7 @@ export function ContactForm({
 
         <InlineField label={subjectLabel}>
           <input
+            aria-label={subjectLabel}
             className={fieldClass}
             name="subject"
             placeholder={subjectPlaceholder}
@@ -218,6 +222,7 @@ export function ContactForm({
 
         <InlineField label={rangeLabel}>
           <input
+            aria-label={rangeLabel}
             className={fieldClass}
             name="range"
             placeholder={rangePlaceholder}
@@ -228,6 +233,7 @@ export function ContactForm({
         <div className="sm:col-span-2">
           <span className="block mb-1 text-xs text-white/55">{messageLabel}</span>
           <textarea
+            aria-label={messageLabel}
             className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5`}
             name="message"
             placeholder={messagePlaceholder}
@@ -246,6 +252,7 @@ export function ContactForm({
         <div className="sm:col-span-2">
           <span className="block mb-1 text-xs text-white/55">备注</span>
           <textarea
+            aria-label="备注"
             className={`${fieldClass} min-h-12 resize-y py-2.5`}
             name="note"
             placeholder="补充时间安排、联系方式或其他说明"

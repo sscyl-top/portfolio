@@ -20,8 +20,18 @@ import {
   getPointerInteraction,
 } from "./particleMotion";
 
+export type CapabilityTextOverrides = {
+  strengthsTitle?: string;
+  contactInvitation?: string;
+  ctaWorks?: string;
+  ctaResume?: string;
+  ctaHiring?: string;
+  footerCopyright?: string;
+};
+
 type CapabilityBandsProps = {
   strengths: string[];
+  textOverrides?: CapabilityTextOverrides;
 };
 
 type StrengthSlide = {
@@ -150,7 +160,8 @@ const particleModelUrls = [
 const ambientParticleThreshold = 0.86;
 let hasShownCapabilityLoaderThisDocument = false;
 
-export function CapabilityBands({ strengths }: CapabilityBandsProps) {
+export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsProps) {
+  const capabilityTextOverrides = textOverrides ?? {};
   const sectionRef = useRef<HTMLElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [shouldShowLoader] = useState(() => {
@@ -283,6 +294,14 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
       </div>
 
       <div className="relative z-10 -mt-[100vh]">
+        {capabilityTextOverrides.strengthsTitle ? (
+          <div className="flex min-h-[50vh] items-center justify-center px-4 md:min-h-[60vh]">
+            <h2 className="text-center text-3xl font-semibold text-white md:text-5xl">
+              {capabilityTextOverrides.strengthsTitle}
+            </h2>
+          </div>
+        ) : null}
+
         {slides.slice(0, -1).map((slide, index) => (
           <StrengthPanel
             key={slide.kicker}
@@ -292,7 +311,10 @@ export function CapabilityBands({ strengths }: CapabilityBandsProps) {
           />
         ))}
 
-        <FinalContactPanel active={activeIndex === slides.length - 1} />
+        <FinalContactPanel
+          active={activeIndex === slides.length - 1}
+          textOverrides={capabilityTextOverrides}
+        />
       </div>
 
       <span className="sr-only">{strengths.join(" ")}</span>
@@ -316,7 +338,13 @@ function Loader({ progress, hidden }: { progress: number; hidden: boolean }) {
   );
 }
 
-function FinalContactPanel({ active }: { active: boolean }) {
+function FinalContactPanel({
+  active,
+  textOverrides,
+}: {
+  active: boolean;
+  textOverrides: CapabilityTextOverrides;
+}) {
   return (
     <section
       id="strength-5"
@@ -331,13 +359,13 @@ function FinalContactPanel({ active }: { active: boolean }) {
         >
           <div className="flex w-fit max-w-full flex-col items-start">
             <p className="text-base font-light text-white">
-              期待一起共事：
+              {textOverrides.contactInvitation || "期待一起共事："}
             </p>
             <a
-              href="mailto:hello@sscyl.top"
+              href={`mailto:${resume.contact.email}`}
               className="mt-3 whitespace-nowrap text-4xl font-light leading-none tracking-[0.035em] text-white md:text-7xl xl:text-[7.5rem]"
             >
-              hello@sscyl.top
+              {resume.contact.email}
             </a>
           </div>
         </div>
@@ -351,7 +379,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
               href="/works"
               className="group inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full bg-white px-3.5 text-xs font-semibold text-black transition hover:bg-cyan md:min-h-12 md:px-6 md:text-sm md:w-52"
             >
-              浏览作品
+              {textOverrides.ctaWorks || "浏览作品"}
               <ArrowUpRight
                 aria-hidden="true"
                 className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -361,14 +389,14 @@ function FinalContactPanel({ active }: { active: boolean }) {
               href="/resume"
               className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
-              查看简历
+              {textOverrides.ctaResume || "查看简历"}
               <FileText aria-hidden="true" className="h-4 w-4" />
             </Link>
             <Link
               href="/resume#hiring-contact"
               className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
-              聘用联系
+              {textOverrides.ctaHiring || "聘用联系"}
               <Mail aria-hidden="true" className="h-4 w-4" />
             </Link>
           </div>
@@ -397,7 +425,7 @@ function FinalContactPanel({ active }: { active: boolean }) {
           </div>
 
           <p className="mt-5 font-mono text-[0.65rem] uppercase text-white/30">
-            © 2026 SSCYL Portfolio
+            {textOverrides.footerCopyright || "© 2026 SSCYL Portfolio"}
           </p>
         </div>
       </div>

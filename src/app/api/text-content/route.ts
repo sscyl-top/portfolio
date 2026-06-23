@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const readiness = getBackendReadiness()
     if (!readiness.supabase) {
-      const result: Record<string, any> = {}
+      const result: Record<string, { success: boolean; error: string }> = {}
       keys.forEach((key: string) => {
         result[key] = { success: false, error: 'Database not configured' }
       })
@@ -95,19 +95,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result: Record<string, any> = {}
+    type TextContentResult =
+      | { success: true; content: string; styles: Record<string, string> }
+      | { success: false; error: string }
+
+    const result: Record<string, TextContentResult> = {}
     keys.forEach((key: string) => {
       const item = data?.find((d) => d.key === key)
       if (item) {
+        const styles: Record<string, string> = {}
+        if (item.font_size) styles.fontSize = item.font_size
+        if (item.font_family) styles.fontFamily = item.font_family
+        if (item.font_weight) styles.fontWeight = item.font_weight
+        if (item.color) styles.color = item.color
+
         result[key] = {
           success: true,
           content: item.content,
-          styles: {
-            ...(item.font_size && { fontSize: item.font_size }),
-            ...(item.font_family && { fontFamily: item.font_family }),
-            ...(item.font_weight && { fontWeight: item.font_weight }),
-            ...(item.color && { color: item.color }),
-          },
+          styles,
         }
       } else {
         result[key] = { success: false, error: 'Not found' }

@@ -8,6 +8,8 @@ describe("CMS repository", () => {
     const databaseWork = { ...getPublishedWorks()[0], slug: "database-work" };
     const repository = createCmsRepository({
       listPublishedWorks: vi.fn().mockResolvedValue([databaseWork]),
+      listFeaturedWorks: vi.fn().mockResolvedValue([]),
+      listCompositeWorks: vi.fn().mockResolvedValue([]),
       listVisibleCategories: vi.fn().mockResolvedValue([]),
       getSiteSettings: vi.fn().mockResolvedValue(null),
     });
@@ -27,6 +29,8 @@ describe("CMS repository", () => {
   it("falls back to static works when the database source fails", async () => {
     const repository = createCmsRepository({
       listPublishedWorks: vi.fn().mockRejectedValue(new Error("offline")),
+      listFeaturedWorks: vi.fn().mockResolvedValue([]),
+      listCompositeWorks: vi.fn().mockResolvedValue([]),
       listVisibleCategories: vi.fn().mockResolvedValue([]),
       getSiteSettings: vi.fn().mockResolvedValue(null),
     });

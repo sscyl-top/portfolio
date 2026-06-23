@@ -8,6 +8,8 @@ type WorkMediaFrameProps = {
   hover?: boolean;
   media?: Work["coverMedia"];
   tone: Work["coverTone"];
+  objectPosition?: string;
+  style?: React.CSSProperties;
 };
 
 export function WorkMediaFrame({
@@ -15,6 +17,8 @@ export function WorkMediaFrame({
   hover = false,
   media,
   tone,
+  objectPosition,
+  style,
 }: WorkMediaFrameProps) {
   const showImage = media && media.mimeType.startsWith("image/");
 
@@ -31,6 +35,7 @@ export function WorkMediaFrame({
           loading="lazy"
           sizes="(max-width: 768px) 100vw, 50vw"
           src={media.url}
+          style={objectPosition ? { objectPosition, ...style } : style}
         />
       ) : null}
     </>

@@ -305,7 +305,7 @@ export function MediaPicker({
                 {uploading ? "正在上传..." : "拖拽文件到此处，或点击上传"}
               </p>
               <p className="mt-1 text-xs text-white/30">
-                支持图片、视频、PDF，最大 25MB
+                支持图片、视频、PDF，单文件最大 10GB
               </p>
             </div>
           </DragDropUpload>
@@ -393,6 +393,7 @@ export function MediaPicker({
                     src={url}
                     alt={asset.alt_text || asset.original_name}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : isVideo ? (

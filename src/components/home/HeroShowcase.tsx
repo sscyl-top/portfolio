@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Download, Sparkles } from "lucide-react";
 import gsap from "gsap";
@@ -9,6 +9,15 @@ import { AmbientParticles } from "@/components/home/AmbientParticles";
 import { toneClass } from "@/lib/workTone";
 import { resume as staticResume } from "@/data/portfolio";
 
+export type HeroTextOverrides = {
+  desktopTitle?: string;
+  mobileTitle?: string;
+  kicker?: string;
+  experienceLabel?: string;
+  mainCta?: string;
+  secondaryCta?: string;
+};
+
 export type HeroData = {
   positioning?: string;
   downloadsPdf?: string;
@@ -16,18 +25,10 @@ export type HeroData = {
   sideCard1VideoUrl?: string;
   sideCard2VideoUrl?: string;
   sideCard3VideoUrl?: string;
+  textOverrides?: HeroTextOverrides;
 };
 
-// merged data available to all sub-components
-let resume = { ...staticResume };
 
-// Video URLs set from CMS data — updated on each render
-let heroVideos = {
-  main: "",
-  side1: "",
-  side2: "",
-  side3: "",
-};
 
 const heroFloatingMediaCards = [
   {
@@ -55,21 +56,27 @@ const heroFloatingMediaCards = [
 ];
 
 export function HeroShowcase({ data }: { data?: HeroData }) {
-  // merge CMS data on top of static resume for this render
-  resume = {
-    ...staticResume,
-    ...(data ?? {}),
-    downloads: {
-      ...staticResume.downloads,
-      pdf: data?.downloadsPdf ?? staticResume.downloads.pdf,
-    },
-  };
-  heroVideos = {
-    main: data?.mainVideoUrl ?? "",
-    side1: data?.sideCard1VideoUrl ?? "",
-    side2: data?.sideCard2VideoUrl ?? "",
-    side3: data?.sideCard3VideoUrl ?? "",
-  };
+  const resume = useMemo(
+    () => ({
+      ...staticResume,
+      ...(data ?? {}),
+      downloads: {
+        ...staticResume.downloads,
+        pdf: data?.downloadsPdf ?? staticResume.downloads.pdf,
+      },
+    }),
+    [data],
+  );
+  const heroVideos = useMemo(
+    () => ({
+      main: data?.mainVideoUrl ?? "",
+      side1: data?.sideCard1VideoUrl ?? "",
+      side2: data?.sideCard2VideoUrl ?? "",
+      side3: data?.sideCard3VideoUrl ?? "",
+    }),
+    [data],
+  );
+  const heroTextOverrides = data?.textOverrides ?? {};
   const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -128,8 +135,16 @@ export function HeroShowcase({ data }: { data?: HeroData }) {
 
       <div className="relative z-20 mx-auto flex min-h-[calc(100vh-10rem)] max-w-[1880px] items-center justify-center">
         <div className="relative w-full pb-10 pt-16">
-          <HeroMainCard />
-          <HeroSideCards />
+          <HeroMainCard
+            resume={resume}
+            textOverrides={heroTextOverrides}
+            videos={heroVideos}
+          />
+          <HeroSideCards
+            resume={resume}
+            textOverrides={heroTextOverrides}
+            videos={heroVideos}
+          />
 
           <div
             data-hero-reveal
@@ -146,7 +161,15 @@ export function HeroShowcase({ data }: { data?: HeroData }) {
   );
 }
 
-function HeroMainCard() {
+function HeroMainCard({
+  resume,
+  textOverrides,
+  videos,
+}: {
+  resume: typeof staticResume;
+  textOverrides: HeroTextOverrides;
+  videos: { main: string; side1: string; side2: string; side3: string };
+}) {
   return (
     <>
     <div
@@ -156,10 +179,10 @@ function HeroMainCard() {
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
 
       {/* Background video (when configured via CMS) */}
-      {heroVideos.main ? (
+      {videos.main ? (
         <video
           data-testid="hero-main-video"
-          src={heroVideos.main}
+          src={videos.main}
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
@@ -169,16 +192,16 @@ function HeroMainCard() {
       ) : null}
 
       {/* Dark overlay for text readability when video is present */}
-      {heroVideos.main ? (
+      {videos.main ? (
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
       ) : null}
 
       <div className="relative z-10 flex items-center justify-between font-mono text-[9px] uppercase text-white/50 md:text-xs">
         <span>CT DESIGN SYSTEM</span>
-        <span>{heroVideos.main ? "LIVE VIDEO" : "VIDEO SLOT / YR26"}</span>
+        <span>{videos.main ? "LIVE VIDEO" : "VIDEO SLOT / YR26"}</span>
       </div>
 
-      {!heroVideos.main ? (
+      {!videos.main ? (
         <div className="absolute left-4 top-12 hidden rounded-full border border-white/12 bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase text-white/58 md:block md:left-5 md:top-14 md:px-4 md:py-2 md:text-xs">
           Upload video here
         </div>
@@ -186,10 +209,10 @@ function HeroMainCard() {
 
       <div className="absolute bottom-5 left-5 right-5 z-10 hidden md:block md:bottom-8 md:left-8 md:right-8">
         <p className="font-mono text-xs uppercase text-copper">
-          Brand Visual / AI Design / Web Experience
+          {textOverrides.kicker || "Brand Visual / AI Design / Web Experience"}
         </p>
         <h1 className="mt-3 max-w-2xl text-2xl font-semibold leading-[1.05] text-white md:text-5xl">
-          让品牌视觉拥有可被记住的数字现场
+          {textOverrides.desktopTitle || "让品牌视觉拥有可被记住的数字现场"}
         </h1>
         <p className="mt-4 max-w-xl text-[13px] leading-6 text-white/62 md:text-base">
           {resume.positioning}
@@ -198,10 +221,10 @@ function HeroMainCard() {
     </div>
     <div className="mt-4 block px-1 md:hidden" data-hero-reveal>
       <p className="font-mono text-[10px] uppercase text-copper">
-        Brand Visual / AI Design / Web Experience
+        {textOverrides.kicker || "Brand Visual / AI Design / Web Experience"}
       </p>
       <h1 className="mt-2 text-2xl font-semibold leading-[1.05] text-white">
-        让品牌视觉拥有被记住的数字现场
+        {textOverrides.mobileTitle || "让品牌视觉拥有被记住的数字现场"}
       </h1>
       <p className="mt-3 text-[13px] leading-6 text-white/62">
         {resume.positioning}
@@ -211,7 +234,15 @@ function HeroMainCard() {
   );
 }
 
-function HeroSideCards() {
+function HeroSideCards({
+  resume,
+  textOverrides,
+  videos,
+}: {
+  resume: typeof staticResume;
+  textOverrides: HeroTextOverrides;
+  videos: { main: string; side1: string; side2: string; side3: string };
+}) {
   return (
     <>
       {heroFloatingMediaCards.slice(0, 2).map((card) => (
@@ -219,15 +250,15 @@ function HeroSideCards() {
           key={card.tone}
           className={card.className}
           tone={card.tone}
-          videoSrc={heroVideos[card.videoKey]}
+          videoSrc={videos[card.videoKey]}
           wide={card.wide}
         />
       ))}
-      <HeroActions />
+      <HeroActions resume={resume} />
       <FloatingImageCard
         className={heroFloatingMediaCards[2].className}
         tone={heroFloatingMediaCards[2].tone}
-        videoSrc={heroVideos[heroFloatingMediaCards[2].videoKey]}
+        videoSrc={videos[heroFloatingMediaCards[2].videoKey]}
         wide={heroFloatingMediaCards[2].wide}
       />
 
@@ -239,14 +270,14 @@ function HeroSideCards() {
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
         <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
         <p className="mt-2 text-xs leading-5 text-white/50">
-          品牌视觉与商业设计实践
+          {textOverrides.experienceLabel || "品牌视觉与商业设计实践"}
         </p>
       </div>
     </>
   );
 }
 
-function HeroActions() {
+function HeroActions({ resume }: { resume: typeof staticResume }) {
   return (
     <div
       data-hero-reveal

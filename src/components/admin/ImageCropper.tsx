@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { X, Check, RotateCcw, Crop } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { X, Check } from "lucide-react";
 import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -48,10 +48,6 @@ export function ImageCropper({ imageSrc, onCropComplete, onClose, aspect }: Prop
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    const cropX = (completedCrop.x || 0) * scaleX / 100 * (image.width / 100 * (completedCrop.width || 0) / 100 ? 1 : 1);
     // 使用 react-image-crop 推荐的 canvas 绘制方式
     const cropWidth = (completedCrop.width || 0) * image.naturalWidth / 100;
     const cropHeight = (completedCrop.height || 0) * image.naturalHeight / 100;

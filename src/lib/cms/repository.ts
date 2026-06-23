@@ -1,4 +1,4 @@
-﻿import {
+import {
   getCompositeWorks,
   getFeaturedWorks,
   getPublishedWorks,
@@ -15,6 +15,7 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { buildOptimizedMediaUrl } from "@/lib/cms/media-url";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -32,6 +33,7 @@ export type PublicSiteSettings = {
   nickname: string;
   seoDescription: string;
   seoTitle: string;
+  shareMediaUrl?: string;
   socialLinks: Array<{ href: string; label: string }>;
   title: string;
 };
@@ -225,7 +227,7 @@ export async function createServerCmsRepository() {
     async getSiteSettings() {
       const { data, error } = await client
         .from("site_settings")
-        .select("*,logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text)")
+        .select("*,logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text)")
         .single();
 
       if (error) throw error;
@@ -264,6 +266,8 @@ type CmsSiteSettingsRow = {
   seo_description: string;
   logo_media_id?: string | null;
   logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  share_media_id?: string | null;
+  share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   social_links: Array<{ label: string; url: string }> | null;
 };
 
@@ -282,7 +286,9 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
   };
 }
 
-function toPublicLogoMedia(value: CmsSiteSettingsRow["logo_media"]): string | undefined {
+function toPublicMediaUrl(
+  value: CmsMediaRow | Array<CmsMediaRow> | null | undefined,
+): string | undefined {
   const { url } = getSupabasePublicConfig();
   const media = Array.isArray(value) ? value[0] : value;
   if (!media?.storage_key) return undefined;
@@ -295,12 +301,13 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
 
   return {
     description: normalizeUtf8(row.seo_description) || settings.description,
-    logoMediaUrl: toPublicLogoMedia(row.logo_media),
+    logoMediaUrl: toPublicMediaUrl(row.logo_media),
     name: normalizeUtf8(row.name) || settings.name,
     navigation: settings.navigation,
     nickname: normalizeUtf8(row.nickname) || settings.logo,
     seoDescription: normalizeUtf8(row.seo_description) || settings.description,
     seoTitle: normalizeUtf8(row.seo_title) || `${settings.name} | ${settings.title}`,
+    shareMediaUrl: toPublicMediaUrl(row.share_media),
     socialLinks:
       row.social_links?.map((link) => ({
         href: link.url,
@@ -379,12 +386,10 @@ function toRefs(raw: unknown): MediaRef[] {
 }
 
 function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
-  const { url } = getSupabasePublicConfig();
-
   const toMedia = (ref: MediaRef) => ({
     alt: ref.alt_text ?? "",
     mimeType: ref.mime_type ?? "",
-    url: `${url}/storage/v1/object/public/portfolio-media/${encodeURI(ref.storage_key)}`,
+    url: buildMediaUrl(ref.storage_key, ref.mime_type),
   });
 
   const toItems = (refs: MediaRef[]) => refs.map(toMedia);
@@ -395,12 +400,22 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     .map((block) => {
       // 读取 layout 字段（来自 payload.layout）
       const rawLayout = (block.payload.layout ?? {}) as Record<string, unknown>;
+      const rawFree = rawLayout.free as Record<string, unknown> | undefined;
+      const free =
+        rawFree &&
+        typeof rawFree.x === "number" &&
+        typeof rawFree.y === "number" &&
+        typeof rawFree.w === "number" &&
+        typeof rawFree.h === "number"
+          ? { x: rawFree.x, y: rawFree.y, w: rawFree.w, h: rawFree.h }
+          : undefined;
       const layout =
         rawLayout && typeof rawLayout === "object"
           ? {
-              width:  (rawLayout.width  as "full" | "contained" | "narrow") ?? undefined,
+              width:  (rawLayout.width  as "full" | "contained" | "narrow" | "free") ?? undefined,
               align:  (rawLayout.align  as "left" | "center")          ?? undefined,
               columns: (rawLayout.columns as 2 | 3 | 4)               ?? undefined,
+              free,
             }
           : undefined;
 
@@ -416,20 +431,31 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
         const refs = toRefs(block.payload.media_refs ?? block.payload.media_ref);
         const items = toItems(refs);
         const caption = String(block.payload.caption ?? "");
+        const rawFocal = block.payload.focal_point as { x?: number; y?: number } | undefined;
+        const focalPoint =
+          rawFocal && typeof rawFocal.x === "number" && typeof rawFocal.y === "number"
+            ? { x: rawFocal.x, y: rawFocal.y }
+            : undefined;
 
         return {
           type: block.block_type as "media" | "gallery",
           caption: caption || undefined,
           items,
           layout: layout ?? undefined,
+          ...(block.block_type === "media" && focalPoint ? { focalPoint } : {}),
         };
       }
       if (block.block_type === "video") {
         const ref = block.payload.media_ref as MediaRef | null;
         const items = ref ? [toMedia(ref)] : [];
         const caption = String(block.payload.caption ?? "");
+        const rawFocal = block.payload.focal_point as { x?: number; y?: number } | undefined;
+        const focalPoint =
+          rawFocal && typeof rawFocal.x === "number" && typeof rawFocal.y === "number"
+            ? { x: rawFocal.x, y: rawFocal.y }
+            : undefined;
 
-        return { type: "video" as const, caption: caption || undefined, items, layout: layout ?? undefined };
+        return { type: "video" as const, caption: caption || undefined, items, layout: layout ?? undefined, focalPoint };
       }
       if (block.block_type === "pdf") {
         const ref = block.payload.media_ref as MediaRef | null;
@@ -459,11 +485,19 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     .filter((block): block is NonNullable<typeof block> => block !== null);
 }
 
+function buildMediaUrl(storageKey: string, mimeType?: string): string {
+  const isImage = (mimeType ?? "").startsWith("image/");
+  if (isImage) {
+    return buildOptimizedMediaUrl(storageKey, { format: "webp" });
+  }
+  const { url } = getSupabasePublicConfig();
+  return `${url}/storage/v1/object/public/portfolio-media/${encodeURI(storageKey)}`;
+}
+
 function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
   const media = Array.isArray(value) ? value[0] : value;
   if (!media?.storage_key) return undefined;
 
-  const { url } = getSupabasePublicConfig();
   const encodedKey = media.storage_key
     .split("/")
     .map((part) => encodeURIComponent(part))
@@ -472,7 +506,7 @@ function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
   return {
     alt: media.alt_text,
     mimeType: media.mime_type,
-    url: `${url}/storage/v1/object/public/portfolio-media/${encodedKey}`,
+    url: buildMediaUrl(encodedKey, media.mime_type),
   };
 }
 

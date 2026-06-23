@@ -1,9 +1,20 @@
-﻿export type WorkStatus = "draft" | "published" | "private";
+export type WorkStatus = "draft" | "published" | "private";
 
 export type BlockLayout = {
-  width?: "full" | "contained" | "narrow";
+  width?: "full" | "contained" | "narrow" | "free";
   align?: "left" | "center";
   columns?: 2 | 3 | 4;
+  free?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
+};
+
+export type FocalPoint = {
+  x: number;
+  y: number;
 };
 
 export type ContentBlock =
@@ -25,6 +36,7 @@ export type ContentBlock =
       caption?: string;
       items: WorkMedia[];
       layout?: BlockLayout;
+      focalPoint?: FocalPoint;
     }
   | {
       type: "gallery";
@@ -47,6 +59,7 @@ export type ContentBlock =
       caption?: string;
       items: WorkMedia[];
       layout?: BlockLayout;
+      focalPoint?: FocalPoint;
     }
   | {
       type: "pdf";
@@ -119,7 +132,7 @@ export const resume = {
     "以求职面试为主的个人作品集，兼顾品牌视觉、AI 设计与网页视觉服务合作。",
   location: "广东-深圳",
   contact: {
-    email: "hello@sscyl.top",
+    email: "3624457672@qq.com",
     phone: "19276690901",
     zcool: "https://www.zcool.com.cn/u/25717361",
   },

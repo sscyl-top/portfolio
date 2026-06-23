@@ -1,9 +1,10 @@
-import { CapabilityBands } from "@/components/home/CapabilityBands";
-import { HeroShowcase, type HeroData } from "@/components/home/HeroShowcase";
+import { CapabilityBands, type CapabilityTextOverrides } from "@/components/home/CapabilityBands";
+import { HeroShowcase, type HeroData, type HeroTextOverrides } from "@/components/home/HeroShowcase";
 import { resume as staticResume } from "@/data/portfolio";
 import { getBackendReadiness } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { getTextContentsByKeys } from "@/lib/cms/text-content";
 
 type HeroVideoSettings = {
   mainVideoMediaId?: string | null;
@@ -29,9 +30,55 @@ export default async function Home() {
   return (
     <main>
       <HeroShowcase data={data.hero} />
-      <CapabilityBands strengths={data.strengths} />
+      <CapabilityBands strengths={data.strengths} textOverrides={data.textOverrides} />
     </main>
   );
+}
+
+const HOME_TEXT_KEYS = [
+  "hero.title.desktop",
+  "hero.title.mobile",
+  "hero.experience",
+  "contact.invitation",
+  "cta.works",
+  "cta.resume",
+  "cta.hiring",
+  "footer.copyright",
+  "home.strengths.title",
+];
+
+function pickText(
+  texts: Record<string, { content: string; styles: Record<string, string> }>,
+  key: string,
+): string | undefined {
+  const content = texts[key]?.content;
+  // getTextContentsByKeys falls back to the key itself when a record is missing,
+  // so treat the key value as "not configured" and keep component defaults.
+  if (!content || content === key) return undefined;
+  return content;
+}
+
+function buildHeroTextOverrides(
+  texts: Record<string, { content: string; styles: Record<string, string> }>,
+): HeroTextOverrides {
+  return {
+    desktopTitle: pickText(texts, "hero.title.desktop"),
+    mobileTitle: pickText(texts, "hero.title.mobile"),
+    experienceLabel: pickText(texts, "hero.experience"),
+  };
+}
+
+function buildCapabilityTextOverrides(
+  texts: Record<string, { content: string; styles: Record<string, string> }>,
+): CapabilityTextOverrides {
+  return {
+    strengthsTitle: pickText(texts, "home.strengths.title"),
+    contactInvitation: pickText(texts, "contact.invitation"),
+    ctaWorks: pickText(texts, "cta.works"),
+    ctaResume: pickText(texts, "cta.resume"),
+    ctaHiring: pickText(texts, "cta.hiring"),
+    footerCopyright: pickText(texts, "footer.copyright"),
+  };
 }
 
 async function getHomeData() {
@@ -41,8 +88,8 @@ async function getHomeData() {
 
     const supabase = await createSupabaseServerClient();
 
-    // Fetch resume data and hero video config in parallel
-    const [resumeResult, pageResult] = await Promise.all([
+    // Fetch resume data, hero video config, and global text overrides in parallel
+    const [resumeResult, pageResult, texts] = await Promise.all([
       supabase
         .from("resumes")
         .select("positioning,strengths")
@@ -52,6 +99,7 @@ async function getHomeData() {
         .select("modules")
         .eq("slug", "home")
         .single(),
+      getTextContentsByKeys(HOME_TEXT_KEYS),
     ]);
 
     const resumeRow = resumeResult.data;
@@ -67,11 +115,13 @@ async function getHomeData() {
       hero: {
         positioning: (resumeRow.positioning as string) || staticResume.positioning,
         downloadsPdf: staticResume.downloads.pdf,
+        textOverrides: buildHeroTextOverrides(texts),
         ...heroVideoUrls,
       } satisfies HeroData,
       strengths: Array.isArray(resumeRow.strengths) && (resumeRow.strengths as string[]).length > 0
         ? (resumeRow.strengths as string[])
         : staticResume.strengths,
+      textOverrides: buildCapabilityTextOverrides(texts),
     };
   } catch {
     return {
@@ -80,6 +130,7 @@ async function getHomeData() {
         downloadsPdf: staticResume.downloads.pdf,
       } satisfies HeroData,
       strengths: staticResume.strengths,
+      textOverrides: buildCapabilityTextOverrides({}),
     };
   }
 }

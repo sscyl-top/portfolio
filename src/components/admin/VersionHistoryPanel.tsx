@@ -1,0 +1,313 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  History,
+  Save,
+  RotateCcw,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  Eye,
+} from "lucide-react";
+
+import type { WorkVersionListItem } from "@/lib/cms/versions";
+import {
+  archiveWorkVersionAction,
+  rollbackWorkVersionAction,
+  restoreForwardWorkVersionAction,
+} from "@/app/admin/(protected)/works/actions";
+
+type Props = {
+  workId: string;
+  workSlug: string;
+  versions: WorkVersionListItem[];
+};
+
+export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
+  const [isPending, startTransition] = useTransition();
+  const [label, setLabel] = useState("");
+  const [expandedNumber, setExpandedNumber] = useState<number | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    versionNumber: number;
+    direction: "back" | "forward";
+  } | null>(null);
+  const router = useRouter();
+
+  const currentIndex = versions.findIndex((v) => v.is_current);
+
+  const handleSave = (formData: FormData) => {
+    startTransition(() => {
+      archiveWorkVersionAction(formData);
+      setLabel("");
+      router.refresh();
+    });
+  };
+
+  const handleRollback = (versionNumber: number) => {
+    const formData = new FormData();
+    formData.set("work_id", workId);
+    formData.set("work_slug", workSlug);
+    formData.set("version_number", String(versionNumber));
+    startTransition(() => {
+      rollbackWorkVersionAction(formData);
+      setConfirmTarget(null);
+      router.refresh();
+    });
+  };
+
+  const handleForward = (versionNumber: number) => {
+    const formData = new FormData();
+    formData.set("work_id", workId);
+    formData.set("work_slug", workSlug);
+    formData.set("version_number", String(versionNumber));
+    startTransition(() => {
+      restoreForwardWorkVersionAction(formData);
+      setConfirmTarget(null);
+      router.refresh();
+    });
+  };
+
+  return (
+    <section className="mt-6 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 text-xl font-semibold text-white">
+            <History className="h-5 w-5 text-cyan" />
+            版本历史
+          </h3>
+          <p className="mt-2 text-sm text-white/45">
+            每次保存作品都会自动归档。可手动保存里程碑版本，回滚或前进到任意历史版本。
+          </p>
+        </div>
+      </div>
+
+      <form action={handleSave} className="flex flex-wrap items-end gap-3 border-b border-white/5 pb-4">
+        <input type="hidden" name="work_id" value={workId} />
+        <input type="hidden" name="work_slug" value={workSlug} />
+        <label className="grid flex-1 gap-1 text-sm">
+          <span className="text-white/50">版本备注（可选）</span>
+          <input
+            name="label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="例如：初稿、客户确认版、终稿"
+            maxLength={80}
+            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white disabled:opacity-40"
+        >
+          <Save className="h-4 w-4" />
+          保存当前版本
+        </button>
+      </form>
+
+      {versions.length === 0 ? (
+        <div className="grid min-h-32 place-items-center text-sm text-white/30">
+          暂无历史版本。保存作品后将自动生成第一个版本。
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {versions.map((version, index) => {
+            const isCurrent = version.is_current;
+            const isExpanded = expandedNumber === version.version_number;
+            const isConfirming =
+              confirmTarget?.versionNumber === version.version_number;
+            const canRollback = !isCurrent && index > currentIndex;
+            const canForward = !isCurrent && index < currentIndex;
+
+            return (
+              <div
+                key={version.version_number}
+                className={`rounded-md border transition ${
+                  isCurrent
+                    ? "border-cyan/30 bg-cyan/[0.04]"
+                    : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedNumber(isExpanded ? null : version.version_number)
+                    }
+                    className="text-white/30 transition hover:text-white/70"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  <span
+                    className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold ${
+                      isCurrent
+                        ? "bg-cyan/20 text-cyan"
+                        : "bg-white/10 text-white/60"
+                    }`}
+                  >
+                    v{version.version_number}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium text-white/85">
+                        {version.label ?? version.title}
+                      </span>
+                      {version.source === "manual" ? (
+                        <span className="rounded-full border border-cyan/30 px-1.5 py-0.5 text-[9px] font-medium text-cyan">
+                          手动
+                        </span>
+                      ) : null}
+                      {isCurrent ? (
+                        <span className="rounded-full border border-cyan/30 px-1.5 py-0.5 text-[9px] font-medium text-cyan">
+                          当前
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-0.5 text-xs text-white/35">
+                      {formatDateTime(version.created_at)} · {version.block_count} 个内容块
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {isConfirming ? (
+                      <>
+                        <span className="mr-1 text-xs text-red-200/70">
+                          确认{confirmTarget.direction === "back" ? "回滚" : "前进"}？
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            confirmTarget.direction === "back"
+                              ? handleRollback(version.version_number)
+                              : handleForward(version.version_number)
+                          }
+                          disabled={isPending}
+                          className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs text-red-200 transition hover:bg-red-500/30 disabled:opacity-30"
+                        >
+                          确认
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmTarget(null)}
+                          className="rounded-md border border-white/10 px-2.5 py-1 text-xs text-white/50 transition hover:text-white/80"
+                        >
+                          取消
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedNumber(isExpanded ? null : version.version_number)
+                          }
+                          className="rounded p-1.5 text-white/30 transition hover:bg-white/10 hover:text-white/70"
+                          title="查看版本详情"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        {canRollback ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfirmTarget({
+                                versionNumber: version.version_number,
+                                direction: "back",
+                              })
+                            }
+                            disabled={isPending}
+                            className="inline-flex items-center gap-1 rounded-md border border-cyan/25 px-2.5 py-1 text-xs text-cyan transition hover:bg-cyan/10 disabled:opacity-30"
+                            title="回滚到此版本"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            回滚
+                          </button>
+                        ) : null}
+                        {canForward ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfirmTarget({
+                                versionNumber: version.version_number,
+                                direction: "forward",
+                              })
+                            }
+                            disabled={isPending}
+                            className="inline-flex items-center gap-1 rounded-md border border-cyan/25 px-2.5 py-1 text-xs text-cyan transition hover:bg-cyan/10 disabled:opacity-30"
+                            title="前进到此版本"
+                          >
+                            <ArrowRight className="h-3 w-3" />
+                            前进
+                          </button>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {isExpanded ? (
+                  <div className="border-t border-white/5 px-4 py-3">
+                    <VersionDetail version={version} />
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isPending ? (
+        <p className="text-center text-xs text-cyan/60">正在处理…</p>
+      ) : null}
+    </section>
+  );
+}
+
+function VersionDetail({ version }: { version: WorkVersionListItem }) {
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 rounded-md bg-black/20 p-3 text-xs">
+        <div className="flex gap-2">
+          <span className="w-16 shrink-0 text-white/35">标题</span>
+          <span className="text-white/75">{version.title}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="w-16 shrink-0 text-white/35">来源</span>
+          <span className="text-white/65">
+            {version.source === "manual" ? "手动保存" : "自动归档"}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-white/30">
+          内容块（{version.block_count}）
+        </p>
+        <p className="text-xs text-white/25">展开可在列表中查看详情</p>
+      </div>
+    </div>
+  );
+}
+
+function formatDateTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}

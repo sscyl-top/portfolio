@@ -1,35 +1,23 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { MediaPicker } from "@/components/admin/MediaPicker";
+import { listWorkVersions } from "@/lib/cms/versions";
+import type { WorkVersionListItem } from "@/lib/cms/versions";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
+import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
 
 import { SlugInput } from "./SlugInput";
-import { BlockListWrapper } from "./BlockListWrapper";
 
 import {
-  createTextBlock,
   clearPrivatePreviewLink,
   deleteWork,
-  deleteWorkBlock,
   generatePrivatePreviewLink,
-  updateTextBlock,
   updateWork,
-  createGalleryBlock,
-  createMediaBlock,
-  createVideoBlock,
-  createBeforeAfterBlock,
-  updateMediaBlock,
-  updateVideoBlock,
-  updateBeforeAfterBlock,
-  updateGalleryBlock,
   updateWorkMedia,
   updateWorkTaxonomy,
-  createPdfBlock,
-  updatePdfBlock,
 } from "../actions";
 
 type WorkEditorRow = {
@@ -52,6 +40,7 @@ type WorkEditorRow = {
   share_media_id: string | null;
   seo_title: string;
   seo_description: string;
+  scheduled_publish_at: string | null;
   updated_at: string;
 };
 
@@ -104,11 +93,12 @@ export default async function AdminWorkEditorPage({
     { data: mediaAssets },
     { data: workCategories },
     { data: workTags },
+    versions,
   ] = await Promise.all([
     supabase
       .from("works")
       .select(
-        "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,cover_media_id,hover_media_id,share_media_id,seo_title,seo_description,updated_at",
+        "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,cover_media_id,hover_media_id,share_media_id,seo_title,seo_description,scheduled_publish_at,updated_at",
       )
       .eq("id", id)
       .is("deleted_at", null)
@@ -135,6 +125,7 @@ export default async function AdminWorkEditorPage({
       .order("created_at", { ascending: false }),
     supabase.from("work_categories").select("category_id").eq("work_id", id),
     supabase.from("work_tags").select("tag_id").eq("work_id", id),
+    listWorkVersions(supabase, id),
   ]);
 
   if (!work) notFound();
@@ -144,6 +135,7 @@ export default async function AdminWorkEditorPage({
   const categoryRows = (categories ?? []) as TaxonomyOptionRow[];
   const mediaRows = (mediaAssets ?? []) as MediaOptionRow[];
   const tagRows = (tags ?? []) as TaxonomyOptionRow[];
+  const versionRows = (versions ?? []) as WorkVersionListItem[];
   const selectedCategoryIds = new Set(
     ((workCategories ?? []) as WorkCategoryRow[]).map((item) => item.category_id),
   );
@@ -193,6 +185,11 @@ export default async function AdminWorkEditorPage({
         workSlug={workRow.slug}
         initialBlocks={blockRows}
         mediaAssets={mediaRows}
+      />
+      <VersionHistoryPanel
+        workId={workRow.id}
+        workSlug={workRow.slug}
+        versions={versionRows}
       />
     </div>
   );
@@ -447,6 +444,15 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
             <option value="private">私密</option>
           </select>
         </label>
+        <label className="grid gap-2 text-sm">
+          <span className="text-white/58">定时发布</span>
+          <input
+            name="scheduled_publish_at"
+            type="datetime-local"
+            defaultValue={work.scheduled_publish_at ? toDatetimeLocalValue(work.scheduled_publish_at) : ""}
+            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          />
+        </label>
         <CheckField
           label="代表作"
           name="is_representative"
@@ -603,312 +609,6 @@ function TaxonomyForm({
   );
 }
 
-function BlockEditor({
-  blocks,
-  mediaAssets,
-  work,
-}: {
-  blocks: WorkBlockRow[];
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  return (
-    <section className="mt-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-semibold text-white">内容块</h3>
-          <p className="mt-2 text-sm text-white/45">
-            当前版本支持文本块、媒体块与图库块编辑；视频和 PDF 块会继续接入。
-          </p>
-        </div>
-      </div>
-
-      <form
-        action={createTextBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto]">
-          <Field label="标题" name="heading" defaultValue="" required />
-          <Field
-            label="排序"
-            name="sort_order"
-            type="number"
-            defaultValue={String(blocks.length)}
-          />
-          <label className="flex min-h-10 items-center gap-3 self-end rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/68">
-            <input
-              name="is_visible"
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 accent-cyan"
-            />
-            可见
-          </label>
-        </div>
-        <label className="grid gap-2 text-sm">
-          <span className="text-white/58">正文</span>
-          <textarea
-            name="body"
-            required
-            rows={5}
-            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
-          />
-        </label>
-        <div className="flex justify-end">
-          <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            新增文本块
-          </button>
-        </div>
-      </form>
-
-      
-      <form
-        action={createMediaBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-white/80">新增媒体块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">media</span>
-        </div>
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          allowUpload={true}
-        />
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
-          <CheckField label="可见" name="is_visible" defaultChecked />
-          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            添加媒体块
-          </button>
-        </div>
-        <Field label="说明文字" name="caption" defaultValue="" />
-      </form>
-      <form
-        action={createGalleryBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-white/80">新增图库块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">gallery</span>
-        </div>
-        <MediaPicker
-          assets={mediaAssets}
-          mode="multi"
-          fieldName="media_ids"
-          allowUpload={true}
-        />
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
-          <CheckField label="可见" name="is_visible" defaultChecked />
-          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            添加图库块
-          </button>
-        </div>
-        <Field label="说明文字" name="caption" defaultValue="" />
-      </form>
-      <form
-        action={createVideoBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-white/80">新增视频块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">video</span>
-        </div>
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          allowUpload={true}
-        />
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
-          <CheckField label="可见" name="is_visible" defaultChecked />
-          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            添加视频块
-          </button>
-        </div>
-        <Field label="说明文字" name="caption" defaultValue="" />
-      </form>
-      <form
-        action={createBeforeAfterBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-white/80">新增 Before/After 块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">before_after</span>
-        </div>
-        <p className="text-sm text-white/38">
-          先选 After（修改后），再选 Before（修改前）。前台会渲染为左右对比滑块。
-        </p>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <span className="mb-2 block text-sm text-white/58">Before（修改前）</span>
-            <MediaPicker
-              assets={mediaAssets}
-              mode="single"
-              fieldName="before_media_id"
-              allowUpload={true}
-            />
-          </div>
-          <div>
-            <span className="mb-2 block text-sm text-white/58">After（修改后）</span>
-            <MediaPicker
-              assets={mediaAssets}
-              mode="single"
-              fieldName="after_media_id"
-              allowUpload={true}
-            />
-          </div>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
-          <CheckField label="可见" name="is_visible" defaultChecked />
-          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            添加 Before/After 块
-          </button>
-        </div>
-        <Field label="说明文字" name="caption" defaultValue="" />
-      </form>
-      <form
-        action={createPdfBlock}
-        className="mt-4 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-      >
-        <input type="hidden" name="work_id" value={work.id} />
-        <input type="hidden" name="work_slug" value={work.slug} />
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-white/80">新增 PDF 块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">pdf</span>
-        </div>
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          allowUpload={true}
-        />
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
-          <CheckField label="可见" name="is_visible" defaultChecked />
-          <button className="min-h-10 self-end rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            添加 PDF 块
-          </button>
-        </div>
-        <Field label="说明文字" name="caption" defaultValue="" />
-      </form>
-      {blocks.length === 0 ? (
-        <div className="mt-4 grid min-h-40 place-items-center border-y border-white/10 text-sm text-white/38">
-          暂无内容块。
-        </div>
-      ) : (
-        <BlockListWrapper
-          blocks={blocks}
-          workId={work.id}
-          workSlug={work.slug}
-        >
-          {Object.fromEntries(
-            blocks.map((block) => [
-              block.id,
-              (() => {
-                if (block.block_type === "text") {
-                  return <TextBlockForm key={block.id} block={block} work={work} />;
-                }
-                if (block.block_type === "media") {
-                  return <MediaBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
-                }
-                if (block.block_type === "gallery") {
-                  return <GalleryBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
-                }
-                if (block.block_type === "video") {
-                  return <VideoBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
-                }
-                if (block.block_type === "before_after") {
-                  return <BeforeAfterBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
-                }
-                if (block.block_type === "pdf") {
-                  return <PdfBlockCard key={block.id} block={block} mediaAssets={mediaAssets} work={work} />;
-                }
-                return (
-                  <div key={block.id} className="rounded-md border border-white/10 bg-white/[0.035] p-4 text-sm text-white/50">
-                    {block.block_type} 块暂未开放编辑。
-                  </div>
-                );
-              })(),
-            ]),
-          )}
-        </BlockListWrapper>
-      )}
-    </section>
-  );
-}
-
-function TextBlockForm({
-  block,
-  work,
-}: {
-  block: WorkBlockRow;
-  work: WorkEditorRow;
-}) {
-  const heading = String(block.payload.heading ?? "");
-  const body = String(block.payload.body ?? "");
-
-  return (
-    <form
-      action={updateTextBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <Field label="标题" name="heading" defaultValue={heading} required />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <label className="grid gap-2 text-sm">
-        <span className="text-white/58">正文</span>
-        <textarea
-          name="body"
-          defaultValue={body}
-          rows={5}
-          className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
-        />
-      </label>
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
-}
-
 function Field({
   label,
   name,
@@ -937,91 +637,12 @@ function Field({
 }
 
 
-function GalleryBlockCard({
-  block,
-  mediaAssets,
-  work,
-}: {
-  block: WorkBlockRow;
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  const mediaIds: string[] = Array.isArray(block.payload.media_ids)
-    ? block.payload.media_ids
-    : [];
-  const caption = String(block.payload.caption ?? "");
-  const assets = mediaIds
-    .map((id) => mediaAssets.find((a) => a.id === id))
-    .filter((a): a is MediaOptionRow => Boolean(a));
-
-  return (
-    <form
-      action={updateGalleryBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/80">图库块</span>
-          <span className="font-mono text-xs text-white/34">
-            {mediaIds.length} 张素材
-          </span>
-        </div>
-      </div>
-      {assets.length === 0 ? (
-        <span className="grid h-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择媒体或已删除
-        </span>
-      ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {assets.map((asset) => (
-            <MediaSelectPreview
-              key={asset.id}
-              storageKey={asset.storage_key}
-              mimeType={asset.mime_type}
-              alt={asset.alt_text || asset.original_name}
-              name={asset.original_name}
-            />
-          ))}
-        </div>
-      )}
-      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <MediaPicker
-          assets={mediaAssets}
-          mode="multi"
-          fieldName="media_ids"
-          defaultValue={mediaIds}
-        />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <Field label="说明文字" name="caption" defaultValue={caption} />
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
+function toDatetimeLocalValue(isoString: string): string {
+  const date = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
 function CheckField({
   label,
   name,
@@ -1046,352 +667,4 @@ function CheckField({
     </label>
   );
 }
-function MediaBlockCard({
-  block,
-  mediaAssets,
-  work,
-}: {
-  block: WorkBlockRow;
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  const mediaId = String(block.payload.media_id ?? "");
-  const caption = String(block.payload.caption ?? "");
-  const asset = mediaAssets.find((a) => a.id === mediaId);
 
-  return (
-    <form
-      action={updateMediaBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/80">媒体块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">media</span>
-        </div>
-        {!asset ? (
-          <span className="font-mono text-xs text-red-200/60">
-            绑定媒体已删除
-          </span>
-        ) : null}
-      </div>
-      {asset ? (
-        <MediaSelectPreview
-          storageKey={asset.storage_key}
-          mimeType={asset.mime_type}
-          alt={asset.alt_text || asset.original_name}
-          name={asset.original_name}
-        />
-      ) : (
-        <span className="grid h-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择媒体
-        </span>
-      )}
-      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          defaultValue={mediaId ? [mediaId] : []}
-        />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <Field label="说明文字" name="caption" defaultValue={caption} />
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function VideoBlockCard({
-  block,
-  mediaAssets,
-  work,
-}: {
-  block: WorkBlockRow;
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  const mediaId = String(block.payload.media_id ?? "");
-  const caption = String(block.payload.caption ?? "");
-  const asset = mediaAssets.find((a) => a.id === mediaId);
-
-  return (
-    <form
-      action={updateVideoBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/80">视频块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">video</span>
-        </div>
-        {!asset ? (
-          <span className="font-mono text-xs text-red-200/60">
-            绑定媒体已删除
-          </span>
-        ) : null}
-      </div>
-      {asset ? (
-        <MediaSelectPreview
-          storageKey={asset.storage_key}
-          mimeType={asset.mime_type}
-          alt={asset.alt_text || asset.original_name}
-          name={asset.original_name}
-        />
-      ) : (
-        <span className="grid h-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择媒体
-        </span>
-      )}
-      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          defaultValue={mediaId ? [mediaId] : []}
-        />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <Field label="说明文字" name="caption" defaultValue={caption} />
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function BeforeAfterBlockCard({
-  block,
-  mediaAssets,
-  work,
-}: {
-  block: WorkBlockRow;
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  const beforeMediaId = String(block.payload.before_media_id ?? "");
-  const afterMediaId = String(block.payload.after_media_id ?? "");
-  const caption = String(block.payload.caption ?? "");
-  const beforeAsset = mediaAssets.find((a) => a.id === beforeMediaId);
-  const afterAsset = mediaAssets.find((a) => a.id === afterMediaId);
-
-  return (
-    <form
-      action={updateBeforeAfterBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/80">Before/After 块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">before_after</span>
-        </div>
-        {(!beforeAsset || !afterAsset) ? (
-          <span className="font-mono text-xs text-red-200/60">
-            绑定媒体已删除
-          </span>
-        ) : null}
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <span className="mb-2 block text-xs text-white/48">Before（修改前）</span>
-          {beforeAsset ? (
-            <MediaSelectPreview
-              storageKey={beforeAsset.storage_key}
-              mimeType={beforeAsset.mime_type}
-              alt={beforeAsset.alt_text || beforeAsset.original_name}
-              name={beforeAsset.original_name}
-            />
-          ) : (
-            <span className="grid h-28 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-              未选择
-            </span>
-          )}
-        </div>
-        <div>
-          <span className="mb-2 block text-xs text-white/48">After（修改后）</span>
-          {afterAsset ? (
-            <MediaSelectPreview
-              storageKey={afterAsset.storage_key}
-              mimeType={afterAsset.mime_type}
-              alt={afterAsset.alt_text || afterAsset.original_name}
-              name={afterAsset.original_name}
-            />
-          ) : (
-            <span className="grid h-28 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-              未选择
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="before_media_id"
-          defaultValue={beforeMediaId ? [beforeMediaId] : []}
-        />
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="after_media_id"
-          defaultValue={afterMediaId ? [afterMediaId] : []}
-        />
-      </div>
-      <div className="grid gap-4 md:grid-cols-[8rem_auto_auto]">
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <Field label="说明文字" name="caption" defaultValue={caption} />
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function PdfBlockCard({
-  block,
-  mediaAssets,
-  work,
-}: {
-  block: WorkBlockRow;
-  mediaAssets: MediaOptionRow[];
-  work: WorkEditorRow;
-}) {
-  const mediaId = String(block.payload.media_id ?? "");
-  const caption = String(block.payload.caption ?? "");
-  const asset = mediaAssets.find((a) => a.id === mediaId);
-
-  return (
-    <form
-      action={updatePdfBlock}
-      className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
-      <input type="hidden" name="block_id" value={block.id} />
-      <input type="hidden" name="work_id" value={work.id} />
-      <input type="hidden" name="work_slug" value={work.slug} />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-white/80">PDF 块</span>
-          <span className="font-mono text-[10px] uppercase text-white/28">pdf</span>
-        </div>
-        {!asset ? (
-          <span className="font-mono text-xs text-red-200/60">
-            绑定媒体已删除
-          </span>
-        ) : null}
-      </div>
-      {asset ? (
-        <MediaSelectPreview
-          storageKey={asset.storage_key}
-          mimeType={asset.mime_type}
-          alt={asset.alt_text || asset.original_name}
-          name={asset.original_name}
-        />
-      ) : (
-        <span className="grid h-40 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择 PDF
-        </span>
-      )}
-      <div className="grid gap-4 md:grid-cols-[1fr_8rem_auto_auto]">
-        <MediaPicker
-          assets={mediaAssets}
-          mode="single"
-          fieldName="media_id"
-          defaultValue={mediaId ? [mediaId] : []}
-        />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(block.sort_order)}
-        />
-        <CheckField
-          label="可见"
-          name="is_visible"
-          defaultChecked={block.is_visible}
-        />
-        <button className="min-h-10 self-end rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          保存块
-        </button>
-      </div>
-      <Field label="说明文字" name="caption" defaultValue={caption} />
-      <div className="flex justify-end">
-        <button
-          formAction={deleteWorkBlock}
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除块
-        </button>
-      </div>
-    </form>
-  );
-}
