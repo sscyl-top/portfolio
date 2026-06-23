@@ -19,10 +19,10 @@ type ContactFormProps = {
 type FieldError = { name?: string; email?: string; message?: string };
 
 const fieldClass =
-  "min-h-9 w-full rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/55 focus:bg-white/[0.04]";
+  "min-h-9 w-full rounded-lg border border-white/[0.03] bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/45 focus:bg-white/[0.04]";
 
 const errorFieldClass =
-  "min-h-9 w-full rounded-lg border border-red-400/35 bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/55 focus:bg-white/[0.04]";
+  "min-h-9 w-full rounded-lg border border-red-400/25 bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/45 focus:bg-white/[0.04]";
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
@@ -36,7 +36,7 @@ function InlineField({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 w-[3.2rem] whitespace-nowrap text-right text-[13px] text-white/55">
+      <span className="shrink-0 w-[3.6rem] whitespace-nowrap text-right text-[13px] text-white/55 sm:w-[3.2rem]">
         {label}
       </span>
       <div className="min-w-0 flex-1">{children}</div>
@@ -147,7 +147,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 max-w-[95%] space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
+        className="mt-3 space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />

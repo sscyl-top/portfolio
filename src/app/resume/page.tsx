@@ -52,10 +52,10 @@ export default async function ResumePage() {
           </div>
 
           <div className="py-10 md:-translate-y-14">
-            <p className="font-mono text-xs uppercase text-copper md:text-sm">
+            <p className="font-mono text-xs uppercase text-copper sm:text-sm md:text-sm">
               HI, I&apos;M {resume.name}
             </p>
-            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-white sm:text-6xl md:text-8xl lg:text-9xl">
+            <h1 className="mt-4 max-w-5xl text-[2.6rem] leading-[0.88] text-white sm:text-5xl md:text-8xl lg:text-9xl">
               BRAND
               <span className="block text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.62)]">
                 VISUAL
