@@ -6,6 +6,8 @@ import {
   deleteTextContent,
 } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function TextContentPage() {
   await requireAdmin();
 

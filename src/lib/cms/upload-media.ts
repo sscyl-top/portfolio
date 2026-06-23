@@ -97,6 +97,21 @@ async function uploadSingleFile(
 }
 
 /**
+ * 上传 Blob 到 Supabase Storage 并注册到数据库
+ * 适用于裁剪后的图片等场景
+ */
+export async function uploadMediaBlob(
+  blob: Blob,
+  filename: string,
+  onProgress: (progress: UploadProgress) => void,
+): Promise<UploadResult> {
+  // 将 Blob 转换为 File
+  const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+  const results = await uploadMediaFiles([file], onProgress);
+  return results[0];
+}
+
+/**
  * 批量上传文件
  * @returns 上传成功的文件信息数组
  */

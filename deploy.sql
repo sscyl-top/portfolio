@@ -489,3 +489,71 @@ begin
 exception when duplicate_object then null;
 end;
 $$;
+
+-- ============================================================================
+-- Text Content — 全局文字管理
+-- ============================================================================
+
+create table public.text_content (
+  id uuid primary key default gen_random_uuid(),
+  key text unique not null,
+  content text not null,
+  font_size text,
+  font_family text,
+  font_weight text,
+  color text,
+  page text not null,
+  section text,
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create index idx_text_content_key on public.text_content(key);
+create index idx_text_content_page on public.text_content(page);
+
+alter table public.text_content enable row level security;
+
+create policy "admin manages text_content"
+  on public.text_content for all to authenticated
+  using (private.is_admin()) with check (private.is_admin());
+
+create policy "public reads text_content"
+  on public.text_content for select to anon, authenticated
+  using (is_active = true and deleted_at is null);
+
+revoke all on public.text_content from anon, authenticated;
+grant select on public.text_content to anon, authenticated;
+grant select, insert, update, delete on public.text_content to authenticated;
+grant all on public.text_content to service_role;
+
+create trigger set_text_content_updated_at
+  before update on public.text_content
+  for each row execute function private.set_updated_at();
+
+-- Seed data
+insert into public.text_content (key, content, font_size, font_family, font_weight, color, page, section, sort_order) values
+('global.nav.home', '首页', 'text-sm', 'font-sans', 'font-medium', 'text-white', 'global', 'navigation', 1),
+('global.nav.works', '全部作品', 'text-sm', 'font-sans', 'font-medium', 'text-white', 'global', 'navigation', 2),
+('global.nav.resume', '简历', 'text-sm', 'font-sans', 'font-medium', 'text-white', 'global', 'navigation', 3),
+('global.nav.admin', '管理', 'text-sm', 'font-sans', 'font-medium', 'text-white/60', 'global', 'navigation', 4),
+('global.footer.copyright', '© 2026 上山采月亮. All rights reserved.', 'text-xs', 'font-sans', 'font-normal', 'text-white/40', 'global', 'footer', 1),
+('global.footer.built', 'Built with Next.js', 'text-xs', 'font-sans', 'font-normal', 'text-white/40', 'global', 'footer', 2),
+('home.hero.title', '视觉设计师', 'text-6xl', 'font-sans', 'font-bold', 'text-white', 'home', 'hero', 1),
+('home.hero.subtitle', '专注品牌设计与 AI 设计', 'text-xl', 'font-sans', 'font-normal', 'text-white/70', 'home', 'hero', 2),
+('home.hero.cta', '查看作品', 'text-base', 'font-sans', 'font-medium', 'text-black', 'home', 'hero', 3),
+('home.strengths.title', '专业能力', 'text-3xl', 'font-sans', 'font-semibold', 'text-white', 'home', 'strengths', 1),
+('brand.logo_alt', '无限进步', null, null, null, null, 'global', 'navigation', 5),
+('hero.title.desktop', '让品牌视觉拥有可被记住的数字现场', null, null, null, null, 'home', 'hero', 4),
+('hero.title.mobile', '让品牌视觉拥有被记住的数字现场', null, null, null, null, 'home', 'hero', 5),
+('hero.experience', '品牌视觉与商业设计实践', null, null, null, null, 'home', 'hero', 6),
+('hero.cta.works', '查看作品', null, null, null, null, 'home', 'hero', 7),
+('hero.cta.resume', '下载简历', null, null, null, null, 'home', 'hero', 8),
+('contact.invitation', '期待一起共事：', null, null, null, null, 'home', 'contact', 1),
+('cta.works', '浏览作品', null, null, null, null, 'home', 'cta', 1),
+('cta.resume', '查看简历', null, null, null, null, 'home', 'cta', 2),
+('cta.hiring', '聘用联系', null, null, null, null, 'home', 'cta', 3),
+('footer.copyright', '© 2026 SSCYL Portfolio', null, null, null, null, 'global', 'footer', 3)
+on conflict (key) do nothing;

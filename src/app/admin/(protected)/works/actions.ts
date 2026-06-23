@@ -1021,3 +1021,100 @@ export async function deleteBlockDirect(
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
 }
+
+export async function updateBlockDirect(
+  workId: string,
+  workSlug: string,
+  blockId: string,
+  payload: Record<string, unknown>,
+) {
+  const { client } = await requireAdmin();
+
+  // Re-enrich media_ref if this is a media/video/pdf block with media_id
+  const blockType = payload._block_type as string | undefined;
+  let enrichedPayload = { ...payload };
+  delete enrichedPayload._block_type;
+
+  if (["media", "video", "pdf"].includes(blockType ?? "") && enrichedPayload.media_id) {
+    const { data: asset } = await client
+      .from("media_assets")
+      .select("id,storage_key,mime_type,alt_text")
+      .eq("id", enrichedPayload.media_id as string)
+      .is("deleted_at", null)
+      .single();
+    if (asset) {
+      enrichedPayload.media_ref = {
+        id: asset.id,
+        storage_key: asset.storage_key,
+        mime_type: asset.mime_type,
+        alt_text: asset.alt_text,
+      };
+    }
+  }
+
+  const { error } = await client
+    .from("work_blocks")
+    .update({ payload: enrichedPayload })
+    .eq("id", blockId)
+    .eq("work_id", workId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath(`/works/${workSlug}`);
+}
+
+/**
+ * 更新块的 media_ref（用于裁剪后替换媒体）
+ */
+export async function updateBlockMediaRef(
+  workId: string,
+  workSlug: string,
+  blockId: string,
+  mediaId: string,
+) {
+  const { client } = await requireAdmin();
+
+  // 获取新的 media asset 信息
+  const { data: asset } = await client
+    .from("media_assets")
+    .select("id,storage_key,mime_type,alt_text")
+    .eq("id", mediaId)
+    .is("deleted_at", null)
+    .single();
+
+  if (!asset) throw new Error("Media asset not found");
+
+  // 获取当前块
+  const { data: block } = await client
+    .from("work_blocks")
+    .select("payload,block_type")
+    .eq("id", blockId)
+    .single();
+
+  if (!block) throw new Error("Block not found");
+
+  // 更新 payload 中的 media_id 和 media_ref
+  const currentPayload = (block as { payload?: Record<string, unknown> }).payload || {};
+  const newPayload = {
+    ...currentPayload,
+    media_id: mediaId,
+    media_ref: {
+      id: asset.id,
+      storage_key: asset.storage_key,
+      mime_type: asset.mime_type,
+      alt_text: asset.alt_text,
+    },
+  };
+
+  const { error } = await client
+    .from("work_blocks")
+    .update({ payload: newPayload })
+    .eq("id", blockId)
+    .eq("work_id", workId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath(`/works/${workSlug}`);
+}
