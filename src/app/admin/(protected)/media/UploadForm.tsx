@@ -4,8 +4,6 @@ import { useState, useRef, useCallback } from "react";
 import { Upload } from "lucide-react";
 import { DragDropUpload } from "@/components/admin/DragDropUpload";
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-
 export function UploadForm() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<Record<string, number>>({});

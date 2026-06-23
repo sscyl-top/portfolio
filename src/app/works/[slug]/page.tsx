@@ -11,6 +11,7 @@ import {
   getPrivatePreviewWorkBySlug,
 } from "@/lib/cms/repository";
 import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
+import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
@@ -232,9 +233,10 @@ export default async function WorkDetailPage({
 
             if (block.type === "pdf") {
               if (block.items.length === 0) return null;
+              const pdfMedia = block.items[0];
               return (
                 <section
-                  key={`pdf-${block.items[0]?.url ?? "empty"}`}
+                  key={`pdf-${pdfMedia?.url ?? "empty"}`}
                   className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
                 >
                   {block.caption ? (
@@ -242,18 +244,12 @@ export default async function WorkDetailPage({
                       {block.caption}
                     </p>
                   ) : null}
-                  <div className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-4 py-3">
-                    <span className="font-mono text-xs text-white/45">PDF 文件</span>
-                    <a
-                      href={block.items[0].url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-md border border-cyan/35 px-3 py-1.5 text-xs text-cyan transition hover:bg-cyan/10"
-                    >
-                      <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                      查看
-                    </a>
-                  </div>
+                  {pdfMedia.storage_key ? (
+                    <PdfBlockRenderer
+                      storageKey={pdfMedia.storage_key}
+                      caption={block.caption}
+                    />
+                  ) : null}
                 </section>
               );
             }

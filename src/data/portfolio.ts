@@ -65,6 +65,8 @@ export type WorkMedia = {
   alt: string;
   mimeType: string;
   url: string;
+  id?: string;
+  storage_key?: string;
 };
 
 export const siteSettings = {
