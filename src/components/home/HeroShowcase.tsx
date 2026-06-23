@@ -234,7 +234,7 @@ function HeroSideCards() {
       <div
         data-float-card
         data-hero-reveal
-        className="absolute -right-[10.5%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:-right-[9.5%]"
+        className="absolute -right-[5.5%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:-right-[4.5%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
         <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
