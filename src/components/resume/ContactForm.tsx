@@ -36,7 +36,7 @@ function InlineField({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 w-[3.6rem] whitespace-nowrap text-right text-[13px] text-white/55 sm:w-[3.2rem]">
+      <span className="shrink-0 w-[3.4rem] whitespace-nowrap text-left text-[13px] text-white/55 sm:w-[3.2rem] sm:text-right">
         {label}
       </span>
       <div className="min-w-0 flex-1">{children}</div>
