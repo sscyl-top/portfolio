@@ -26,6 +26,24 @@ const errorFieldClass =
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
+/** 统一的短字段：标签左 / 输入右，垂直居中对齐 */
+function InlineField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="shrink-0 w-[2.6rem] text-right text-xs text-white/50">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
 export function ContactForm({
   id,
   type,
@@ -129,7 +147,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 grid gap-3 sm:grid-cols-2 sm:gap-4"
+        className="mt-3 space-y-2.5 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
@@ -143,52 +161,43 @@ export function ContactForm({
           />
         </div>
 
-        {/* 姓名 — 标签+输入同行 */}
-        <div className="grid grid-cols-[3rem_1fr] items-center gap-2">
-          <span className="shrink-0 text-xs text-white/55">姓名</span>
-          <div>
-            <input
-              className={fieldErrors.name ? errorFieldClass : fieldClass}
-              name="name"
-              placeholder="您的姓名"
-              autoComplete="name"
-              maxLength={80}
-              onChange={() => setFieldErrors((prev) => ({ ...prev, name: undefined }))}
-            />
-            {fieldErrors.name ? (
-              <p className={errorTextClass}>
-                <AlertCircle aria-hidden="true" className="h-3 w-3" />
-                {fieldErrors.name}
-              </p>
-            ) : null}
-          </div>
-        </div>
+        {/* ── 短字段：标签左 / 输入右（统一模式）── */}
+        <InlineField label="姓名">
+          <input
+            className={fieldErrors.name ? errorFieldClass : fieldClass}
+            name="name"
+            placeholder="您的姓名"
+            autoComplete="name"
+            maxLength={80}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, name: undefined }))}
+          />
+          {fieldErrors.name ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.name}
+            </p>
+          ) : null}
+        </InlineField>
 
-        {/* 邮箱 — 标签+输入同行 */}
-        <div className="grid grid-cols-[3rem_1fr] items-center gap-2">
-          <span className="shrink-0 text-xs text-white/55">邮箱</span>
-          <div>
-            <input
-              className={fieldErrors.email ? errorFieldClass : fieldClass}
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              autoComplete="email"
-              maxLength={160}
-              onChange={() => setFieldErrors((prev) => ({ ...prev, email: undefined }))}
-            />
-            {fieldErrors.email ? (
-              <p className={errorTextClass}>
-                <AlertCircle aria-hidden="true" className="h-3 w-3" />
-                {fieldErrors.email}
-              </p>
-            ) : null}
-          </div>
-        </div>
+        <InlineField label="邮箱">
+          <input
+            className={fieldErrors.email ? errorFieldClass : fieldClass}
+            type="email"
+            name="email"
+            placeholder="your@email.com"
+            autoComplete="email"
+            maxLength={160}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, email: undefined }))}
+          />
+          {fieldErrors.email ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.email}
+            </p>
+          ) : null}
+        </InlineField>
 
-        {/* 公司 — 全宽 */}
-        <div className="sm:col-span-2">
-          <span className="block mb-1 text-xs text-white/55">公司</span>
+        <InlineField label="公司">
           <input
             className={fieldClass}
             name="company"
@@ -196,29 +205,8 @@ export function ContactForm({
             autoComplete="organization"
             maxLength={120}
           />
-        </div>
+        </InlineField>
 
-        {/* subject / range 并排 */}
-        <div className="grid grid-cols-[3rem_1fr] items-center gap-2">
-          <span className="shrink-0 text-xs text-white/55">{subjectLabel}</span>
-          <input
-            className={fieldClass}
-            name="subject"
-            placeholder={subjectPlaceholder}
-            maxLength={120}
-          />
-        </div>
-        <div className="grid grid-cols-[3rem_1fr] items-center gap-2">
-          <span className="shrink-0 text-xs text-white/55">{rangeLabel}</span>
-          <input
-            className={fieldClass}
-            name="range"
-            placeholder={rangePlaceholder}
-            maxLength={80}
-          />
-        </div>
-
-        {/* message — 全宽 textarea */}
         <div className="sm:col-span-2">
           <span className="block mb-1 text-xs text-white/55">{messageLabel}</span>
           <textarea
@@ -236,7 +224,25 @@ export function ContactForm({
           ) : null}
         </div>
 
-        {/* 备注 — 全宽 */}
+        <InlineField label={subjectLabel}>
+          <input
+            className={fieldClass}
+            name="subject"
+            placeholder={subjectPlaceholder}
+            maxLength={120}
+          />
+        </InlineField>
+
+        <InlineField label={rangeLabel}>
+          <input
+            className={fieldClass}
+            name="range"
+            placeholder={rangePlaceholder}
+            maxLength={80}
+          />
+        </InlineField>
+
+        {/* 备注 — 全宽 textarea */}
         <div className="sm:col-span-2">
           <span className="block mb-1 text-xs text-white/55">备注</span>
           <textarea
