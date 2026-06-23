@@ -31,23 +31,23 @@ let heroVideos = {
 
 const heroFloatingMediaCards = [
   {
-    // mono: 始终挂在左外侧，宽屏逐渐回缩
+    // mono: 窄屏小而远，宽屏逐步放大回缩
     className:
-      "z-20 -left-14 top-[32%] hidden w-[200px] h-[155px] md:block lg:w-[240px] lg:h-[186px] xl:w-[280px] xl:h-[217px] xl:-left-20 2xl:-left-28",
+      "z-20 -left-24 top-[32%] hidden w-[160px] h-[124px] md:block lg:w-[200px] lg:h-[155px] lg:-left-20 xl:w-[280px] xl:h-[217px] 2xl:-left-28",
     tone: "mono" as const,
     videoKey: "side1" as const,
   },
   {
     // warm: 窄屏挂左外侧，xl 以上才回缩到边缘内侧
     className:
-      "z-10 -left-2 top-[15%] hidden w-[180px] h-[137px] md:block lg:left-0 lg:w-[215px] lg:h-[163px] xl:left-2 xl:w-[250px] xl:h-[190px] 2xl:left-4",
+      "z-10 -left-10 top-[15%] hidden w-[140px] h-[106px] md:block lg:w-[180px] lg:h-[137px] lg:-left-6 xl:left-2 xl:w-[250px] xl:h-[190px] 2xl:left-4",
     tone: "warm" as const,
     videoKey: "side2" as const,
   },
   {
-    // graphite: lg 起挂在右外侧，宽屏更靠右
+    // graphite: xl 起才显示（最宽的卡，窄屏不显示避免挤压）
     className:
-      "-right-[calc(2.75rem+3vw)] top-[69%] hidden w-72 h-[150px] lg:block xl:w-96 xl:h-[200px] 2xl:-right-[calc(5rem+3vw)]",
+      "-right-[calc(4rem+3vw)] top-[69%] hidden w-96 h-[200px] xl:block 2xl:-right-[calc(5rem+3vw)]",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
@@ -234,7 +234,7 @@ function HeroSideCards() {
       <div
         data-float-card
         data-hero-reveal
-        className="absolute right-[6%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:right-[7%]"
+        className="absolute right-[12%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:right-[14%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
         <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
