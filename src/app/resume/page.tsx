@@ -340,11 +340,25 @@ async function getResumeData() {
         phone: data.phone || staticResume.contact.phone,
         zcool: data.zcool_url || staticResume.contact.zcool,
       },
-      strengths: Array.isArray(data.strengths) && data.strengths.length > 0
+      strengths: Array.isArray(data.strengths) && data.strengths.length > 0 && !hasEncodingCorruption(data.strengths)
         ? data.strengths
         : staticResume.strengths,
     };
   } catch {
     return staticResume;
   }
+}
+
+/** 检测数组中是否存在编码损坏（全部是问号或拉丁扩展字符） */
+function hasEncodingCorruption(strings: unknown): boolean {
+  if (!Array.isArray(strings)) return true;
+  return strings.some((s: unknown) => {
+    if (typeof s !== "string" || s.length === 0) return true;
+    // 损坏的中文 UTF-8 被错误解码后会出现大量连续问号或高位拉丁字符
+    const questionMarkRatio = (s.match(/\?/g) ?? []).length / s.length;
+    if (questionMarkRatio > 0.3) return true;
+    // 正常中文应该有 CJK 字符
+    const hasCjk = /[\u4e00-\u9fff]/.test(s);
+    return !hasCjk && s.length > 10;
+  });
 }

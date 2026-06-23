@@ -118,7 +118,7 @@ export function createCmsRepository(source: CmsReadSource | null) {
       }
       const works = await this.listPublishedWorks();
       return works
-        .filter((work) => work.category === "复合设计" || work.category === "澶嶅悎璁捐")
+        .filter((work) => normalizeUtf8(work.category) === "复合设计")
         .sort((a, b) => b.priority - a.priority);
     },
     async getWorkBySlug(slug: string) {
@@ -294,19 +294,19 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
   return {
-    description: row.seo_description || settings.description,
+    description: normalizeUtf8(row.seo_description) || settings.description,
     logoMediaUrl: toPublicLogoMedia(row.logo_media),
-    name: row.name || settings.name,
+    name: normalizeUtf8(row.name) || settings.name,
     navigation: settings.navigation,
-    nickname: row.nickname || settings.logo,
-    seoDescription: row.seo_description || settings.description,
-    seoTitle: row.seo_title || `${settings.name} | ${settings.title}`,
+    nickname: normalizeUtf8(row.nickname) || settings.logo,
+    seoDescription: normalizeUtf8(row.seo_description) || settings.description,
+    seoTitle: normalizeUtf8(row.seo_title) || `${settings.name} | ${settings.title}`,
     socialLinks:
       row.social_links?.map((link) => ({
         href: link.url,
-        label: link.label,
+        label: normalizeUtf8(link.label),
       })) ?? settings.socialLinks,
-    title: row.seo_title || settings.title,
+    title: normalizeUtf8(row.seo_title) || settings.title,
   };
 }
 
@@ -320,9 +320,9 @@ function toPublicWork(row: CmsWorkRow): Work {
       .filter((tag): tag is string => Boolean(tag)) ?? [];
 
   return {
-    title: row.title,
+    title: normalizeUtf8(row.title),
     slug: row.slug,
-    summary: row.summary,
+    summary: normalizeUtf8(row.summary ?? ""),
     category,
     tags,
     tools: [],
@@ -344,8 +344,25 @@ function toPublicWork(row: CmsWorkRow): Work {
 function getJoinedName(
   value: { name: string } | Array<{ name: string }> | null | undefined,
 ) {
-  if (Array.isArray(value)) return value[0]?.name;
-  return value?.name;
+  if (Array.isArray(value)) return normalizeUtf8(value[0]?.name ?? "");
+  return normalizeUtf8(value?.name ?? "");
+}
+
+/** 修复 UTF-8 字节被错误解码为 Latin-1 导致的中文乱码 */
+function normalizeUtf8(text: string): string {
+  if (!text) return text;
+  // 已包含中文字符 → 无需修复
+  if (/[\u4e00-\u9fff]/.test(text)) return text;
+  try {
+    const bytes = new Uint8Array(text.length);
+    for (let i = 0; i < text.length; i++) {
+      bytes[i] = text.charCodeAt(i) & 0xff;
+    }
+    const decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return /[\u4e00-\u9fff]/.test(decoded) ? decoded : text;
+  } catch {
+    return text;
+  }
 }
 
 type MediaRef = {
