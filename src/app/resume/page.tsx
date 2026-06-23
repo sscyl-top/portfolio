@@ -206,36 +206,36 @@ export default async function ResumePage() {
                   <article
                     key={`${achievement.label}-${achievement.value}`}
                     data-testid="education-achievement"
-                    className="flex h-14 flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-2.5 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
+                    className="flex min-h-[60px] flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-2.5 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[10px] uppercase text-white/34">
                         {achievement.label}
                       </span>
                       {index === 0 ? (
                         <GraduationCap
                           aria-hidden="true"
-                          className="h-4 w-4 text-copper"
+                          className="h-3.5 w-3.5 text-copper"
                         />
                       ) : (
                         <Trophy
                           aria-hidden="true"
-                          className="h-4 w-4 text-copper"
+                          className="h-3.5 w-3.5 text-copper"
                         />
                       )}
                     </div>
-                    <div>
+                    <div className="-mt-0.5">
                       <p
                         className={
                           index === 0
-                            ? "text-3xl font-semibold leading-none text-copper"
+                            ? "text-2xl font-semibold leading-none text-copper md:text-3xl"
                             : "text-sm font-medium leading-6 text-white/76"
                         }
                       >
                         {achievement.value}
                       </p>
                       {achievement.detail ? (
-                        <p className="mt-2 text-xs text-white/46">
+                        <p className="mt-0.5 text-[11px] text-white/46">
                           {achievement.detail}
                         </p>
                       ) : null}
