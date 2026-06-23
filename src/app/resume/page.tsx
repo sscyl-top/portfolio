@@ -200,13 +200,13 @@ export default async function ResumePage() {
 
               <div
                 data-testid="education-achievement-grid"
-                className="mt-5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3"
+                className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3"
               >
                 {resume.education.achievements.map((achievement, index) => (
                   <article
                     key={`${achievement.label}-${achievement.value}`}
                     data-testid="education-achievement"
-                    className="flex h-20 flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-3 md:h-24 md:p-3.5"
+                    className="flex h-14 flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-2.5 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-mono text-[10px] uppercase text-white/34">
