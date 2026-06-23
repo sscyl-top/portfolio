@@ -1,26 +1,36 @@
 ﻿export type WorkStatus = "draft" | "published" | "private";
 
+export type BlockLayout = {
+  width?: "full" | "contained" | "narrow";
+  align?: "left" | "center";
+  columns?: 2 | 3 | 4;
+};
+
 export type ContentBlock =
   | {
       type: "text";
       heading: string;
       body: string;
+      layout?: BlockLayout;
     }
   | {
       type: "image";
       heading: string;
       alt: string;
       tone: string;
+      layout?: BlockLayout;
     }
   | {
       type: "media";
       caption?: string;
       items: WorkMedia[];
+      layout?: BlockLayout;
     }
   | {
       type: "gallery";
       caption?: string;
       items: WorkMedia[];
+      layout?: BlockLayout;
     }
   | {
       type: "beforeAfter";
@@ -30,16 +40,19 @@ export type ContentBlock =
       note: string;
       beforeMedia?: WorkMedia;
       afterMedia?: WorkMedia;
+      layout?: BlockLayout;
     }
   | {
       type: "video";
       caption?: string;
       items: WorkMedia[];
+      layout?: BlockLayout;
     }
   | {
       type: "pdf";
       caption?: string;
       items: WorkMedia[];
+      layout?: BlockLayout;
     };
 
 export type Work = {

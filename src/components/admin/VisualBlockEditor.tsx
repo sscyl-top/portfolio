@@ -67,6 +67,138 @@ const BLOCK_TYPE_META = {
   before_after: { label: "对比",  icon: Columns2,    color: "text-yellow-400" },
 } as const;
 
+// ── 布局类型 ─────────────────────────────────────────────
+
+type LayoutWidth = "full" | "contained" | "narrow";
+
+const LAYOUT_WIDTH_OPTIONS = [
+  { value: "full"      as const, label: "通栏",  desc: "满宽显示" },
+  { value: "contained" as const, label: "约束",  desc: "最大1100px居中" },
+  { value: "narrow"    as const, label: "窄版",  desc: "最大768px居中" },
+];
+
+const LAYOUT_ALIGN_OPTIONS = [
+  { value: "left"   as const, label: "左对齐" },
+  { value: "center" as const, label: "居中" },
+];
+
+const GALLERY_COLUMN_OPTIONS = [
+  { value: 2 as const, label: "2列" },
+  { value: 3 as const, label: "3列" },
+  { value: 4 as const, label: "4列" },
+];
+
+/** 从 payload 中安全读取 layout 字段 */
+function getLayout(payload: Record<string, unknown>): {
+  width: LayoutWidth;
+  align: "left" | "center";
+  columns: 2 | 3 | 4;
+} {
+  const l = (payload.layout ?? {}) as Record<string, unknown>;
+  return {
+    width:  (l.width  as LayoutWidth) ?? "contained",
+    align:  (l.align  as "left" | "center") ?? "left",
+    columns: (l.columns as 2 | 3 | 4) ?? 3,
+  };
+}
+
+/** 将 layout 合并写回 payload */
+function withLayout(
+  payload: Record<string, unknown>,
+  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 }>,
+): Record<string, unknown> {
+  return {
+    ...payload,
+    layout: { ...getLayout(payload), ...layout },
+  };
+}
+
+// ── 布局控制条组件 ─────────────────────────────────────────
+
+function LayoutBar({
+  blockType,
+  layout,
+  onChange,
+}: {
+  blockType: string;
+  layout: { width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 };
+  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 }>) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-4 py-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-white/25">
+        布局
+      </span>
+
+      {/* 宽度选择 */}
+      <div className="flex overflow-hidden rounded-md border border-white/10">
+        {LAYOUT_WIDTH_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange({ width: opt.value })}
+            className={`px-2.5 py-1 text-[11px] font-medium transition ${
+              layout.width === opt.value
+                ? "bg-cyan/20 text-cyan"
+                : "text-white/40 hover:bg-white/5 hover:text-white/70"
+            }`}
+            title={opt.desc}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 文本对齐（仅文本块） */}
+      {blockType === "text" ? (
+        <div className="flex overflow-hidden rounded-md border border-white/10">
+          {LAYOUT_ALIGN_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange({ align: opt.value })}
+              className={`px-2.5 py-1 text-[11px] font-medium transition ${
+                layout.align === opt.value
+                  ? "bg-cyan/20 text-cyan"
+                  : "text-white/40 hover:bg-white/5 hover:text-white/70"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {/* 图库列数（仅图库块） */}
+      {blockType === "gallery" ? (
+        <div className="flex overflow-hidden rounded-md border border-white/10">
+          {GALLERY_COLUMN_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange({ columns: opt.value })}
+              className={`px-2.5 py-1 text-[11px] font-medium transition ${
+                layout.columns === opt.value
+                  ? "bg-cyan/20 text-cyan"
+                  : "text-white/40 hover:bg-white/5 hover:text-white/70"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {/* 布局说明 */}
+      <span className="ml-auto text-[10px] text-white/20">
+        {layout.width === "full" ? "满宽通栏" : layout.width === "contained" ? "约束宽度居中" : "窄版居中"}
+        {blockType === "gallery" ? ` · ${layout.columns}列` : ""}
+        {blockType === "text" ? ` · ${layout.align === "center" ? "居中" : "左对齐"}` : ""}
+      </span>
+    </div>
+  );
+}
+
 // ── 主组件 ─────────────────────────────────────────────────
 
 export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets }: Props) {
@@ -228,6 +360,47 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       }
     },
     [workId, workSlug, router],
+  );
+
+  // ── 上传图片并追加到图库块 ───────────────────────────────
+
+  const handleAddImagesToGallery = useCallback(
+    async (blockId: string, files: File[]) => {
+      setUploading(true);
+      try {
+        const results = await uploadMediaFiles(files, (progress) => {
+          setUploadProgress(progress);
+        });
+
+        const block = blocks.find((b) => b.id === blockId);
+        if (!block) return;
+
+        const existingIds = (block.payload.media_ids as string[]) ?? [];
+        const newIds = results.map((r) => r.id);
+        const newPayload = {
+          ...block.payload,
+          media_ids: [...existingIds, ...newIds],
+        };
+
+        await updateBlockDirect(workId, workSlug, blockId, {
+          ...newPayload,
+          _block_type: "gallery",
+        });
+
+        setBlocks((prev) =>
+          prev.map((b) =>
+            b.id === blockId ? { ...b, payload: newPayload } : b,
+          ),
+        );
+        router.refresh();
+      } catch (err) {
+        console.error("Add images to gallery failed:", err);
+      } finally {
+        setUploading(false);
+        setUploadProgress({});
+      }
+    },
+    [workId, workSlug, router, blocks],
   );
 
   // ── 处理文件选择（"上传文件"按钮触发）────────────────────
@@ -708,6 +881,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                     fileInputRef.current.click();
                   }
                 }}
+                onAddImagesToGallery={handleAddImagesToGallery}
                 onSelectBaFile={(blockId, step) => {
                   setBaStep({ blockId, step });
                   setFileInputIntent({ mode: "ba", blockId, step });
@@ -808,6 +982,7 @@ function BlockCard({
   onUpdatePayload,
   onSaveAndClose,
   onReplaceMedia,
+  onAddImagesToGallery,
   onSelectBaFile,
   onCropImage,
 }: {
@@ -823,6 +998,7 @@ function BlockCard({
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
   onSaveAndClose: () => void;
   onReplaceMedia: (blockId: string) => void;
+  onAddImagesToGallery: (blockId: string, files: File[]) => void;
   onSelectBaFile: (blockId: string, step: "before" | "after") => void;
   onCropImage: (blockId: string) => void;
 }) {
@@ -893,6 +1069,18 @@ function BlockCard({
         </div>
       </div>
 
+      {/* 布局控制条（仅编辑模式） */}
+      {isEditing ? (
+        <LayoutBar
+          blockType={block.block_type}
+          layout={getLayout(block.payload)}
+          onChange={(patch) => {
+            const newPayload = withLayout(block.payload, patch);
+            onUpdatePayload(newPayload);
+          }}
+        />
+      ) : null}
+
       {/* 内容区域 */}
       <div className="p-4">
         {showInlineEditor ? (
@@ -901,6 +1089,7 @@ function BlockCard({
             mediaAssets={mediaAssets}
             onUpdatePayload={onUpdatePayload}
             onReplaceMedia={() => onReplaceMedia(block.id)}
+            onAddImagesToGallery={(files) => onAddImagesToGallery(block.id, files)}
             onSelectBaFile={(step) => onSelectBaFile(block.id, step)}
             onCropImage={() => onCropImage(block.id)}
           />
@@ -919,6 +1108,7 @@ function InlineBlockEditor({
   mediaAssets,
   onUpdatePayload,
   onReplaceMedia,
+  onAddImagesToGallery,
   onSelectBaFile,
   onCropImage,
 }: {
@@ -926,6 +1116,7 @@ function InlineBlockEditor({
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
   onReplaceMedia: () => void;
+  onAddImagesToGallery: (files: File[]) => void;
   onSelectBaFile: (step: "before" | "after") => void;
   onCropImage: () => void;
 }) {
@@ -967,6 +1158,7 @@ function InlineBlockEditor({
         block={block}
         mediaAssets={mediaAssets}
         onUpdatePayload={onUpdatePayload}
+        onAddImages={onAddImagesToGallery}
       />
     );
   }
@@ -1114,10 +1306,12 @@ function InlineGalleryEditor({
   block,
   mediaAssets,
   onUpdatePayload,
+  onAddImages,
 }: {
   block: VisualBlock;
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
+  onAddImages: (files: File[]) => void;
 }) {
   const payload = block.payload;
   const mediaIds = (payload.media_ids as string[]) ?? [];
@@ -1156,8 +1350,10 @@ function InlineGalleryEditor({
             accept="image/*"
             className="hidden"
             onChange={async (e) => {
-              // TODO: 上传并追加到图库块
-              console.log("Add more images to gallery", e.target.files);
+              const files = e.target.files;
+              if (!files || files.length === 0) return;
+              await onAddImages(Array.from(files));
+              e.target.value = "";
             }}
           />
         </label>

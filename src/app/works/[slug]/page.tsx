@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import type { BlockLayout } from "@/data/portfolio";
 
 import {
   getPublishedWorks,
@@ -12,6 +13,24 @@ import {
 } from "@/lib/cms/repository";
 import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
 import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
+
+/** 根据 layout 字段返回对应的宽度 CSS 类 */
+function layoutWidthClass(layout?: BlockLayout): string {
+  if (!layout || layout.width === "contained" || !layout.width) {
+    return "max-w-6xl mx-auto";
+  }
+  if (layout.width === "narrow") return "max-w-3xl mx-auto";
+  return ""; // full: 无约束
+}
+
+/** 根据 layout 返回 section 的额外 class */
+function layoutSectionClass(layout?: BlockLayout): string {
+  if (layout?.width === "full") {
+    // 满宽：去掉边框/圆角/背景，让内容真正通栏
+    return "border-0 bg-transparent p-0";
+  }
+  return "rounded-lg border border-white/10 bg-white/[0.035] p-6";
+}
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
@@ -71,6 +90,7 @@ export default async function WorkDetailPage({
 
   return (
     <main className="px-5 pb-24 pt-32 md:px-8">
+      {/* 头部信息：约束在 max-w-6xl 内 */}
       <article className="mx-auto max-w-6xl">
         <Link
           href="/works"
@@ -110,15 +130,25 @@ export default async function WorkDetailPage({
             <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_52%,rgba(0,0,0,0.5))]" />
           </div>
         </div>
+      </article>
 
-        <div className="mt-16 grid gap-6">
+      {/* 内容块区域：每个块自己控制宽度 */}
+      <div className="mt-16 grid gap-6">
           {work.blocks.map((block) => {
             if (block.type === "media" || block.type === "gallery") {
               if (block.items.length === 0) return null;
+              const lw = layoutWidthClass(block.layout);
+              const ls = layoutSectionClass(block.layout);
+              const galCols =
+                block.type === "gallery"
+                  ? (block.layout?.columns === 2 ? "grid-cols-2"
+                    : block.layout?.columns === 4 ? "grid-cols-2 md:grid-cols-4"
+                    : "grid-cols-2 md:grid-cols-3")
+                  : "";
               return (
                 <section
                   key={`${block.type}-${block.items[0]?.url ?? "empty"}`}
-                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                  className={`grid gap-5 ${ls} ${lw}`}
                 >
                   {block.caption ? (
                     <p className="text-sm font-medium text-white/54">
@@ -128,7 +158,7 @@ export default async function WorkDetailPage({
                   <div
                     className={
                       block.type === "gallery"
-                        ? "grid grid-cols-2 gap-4 md:grid-cols-3"
+                        ? `grid gap-4 ${galCols}`
                         : ""
                     }
                   >
@@ -139,8 +169,8 @@ export default async function WorkDetailPage({
                         tone="graphite"
                         className={
                           block.type === "media"
-                            ? "mx-auto max-h-[70vh] w-full rounded-lg"
-                            : "mx-auto max-h-80 w-full rounded-lg"
+                            ? `w-full rounded-lg ${block.layout?.width === "full" ? "h-[70vh] object-cover" : "max-h-[70vh]"}`
+                            : "w-full rounded-lg"
                         }
                       />
                     ))}
@@ -150,10 +180,13 @@ export default async function WorkDetailPage({
             }
 
             if (block.type === "text") {
+              const lw = layoutWidthClass(block.layout);
+              const ls = layoutSectionClass(block.layout);
+              const alignClass = block.layout?.align === "center" ? "text-center" : "text-left";
               return (
                 <section
                   key={block.heading}
-                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6 md:grid-cols-[0.4fr_1fr]"
+                  className={`grid gap-5 ${ls} ${lw} ${alignClass}`}
                 >
                   <h2 className="text-2xl font-semibold text-white">
                     {block.heading}
@@ -166,10 +199,12 @@ export default async function WorkDetailPage({
             }
 
             if (block.type === "beforeAfter") {
+              const lw = layoutWidthClass(block.layout);
+              const ls = layoutSectionClass(block.layout);
               return (
                 <section
                   key={block.heading}
-                  className="rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                  className={`${ls} ${lw}`}
                 >
                   {block.heading ? (
                     <h2 className="text-2xl font-semibold text-white">
@@ -209,10 +244,12 @@ export default async function WorkDetailPage({
 
             if (block.type === "video") {
               if (block.items.length === 0) return null;
+              const lw = layoutWidthClass(block.layout);
+              const ls = layoutSectionClass(block.layout);
               return (
                 <section
                   key={`video-${block.items[0]?.url ?? "empty"}`}
-                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                  className={`grid gap-5 ${ls} ${lw}`}
                 >
                   {block.caption ? (
                     <p className="text-sm font-medium text-white/54">
@@ -234,10 +271,12 @@ export default async function WorkDetailPage({
             if (block.type === "pdf") {
               if (block.items.length === 0) return null;
               const pdfMedia = block.items[0];
+              const lw = layoutWidthClass(block.layout);
+              const ls = layoutSectionClass(block.layout);
               return (
                 <section
                   key={`pdf-${pdfMedia?.url ?? "empty"}`}
-                  className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-6"
+                  className={`grid gap-5 ${ls} ${lw}`}
                 >
                   {block.caption ? (
                     <p className="text-sm font-medium text-white/54">
@@ -284,8 +323,7 @@ export default async function WorkDetailPage({
               ))}
             </div>
           </aside>
-        ) : null}
-      </article>
+          ) : null}
     </main>
   );
 }

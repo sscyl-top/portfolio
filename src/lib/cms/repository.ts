@@ -393,11 +393,23 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     .filter((block) => block.is_visible !== false)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((block) => {
+      // 读取 layout 字段（来自 payload.layout）
+      const rawLayout = (block.payload.layout ?? {}) as Record<string, unknown>;
+      const layout =
+        rawLayout && typeof rawLayout === "object"
+          ? {
+              width:  (rawLayout.width  as "full" | "contained" | "narrow") ?? undefined,
+              align:  (rawLayout.align  as "left" | "center")          ?? undefined,
+              columns: (rawLayout.columns as 2 | 3 | 4)               ?? undefined,
+            }
+          : undefined;
+
       if (block.block_type === "text") {
         return {
           type: "text" as const,
           heading: String(block.payload.heading ?? "内容"),
           body: String(block.payload.body ?? ""),
+          layout: layout ?? undefined,
         };
       }
       if (block.block_type === "media" || block.block_type === "gallery") {
@@ -409,6 +421,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
           type: block.block_type as "media" | "gallery",
           caption: caption || undefined,
           items,
+          layout: layout ?? undefined,
         };
       }
       if (block.block_type === "video") {
@@ -416,14 +429,14 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
         const items = ref ? [toMedia(ref)] : [];
         const caption = String(block.payload.caption ?? "");
 
-        return { type: "video" as const, caption: caption || undefined, items };
+        return { type: "video" as const, caption: caption || undefined, items, layout: layout ?? undefined };
       }
       if (block.block_type === "pdf") {
         const ref = block.payload.media_ref as MediaRef | null;
         const items = ref ? [toMedia(ref)] : [];
         const caption = String(block.payload.caption ?? "");
 
-        return { type: "pdf" as const, caption: caption || undefined, items };
+        return { type: "pdf" as const, caption: caption || undefined, items, layout: layout ?? undefined };
       }
       if (block.block_type === "before_after") {
         const beforeRef = block.payload.before_media_ref as MediaRef | null;
@@ -438,6 +451,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
           note: caption || "",
           beforeMedia: beforeRef ? toMedia(beforeRef) : undefined,
           afterMedia: afterRef ? toMedia(afterRef) : undefined,
+          layout: layout ?? undefined,
         };
       }
       return null;
