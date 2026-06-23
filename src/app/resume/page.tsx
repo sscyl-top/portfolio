@@ -22,7 +22,7 @@ export default async function ResumePage() {
         <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_18%_22%,rgba(201,162,127,0.12),transparent_26%),radial-gradient(circle_at_78%_48%,rgba(139,215,205,0.1),transparent_30%)]" />
         <div className="absolute inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:96px_96px] opacity-20" />
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(100vh-10rem)] max-w-7xl flex-col justify-between">
+        <div className="relative z-10 mx-auto flex min-h-[calc(100vh-7rem)] max-w-7xl flex-col justify-between sm:min-h-[calc(100vh-8rem)]">
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
             <div className="space-y-2 font-mono text-xs uppercase text-white/45">
               <p>{resume.alias}</p>
@@ -51,17 +51,17 @@ export default async function ResumePage() {
             </div>
           </div>
 
-          <div className="py-10 md:-translate-y-14">
+          <div className="py-12 md:-translate-y-14 md:py-10">
             <p className="font-mono text-xs uppercase text-copper md:text-sm">
               HI, I&apos;M {resume.name}
             </p>
-            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-white md:text-8xl lg:text-9xl">
+            <h1 className="mt-5 max-w-5xl text-[2.85rem] leading-[0.9] text-white sm:text-6xl md:text-8xl lg:text-9xl">
               BRAND
               <span className="block text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.62)]">
                 VISUAL
               </span>
             </h1>
-            <div className="mt-5 flex max-w-4xl flex-wrap gap-1.5 md:mt-8 md:gap-2">
+            <div className="mt-6 flex max-w-4xl flex-wrap gap-1.5 md:mt-8 md:gap-2">
               {resume.highlights.map((item) => (
                 <span
                   key={item}

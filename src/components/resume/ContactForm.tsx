@@ -19,10 +19,10 @@ type ContactFormProps = {
 type FieldError = { name?: string; email?: string; message?: string };
 
 const fieldClass =
-  "min-h-9 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+  "min-h-9 w-full rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/55 focus:bg-white/[0.04]";
 
 const errorFieldClass =
-  "min-h-9 w-full rounded-lg border border-red-400/40 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+  "min-h-9 w-full rounded-lg border border-red-400/35 bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/55 focus:bg-white/[0.04]";
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
