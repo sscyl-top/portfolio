@@ -672,6 +672,7 @@ function BlockEditor({
           assets={mediaAssets}
           mode="single"
           fieldName="media_id"
+          allowUpload={true}
         />
         <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
@@ -696,6 +697,7 @@ function BlockEditor({
           assets={mediaAssets}
           mode="multi"
           fieldName="media_ids"
+          allowUpload={true}
         />
         <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
@@ -720,6 +722,7 @@ function BlockEditor({
           assets={mediaAssets}
           mode="single"
           fieldName="media_id"
+          allowUpload={true}
         />
         <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />
@@ -750,6 +753,7 @@ function BlockEditor({
               assets={mediaAssets}
               mode="single"
               fieldName="before_media_id"
+              allowUpload={true}
             />
           </div>
           <div>
@@ -758,6 +762,7 @@ function BlockEditor({
               assets={mediaAssets}
               mode="single"
               fieldName="after_media_id"
+              allowUpload={true}
             />
           </div>
         </div>
@@ -784,6 +789,7 @@ function BlockEditor({
           assets={mediaAssets}
           mode="single"
           fieldName="media_id"
+          allowUpload={true}
         />
         <div className="flex flex-wrap items-end gap-3">
           <Field label="排序" name="sort_order" type="number" defaultValue={String(blocks.length)} />

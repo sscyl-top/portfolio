@@ -21,6 +21,10 @@ const draftWorkSchema = z.object({
     .max(120)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   year: z.string().trim().max(20).default(""),
+  is_representative: z.coerce.boolean().default(false),
+  representative_order: z.coerce.number().int().nullable().default(null),
+  is_composite: z.coerce.boolean().default(false),
+  composite_order: z.coerce.number().int().nullable().default(null),
 });
 
 const paletteColorSchema = z.string().trim().max(7).regex(/^#[0-9a-fA-F]{3,6}$/, "must be hex color (#RGB or #RRGGBB)");
@@ -105,6 +109,10 @@ export async function createDraftWork(formData: FormData) {
     title: formData.get("title"),
     slug: formData.get("slug"),
     year: formData.get("year") ?? "",
+    is_representative: formData.get("is_representative") === "true",
+    representative_order: formData.get("representative_order") ?? null,
+    is_composite: formData.get("is_composite") === "true",
+    composite_order: formData.get("composite_order") ?? null,
   });
 
   if (!parsed.success) return;

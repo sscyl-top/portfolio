@@ -19,9 +19,12 @@ type AdminWorkRow = {
 export default async function AdminWorksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ seeded?: string; seedError?: string }>;
+  searchParams: Promise<{ seeded?: string; seedError?: string; section?: string }>;
 }) {
-  const { seeded, seedError } = await searchParams;
+  const { seeded, seedError, section: rawSection = "all" } = await searchParams;
+  const section: Section = ["all", "representative", "composite"].includes(rawSection ?? "all")
+    ? (rawSection as Section)
+    : "all";
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("works")
@@ -32,6 +35,13 @@ export default async function AdminWorksPage({
     .order("sort_order", { ascending: false })
     .order("updated_at", { ascending: false });
   const works = (data ?? []) as AdminWorkRow[];
+
+  // 根据 section 筛选作品
+  const filteredWorks = works.filter((work) => {
+    if (section === "representative") return work.is_representative;
+    if (section === "composite") return work.is_composite;
+    return true;
+  });
 
   return (
     <div>
@@ -66,10 +76,21 @@ export default async function AdminWorksPage({
         </p>
       ) : null}
 
+      {/* 板块筛选选项卡 */}
+      <SectionTabs currentSection={section} worksCount={works.length} filteredCount={filteredWorks.length} />
+
       <form
         action={createDraftWork}
         className="mt-6 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_0.8fr_0.35fr_auto]"
       >
+        {/* 根据当前板块预设置作品属性 */}
+        {section === "representative" ? (
+          <input type="hidden" name="is_representative" value="true" />
+        ) : null}
+        {section === "composite" ? (
+          <input type="hidden" name="is_composite" value="true" />
+        ) : null}
+        
         <input
           name="title"
           required
@@ -98,7 +119,7 @@ export default async function AdminWorksPage({
           作品读取失败：{error.message}
         </p>
       ) : (
-        <WorkTable works={works} />
+        <WorkTable works={filteredWorks} />
       )}
     </div>
   );
@@ -182,5 +203,54 @@ function StatusBadge({ status }: { status: AdminWorkRow["status"] }) {
     <span className="rounded-full border border-white/12 px-2.5 py-1 text-xs text-white/62">
       {label}
     </span>
+  );
+}
+
+type Section = "all" | "representative" | "composite";
+
+function SectionTabs({
+  currentSection,
+  worksCount,
+  filteredCount,
+}: {
+  currentSection: Section;
+  worksCount: number;
+  filteredCount: number;
+}) {
+  const sections: { key: Section; label: string }[] = [
+    { key: "all", label: "全部作品" },
+    { key: "representative", label: "代表作" },
+    { key: "composite", label: "复合设计" },
+  ];
+
+  return (
+    <div className="mt-6 border-b border-white/10">
+      <div className="flex gap-1">
+        {sections.map(({ key, label }) => {
+          const isActive = currentSection === key;
+          return (
+            <Link
+              key={key}
+              href={`/admin/works?section=${key}`}
+              className={`relative px-4 py-3 text-sm transition ${
+                isActive
+                  ? "text-white"
+                  : "text-white/45 hover:text-white/75"
+              }`}
+            >
+              {label}
+              {isActive ? (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan" />
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+      <p className="mt-3 pb-4 text-xs text-white/34">
+        {filteredCount === worksCount
+          ? `共 ${worksCount} 个作品`
+          : `显示 ${filteredCount} 个作品（共 ${worksCount} 个）`}
+      </p>
+    </div>
   );
 }

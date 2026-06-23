@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Check, Filter, Search, X as XIcon } from "lucide-react";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { DragDropUpload } from "./DragDropUpload";
 
 type MediaOption = {
   id: string;
@@ -22,6 +23,8 @@ type Props = {
   fieldName: string;
   /** Pre-selected IDs */
   defaultValue?: string[];
+  /** Allow uploading new media directly in the picker */
+  allowUpload?: boolean;
 };
 
 export function MediaPicker({
@@ -29,6 +32,7 @@ export function MediaPicker({
   mode = "single",
   fieldName,
   defaultValue = [],
+  allowUpload = false,
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(
     new Set(defaultValue),
@@ -36,6 +40,9 @@ export function MediaPicker({
   const [search, setSearch] = useState("");
   const [mediaType, setMediaType] = useState<MediaType>("all");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadMessage, setUploadMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   // --- filtering ---
   const filtered = useMemo(() => {
@@ -109,6 +116,90 @@ export function MediaPicker({
       }
       return next;
     });
+  };
+
+  // --- upload handler ---
+  const handleUpload = async (files: File[]) => {
+    setUploading(true);
+    setUploadMessage(null);
+    setUploadProgress({});
+
+    try {
+      for (const file of files) {
+        setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
+
+        // Step 1: Request signed upload URL
+        const signRes = await fetch("/api/media/sign-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            fileSize: file.size,
+          }),
+        });
+
+        const signData = await signRes.json();
+        if (!signRes.ok) {
+          throw new Error(signData.error || "获取上传凭证失败");
+        }
+
+        // Step 2: Upload file directly to Supabase Storage
+        setUploadProgress((prev) => ({ ...prev, [file.name]: 50 }));
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const pct = 50 + Math.round((event.loaded / event.total) * 50);
+              setUploadProgress((prev) => ({ ...prev, [file.name]: pct }));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`文件上传失败 (HTTP ${xhr.status})`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("网络连接失败，请检查网络"));
+          
+          xhr.open("PUT", signData.signedUrl);
+          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+          xhr.send(file);
+        });
+
+        // Step 3: Register media in database
+        const regRes = await fetch("/api/media/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            storage_key: signData.storageKey,
+            original_name: file.name,
+            mime_type: file.type,
+            byte_size: file.size,
+          }),
+        });
+
+        const regData = await regRes.json();
+        if (!regRes.ok) {
+          throw new Error(regData.error || "数据库记录保存失败");
+        }
+
+        setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }));
+      }
+
+      setUploadMessage({ type: "ok", text: `成功上传 ${files.length} 个文件` });
+      
+      // Refresh the page to show newly uploaded media
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      setUploadMessage({ type: "error", text: (err as Error).message });
+      setUploading(false);
+    }
   };
 
   // --- hidden inputs for FormData ---
@@ -204,6 +295,55 @@ export function MediaPicker({
           </div>
         ) : null}
       </div>
+
+      {/* ── upload area (when allowUpload) ── */}
+      {allowUpload ? (
+        <div className="mb-4">
+          <DragDropUpload onUpload={handleUpload}>
+            <div className="rounded-md border-2 border-dashed border-white/20 p-4 text-center transition-colors hover:border-white/40">
+              <p className="text-sm text-white/70">
+                {uploading ? "正在上传..." : "拖拽文件到此处，或点击上传"}
+              </p>
+              <p className="mt-1 text-xs text-white/30">
+                支持图片、视频、PDF，最大 25MB
+              </p>
+            </div>
+          </DragDropUpload>
+
+          {/* upload progress */}
+          {uploading && Object.keys(uploadProgress).length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {Object.entries(uploadProgress).map(([filename, pct]) => (
+                <div key={filename}>
+                  <div className="flex justify-between text-xs">
+                    <span className="truncate">{filename}</span>
+                    <span>{pct}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-cyan transition-all duration-200"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* upload message */}
+          {uploadMessage ? (
+            <p
+              className={`mt-3 rounded-md px-3 py-1.5 text-sm ${
+                uploadMessage.type === "ok"
+                  ? "bg-green-300/10 text-green-200"
+                  : "bg-red-300/10 text-red-200"
+              }`}
+            >
+              {uploadMessage.text}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* ── results summary ── */}
       <p className="mb-3 text-xs text-white/34">
