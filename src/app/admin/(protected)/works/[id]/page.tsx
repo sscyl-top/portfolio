@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { MediaPicker } from "@/components/admin/MediaPicker";
+import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 
 import { SlugInput } from "./SlugInput";
 import { BlockListWrapper } from "./BlockListWrapper";
@@ -187,7 +188,12 @@ export default async function AdminWorkEditorPage({
         tags={tagRows}
         work={workRow}
       />
-      <BlockEditor work={workRow} blocks={blockRows} mediaAssets={mediaRows} />
+      <VisualBlockEditor
+        workId={workRow.id}
+        workSlug={workRow.slug}
+        initialBlocks={blockRows}
+        mediaAssets={mediaRows}
+      />
     </div>
   );
 }

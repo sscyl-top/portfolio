@@ -948,3 +948,76 @@ export async function updateGalleryBlock(formData: FormData) {
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
+// ── Client-callable Server Actions for VisualBlockEditor ──
+
+export async function createBlockDirect(
+  workId: string,
+  workSlug: string,
+  blockType: string,
+  payload: Record<string, unknown>,
+  sortOrder: number,
+) {
+  const { client } = await requireAdmin();
+
+  let enrichedPayload = { ...payload };
+  if (["media", "video", "pdf"].includes(blockType) && payload.media_id) {
+    const { data: asset } = await client
+      .from("media_assets")
+      .select("id,storage_key,mime_type,alt_text")
+      .eq("id", payload.media_id as string)
+      .is("deleted_at", null)
+      .single();
+    if (asset) {
+      enrichedPayload.media_ref = {
+        id: asset.id,
+        storage_key: asset.storage_key,
+        mime_type: asset.mime_type,
+        alt_text: asset.alt_text,
+      };
+    }
+  }
+
+  if (blockType === "gallery" && payload.media_ids) {
+    const ids = payload.media_ids as string[];
+    const { data: rows } = await client
+      .from("media_assets")
+      .select("id,storage_key,mime_type,alt_text")
+      .in("id", ids)
+      .is("deleted_at", null);
+    enrichedPayload.media_refs = (rows ?? []).map(
+      (r: { id: string; storage_key: string; mime_type: string; alt_text: string }) => ({
+        id: r.id, storage_key: r.storage_key, mime_type: r.mime_type, alt_text: r.alt_text,
+      }),
+    );
+  }
+
+  const { data, error } = await client
+    .from("work_blocks")
+    .insert({
+      work_id: workId,
+      block_type: blockType,
+      sort_order: sortOrder,
+      is_visible: true,
+      payload: enrichedPayload,
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath(`/works/${workSlug}`);
+  return { id: (data as { id: string }).id };
+}
+
+export async function deleteBlockDirect(
+  blockId: string,
+  workId: string,
+  workSlug: string,
+) {
+  const { client } = await requireAdmin();
+  const { error } = await client.from("work_blocks").delete().eq("id", blockId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath(`/works/${workSlug}`);
+}
