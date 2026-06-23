@@ -1,9 +1,40 @@
 -- ============================================================================
--- 修复：线上生产环境创建 text_content 表 + 种子数据
--- 在 Supabase SQL Editor 中执行：https://supabase.com/dashboard/project/hnujowombcgfxledpnxe/sql/new
+-- 独立版：线上生产环境 text_content 表 + 种子数据
+-- 在 Supabase SQL Editor 中执行：
+-- https://supabase.com/dashboard/project/hnujowombcgfxledpnxe/sql/new
 -- ============================================================================
 
--- 1. 建表
+-- ── 依赖准备：确保 private schema 和辅助函数存在 ──
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM public;
+GRANT USAGE ON SCHEMA private TO authenticated;
+
+CREATE OR REPLACE FUNCTION private.is_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT coalesce(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin',
+    false
+  );
+$$;
+
+REVOKE ALL ON FUNCTION private.is_admin() FROM public;
+GRANT EXECUTE ON FUNCTION private.is_admin() TO authenticated;
+
+CREATE OR REPLACE FUNCTION private.set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+-- ── 建表 ──
 DROP TABLE IF EXISTS public.text_content CASCADE;
 
 CREATE TABLE public.text_content (
@@ -23,36 +54,34 @@ CREATE TABLE public.text_content (
   deleted_at TIMESTAMPTZ
 );
 
--- 2. 索引
+-- ── 索引 ──
 CREATE INDEX idx_text_content_key ON public.text_content(key);
 CREATE INDEX idx_text_content_page ON public.text_content(page);
 
--- 3. RLS
+-- ── RLS ──
 ALTER TABLE public.text_content ENABLE ROW LEVEL SECURITY;
 
--- 管理员完全访问（使用与 CMS 其他表一致的 private.is_admin() 模式）
 CREATE POLICY "admin manages text_content"
   ON public.text_content FOR ALL TO authenticated
   USING (private.is_admin()) WITH CHECK (private.is_admin());
 
--- 公开读（只读激活且未删除的内容）
 CREATE POLICY "public reads text_content"
   ON public.text_content FOR SELECT TO anon, authenticated
   USING (is_active = true AND deleted_at IS NULL);
 
--- 4. 权限
+-- ── 权限 ──
 REVOKE ALL ON public.text_content FROM anon, authenticated;
 GRANT SELECT ON public.text_content TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.text_content TO authenticated;
 GRANT ALL ON public.text_content TO service_role;
 
--- 5. 触发器（复用已有的 private.set_updated_at()）
+-- ── 触发器 ──
 DROP TRIGGER IF EXISTS set_text_content_updated_at ON public.text_content;
 CREATE TRIGGER set_text_content_updated_at
   BEFORE UPDATE ON public.text_content
   FOR EACH ROW EXECUTE FUNCTION private.set_updated_at();
 
--- 6. 种子数据
+-- ── 种子数据 ──
 INSERT INTO public.text_content (key, content, font_size, font_family, font_weight, color, page, section, sort_order) VALUES
 ('global.nav.home', '首页', 'text-sm', 'font-sans', 'font-medium', 'text-white', 'global', 'navigation', 1),
 ('global.nav.works', '全部作品', 'text-sm', 'font-sans', 'font-medium', 'text-white', 'global', 'navigation', 2),

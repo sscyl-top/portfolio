@@ -11,20 +11,28 @@ export const dynamic = "force-dynamic";
 export default async function TextContentPage() {
   await requireAdmin();
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("text_content")
-    .select("*")
-    .is("deleted_at", null)
-    .order("page")
-    .order("section")
-    .order("sort_order");
+  let items: any[] = [];
+  let error: { message: string } | null = null;
 
-  if (error) {
-    console.error("Failed to fetch text_content:", error);
+  try {
+    const supabase = await createSupabaseServerClient();
+    const result = await supabase
+      .from("text_content")
+      .select("*")
+      .is("deleted_at", null)
+      .order("page")
+      .order("section")
+      .order("sort_order");
+
+    if (result.error) {
+      console.error("Failed to fetch text_content:", result.error);
+      error = result.error;
+    }
+    items = result.data ?? [];
+  } catch (e: any) {
+    console.error("text_content fetch error:", e);
+    error = { message: e.message || "未知错误" };
   }
-
-  const items = data ?? [];
 
   const grouped = items.reduce<Record<string, typeof items>>(
     (acc, item) => {
