@@ -80,7 +80,7 @@ export const siteSettings = {
   ],
   socialLinks: [
     { label: "Zcool", href: "https://www.zcool.com.cn/u/25717361" },
-    { label: "Email", href: "mailto:3624457672@qq.com" },
+    { label: "Email", href: "mailto:hello@sscyl.top" },
   ],
 };
 
@@ -104,7 +104,7 @@ export const resume = {
     "以求职面试为主的个人作品集，兼顾品牌视觉、AI 设计与网页视觉服务合作。",
   location: "广东-深圳",
   contact: {
-    email: "3624457672@qq.com",
+    email: "hello@sscyl.top",
     phone: "19276690901",
     zcool: "https://www.zcool.com.cn/u/25717361",
   },

@@ -6,7 +6,7 @@ import { createContactHandler } from "./handler";
 
 export const runtime = "nodejs";
 
-const notificationRecipient = "3624457672@qq.com";
+const notificationRecipient = "hello@sscyl.top";
 
 function contactTypeLabel(type: ContactSubmission["type"]) {
   return type === "hiring" ? "聘用联系" : "商业咨询";

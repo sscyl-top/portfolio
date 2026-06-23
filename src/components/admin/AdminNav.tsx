@@ -7,6 +7,7 @@
   Mail,
   Settings,
   Tags,
+  Type,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,6 +20,7 @@ export const adminNavigation = [
   { label: "简历", href: "/admin/resume", icon: Layers3 },
   { label: "页面", href: "/admin/pages", icon: Layers3 },
   { label: "联系消息", href: "/admin/messages", icon: Mail },
+  { label: "全局文字", href: "/admin/settings/text-content", icon: Type },
   { label: "网站设置", href: "/admin/settings", icon: Settings },
 ] as const;
 

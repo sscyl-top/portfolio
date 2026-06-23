@@ -36,7 +36,7 @@ function InlineField({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 w-[2.8rem] text-right text-[13px] text-white/55">
+      <span className="shrink-0 w-[3.2rem] whitespace-nowrap text-right text-[13px] text-white/55">
         {label}
       </span>
       <div className="min-w-0 flex-1">{children}</div>
@@ -147,7 +147,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 max-w-[97%] space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
+        className="mt-3 max-w-[95%] space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
