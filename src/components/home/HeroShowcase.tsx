@@ -47,7 +47,7 @@ const heroFloatingMediaCards = [
   {
     // graphite: xl 起才显示（最宽的卡，窄屏不显示避免挤压）
     className:
-      "-right-[calc(4rem+3vw)] top-[69%] hidden w-96 h-[200px] xl:block 2xl:-right-[calc(5rem+3vw)]",
+      "-right-[calc(2rem+3vw)] top-[69%] hidden w-96 h-[200px] xl:block 2xl:-right-[calc(3rem+3vw)]",
     tone: "graphite" as const,
     videoKey: "side3" as const,
     wide: true,
@@ -234,7 +234,7 @@ function HeroSideCards() {
       <div
         data-float-card
         data-hero-reveal
-        className="absolute right-[12%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:right-[14%]"
+        className="absolute right-[2.5%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:right-[3.5%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
         <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
