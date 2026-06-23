@@ -36,7 +36,7 @@ function InlineField({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 w-[2.6rem] text-right text-xs text-white/50">
+      <span className="shrink-0 w-[2.8rem] text-right text-[13px] text-white/55">
         {label}
       </span>
       <div className="min-w-0 flex-1">{children}</div>
@@ -147,7 +147,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 space-y-2.5 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0"
+        className="mt-3 max-w-[97%] space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
@@ -207,23 +207,6 @@ export function ContactForm({
           />
         </InlineField>
 
-        <div className="sm:col-span-2">
-          <span className="block mb-1 text-xs text-white/55">{messageLabel}</span>
-          <textarea
-            className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5`}
-            name="message"
-            placeholder={messagePlaceholder}
-            maxLength={3000}
-            onChange={() => setFieldErrors((prev) => ({ ...prev, message: undefined }))}
-          />
-          {fieldErrors.message ? (
-            <p className={errorTextClass}>
-              <AlertCircle aria-hidden="true" className="h-3 w-3" />
-              {fieldErrors.message}
-            </p>
-          ) : null}
-        </div>
-
         <InlineField label={subjectLabel}>
           <input
             className={fieldClass}
@@ -241,6 +224,23 @@ export function ContactForm({
             maxLength={80}
           />
         </InlineField>
+
+        <div className="sm:col-span-2">
+          <span className="block mb-1 text-xs text-white/55">{messageLabel}</span>
+          <textarea
+            className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5`}
+            name="message"
+            placeholder={messagePlaceholder}
+            maxLength={3000}
+            onChange={() => setFieldErrors((prev) => ({ ...prev, message: undefined }))}
+          />
+          {fieldErrors.message ? (
+            <p className={errorTextClass}>
+              <AlertCircle aria-hidden="true" className="h-3 w-3" />
+              {fieldErrors.message}
+            </p>
+          ) : null}
+        </div>
 
         {/* 备注 — 全宽 textarea */}
         <div className="sm:col-span-2">
