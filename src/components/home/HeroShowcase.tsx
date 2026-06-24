@@ -70,6 +70,7 @@ function MeteorShower() {
   const meteor1Ref = useRef<HTMLDivElement>(null);
   const meteor2Ref = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -81,38 +82,61 @@ function MeteorShower() {
     }
 
     const ANIM_DURATION = 10000;
+    const FADE_GUARD = 500;
 
-    const triggerMeteor = () => {
+    const playOne = (el: HTMLDivElement | null): Promise<void> => {
+      return new Promise((resolve) => {
+        if (!el) {
+          resolve();
+          return;
+        }
+        el.classList.remove("is-animating");
+        void el.offsetWidth;
+        el.classList.add("is-animating");
+        const total = ANIM_DURATION + FADE_GUARD;
+        setTimeout(() => {
+          el.classList.remove("is-animating");
+          resolve();
+        }, total);
+      });
+    };
+
+    const scheduleNext = () => {
+      const delay = 5000 + Math.random() * 3000;
+      timeoutRef.current = setTimeout(triggerBatch, delay);
+    };
+
+    const triggerBatch = () => {
+      if (isPlayingRef.current) return;
+      isPlayingRef.current = true;
+
       const m1 = meteor1Ref.current;
       const m2 = meteor2Ref.current;
 
-      if (m1) {
-        m1.classList.remove("is-animating");
-        void m1.offsetWidth;
-        m1.classList.add("is-animating");
-        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 300);
+      const useM2 = Math.random() > 0.5;
+      const m2Delay = useM2 ? 600 + Math.random() * 1000 : 0;
+
+      const p1 = playOne(m1);
+
+      let p2: Promise<void> = Promise.resolve();
+      if (useM2 && m2) {
+        p2 = new Promise((resolve) => {
+          setTimeout(() => {
+            playOne(m2).then(resolve);
+          }, m2Delay);
+        });
       }
 
-      if (Math.random() > 0.5) {
-        const m2Delay = 500 + Math.random() * 1200;
-        setTimeout(() => {
-          if (m2) {
-            m2.classList.remove("is-animating");
-            void m2.offsetWidth;
-            m2.classList.add("is-animating");
-            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 300);
-          }
-        }, m2Delay);
-      }
-
-      const nextDelay = 7000 + Math.random() * 3000;
-      timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
+      Promise.all([p1, p2]).then(() => {
+        isPlayingRef.current = false;
+        scheduleNext();
+      });
     };
 
-    const initialDelay = 5000 + Math.random() * 4000;
-    timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
+    timeoutRef.current = setTimeout(triggerBatch, 300);
 
     return () => {
+      isPlayingRef.current = true;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

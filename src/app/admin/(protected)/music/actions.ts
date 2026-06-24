@@ -1,147 +1,126 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireAdmin } from "@/lib/admin-session";
-import { buildStorageKey } from "@/lib/cms/admin-model";
+import { getAuthorizedAdmin } from "@/lib/admin-session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
-const maxUploadBytes = 30 * 1024 * 1024;
-
-const categorySchema = z.object({
-  categoryId: z.string().uuid(),
-});
-
-const trackSchema = z.object({
+const trackIdSchema = z.object({
   trackId: z.string().uuid(),
-  title: z.string().trim().min(1, "标题不能为空").max(200),
 });
 
-export async function uploadMusicTrack(formData: FormData) {
-  const file = formData.get("file");
-  const categoryId = String(formData.get("categoryId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim() || "未命名音乐";
+const addTrackSchema = z.object({
+  categoryId: z.string().uuid(),
+  mediaId: z.string().uuid(),
+  title: z.string().trim().min(1).max(200),
+});
 
-  if (!(file instanceof File) || file.size === 0 || file.size > maxUploadBytes) {
-    return { error: "请选择有效的音频文件（最大30MB）" };
-  }
+export async function addMusicTrack(formData: FormData) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) return { error: "未授权" };
 
-  if (!categoryId) {
-    return { error: "请选择音乐分类" };
-  }
-
-  const parsed = categorySchema.safeParse({ categoryId });
-  if (!parsed.success) {
-    return { error: "无效的分类" };
-  }
-
-  const { client } = await requireAdmin();
-  const mediaId = randomUUID();
-  const storageKey = buildStorageKey(file.name, mediaId);
-  const mimeType = file.type || "audio/mpeg";
-
-  if (!mimeType.startsWith("audio/")) {
-    return { error: "请上传音频文件（MP3、WAV、OGG等格式）" };
-  }
-
-  const { error: uploadError } = await client.storage
-    .from("portfolio-media")
-    .upload(storageKey, file, {
-      contentType: mimeType,
-      upsert: false,
+    const parsed = addTrackSchema.safeParse({
+      categoryId: formData.get("categoryId"),
+      mediaId: formData.get("mediaId"),
+      title: formData.get("title") ?? "",
     });
 
-  if (uploadError) {
-    return { error: uploadError.message };
+    if (!parsed.success) {
+      return { error: "参数无效" };
+    }
+
+    const service = createSupabaseServiceClient();
+    const { error } = await service.from("music_tracks").insert({
+      category_id: parsed.data.categoryId,
+      media_id: parsed.data.mediaId,
+      title: parsed.data.title,
+    });
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/music");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
-
-  const { error: mediaDbError } = await client.from("media_assets").insert({
-    id: mediaId,
-    storage_key: storageKey,
-    mime_type: mimeType,
-    original_name: file.name,
-    byte_size: file.size,
-    alt_text: title,
-  });
-
-  if (mediaDbError) {
-    await client.storage.from("portfolio-media").remove([storageKey]);
-    return { error: mediaDbError.message };
-  }
-
-  const trackId = randomUUID();
-  const { error: trackDbError } = await client.from("music_tracks").insert({
-    id: trackId,
-    category_id: parsed.data.categoryId,
-    media_id: mediaId,
-    title,
-  });
-
-  if (trackDbError) {
-    await client.storage.from("portfolio-media").remove([storageKey]);
-    await client.from("media_assets").delete().eq("id", mediaId);
-    return { error: trackDbError.message };
-  }
-
-  revalidatePath("/admin/music");
-  return { success: true };
 }
 
 export async function deleteMusicTrack(formData: FormData) {
-  const parsed = z.object({ trackId: z.string().uuid() }).safeParse({
-    trackId: formData.get("trackId"),
-  });
+  try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) return;
 
-  if (!parsed.success) return;
+    const parsed = trackIdSchema.safeParse({
+      trackId: formData.get("trackId"),
+    });
+    if (!parsed.success) return;
 
-  const { client } = await requireAdmin();
+    const service = createSupabaseServiceClient();
 
-  const { data: track } = await client
-    .from("music_tracks")
-    .select("media_id")
-    .eq("id", parsed.data.trackId)
-    .single();
-
-  if (!track) return;
-
-  await client.from("music_tracks").delete().eq("id", parsed.data.trackId);
-
-  const { data: otherUsage } = await client
-    .from("music_tracks")
-    .select("id")
-    .eq("media_id", track.media_id)
-    .limit(1);
-
-  if (!otherUsage || otherUsage.length === 0) {
-    const { data: mediaRow } = await client
-      .from("media_assets")
-      .select("storage_key")
-      .eq("id", track.media_id)
+    const { data: track } = await service
+      .from("music_tracks")
+      .select("media_id")
+      .eq("id", parsed.data.trackId)
       .single();
 
-    if (mediaRow) {
-      await client.storage.from("portfolio-media").remove([mediaRow.storage_key]);
-      await client.from("media_assets").delete().eq("id", track.media_id);
-    }
-  }
+    if (!track) return;
 
-  revalidatePath("/admin/music");
+    await service.from("music_tracks").delete().eq("id", parsed.data.trackId);
+
+    const { data: otherUsage } = await service
+      .from("music_tracks")
+      .select("id")
+      .eq("media_id", track.media_id)
+      .limit(1);
+
+    if (!otherUsage || otherUsage.length === 0) {
+      const { data: mediaRow } = await service
+        .from("media_assets")
+        .select("storage_key")
+        .eq("id", track.media_id)
+        .single();
+
+      if (mediaRow) {
+        await service.storage.from("portfolio-media").remove([mediaRow.storage_key]);
+        await service.from("media_assets").delete().eq("id", track.media_id);
+      }
+    }
+
+    revalidatePath("/admin/music");
+  } catch (e) {
+    console.error("deleteMusicTrack error:", e);
+  }
 }
 
 export async function updateTrackTitle(formData: FormData) {
-  const parsed = trackSchema.safeParse({
-    trackId: formData.get("trackId"),
-    title: formData.get("title") ?? "",
-  });
+  try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) return;
 
-  if (!parsed.success) return;
+    const parsed = z.object({
+      trackId: z.string().uuid(),
+      title: z.string().trim().min(1).max(200),
+    }).safeParse({
+      trackId: formData.get("trackId"),
+      title: formData.get("title") ?? "",
+    });
 
-  const { client } = await requireAdmin();
-  await client
-    .from("music_tracks")
-    .update({ title: parsed.data.title })
-    .eq("id", parsed.data.trackId);
+    if (!parsed.success) return;
 
-  revalidatePath("/admin/music");
+    const service = createSupabaseServiceClient();
+    await service
+      .from("music_tracks")
+      .update({ title: parsed.data.title })
+      .eq("id", parsed.data.trackId);
+
+    revalidatePath("/admin/music");
+  } catch (e) {
+    console.error("updateTrackTitle error:", e);
+  }
 }
