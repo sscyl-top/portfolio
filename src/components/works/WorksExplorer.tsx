@@ -114,9 +114,9 @@ export function WorksExplorer({
               const index = item.index;
               const card = (
                 <article className="relative">
-                  <div className="relative aspect-[1.56] overflow-hidden rounded-[28px] bg-white/[0.04] shadow-[0_32px_100px_rgba(0,0,0,0.36)] transition duration-500 group-hover:-translate-y-2 md:rounded-[32px]">
+                  <div className="relative aspect-[1.56] overflow-hidden rounded-xl bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.3)] transition-all duration-400 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_30px_80px_rgba(0,0,0,0.45)] md:rounded-2xl">
                     <div
-                      className={`absolute inset-0 opacity-82 saturate-[0.86] ${toneClass(
+                      className={`absolute inset-0 opacity-82 saturate-[0.86] transition duration-500 group-hover:scale-[1.02] ${toneClass(
                         coverTone,
                       )}`}
                     />
@@ -129,41 +129,41 @@ export function WorksExplorer({
                     ) : null}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,rgba(255,255,255,0.24),transparent_22%),linear-gradient(120deg,rgba(255,255,255,0.08),transparent_34%),linear-gradient(to_bottom,transparent_56%,rgba(0,0,0,0.42))]" />
                     {isPlaceholder ? (
-                      <div className="absolute inset-5 rounded-[22px] border border-dashed border-white/16 bg-black/10" />
+                      <div className="absolute inset-4 rounded-lg border border-dashed border-white/16 bg-black/10" />
                     ) : null}
-                    <div className="absolute left-6 top-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/58">
+                    <div className="absolute left-4 top-4 font-mono text-[11px] uppercase tracking-[0.18em] text-white/58 transition-all duration-300 group-hover:text-white/75 md:left-5 md:top-5">
                       {String(index + 1).padStart(2, "0")} /{" "}
                       {work?.year ?? "Next"}
                     </div>
-                    <div className="absolute bottom-6 right-6 flex gap-2">
+                    <div className="absolute bottom-4 right-4 flex gap-2 transition-all duration-300 group-hover:bottom-5 group-hover:right-5 md:bottom-5 md:right-5">
                       {palette.slice(0, 3).map((color) => (
                         <span
                           key={color}
-                          className="h-3.5 w-3.5 rounded-full border border-white/32"
+                          className="h-3 w-3 rounded-full border border-white/32 transition-transform duration-300 group-hover:scale-110"
                           style={{ backgroundColor: color }}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="mt-10 flex items-start justify-between gap-6 px-0">
-                    <div>
-                      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-copper">
+                  <div className="mt-7 flex items-start justify-between gap-6 px-0 md:mt-8">
+                    <div className="transition-transform duration-400 ease-out group-hover:-translate-y-1">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-copper transition-colors duration-300 group-hover:text-white/70">
                         {work?.category ?? activeCategory}
                       </p>
-                      <h3 className="mt-2 max-w-xl text-3xl font-semibold leading-tight text-white md:text-5xl">
+                      <h3 className="mt-2 max-w-xl text-3xl font-semibold leading-tight text-white transition-all duration-400 ease-out group-hover:translate-x-1 md:text-5xl">
                         {work?.title ?? "Project placeholder"}
                       </h3>
-                      <p className="mt-2 line-clamp-1 max-w-xl text-sm leading-6 text-white/64 md:mt-3 md:text-lg md:leading-7">
+                      <p className="mt-2 line-clamp-1 max-w-xl text-sm leading-6 text-white/64 transition-colors duration-300 group-hover:text-white/75 md:mt-3 md:text-lg md:leading-7">
                         {work?.summary ?? "Reserved visual slot for upcoming work."}
                       </p>
                     </div>
                     <ArrowUpRight
                       aria-hidden="true"
-                      className={`mt-3 h-6 w-6 shrink-0 text-white/42 transition duration-300 ${
+                      className={`mt-2 h-6 w-6 shrink-0 transition-all duration-400 ease-out ${
                         isPlaceholder
                           ? "opacity-30"
-                          : "group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-white"
+                          : "text-white/42 group-hover:translate-x-1.5 group-hover:-translate-y-1.5 group-hover:scale-110 group-hover:text-white md:mt-3"
                       }`}
                     />
                   </div>
