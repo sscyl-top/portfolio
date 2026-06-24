@@ -21,7 +21,6 @@ const toneFallbacks = [
 ];
 
 const infiniteProgressLogo = "/brand/infinite-progress-logo.svg";
-const ctaTickerLogoSrc = infiniteProgressLogo;
 
 export type CompositeTextOverrides = {
   compositeKicker?: string;
@@ -37,6 +36,7 @@ type CompositeDesignWallProps = {
   textOverrides?: CompositeTextOverrides;
   ctaCardUrl?: string;
   ctaFigureUrl?: string;
+  ctaTickerLogoUrl?: string;
 };
 
 export function CompositeDesignWall({
@@ -44,6 +44,7 @@ export function CompositeDesignWall({
   textOverrides = {},
   ctaCardUrl = "",
   ctaFigureUrl = "",
+  ctaTickerLogoUrl = "",
 }: CompositeDesignWallProps) {
   const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
@@ -110,13 +111,13 @@ export function CompositeDesignWall({
     <section id="section-composite" className="relative overflow-hidden px-4 pb-8 pt-24 md:px-8 md:pt-48 md:pb-10">
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-16 text-center md:mb-28">
-          <p className="font-mono text-xs uppercase text-copper">
+          <p className="font-mono text-xs uppercase text-copper" data-text-key="works.compositeKicker">
             {textOverrides.compositeKicker || "Composite Design / Visual Flow"}
           </p>
-          <h2 className="mt-3 text-4xl font-semibold text-white md:text-7xl">
+          <h2 className="mt-3 text-4xl font-semibold text-white md:text-7xl" data-text-key="works.compositeTitle">
             {textOverrides.compositeTitle || "复合设计"}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/56 md:text-base md:leading-8">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/56 md:text-base md:leading-8" data-text-key="works.compositeDescription">
             {textOverrides.compositeDescription ||
               "用更密集的作品墙展示图案、装备、曲面贴花和多介质延展。当前为开发占位，后续可在后台替换图片与项目内容。"}
           </p>
@@ -246,16 +247,27 @@ export function CompositeDesignWall({
             <div className="cta-logo-track flex h-full w-max items-center gap-16 whitespace-nowrap">
               {Array.from({ length: 2 }).map((_, groupIndex) => (
                 <div key={groupIndex} className="flex items-center gap-16">
-                  {Array.from({ length: 6 }).map((_, logoIndex) => (
-                    <Image
-                      key={`${groupIndex}-${logoIndex}`}
-                      src={ctaTickerLogoSrc}
-                      alt=""
-                      width={240}
-                      height={60}
-                      className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen"
-                    />
-                  ))}
+                  {Array.from({ length: 6 }).map((_, logoIndex) => {
+                    const logoSrc = ctaTickerLogoUrl || infiniteProgressLogo;
+                    return ctaTickerLogoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={`${groupIndex}-${logoIndex}`}
+                        src={logoSrc}
+                        alt=""
+                        className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen object-contain"
+                      />
+                    ) : (
+                      <Image
+                        key={`${groupIndex}-${logoIndex}`}
+                        src={logoSrc}
+                        alt=""
+                        width={240}
+                        height={60}
+                        className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen"
+                      />
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -279,6 +291,7 @@ export function CompositeDesignWall({
               <Link
                 href="/resume"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
+                data-text-key="works.ctaResume"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 {textOverrides.ctaResume || "查看简历"}
@@ -286,6 +299,7 @@ export function CompositeDesignWall({
               <Link
                 href="/resume#hiring-contact"
                 className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
+                data-text-key="works.ctaHiring"
               >
                 <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
                 {textOverrides.ctaHiring || "聘用联系"}
@@ -293,6 +307,7 @@ export function CompositeDesignWall({
               <Link
                 href="/resume#commercial-contact"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
+                data-text-key="works.ctaCommercial"
               >
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
                 {textOverrides.ctaCommercial || "商业咨询"}

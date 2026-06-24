@@ -29,6 +29,7 @@ export type PublicSiteSettings = {
   avatarMediaUrl?: string;
   ctaCardMediaUrl?: string;
   ctaFigureMediaUrl?: string;
+  ctaTickerLogoMediaUrl?: string;
   description: string;
   logoMediaUrl?: string;
   name: string;
@@ -235,7 +236,8 @@ export async function createServerCmsRepository() {
           logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
           share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
           cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
-          cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text)`)
+          cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text),
+          cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text)`)
         .single();
 
       if (error) throw error;
@@ -282,6 +284,8 @@ type CmsSiteSettingsRow = {
   cta_card_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   cta_figure_media_id?: string | null;
   cta_figure_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  cta_ticker_logo_media_id?: string | null;
+  cta_ticker_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   social_links: Array<{ label: string; url: string }> | null;
 };
 
@@ -317,6 +321,7 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
     avatarMediaUrl: toPublicMediaUrl(row.avatar_media),
     ctaCardMediaUrl: toPublicMediaUrl(row.cta_card_media),
     ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
+    ctaTickerLogoMediaUrl: toPublicMediaUrl(row.cta_ticker_logo_media),
     description: normalizeUtf8(row.seo_description) || settings.description,
     logoMediaUrl: toPublicMediaUrl(row.logo_media),
     name: normalizeUtf8(row.name) || settings.name,

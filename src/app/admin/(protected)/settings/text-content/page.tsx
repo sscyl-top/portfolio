@@ -71,7 +71,10 @@ export default async function TextContentPage() {
           hero.title.desktop、hero.title.mobile、home.hero.ticker、works.composite.kicker、
           works.composite.title、works.composite.description、works.cta.resume、
           works.cta.hiring、works.cta.commercial、cta.works、cta.resume、cta.hiring、
-          contact.invitation、footer.copyright
+          contact.invitation、resume.contact.marquee、footer.copyright
+        </p>
+        <p className="mt-2 text-[10px] text-white/35">
+          滚动字幕类 key（如 home.hero.ticker、resume.contact.marquee）：每行一条内容；使用「·」或「•」作为分隔圆点；以「stroke:」开头的文字显示为描边空心效果。
         </p>
       </div>
 

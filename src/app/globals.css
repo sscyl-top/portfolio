@@ -53,21 +53,21 @@ button {
 
 @keyframes ticker {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 @keyframes cta-logo-ticker {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -254,6 +254,7 @@ button {
 
 .cta-logo-track {
   animation: cta-logo-ticker 42s linear infinite;
+  will-change: transform;
 }
 
 .cta-logo-image {
@@ -275,6 +276,7 @@ button {
   display: flex;
   width: max-content;
   animation: ticker 34s linear infinite;
+  will-change: transform;
 }
 
 .ticker-group {

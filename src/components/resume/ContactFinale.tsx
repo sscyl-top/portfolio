@@ -6,13 +6,38 @@ type ContactFinaleProps = {
   email: string;
   phone: string;
   location: string;
+  marqueeItems?: string[];
 };
 
 const wechatId = "CTT522423";
 
+const defaultMarqueeItems = ["聊聊设计", "·", "BRAND & AI", "·", "LET'S TALK", "·"];
+
 const marqueeGroups = [0, 1, 2, 3];
 
-export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
+function renderMarqueeItem(item: string, index: number) {
+  const isDot = item.trim() === "·" || item.trim() === "•";
+  if (isDot) {
+    return (
+      <span key={index} className="text-copper">·</span>
+    );
+  }
+  const isStroke = item.startsWith("stroke:");
+  if (isStroke) {
+    return (
+      <span key={index} className="font-sans font-semibold text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.32)]">
+        {item.slice(7)}
+      </span>
+    );
+  }
+  return (
+    <span key={index} className="font-sans font-semibold text-white">{item}</span>
+  );
+}
+
+export function ContactFinale({ email, phone, location, marqueeItems }: ContactFinaleProps) {
+  const items = marqueeItems && marqueeItems.length > 0 ? marqueeItems : defaultMarqueeItems;
+
   return (
     <section className="relative z-10 overflow-hidden border-t border-white/10 pb-8 pt-14 md:pt-20 md:pb-10">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
@@ -98,7 +123,6 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
 
       <div
         data-testid="contact-marquee"
-        aria-label="聊聊设计 · BRAND & AI · LET'S TALK ·"
         className="mt-14 overflow-hidden border-y border-white/10 py-5 md:mt-20 md:py-6"
       >
         <div className="resume-contact-marquee-track flex w-max min-w-[200%] items-center">
@@ -107,16 +131,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
               key={group}
               className="flex shrink-0 items-center gap-6 whitespace-nowrap pr-6 text-[clamp(2.8rem,8.5vw,10rem)] leading-none"
             >
-              <span className="font-sans font-semibold text-white">聊聊设计</span>
-              <span className="text-copper">·</span>
-              <span className="font-sans font-semibold text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.32)]">
-                BRAND &amp; AI
-              </span>
-              <span className="text-copper">·</span>
-              <span className="font-sans font-semibold text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.32)]">
-                LET&apos;S TALK
-              </span>
-              <span className="text-copper">·</span>
+              {items.map((item, index) => renderMarqueeItem(item, index))}
             </div>
           ))}
         </div>

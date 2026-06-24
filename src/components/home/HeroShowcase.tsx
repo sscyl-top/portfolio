@@ -307,10 +307,10 @@ function HeroMainCard({
       ) : null}
 
       <div className="absolute bottom-5 left-5 right-5 z-10 hidden md:block md:bottom-8 md:left-8 md:right-8">
-        <p className="font-mono text-xs uppercase text-copper">
+        <p className="font-mono text-xs uppercase text-copper" data-text-key="hero.kicker">
           {textOverrides.kicker || "Brand Visual / AI Design / Web Experience"}
         </p>
-        <h1 className="mt-3 max-w-2xl text-2xl font-semibold leading-[1.05] text-white md:text-5xl">
+        <h1 className="mt-3 max-w-2xl text-2xl font-semibold leading-[1.05] text-white md:text-5xl" data-text-key="hero.title.desktop">
           {textOverrides.desktopTitle || "让品牌视觉拥有可被记住的数字现场"}
         </h1>
         <p className="mt-4 max-w-xl text-[13px] leading-6 text-white/62 md:text-base">
@@ -319,10 +319,10 @@ function HeroMainCard({
       </div>
     </div>
     <div className="mt-4 block px-1 md:hidden" data-hero-reveal>
-      <p className="font-mono text-[10px] uppercase text-copper">
+      <p className="font-mono text-[10px] uppercase text-copper" data-text-key="hero.kicker">
         {textOverrides.kicker || "Brand Visual / AI Design / Web Experience"}
       </p>
-      <h1 className="mt-2 text-2xl font-semibold leading-[1.05] text-white">
+      <h1 className="mt-2 text-2xl font-semibold leading-[1.05] text-white" data-text-key="hero.title.mobile">
         {textOverrides.mobileTitle || "让品牌视觉拥有被记住的数字现场"}
       </h1>
       <p className="mt-3 text-[13px] leading-6 text-white/62">
@@ -367,8 +367,8 @@ function HeroSideCards({
         className="absolute -right-[2.5%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:-right-[1.5%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
-        <p className="mt-6 text-4xl font-semibold text-white">5年+</p>
-        <p className="mt-2 text-xs leading-5 text-white/50">
+        <p className="mt-6 text-4xl font-semibold text-white" data-text-key="hero.experience.years">5年+</p>
+        <p className="mt-2 text-xs leading-5 text-white/50" data-text-key="hero.experience.label">
           {textOverrides.experienceLabel || "品牌视觉与商业设计实践"}
         </p>
       </div>
@@ -385,6 +385,7 @@ function HeroActions({ resume }: { resume: typeof staticResume }) {
       <Link
         href="/works"
         className="group flex items-center justify-between rounded-full border border-white/15 bg-white px-5 py-3 text-sm font-medium text-black shadow-2xl shadow-black/40 transition hover:bg-copper"
+        data-text-key="hero.cta.main"
       >
         查看作品
         <ArrowUpRight
@@ -396,6 +397,7 @@ function HeroActions({ resume }: { resume: typeof staticResume }) {
         href={resume.downloads.pdf}
         download
         className="group flex items-center justify-between rounded-full border border-white/15 bg-black/35 px-5 py-3 text-sm text-white/78 backdrop-blur transition hover:border-white/40 hover:text-white"
+        data-text-key="hero.cta.secondary"
       >
         下载简历
         <Download aria-hidden="true" className="h-4 w-4" />
@@ -422,7 +424,7 @@ function HeroTicker({
         <div className="ticker-track">
           {[0, 1].map((group) => (
             <div className="ticker-group" key={group}>
-              {tickerItems.concat(tickerItems).map((item, index) => (
+              {tickerItems.map((item, index) => (
                 <span key={`${group}-${item}-${index}`}>{item}</span>
               ))}
             </div>

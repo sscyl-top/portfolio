@@ -28,7 +28,7 @@ export default async function WorksPage() {
   let visibleCategories: any[] = [];
   let texts: Record<string, { content: string; styles: Record<string, string> }> = {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let siteSettings: any = { ctaCardMediaUrl: null, ctaFigureMediaUrl: null };
+  let siteSettings: any = { ctaCardMediaUrl: null, ctaFigureMediaUrl: null, ctaTickerLogoMediaUrl: null };
 
   try {
     const repository = await createServerCmsRepository();
@@ -65,6 +65,7 @@ export default async function WorksPage() {
         textOverrides={textOverrides}
         ctaCardUrl={siteSettings.ctaCardMediaUrl}
         ctaFigureUrl={siteSettings.ctaFigureMediaUrl}
+        ctaTickerLogoUrl={siteSettings.ctaTickerLogoMediaUrl}
       />
     </WorksPageShell>
   );

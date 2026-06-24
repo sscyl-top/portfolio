@@ -19,6 +19,7 @@ type SettingsRow = {
   share_media_id: string | null;
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
+  cta_ticker_logo_media_id: string | null;
   social_links: Array<{ label: string; url: string }>;
 };
 
@@ -38,7 +39,7 @@ export default async function AdminSettingsPage() {
     supabase
       .from("site_settings")
       .select(
-        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,social_links",
+        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links",
       )
       .single(),
     supabase
@@ -60,6 +61,7 @@ export default async function AdminSettingsPage() {
     share_media_id: null,
     cta_card_media_id: null,
     cta_figure_media_id: null,
+    cta_ticker_logo_media_id: null,
     social_links: siteSettings.socialLinks.map((link) => ({
       label: link.label,
       url: link.href,
@@ -172,6 +174,15 @@ export default async function AdminSettingsPage() {
               assets={mediaAssets}
               defaultValue={settings.cta_figure_media_id ?? ""}
               hint="上层人物/主体图，建议 PNG 透明底"
+            />
+          </div>
+          <div className="mt-4">
+            <SettingsMediaField
+              label="终场滚动条幅图"
+              name="cta_ticker_logo_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.cta_ticker_logo_media_id ?? ""}
+              hint="终场横向滚动条幅中重复出现的 logo/图案，建议 PNG 透明底。不上传则使用默认「无限进步」logo"
             />
           </div>
         </div>

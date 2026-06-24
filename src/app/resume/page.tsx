@@ -10,6 +10,9 @@ import type { Metadata } from "next";
 
 import { ContactFinale } from "@/components/resume/ContactFinale";
 import { getResumeData } from "@/lib/cms/resume";
+import { getTextContentsByKeys, parseTextContentArray } from "@/lib/cms/text-content";
+
+const RESUME_TEXT_KEYS = ["resume.contact.marquee"];
 
 export const metadata: Metadata = {
   title: "sscyl.top-简历",
@@ -23,7 +26,17 @@ export const metadata: Metadata = {
 };
 
 export default async function ResumePage() {
-  const resume = await getResumeData();
+  const [resume, texts] = await Promise.all([
+    getResumeData(),
+    getTextContentsByKeys(RESUME_TEXT_KEYS),
+  ]);
+
+  const marqueeContent = texts["resume.contact.marquee"]?.content;
+  const marqueeItems =
+    marqueeContent && marqueeContent !== "resume.contact.marquee"
+      ? parseTextContentArray(marqueeContent)
+      : undefined;
+
   return (
     <main className="relative isolate overflow-hidden bg-[#050505]">
       <div className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-62" />
@@ -283,6 +296,7 @@ export default async function ResumePage() {
         email={resume.contact.email}
         phone={resume.contact.phone}
         location={resume.location}
+        marqueeItems={marqueeItems}
       />
     </main>
   );
