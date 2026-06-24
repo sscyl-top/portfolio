@@ -145,14 +145,17 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    /* 全宽突破：脱离 AdminShell 的 max-w-7xl 约束，从导航栏右边缘到屏幕右侧 */
+    /* ══ 全宽突破：脱离 AdminShell 内容区的 max-w-7xl 约束 ══ */
+    /* 新布局：导航栏已独立为 aside(w-60)，此处只需突破 content div 的 max-w-7xl 居中 */
     <div
-      className="-mx-5 md:-mx-8"
       style={{
-        marginLeft: "calc(-50vw + 50% + 120px)",
-        marginRight: "calc(-50vw + 50% + 120px)",
-        paddingLeft: "calc(50vw - 50% - 120px + 2rem)",
-        paddingRight: "calc(50vw - 50% - 120px + 2rem)",
+        maxWidth: 'none',
+        width: '100%',
+        marginLeft: 'calc(-50vw + 50%)',
+        marginRight: 'calc(-50vw + 50%)',
+        paddingLeft: '2rem',
+        paddingRight: '2rem',
+        paddingTop: '5.5rem',
       }}
     >
       {toast ? <ToastHandler message={toast} /> : null}
