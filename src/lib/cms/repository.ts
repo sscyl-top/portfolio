@@ -26,6 +26,9 @@ export type CmsReadSource = {
 };
 
 export type PublicSiteSettings = {
+  avatarMediaUrl?: string;
+  ctaCardMediaUrl?: string;
+  ctaFigureMediaUrl?: string;
   description: string;
   logoMediaUrl?: string;
   name: string;
@@ -227,7 +230,12 @@ export async function createServerCmsRepository() {
     async getSiteSettings() {
       const { data, error } = await client
         .from("site_settings")
-        .select("*,logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text)")
+        .select(`*,
+          avatar_media:media_assets!site_settings_avatar_media_id_fkey(storage_key,mime_type,alt_text),
+          logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
+          share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
+          cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
+          cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text)`)
         .single();
 
       if (error) throw error;
@@ -264,10 +272,16 @@ type CmsSiteSettingsRow = {
   nickname: string;
   seo_title: string;
   seo_description: string;
+  avatar_media_id?: string | null;
+  avatar_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   logo_media_id?: string | null;
   logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   share_media_id?: string | null;
   share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  cta_card_media_id?: string | null;
+  cta_card_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  cta_figure_media_id?: string | null;
+  cta_figure_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   social_links: Array<{ label: string; url: string }> | null;
 };
 
@@ -300,6 +314,9 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
   return {
+    avatarMediaUrl: toPublicMediaUrl(row.avatar_media),
+    ctaCardMediaUrl: toPublicMediaUrl(row.cta_card_media),
+    ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
     description: normalizeUtf8(row.seo_description) || settings.description,
     logoMediaUrl: toPublicMediaUrl(row.logo_media),
     name: normalizeUtf8(row.name) || settings.name,

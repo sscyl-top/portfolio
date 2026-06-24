@@ -24,6 +24,7 @@ export type HeroTextOverrides = {
   mobileTitle?: string;
   kicker?: string;
   experienceLabel?: string;
+  tickerItems?: string[];
   mainCta?: string;
   secondaryCta?: string;
 };
@@ -127,21 +128,7 @@ export function HeroShowcase({ data }: { data?: HeroData }) {
     >
       <AmbientParticles />
       <div className="grain" />
-      <div className="absolute inset-x-0 top-16 z-10 border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
-        <div className="ticker-viewport font-mono text-xs text-white/40">
-          <div className="ticker-track">
-            {[0, 1].map((group) => (
-              <div className="ticker-group" key={group}>
-                {resume.highlights
-                  .concat(resume.highlights)
-                  .map((item, index) => (
-                    <span key={`${group}-${item}-${index}`}>{item}</span>
-                  ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <HeroTicker textOverrides={heroTextOverrides} resume={resume} />
 
       <div className="relative z-20 mx-auto flex min-h-[calc(100vh-10rem)] max-w-[1880px] items-center justify-center">
         <div className="relative w-full pb-10 pt-16">
@@ -311,6 +298,35 @@ function HeroActions({ resume }: { resume: typeof staticResume }) {
         下载简历
         <Download aria-hidden="true" className="h-4 w-4" />
       </a>
+    </div>
+  );
+}
+
+function HeroTicker({
+  textOverrides,
+  resume,
+}: {
+  textOverrides: HeroTextOverrides;
+  resume: typeof staticResume;
+}) {
+  const tickerItems =
+    textOverrides.tickerItems && textOverrides.tickerItems.length > 0
+      ? textOverrides.tickerItems
+      : resume.highlights;
+
+  return (
+    <div className="absolute inset-x-0 top-16 z-10 border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
+      <div className="ticker-viewport font-mono text-xs text-white/40">
+        <div className="ticker-track">
+          {[0, 1].map((group) => (
+            <div className="ticker-group" key={group}>
+              {tickerItems.concat(tickerItems).map((item, index) => (
+                <span key={`${group}-${item}-${index}`}>{item}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

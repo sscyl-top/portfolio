@@ -17,6 +17,8 @@ type SettingsRow = {
   logo_media_id: string | null;
   avatar_media_id: string | null;
   share_media_id: string | null;
+  cta_card_media_id: string | null;
+  cta_figure_media_id: string | null;
   social_links: Array<{ label: string; url: string }>;
 };
 
@@ -36,7 +38,7 @@ export default async function AdminSettingsPage() {
     supabase
       .from("site_settings")
       .select(
-        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,social_links",
+        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,social_links",
       )
       .single(),
     supabase
@@ -56,6 +58,8 @@ export default async function AdminSettingsPage() {
     logo_media_id: null,
     avatar_media_id: null,
     share_media_id: null,
+    cta_card_media_id: null,
+    cta_figure_media_id: null,
     social_links: siteSettings.socialLinks.map((link) => ({
       label: link.label,
       url: link.href,
@@ -144,6 +148,21 @@ export default async function AdminSettingsPage() {
             name="share_media_id"
             assets={mediaAssets}
             defaultValue={settings.share_media_id ?? ""}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <SettingsMediaField
+            label="作品终场背景卡"
+            name="cta_card_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.cta_card_media_id ?? ""}
+          />
+          <SettingsMediaField
+            label="作品终场人物图"
+            name="cta_figure_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.cta_figure_media_id ?? ""}
           />
         </div>
 

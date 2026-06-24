@@ -4,7 +4,10 @@ import { resume as staticResume } from "@/data/portfolio";
 import { getBackendReadiness } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { getTextContentsByKeys } from "@/lib/cms/text-content";
+import {
+  getTextContentsByKeys,
+  parseTextContentArray,
+} from "@/lib/cms/text-content";
 
 type HeroVideoSettings = {
   mainVideoMediaId?: string | null;
@@ -39,6 +42,7 @@ const HOME_TEXT_KEYS = [
   "hero.title.desktop",
   "hero.title.mobile",
   "hero.experience",
+  "home.hero.ticker",
   "contact.invitation",
   "cta.works",
   "cta.resume",
@@ -58,6 +62,16 @@ function pickText(
   return content;
 }
 
+function pickTextArray(
+  texts: Record<string, { content: string; styles: Record<string, string> }>,
+  key: string,
+): string[] | undefined {
+  const content = texts[key]?.content;
+  if (!content || content === key) return undefined;
+  const arr = parseTextContentArray(content);
+  return arr.length > 0 ? arr : undefined;
+}
+
 function buildHeroTextOverrides(
   texts: Record<string, { content: string; styles: Record<string, string> }>,
 ): HeroTextOverrides {
@@ -65,6 +79,7 @@ function buildHeroTextOverrides(
     desktopTitle: pickText(texts, "hero.title.desktop"),
     mobileTitle: pickText(texts, "hero.title.mobile"),
     experienceLabel: pickText(texts, "hero.experience"),
+    tickerItems: pickTextArray(texts, "home.hero.ticker"),
   };
 }
 

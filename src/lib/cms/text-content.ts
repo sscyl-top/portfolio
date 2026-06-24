@@ -116,3 +116,33 @@ export async function getTextContentsByKeys(
     return result
   }
 }
+
+// 将文字内容解析为字符串数组，用于 ticker 等多条目场景
+// 若内容以 '[' 开头，则尝试 JSON.parse；失败或不是数组时返回 [content]
+export function parseTextContentArray(content: string): string[] {
+  const trimmed = content.trim()
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === 'string')
+      }
+    } catch {
+      // 解析失败时回退到单条目
+    }
+  }
+  return [content]
+}
+
+// 获取单个 key 的数组内容（服务端）
+export async function getTextContentArrayByKey(
+  key: string,
+  fallback?: string[],
+): Promise<string[]> {
+  const item = await getTextContentByKey(key)
+  if (item.content === key && fallback) {
+    return fallback
+  }
+  const arr = parseTextContentArray(item.content)
+  return arr.length > 0 ? arr : fallback ?? []
+}

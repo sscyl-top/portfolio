@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const defaultSiteSettings: PublicSiteSettings = {
   description: staticSiteSettings.description,
@@ -15,11 +16,18 @@ const defaultSiteSettings: PublicSiteSettings = {
   title: staticSiteSettings.title,
 };
 
-export function SiteHeader({
+export async function SiteHeader({
   siteSettings = defaultSiteSettings,
 }: {
   siteSettings?: PublicSiteSettings;
 }) {
+  // 检测当前用户是否登录，决定头像点击跳转目标
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const avatarHref = user ? "/admin" : "/resume";
+
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-3 md:h-24 md:px-8">
@@ -70,16 +78,37 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40">
-          <Image
-            src="/brand/infinite-progress-logo.svg"
-            alt="无限进步"
-            width={120}
-            height={30}
-            className="h-auto w-[4.5rem] sm:w-28 md:w-32"
-            priority
-          />
-        </div>
+        {siteSettings.avatarMediaUrl ? (
+          <Link
+            href={avatarHref}
+            className="justify-self-end grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            aria-label={user ? "进入后台" : "查看简历"}
+          >
+            <Image
+              src={siteSettings.avatarMediaUrl}
+              alt=""
+              width={48}
+              height={48}
+              className="h-full w-full object-cover"
+              priority
+            />
+          </Link>
+        ) : (
+          <Link
+            href={avatarHref}
+            className="justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40"
+            aria-label={user ? "进入后台" : "查看简历"}
+          >
+            <Image
+              src="/brand/infinite-progress-logo.svg"
+              alt="无限进步"
+              width={120}
+              height={30}
+              className="h-auto w-[4.5rem] sm:w-28 md:w-32"
+              priority
+            />
+          </Link>
+        )}
       </nav>
     </header>
   );

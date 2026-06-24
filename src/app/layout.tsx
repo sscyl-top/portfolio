@@ -38,7 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const repository = await createServerCmsRepository();
   const settings = await repository.getSiteSettings();
 
-  const imageUrl = settings.shareMediaUrl ?? settings.logoMediaUrl;
+  const imageUrl =
+    settings.shareMediaUrl ?? settings.logoMediaUrl ?? settings.avatarMediaUrl;
 
   return {
     title: settings.seoTitle,

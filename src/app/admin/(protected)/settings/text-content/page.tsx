@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-session";
 
 import { createTextContent } from "./actions";
-import { DeleteTextContentButton } from "./DeleteTextContentButton";
+import { EditTextContentRow } from "./EditTextContentRow";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +65,16 @@ export default async function TextContentPage() {
         管理前台所有可动态修改的文字内容。修改后前台自动生效。
       </p>
 
+      <div className="mt-4 rounded-md border border-white/10 bg-white/[0.02] p-3">
+        <p className="text-xs text-white/40">常用 key 参考：</p>
+        <p className="mt-1 font-mono text-xs leading-relaxed text-white/55">
+          hero.title.desktop、hero.title.mobile、home.hero.ticker、works.composite.kicker、
+          works.composite.title、works.composite.description、works.cta.resume、
+          works.cta.hiring、works.cta.commercial、cta.works、cta.resume、cta.hiring、
+          contact.invitation、footer.copyright
+        </p>
+      </div>
+
       {error && (
         <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
           数据库读取失败：{error.message}。请确认已执行数据库迁移 SQL。
@@ -94,37 +104,13 @@ export default async function TextContentPage() {
                       <th className="px-4 py-2">字号</th>
                       <th className="px-4 py-2">字体</th>
                       <th className="px-4 py-2">字重</th>
+                      <th className="px-4 py-2">颜色</th>
                       <th className="px-4 py-2">操作</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b border-white/5 hover:bg-white/[0.03]"
-                      >
-                        <td className="px-4 py-2 font-mono text-xs">
-                          {item.key}
-                        </td>
-                        <td className="max-w-[240px] truncate px-4 py-2">
-                          {item.content}
-                        </td>
-                        <td className="px-4 py-2 text-white/50">
-                          {item.section ?? "-"}
-                        </td>
-                        <td className="px-4 py-2 text-white/50">
-                          {item.font_size ?? "-"}
-                        </td>
-                        <td className="px-4 py-2 text-white/50">
-                          {item.font_family ?? "-"}
-                        </td>
-                        <td className="px-4 py-2 text-white/50">
-                          {item.font_weight ?? "-"}
-                        </td>
-                        <td className="px-4 py-2">
-                          <DeleteTextContentButton id={item.id} label={item.key} />
-                        </td>
-                      </tr>
+                      <EditTextContentRow key={item.id} item={item} />
                     ))}
                   </tbody>
                 </table>

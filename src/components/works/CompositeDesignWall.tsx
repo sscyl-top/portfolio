@@ -9,10 +9,6 @@ import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
 import { WorkMediaFrame } from "./WorkMediaFrame";
 
-type CompositeDesignWallProps = {
-  works: Work[];
-};
-
 const toneFallbacks = [
   "bronze",
   "orange",
@@ -25,11 +21,30 @@ const toneFallbacks = [
 ];
 
 const infiniteProgressLogo = "/brand/infinite-progress-logo.svg";
-const ctaCardSrc = "";
 const ctaTickerLogoSrc = infiniteProgressLogo;
-const ctaFigureSrc = "";
 
-export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
+export type CompositeTextOverrides = {
+  compositeKicker?: string;
+  compositeTitle?: string;
+  compositeDescription?: string;
+  ctaResume?: string;
+  ctaHiring?: string;
+  ctaCommercial?: string;
+};
+
+type CompositeDesignWallProps = {
+  works: Work[];
+  textOverrides?: CompositeTextOverrides;
+  ctaCardUrl?: string;
+  ctaFigureUrl?: string;
+};
+
+export function CompositeDesignWall({
+  works,
+  textOverrides = {},
+  ctaCardUrl = "",
+  ctaFigureUrl = "",
+}: CompositeDesignWallProps) {
   const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -96,13 +111,14 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-16 text-center md:mb-28">
           <p className="font-mono text-xs uppercase text-copper">
-            Composite Design / Visual Flow
+            {textOverrides.compositeKicker || "Composite Design / Visual Flow"}
           </p>
           <h2 className="mt-3 text-4xl font-semibold text-white md:text-7xl">
-            复合设计
+            {textOverrides.compositeTitle || "复合设计"}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/56 md:text-base md:leading-8">
-            用更密集的作品墙展示图案、装备、曲面贴花和多介质延展。当前为开发占位，后续可在后台替换图片与项目内容。
+            {textOverrides.compositeDescription ||
+              "用更密集的作品墙展示图案、装备、曲面贴花和多介质延展。当前为开发占位，后续可在后台替换图片与项目内容。"}
           </p>
         </div>
 
@@ -175,9 +191,9 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(0,0,0,0.72),transparent_42%)]" />
 
           <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
-            {ctaCardSrc ? (
+            {ctaCardUrl ? (
               <Image
-                src={ctaCardSrc}
+                src={ctaCardUrl}
                 alt=""
                 fill
                 sizes="(max-width: 768px) 92vw, 1100px"
@@ -220,9 +236,9 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
           </div>
 
           <div className="absolute bottom-0 left-1/2 z-30 h-[440px] w-[min(560px,84vw)] -translate-x-1/2">
-            {ctaFigureSrc ? (
+            {ctaFigureUrl ? (
               <Image
-                src={ctaFigureSrc}
+                src={ctaFigureUrl}
                 alt=""
                 fill
                 sizes="(max-width: 768px) 84vw, 560px"
@@ -240,21 +256,21 @@ export function CompositeDesignWall({ works }: CompositeDesignWallProps) {
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
-                查看简历
+                {textOverrides.ctaResume || "查看简历"}
               </Link>
               <Link
                 href="/resume#hiring-contact"
                 className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
               >
                 <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
-                聘用联系
+                {textOverrides.ctaHiring || "聘用联系"}
               </Link>
               <Link
                 href="/resume#commercial-contact"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
               >
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-                商业咨询
+                {textOverrides.ctaCommercial || "商业咨询"}
               </Link>
             </div>
           </div>

@@ -20,6 +20,8 @@ const settingsSchema = z.object({
   logo_media_id: z.string().uuid().nullable(),
   avatar_media_id: z.string().uuid().nullable(),
   share_media_id: z.string().uuid().nullable(),
+  cta_card_media_id: z.string().uuid().nullable(),
+  cta_figure_media_id: z.string().uuid().nullable(),
   social_links: z.array(socialLinkSchema),
 });
 
@@ -40,6 +42,8 @@ export async function saveSiteSettings(formData: FormData) {
     logo_media_id: formData.get("logo_media_id") || null,
     avatar_media_id: formData.get("avatar_media_id") || null,
     share_media_id: formData.get("share_media_id") || null,
+    cta_card_media_id: formData.get("cta_card_media_id") || null,
+    cta_figure_media_id: formData.get("cta_figure_media_id") || null,
     social_links,
   });
 
