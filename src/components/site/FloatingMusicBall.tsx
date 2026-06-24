@@ -17,8 +17,8 @@ const TIP_MESSAGES = [
   "听听动感节拍，恢复活力。",
 ];
 
-const TIP_DISPLAY_MS = 3200;
-const TIP_GAP_MS = 300;
+const TIP_SHOW_MS = 3200;
+const TIP_HIDE_MS = 300;
 
 const categoryEmoji: Record<string, string> = {
   relax: "🌿",
@@ -30,33 +30,25 @@ const categoryEmoji: Record<string, string> = {
 export function FloatingMusicBall() {
   const [categories, setCategories] = useState<MusicCategory[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [showTip, setShowTip] = useState(false);
   const [hoverActive, setHoverActive] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [currentTrackTitle, setCurrentTrackTitle] = useState<string>("");
-  const [tipText, setTipText] = useState(TIP_MESSAGES[0]);
   const [tipIndex, setTipIndex] = useState(0);
+  const [tipKey, setTipKey] = useState(0);
+  const [tipOn, setTipOn] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hoverZoneRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const currentCategoryRef = useRef<string | null>(null);
+  const currentCatKeyRef = useRef<string | null>(null);
   const categoriesRef = useRef<MusicCategory[]>([]);
-  const tipShowTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const tipHideTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hoverCheckTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasInteractedRef = useRef(false);
-  const tipIndexRef = useRef(0);
+  const tipTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isPlayingRef = useRef(false);
   const isPausedRef = useRef(false);
-  const currentCatKeyRef = useRef<string | null>(null);
-  const mousePos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    currentCategoryRef.current = currentCategory;
-  }, [currentCategory]);
+  const hoverActiveRef = useRef(false);
+  const tipIndexRef = useRef(0);
+  const dismissedRef = useRef(false);
 
   useEffect(() => {
     currentCatKeyRef.current = currentCategory;
@@ -75,12 +67,12 @@ export function FloatingMusicBall() {
   }, [isPaused]);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+    hoverActiveRef.current = hoverActive;
+  }, [hoverActive]);
+
+  useEffect(() => {
+    dismissedRef.current = dismissed;
+  }, [dismissed]);
 
   useEffect(() => {
     fetch("/api/music")
@@ -95,114 +87,81 @@ export function FloatingMusicBall() {
       .catch(() => setLoaded(true));
   }, []);
 
-  const stopTipCarousel = useCallback(() => {
-    if (tipShowTimerRef.current) {
-      clearTimeout(tipShowTimerRef.current);
-      tipShowTimerRef.current = null;
+  const clearTipTimer = useCallback(() => {
+    if (tipTimerRef.current) {
+      clearTimeout(tipTimerRef.current);
+      tipTimerRef.current = null;
     }
-    if (tipHideTimerRef.current) {
-      clearTimeout(tipHideTimerRef.current);
-      tipHideTimerRef.current = null;
-    }
-    setShowTip(false);
   }, []);
 
-  const showNextTip = useCallback(() => {
-    if (
-      hasInteractedRef.current ||
-      isPlayingRef.current ||
-      hoverActive
-    ) {
-      return;
-    }
+  const advanceTip = useCallback(() => {
+    if (dismissedRef.current || isPlayingRef.current) return;
 
+    const inHover = hoverActiveRef.current;
     const nextIdx = (tipIndexRef.current + 1) % TIP_MESSAGES.length;
     tipIndexRef.current = nextIdx;
     setTipIndex(nextIdx);
-    setTipText(TIP_MESSAGES[nextIdx]);
-    setShowTip(true);
+    setTipKey((k) => k + 1);
+    setTipOn(true);
 
-    tipHideTimerRef.current = setTimeout(() => {
-      setShowTip(false);
-      tipShowTimerRef.current = setTimeout(() => {
-        showNextTip();
-      }, TIP_GAP_MS);
-    }, TIP_DISPLAY_MS);
-  }, [hoverActive]);
-
-  useEffect(() => {
-    if (!loaded || categories.length === 0) return;
-
-    if (!isPlaying && !hoverActive) {
-      tipIndexRef.current = 0;
-      setTipIndex(0);
-      setTipText(TIP_MESSAGES[0]);
-
-      const startTimer = setTimeout(() => {
-        if (isPlayingRef.current || hoverActive) return;
-        setShowTip(true);
-        tipHideTimerRef.current = setTimeout(() => {
-          setShowTip(false);
-          tipShowTimerRef.current = setTimeout(() => {
-            showNextTip();
-          }, TIP_GAP_MS);
-        }, TIP_DISPLAY_MS);
-      }, 800);
-
-      return () => {
-        clearTimeout(startTimer);
-        stopTipCarousel();
-      };
-    } else {
-      stopTipCarousel();
-    }
-  }, [loaded, categories.length, isPlaying, hoverActive, showNextTip, stopTipCarousel]);
-
-  const checkHoverZone = useCallback(() => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const ballSize = 56;
-    const zoneRadius = ballSize * 5;
-    const ballCenterX = rect.left + rect.width / 2;
-    const ballCenterY = rect.top + rect.height / 2;
-    const dx = mousePos.current.x - ballCenterX;
-    const dy = mousePos.current.y - ballCenterY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist > zoneRadius) {
-      setHoverActive(false);
-    }
+    tipTimerRef.current = setTimeout(() => {
+      if (dismissedRef.current || isPlayingRef.current) return;
+      if (inHover && hoverActiveRef.current) {
+        advanceTip();
+      } else {
+        setTipOn(false);
+        tipTimerRef.current = setTimeout(advanceTip, TIP_HIDE_MS);
+      }
+    }, TIP_SHOW_MS);
   }, []);
 
-  const handleMouseEnter = useCallback(() => {
-    if (hoverCheckTimerRef.current) {
-      clearInterval(hoverCheckTimerRef.current);
-    }
-    setHoverActive(true);
-    stopTipCarousel();
-  }, [stopTipCarousel]);
-
   useEffect(() => {
-    if (hoverActive) {
-      hoverCheckTimerRef.current = setInterval(checkHoverZone, 120);
-      return () => {
-        if (hoverCheckTimerRef.current) {
-          clearInterval(hoverCheckTimerRef.current);
-        }
-      };
-    }
-  }, [hoverActive, checkHoverZone]);
-
-  const playTrackFromCategory = useCallback((categoryKey: string, resumeFromSameCat = false) => {
-    const cat = categoriesRef.current.find((c) => c.key === categoryKey);
-    if (!cat || cat.tracks.length === 0) return;
-
-    if (resumeFromSameCat && audioRef.current && currentCatKeyRef.current === categoryKey) {
-      audioRef.current.play();
-      setIsPlaying(true);
-      setIsPaused(false);
+    if (!loaded || categories.length === 0 || isPlaying) {
+      clearTipTimer();
+      setTipOn(false);
       return;
     }
+
+    tipIndexRef.current = 0;
+    setTipIndex(0);
+    setTipKey(0);
+    setDismissed(false);
+    dismissedRef.current = false;
+
+    tipTimerRef.current = setTimeout(() => {
+      if (isPlayingRef.current || dismissedRef.current) return;
+      setTipOn(true);
+      setTipKey((k) => k + 1);
+      tipTimerRef.current = setTimeout(() => {
+        if (isPlayingRef.current || dismissedRef.current) return;
+        if (hoverActiveRef.current) {
+          advanceTip();
+        } else {
+          setTipOn(false);
+          tipTimerRef.current = setTimeout(advanceTip, TIP_HIDE_MS);
+        }
+      }, TIP_SHOW_MS);
+    }, 800);
+
+    return () => clearTipTimer();
+  }, [loaded, categories.length, isPlaying, clearTipTimer, advanceTip]);
+
+  useEffect(() => {
+    if (!loaded || categories.length === 0 || isPlaying || dismissed) return;
+
+    if (hoverActive) {
+      if (!tipOn) {
+        clearTipTimer();
+        setTipOn(true);
+        setTipKey((k) => k + 1);
+        tipTimerRef.current = setTimeout(advanceTip, TIP_SHOW_MS);
+      }
+    }
+  }, [hoverActive, loaded, categories.length, isPlaying, dismissed, tipOn, clearTipTimer, advanceTip]);
+
+  const playTrackFromCategory = useCallback((categoryKey: string) => {
+    const cat = categoriesRef.current.find((c) => c.key === categoryKey);
+    if (!cat || cat.tracks.length === 0) return;
 
     const track = cat.tracks[Math.floor(Math.random() * cat.tracks.length)];
 
@@ -225,7 +184,7 @@ export function FloatingMusicBall() {
         }
       });
       audioRef.current.addEventListener("pause", () => {
-        if (audioRef.current && !audioRef.current.ended) {
+        if (audioRef.current && !audioRef.current.ended && !audioRef.current.seeking) {
           setIsPaused(true);
         }
         setIsPlaying(false);
@@ -248,23 +207,16 @@ export function FloatingMusicBall() {
   const selectCategory = useCallback((category: MusicCategory) => {
     if (category.tracks.length === 0) return;
 
-    hasInteractedRef.current = true;
-
-    if (currentCatKeyRef.current === category.key && isPausedRef.current) {
-      if (audioRef.current) {
+    if (currentCatKeyRef.current === category.key) {
+      if (isPausedRef.current && audioRef.current) {
         audioRef.current.play();
-        setIsPlaying(true);
-        setIsPaused(false);
+        return;
       }
-      setHoverActive(false);
-      return;
+      if (isPlayingRef.current) {
+        return;
+      }
     }
 
-    if (currentCatKeyRef.current === category.key && isPlayingRef.current) {
-      return;
-    }
-
-    setHoverActive(false);
     playTrackFromCategory(category.key);
   }, [playTrackFromCategory]);
 
@@ -272,12 +224,8 @@ export function FloatingMusicBall() {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false);
-      setIsPaused(true);
     } else if (isPaused) {
       audioRef.current.play();
-      setIsPlaying(true);
-      setIsPaused(false);
     }
   }, [isPlaying, isPaused]);
 
@@ -295,114 +243,140 @@ export function FloatingMusicBall() {
 
   const dismissTip = (e: React.MouseEvent) => {
     e.stopPropagation();
-    hasInteractedRef.current = true;
-    stopTipCarousel();
+    setDismissed(true);
+    dismissedRef.current = true;
+    clearTipTimer();
+    setTipOn(false);
   };
+
+  const handleMouseEnter = useCallback(() => {
+    setHoverActive(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoverActive(false);
+  }, []);
 
   if (!loaded || categories.length === 0) return null;
 
-  const sortedCats = [...categories];
+  const showTipBubble = !isPlaying && !isPaused && tipOn && !dismissed;
+  const showPlayingBar = isPlaying || isPaused;
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed bottom-6 right-6 z-50 md:bottom-8 md:right-8"
-    >
+    <div className="fixed bottom-6 right-6 z-50 md:bottom-8 md:right-8">
       <div
-        ref={hoverZoneRef}
         onMouseEnter={handleMouseEnter}
-        className="relative flex items-center"
-        style={{ alignItems: "flex-end" }}
+        onMouseLeave={handleMouseLeave}
+        className="flex items-end gap-3"
+        style={{ padding: "40px 0 40px 40px", margin: "-40px 0 -40px -40px" }}
       >
-        {/* Tip bubble - 轮播提示，未播放且未hover时显示 */}
-        {showTip && !hoverActive && !isPlaying && !isPaused ? (
-          <div key={tipIndex} className="music-bubble music-bubble-tip is-visible">
-            <p className="whitespace-nowrap text-sm text-white/90">{tipText}</p>
-            <button
-              onClick={dismissTip}
-              className="ml-2 text-white/40 hover:text-white/70"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+        {/* Tip bubble */}
+        {showTipBubble ? (
+          <div key={tipKey} className="music-bubble music-bubble-tip is-visible shrink-0">
+            <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
+            {!hoverActive && (
+              <button
+                onClick={dismissTip}
+                className="ml-2 text-white/40 hover:text-white/70"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         ) : null}
 
-        {/* Now playing bar - 播放中（包括暂停）显示 */}
-        {(isPlaying || isPaused) && !hoverActive ? (
-          <div className="music-bubble music-bubble-playing is-visible">
+        {/* Playing bar */}
+        {showPlayingBar ? (
+          <div className="music-bubble music-bubble-playing is-visible shrink-0">
             <Volume2 className="h-4 w-4 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
             <p className="min-w-0 truncate text-sm text-white/90">
               {currentTrackTitle || "正在播放"}
               {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
             </p>
-            <div className="ml-1 flex items-center gap-1">
+            {!hoverActive ? (
+              <div className="ml-1 flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePlayPause();
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-3.5 w-3.5" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 pl-0.5" />
+                  )}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    stopMusic();
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Options panel (hover时显示) */}
+        {hoverActive ? (
+          <div key="options" className="music-options-panel-static shrink-0">
+            {categories.map((cat) => {
+              const isCurrentCat = currentCatKeyRef.current === cat.key;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectCategory(cat);
+                  }}
+                  className={`music-option-item ${isCurrentCat ? "music-option-active" : ""}`}
+                >
+                  <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
+                  <span className="truncate text-sm">{cat.label}</span>
+                  {isCurrentCat && isPlaying && (
+                    <span className="ml-1 flex items-center gap-0.5">
+                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0s" }} />
+                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.15s" }} />
+                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.3s" }} />
+                    </span>
+                  )}
+                  {isCurrentCat && isPaused && (
+                    <Pause className="ml-1 h-3 w-3 text-cyan/70" />
+                  )}
+                </button>
+              );
+            })}
+            {showPlayingBar ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   togglePlayPause();
                 }}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+                className="music-option-item"
               >
-                {isPlaying ? (
-                  <Pause className="h-3.5 w-3.5" />
-                ) : (
-                  <Play className="h-3.5 w-3.5 pl-0.5" />
-                )}
+                <span className="text-lg">{isPlaying ? "⏸" : "▶"}</span>
+                <span className="truncate text-sm">{isPlaying ? "暂停" : "继续播放"}</span>
               </button>
+            ) : null}
+            {showPlayingBar ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   stopMusic();
                 }}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+                className="music-option-item music-option-stop"
               >
-                <X className="h-3.5 w-3.5" />
+                <span className="text-lg">⏹</span>
+                <span className="truncate text-sm">停止播放</span>
               </button>
-            </div>
+            ) : null}
           </div>
         ) : null}
-
-        {/* Options panel - hover时显示 */}
-        <div
-          className={`music-options-panel ${hoverActive ? "is-visible" : ""}`}
-          style={{ right: "72px", bottom: "0" }}
-        >
-          {sortedCats.map((cat) => {
-            const isCurrentCat = currentCatKeyRef.current === cat.key;
-            return (
-              <button
-                key={cat.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  selectCategory(cat);
-                }}
-                className={`music-option-item ${isCurrentCat ? "music-option-active" : ""}`}
-              >
-                <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
-                <span className="truncate text-sm">{cat.label}</span>
-                {isCurrentCat && isPlaying && (
-                  <span className="ml-1 flex items-center gap-0.5">
-                    <span className="inline-block h-3 w-0.5 animate-pulse bg-cyan" style={{ animationDelay: "0s" }} />
-                    <span className="inline-block h-3 w-0.5 animate-pulse bg-cyan" style={{ animationDelay: "0.15s" }} />
-                    <span className="inline-block h-3 w-0.5 animate-pulse bg-cyan" style={{ animationDelay: "0.3s" }} />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          {(isPlaying || isPaused) ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                stopMusic();
-              }}
-              className="music-option-item music-option-stop"
-            >
-              <span className="text-lg">⏹</span>
-              <span className="truncate text-sm">停止播放</span>
-            </button>
-          ) : null}
-        </div>
 
         {/* Main ball */}
         <button
@@ -412,7 +386,7 @@ export function FloatingMusicBall() {
               togglePlayPause();
             }
           }}
-          className="music-ball"
+          className="music-ball shrink-0"
           aria-label="音乐播放器"
         >
           <div className="music-ball-inner">
