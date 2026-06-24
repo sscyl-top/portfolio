@@ -233,8 +233,8 @@ export default async function AdminWorkEditorPage({
           </div>
         </div>
 
-        {/* ═══ 右侧：辅助面板 ═══ */}
-        <div className="min-w-0 space-y-4">
+        {/* ═══ 右侧：辅助面板（sticky固定，不随页面滚动） ═══ */}
+        <div className="sticky top-4 self-start max-h-[calc(100vh-2rem)] min-w-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin md:top-6 md:max-h-[calc(100vh-3rem)]">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
           {/* 媒体选择 */}

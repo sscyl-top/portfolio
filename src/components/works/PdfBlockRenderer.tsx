@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
-// Set the worker source
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 type PdfBlockRendererProps = {
   storageKey: string;
