@@ -976,6 +976,8 @@ const particleFragmentShader = `
   varying float vScale;
   varying vec3 vPosition;
   uniform float uTime;
+  uniform vec2 uCursor;
+  uniform float uMouseForce;
 
   float hash31(vec3 p) {
     p = fract(p * 0.1031);
@@ -1010,76 +1012,62 @@ const particleFragmentShader = `
   void main() {
     vec2 uv = gl_PointCoord - vec2(0.5);
     float distanceFromCenter = length(uv);
-    float core = smoothstep(0.48, 0.2, distanceFromCenter);
+    float isShapeParticle = smoothstep(0.15, 0.5, vScale);
+    
+    float core = smoothstep(0.45, 0.15, distanceFromCenter);
     float halo =
-      smoothstep(0.5, 0.32, distanceFromCenter) *
-      (0.08 + vScale * 0.08);
+      smoothstep(0.5, 0.3, distanceFromCenter) *
+      (0.06 + vScale * 0.12);
     float alpha =
-      core * (0.7 + vTwinkle * 0.25) +
-      halo * (0.32 + vFlow * 0.16);
+      core * (0.6 + vTwinkle * 0.3 + isShapeParticle * 0.2) +
+      halo * (0.25 + vFlow * 0.15 + isShapeParticle * 0.15);
 
-    if (alpha < 0.02) {
+    if (alpha < 0.015) {
       discard;
     }
 
-    vec3 fieldBase = vPosition * vec3(0.54, 0.55, 0.42);
-    float warpA = valueNoise(
-      fieldBase * 0.72 + vec3(0.0, uTime * 0.12, 1.7)
-    );
-    float warpB = valueNoise(
-      fieldBase * 0.94 + vec3(-uTime * 0.105, 3.1, 0.0)
-    );
-    vec3 fieldPosition = fieldBase;
-    fieldPosition.x += sin(
-      fieldBase.y * 1.3 + warpA * 4.5 + uTime * 0.22
-    ) * 0.48;
-    fieldPosition.y += sin(
-      fieldBase.x * 0.85 + warpB * 5.2 - uTime * 0.19
-    ) * 0.42;
-    fieldPosition += vec3(
-      uTime * 0.16,
-      -uTime * 0.11,
-      uTime * 0.08
-    );
-    float cluster = valueNoise(fieldPosition);
-    float detail = valueNoise(fieldPosition * 2.05 + vec3(4.7, 1.3, 8.1));
-    float sparkle = valueNoise(fieldPosition * 3.4 + vec3(9.1, uTime * 0.16, 2.4));
-    float paletteRibbon = 0.5 + 0.5 * sin(
-      vPosition.x * 0.88 +
-      sin(vPosition.y * 0.72 + uTime * 0.18) * 2.1 -
-      uTime * 0.22
-    );
-    float goldSignal =
-      cluster * 0.42 +
-      detail * 0.33 +
-      paletteRibbon * 0.25;
-    float goldRegion = smoothstep(0.44, 0.61, goldSignal);
-    float goldPocket = smoothstep(0.56, 0.78, detail + vFlow * 0.2);
-    float stablePartition = 0.5 + 0.5 * sin(
-      vPosition.x * 1.36 + sin(vPosition.y * 0.72) * 1.18
-    );
-    goldRegion = mix(goldRegion, goldPocket, 0.18);
-    goldRegion = mix(
-      goldRegion,
-      smoothstep(0.38, 0.62, stablePartition),
-      0.32
-    );
-    float pearlRegion = smoothstep(0.72, 0.9, sparkle + detail * 0.14);
+    float mouseDistance = distance(vPosition.xy, uCursor);
+    float mouseGlow = (1.0 - smoothstep(0.0, 2.2, mouseDistance)) * uMouseForce;
 
-    vec3 blueDark = vec3(0.035, 0.3, 0.68);
-    vec3 blueLight = vec3(0.08, 0.76, 1.0);
-    vec3 goldDark = vec3(0.78, 0.43, 0.06);
-    vec3 goldLight = vec3(1.0, 0.78, 0.16);
-    vec3 blue = mix(blueDark, blueLight, 0.3 + detail * 0.7);
-    vec3 gold = mix(goldDark, goldLight, 0.32 + detail * 0.68);
-    vec3 fieldColor = mix(blue, gold, clamp(goldRegion, 0.0, 1.0));
-    fieldColor = mix(fieldColor, vec3(0.78, 0.9, 0.96), pearlRegion * 0.24);
-    vec3 glowColor = mix(fieldColor, vec3(1.0), 0.012 + vTwinkle * 0.016);
+    if (isShapeParticle < 0.5) {
+      vec3 starColor = vec3(0.85, 0.9, 1.0);
+      starColor = mix(starColor, vec3(1.0), vTwinkle * 0.2);
+      starColor = mix(starColor, vec3(1.0), mouseGlow * 0.5);
+      gl_FragColor = vec4(starColor * (0.5 + vTwinkle * 0.4), alpha * (0.7 + mouseGlow * 0.3));
+      return;
+    }
 
-    gl_FragColor = vec4(
-      glowColor * (0.8 + vTwinkle * 0.22 + vFlow * 0.08),
-      alpha
-    );
+    vec3 fieldBase = vPosition * vec3(0.6, 0.55, 0.4);
+    float noiseA = valueNoise(fieldBase * 0.8 + vec3(uTime * 0.08, 0.0, 0.0));
+    float noiseB = valueNoise(fieldBase * 1.6 + vec3(0.0, uTime * 0.1, 2.0));
+    
+    float yPos = vPosition.y * 0.4 + 0.5;
+    float xPos = vPosition.x * 0.35;
+    float goldBase = smoothstep(0.2, 0.7, 1.0 - yPos) * (0.6 + noiseA * 0.4);
+    float goldStripe = smoothstep(0.3, 0.6, 0.5 + 0.5 * sin(xPos * 2.5 + uTime * 0.15 + noiseA * 2.0));
+    float goldRegion = clamp(goldBase * 0.6 + goldStripe * 0.4 * smoothstep(0.0, 0.5, 1.0 - yPos), 0.0, 1.0);
+    
+    float brightSparkle = smoothstep(0.65, 0.9, noiseB + vTwinkle * 0.15);
+
+    vec3 blueDeep = vec3(0.02, 0.15, 0.5);
+    vec3 blueMid = vec3(0.05, 0.45, 0.95);
+    vec3 blueBright = vec3(0.3, 0.75, 1.0);
+    vec3 goldDeep = vec3(0.85, 0.35, 0.0);
+    vec3 goldMid = vec3(1.0, 0.6, 0.1);
+    vec3 goldBright = vec3(1.0, 0.8, 0.35);
+    
+    vec3 blue = mix(blueDeep, blueMid, noiseA);
+    blue = mix(blue, blueBright, noiseB * 0.5);
+    vec3 gold = mix(goldDeep, goldMid, noiseA);
+    gold = mix(gold, goldBright, noiseB * 0.4);
+    
+    vec3 shapeColor = mix(blue, gold, goldRegion);
+    shapeColor = mix(shapeColor, vec3(0.9, 0.95, 1.0), brightSparkle * 0.35);
+    shapeColor = mix(shapeColor, vec3(1.0), mouseGlow * 0.6);
+    
+    float brightness = 0.7 + vTwinkle * 0.25 + vFlow * 0.1 + isShapeParticle * 0.15;
+
+    gl_FragColor = vec4(shapeColor * brightness, alpha * (0.85 + mouseGlow * 0.25));
   }
 `;
 
