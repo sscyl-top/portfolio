@@ -166,12 +166,15 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* ══ 主布局：两列 — 左侧编辑区 | 右侧辅助面板 ══ */}
+      {/* ══ 主布局：三列 — 左留白(居中) | 编辑区(约束宽度) | 辅助面板(右侧) ══ */}
       <div
         className="items-start gap-8 lg:gap-10"
-        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px' }}
+        style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 920px) 320px' }}
       >
-        {/* ═══ 左侧：统一编辑板块（标题 + 文案 + 拖拽上传编辑器）═══ */}
+        {/* ═══ 左侧留白：用于将编辑区居中 ═══ */}
+        <div />
+
+        {/* ═══ 中间：统一编辑板块（标题 + 文案 + 拖拽上传编辑器）═══ */}
         <div className="min-w-0">
           {/* 合并的编辑卡片 */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
