@@ -11,9 +11,9 @@ type AdminShellProps = {
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {
   return (
-    <main className="min-h-screen bg-[#07090b] text-white">
-      <div className="mx-auto grid min-h-screen max-w-7xl md:grid-cols-[240px_1fr]">
-        <aside className="border-b border-white/10 p-4 md:border-b-0 md:border-r md:p-5">
+    <main className="h-screen bg-[#07090b] text-white">
+      <div className="mx-auto grid h-full max-w-7xl md:grid-cols-[240px_1fr]">
+        <aside className="overflow-y-auto border-b border-white/10 p-4 md:border-b-0 md:border-r md:p-5">
           <div className="mb-5 flex items-center justify-between gap-4 md:block">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">
@@ -33,7 +33,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </button>
           </form>
         </aside>
-        <section className="min-w-0 px-5 py-6 md:px-8 md:py-8">{children}</section>
+        <section className="min-w-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8">{children}</section>
       </div>
     </main>
   );
