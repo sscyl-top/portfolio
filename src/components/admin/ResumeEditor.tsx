@@ -339,9 +339,7 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
         </div>
       ))}
       <AddButton
-        onClick={() =>
-          setItems((prev) => [...prev, { company: "", title: "", period: "", points: [""] }])
-        }
+        onClick={() => setItems((prev) => [{ company: "", title: "", period: "", points: [""] }, ...prev])}
         label="添加经历"
       />
     </ListSection>
@@ -397,7 +395,7 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
       ))}
       <AddButton
         onClick={() =>
-          setItems((prev) => [...prev, { company: "", title: "", period: "", description: "" }])
+          setItems((prev) => [{ company: "", title: "", period: "", description: "" }, ...prev])
         }
         label="添加经历"
       />
