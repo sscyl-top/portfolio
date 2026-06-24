@@ -1644,3 +1644,38 @@ export async function restoreForwardWorkVersionAction(formData: FormData) {
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
 }
+
+/**
+ * 批量更新作品排序。
+ * 接收有序的 work_id 数组（JSON 字符串），按位置分配 sort_order。
+ */
+export async function reorderWorksAction(formData: FormData) {
+  const raw = String(formData.get("ordered_ids") ?? "[]");
+  let orderedIds: string[] = [];
+  try {
+    orderedIds = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return;
+
+  const uuidSchema = z.array(z.string().uuid());
+  const parsed = uuidSchema.safeParse(orderedIds);
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+
+  // sort_order 从高到低：第一个作品 sort_order 最大
+  const base = parsed.data.length;
+  await Promise.all(
+    parsed.data.map((workId, index) =>
+      client
+        .from("works")
+        .update({ sort_order: base - index })
+        .eq("id", workId),
+    ),
+  );
+
+  revalidatePath("/admin/works");
+  revalidatePath("/works");
+}

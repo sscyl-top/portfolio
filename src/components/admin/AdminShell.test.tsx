@@ -6,7 +6,7 @@ import { AdminShell } from "./AdminShell";
 describe("AdminShell", () => {
   it("shows every first-release module in Chinese", () => {
     render(
-      <AdminShell userEmail="3624457672@qq.com">
+      <AdminShell userEmail="hello@sscyl.top">
         <p>内容</p>
       </AdminShell>,
     );

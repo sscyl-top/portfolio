@@ -253,7 +253,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
@@ -608,7 +607,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     const handleDrop = () => {
       setIsDraggingFile(false);
       setDragOverIndex(null);
-      setDraggedBlockId(null);
     };
     document.addEventListener("dragenter", handleDragEnter);
     document.addEventListener("dragleave", handleDragLeave);
@@ -656,7 +654,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         const blockId = e.dataTransfer.getData("block-id");
         if (!blockId) return;
         moveBlockToIndex(blockId, insertAt);
-        setDraggedBlockId(null);
         return;
       }
 
@@ -961,7 +958,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                   if (isBlockDrag(e)) return;
                   void onDropAt(e, index);
                 }}
-                dragOverIndex={dragOverIndex}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onSaveAndClose={() => setEditingBlockId(null)}
@@ -1040,7 +1036,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 // ── 插入触发区域（拖拽定位）──────────────────────────────
 
 function InsertTrigger({
-  index,
   onDragOver,
   onDrop,
   isDragOver,
@@ -1075,7 +1070,6 @@ function BlockCard({
   onDelete,
   onDragOver,
   onDrop,
-  dragOverIndex,
   mediaAssets,
   onUpdatePayload,
   onSaveAndClose,
@@ -1091,7 +1085,6 @@ function BlockCard({
   onDelete: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
-  dragOverIndex: number | null;
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
   onSaveAndClose: () => void;

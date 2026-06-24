@@ -1,4 +1,4 @@
-export const defaultAdminEmail = "3624457672@qq.com";
+export const defaultAdminEmail = "hello@sscyl.top";
 
 export function isAdminEmail(
   email: string | null | undefined,

@@ -10,7 +10,7 @@ describe("getAuthorizedAdmin", () => {
           data: {
             user: {
               id: "admin-id",
-              email: "3624457672@qq.com",
+              email: "hello@sscyl.top",
               app_metadata: { role: "admin" },
             },
           },
@@ -20,7 +20,7 @@ describe("getAuthorizedAdmin", () => {
 
     await expect(getAuthorizedAdmin(client)).resolves.toMatchObject({
       id: "admin-id",
-      email: "3624457672@qq.com",
+      email: "hello@sscyl.top",
     });
   });
 

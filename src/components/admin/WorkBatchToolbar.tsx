@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, GripVertical } from "lucide-react";
 
 import {
   batchDeleteWorks,
   batchUpdateWorkPlacement,
   batchUpdateWorkStatus,
+  reorderWorksAction,
 } from "@/app/admin/(protected)/works/actions";
 
 type WorkStatus = "draft" | "published" | "private";
@@ -29,13 +30,24 @@ interface Props {
 export function WorkBatchManager({ works }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
+  const [orderedWorks, setOrderedWorks] = useState(works);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const dragCounter = useRef(0);
 
-  const allSelected = works.length > 0 && selected.size === works.length;
+  // 同步外部 works 变化
+  const worksKey = works.map((w) => w.id).join(",");
+  const orderedKey = orderedWorks.map((w) => w.id).join(",");
+  if (worksKey !== orderedKey) {
+    setOrderedWorks(works);
+  }
+
+  const allSelected = orderedWorks.length > 0 && selected.size === orderedWorks.length;
   const selectedArray = Array.from(selected);
   const hasSelection = selectedArray.length > 0;
 
   const toggleAll = () => {
-    setSelected(allSelected ? new Set() : new Set(works.map((w) => w.id)));
+    setSelected(allSelected ? new Set() : new Set(orderedWorks.map((w) => w.id)));
   };
 
   const toggleOne = (id: string) => {
@@ -59,7 +71,37 @@ export function WorkBatchManager({ works }: Props) {
     withReset(batchDeleteWorks)(formData);
   };
 
-  if (works.length === 0) {
+  // ── 拖拽排序 ───────────────────────────────────────────────
+  const handleDragStart = useCallback((index: number) => {
+    setDragIndex(index);
+  }, []);
+
+  const handleDragEnter = useCallback((index: number) => {
+    if (dragIndex === null || dragIndex === index) return;
+    setOrderedWorks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setDragIndex(index);
+  }, [dragIndex]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIndex(null);
+    setOverIndex(null);
+    dragCounter.current = 0;
+    // 保存新顺序
+    if (orderedWorks.length > 1) {
+      const formData = new FormData();
+      formData.set("ordered_ids", JSON.stringify(orderedWorks.map((w) => w.id)));
+      startTransition(async () => {
+        await reorderWorksAction(formData);
+      });
+    }
+  }, [orderedWorks]);
+
+  if (orderedWorks.length === 0) {
     return (
       <div className="mt-6 grid min-h-64 place-items-center border-y border-white/10 text-sm text-white/38">
         暂无 CMS 作品。可以先导入当前作品，或新建一个草稿。
@@ -82,6 +124,10 @@ export function WorkBatchManager({ works }: Props) {
 
         <span className="text-sm text-white/40">
           {hasSelection ? `已选 ${selectedArray.length} 项` : "未选择"}
+        </span>
+
+        <span className="hidden text-xs text-white/30 sm:inline">
+          拖拽 ⠿ 手柄可调整排序
         </span>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -155,6 +201,7 @@ export function WorkBatchManager({ works }: Props) {
         <table className="min-w-full text-left text-sm">
           <thead className="font-mono text-[10px] uppercase text-white/36">
             <tr>
+              <th className="py-3 pr-1 font-normal"></th>
               <th className="py-3 pr-2 font-normal">
                 <input
                   type="checkbox"
@@ -171,8 +218,30 @@ export function WorkBatchManager({ works }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {works.map((work) => (
-              <tr key={work.id} className="align-top">
+            {orderedWorks.map((work, index) => (
+              <tr
+                key={work.id}
+                className={`align-top transition ${
+                  dragIndex === index ? "opacity-40" : ""
+                } ${overIndex === index && dragIndex !== null && dragIndex !== index ? "border-t-2 border-t-cyan" : ""}`}
+              >
+                <td className="py-4 pr-1">
+                  <button
+                    type="button"
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragEnter={() => handleDragEnter(index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setOverIndex(index);
+                    }}
+                    className="cursor-grab text-white/25 transition hover:text-white/60 active:cursor-grabbing"
+                    title="拖拽调整排序"
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </button>
+                </td>
                 <td className="py-4 pr-2">
                   <input
                     type="checkbox"

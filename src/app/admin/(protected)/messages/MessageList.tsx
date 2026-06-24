@@ -31,7 +31,11 @@ export function MessageList({ messages }: { messages: ContactMessage[] }) {
       {messages.map((message) => (
         <article
           key={message.id}
-          className="rounded-md border border-white/10 bg-white/[0.035] p-5 md:p-6"
+          className={`rounded-md border p-5 md:p-6 transition ${
+            message.status === "new"
+              ? "border-cyan/30 bg-cyan/[0.04]"
+              : "border-white/10 bg-white/[0.035]"
+          }`}
         >
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
             <div>
@@ -39,8 +43,14 @@ export function MessageList({ messages }: { messages: ContactMessage[] }) {
                 <span className="rounded-full border border-cyan/30 px-2.5 py-1 font-mono text-[10px] uppercase text-cyan">
                   {message.type === "hiring" ? "聘用联系" : "商业咨询"}
                 </span>
-                <span className="font-mono text-[10px] uppercase text-white/34">
-                  {message.status}
+                <span
+                  className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase ${
+                    message.status === "new"
+                      ? "bg-cyan/20 text-cyan"
+                      : "text-white/34"
+                  }`}
+                >
+                  {message.status === "new" ? "未读" : message.status === "read" ? "已读" : "已归档"}
                 </span>
               </div>
               <h2 className="mt-3 text-2xl font-semibold text-white">

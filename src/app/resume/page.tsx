@@ -7,10 +7,8 @@ import {
   Trophy,
 } from "lucide-react";
 
-import { resume as staticResume } from "@/data/portfolio";
 import { ContactFinale } from "@/components/resume/ContactFinale";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getBackendReadiness } from "@/lib/supabase/config";
+import { getResumeData } from "@/lib/cms/resume";
 
 export default async function ResumePage() {
   const resume = await getResumeData();
@@ -309,56 +307,4 @@ function ResumeSection({
   );
 }
 
-/** 合并 CMS 动态数据与静态简历数据 */
-async function getResumeData() {
-  try {
-    const readiness = getBackendReadiness();
-    if (!readiness.cms) throw new Error("CMS not available");
 
-    const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
-      .from("resumes")
-      .select(
-        "name,alias,role,positioning,location,email,phone,zcool_url,wechat_id,strengths",
-      )
-      .single();
-
-    if (!data) return staticResume;
-
-    // merge: CMS provides basic profile + strengths
-    // everything else (experience, education, campus, expertise, highlights) stays static
-    return {
-      ...staticResume,
-      name: data.name || staticResume.name,
-      alias: data.alias || staticResume.alias,
-      role: data.role || staticResume.role,
-      positioning: data.positioning || staticResume.positioning,
-      location: data.location || staticResume.location,
-      contact: {
-        ...staticResume.contact,
-        email: data.email || staticResume.contact.email,
-        phone: data.phone || staticResume.contact.phone,
-        zcool: data.zcool_url || staticResume.contact.zcool,
-      },
-      strengths: Array.isArray(data.strengths) && data.strengths.length > 0 && !hasEncodingCorruption(data.strengths)
-        ? data.strengths
-        : staticResume.strengths,
-    };
-  } catch {
-    return staticResume;
-  }
-}
-
-/** 检测数组中是否存在编码损坏（全部是问号或拉丁扩展字符） */
-function hasEncodingCorruption(strings: unknown): boolean {
-  if (!Array.isArray(strings)) return true;
-  return strings.some((s: unknown) => {
-    if (typeof s !== "string" || s.length === 0) return true;
-    // 损坏的中文 UTF-8 被错误解码后会出现大量连续问号或高位拉丁字符
-    const questionMarkRatio = (s.match(/\?/g) ?? []).length / s.length;
-    if (questionMarkRatio > 0.3) return true;
-    // 正常中文应该有 CJK 字符
-    const hasCjk = /[\u4e00-\u9fff]/.test(s);
-    return !hasCjk && s.length > 10;
-  });
-}

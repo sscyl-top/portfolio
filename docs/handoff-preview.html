@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSCYL Portfolio — 项目交接文档</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --border: #2a2a2a;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; line-height:1.7; }
+  .container { max-width:900px; margin:0 auto; padding:40px 24px 80px; }
+  h1 { font-size:2rem; margin-bottom:8px; color:#fff; }
+  .meta { color:var(--muted); font-size:0.85rem; margin-bottom:40px; }
+  h2 { font-size:1.3rem; color:#fff; margin:40px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:1.05rem; color:#ddd; margin:24px 0 10px; }
+  table { width:100%; border-collapse:collapse; margin:12px 0 20px; font-size:0.9rem; }
+  th { background:var(--card); color:#aaa; padding:10px 12px; text-align:left; font-weight:500; border:1px solid var(--border); }
+  td { padding:8px 12px; border:1px solid var(--border); vertical-align:top; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  code { background:#1e1e2e; padding:2px 6px; border-radius:4px; font-size:0.85rem; color:#e0b0ff; }
+  pre { background:#1e1e2e; padding:16px; border-radius:8px; overflow-x:auto; margin:12px 0 20px; font-size:0.85rem; line-height:1.5; border:1px solid var(--border); }
+  pre code { background:none; padding:0; color:#c9d1d9; }
+  ul, ol { margin:8px 0 16px 24px; }
+  li { margin:4px 0; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600; }
+  .badge-green { background:#166534; color:#22c55e; }
+  .badge-amber { background:#78350f; color:#f59e0b; }
+  .badge-red { background:#7f1d1d; color:#ef4444; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; margin:12px 0; }
+  .checklist { list-style:none; margin-left:0; }
+  .checklist li { padding:4px 0; }
+  .checklist li::before { content:'☐ '; color:var(--muted); margin-right:6px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin:20px 0; }
+  .toc ol { margin:8px 0 0 20px; }
+  .toc a { color:#c4b5fd; }
+  hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+  .warning { background:#422006; border:1px solid #78350f; border-radius:6px; padding:12px 16px; color:#fbbf24; font-size:0.9rem; margin:12px 0; }
+  .info { background:#1e1b4b; border:1px solid #3730a3; border-radius:6px; padding:12px 16px; color:#c7d2fe; font-size:0.9rem; margin:12px 0; }
+  @media (max-width:640px) {
+    .container { padding:20px 16px 60px; }
+    h1 { font-size:1.5rem; }
+    table { font-size:0.78rem; }
+    th, td { padding:6px 8px; }
+    pre { padding:12px; font-size:0.78rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>SSCYL Portfolio — 当前项目交接文档</h1>
+<p class="meta">生成时间：2026-06-23 &nbsp;|&nbsp; 对应 commit：当前工作区最新状态 &nbsp;|&nbsp; 本地路径：D:\上山采月亮的台式\作品集网站\2026-作品集网站</p>
+
+<div class="toc">
+<strong style="color:#fff;">📋 目录</strong>
+<ol>
+  <li><a href="#basic">项目基本信息</a></li>
+  <li><a href="#features">已完成核心功能</a></li>
+  <li><a href="#new">本次新增/修改重点</a></li>
+  <li><a href="#migrations">数据库迁移清单</a></li>
+  <li><a href="#files">关键文件索引</a></li>
+  <li><a href="#env">环境变量</a></li>
+  <li><a href="#dev">本地开发与部署</a></li>
+  <li><a href="#todo">待完成工作</a></li>
+  <li><a href="#faq">常见问题与注意事项</a></li>
+</ol>
+</div>
+
+<!-- 一 -->
+<h2 id="basic">一、项目基本信息</h2>
+<table>
+  <tr><td><strong>名称</strong></td><td>SSCYL Portfolio（陈涛涛个人作品集）</td></tr>
+  <tr><td><strong>线上地址</strong></td><td><a href="https://sscyl.top">https://sscyl.top</a></td></tr>
+  <tr><td><strong>后台地址</strong></td><td><a href="https://sscyl.top/admin">https://sscyl.top/admin</a></td></tr>
+  <tr><td><strong>GitHub 仓库</strong></td><td><a href="https://github.com/sscyl-top/portfolio.git">https://github.com/sscyl-top/portfolio.git</a>（master 分支）</td></tr>
+  <tr><td><strong>部署平台</strong></td><td>Vercel（项目 sscyl/portfolio），自动从 GitHub master 部署</td></tr>
+  <tr><td><strong>数据库</strong></td><td>Supabase 项目 <code>hnujowombcgfxledpnxe</code></td></tr>
+  <tr><td><strong>技术栈</strong></td><td>Next.js 16.2.9 + React 19 + TypeScript 5 + Tailwind CSS 4 + Supabase + Three.js + GSAP</td></tr>
+</table>
+
+<!-- 二 -->
+<h2 id="features">二、已完成核心功能</h2>
+
+<h3>2.1 前台页面</h3>
+<ul>
+  <li><strong>首页</strong> <code>/</code>：3D 粒子动画、核心优势段落、作品展示、联系 CTA</li>
+  <li><strong>作品列表</strong> <code>/works</code>：代表作轮播、分类筛选、复合设计墙</li>
+  <li><strong>作品详情</strong> <code>/works/[slug]</code>：动态 CMS 内容块渲染</li>
+  <li><strong>简历页</strong> <code>/resume</code>：完整从 CMS 读取并渲染</li>
+</ul>
+
+<h3>2.2 后台管理（/admin）</h3>
+<table>
+  <tr><th>模块</th><th>路径</th><th>功能</th></tr>
+  <tr><td>仪表盘</td><td><code>/admin</code></td><td>管理员入口</td></tr>
+  <tr><td>数据分析</td><td><code>/admin/analytics</code></td><td>访客统计、页面浏览、设备/来源分析</td></tr>
+  <tr><td>站点设置</td><td><code>/admin/settings</code></td><td>站点名称、Logo、头像、SEO、社交链接</td></tr>
+  <tr><td>全局文字</td><td><code>/admin/settings/text-content</code></td><td>前台文字 CMS 管理</td></tr>
+  <tr><td>作品管理</td><td><code>/admin/works</code></td><td>列表、搜索、批量操作、导入静态作品</td></tr>
+  <tr><td>作品编辑</td><td><code>/admin/works/[id]</code></td><td>内容块编辑、版本历史、定时发布</td></tr>
+  <tr><td>分类/标签</td><td><code>/admin/categories</code></td><td>增删改查作品分类与标签</td></tr>
+  <tr><td>媒体库</td><td><code>/admin/media</code></td><td>文件上传/管理</td></tr>
+  <tr><td>留言管理</td><td><code>/admin/messages</code></td><td>联系表单留言查看</td></tr>
+  <tr><td>简历管理</td><td><code>/admin/resume</code></td><td>完整编辑简历所有区块</td></tr>
+</table>
+
+<h3>2.3 作品上传流程（参考站酷）</h3>
+<ul>
+  <li>三段式向导：媒体上传 → 元数据 → 内容块编辑</li>
+  <li>拖拽上传、多选文件</li>
+  <li>支持 JPG/PNG/GIF/MP4/PDF 等格式</li>
+  <li>单文件最高 10GB</li>
+  <li>上传后自动生成内容块</li>
+</ul>
+
+<h3>2.4 状态与版本控制</h3>
+<ul>
+  <li>作品状态：<span class="badge badge-green">draft</span> / <span class="badge badge-green">published</span> / <span class="badge badge-red">private</span></li>
+  <li>私密分享：生成 preview token，仅链接可见</li>
+  <li>自动版本归档：每次修改作品后自动保存快照</li>
+  <li>定时发布：scheduled_publish_at + 手动/自动发布机制</li>
+</ul>
+
+<!-- 三 -->
+<h2 id="new">三、本次新增/修改重点</h2>
+
+<h3>3.1 简历页完整 CMS 化</h3>
+<ul>
+  <li>数据库：resumes 表新增 highlights、expertise、experience 等 JSON 列</li>
+  <li>迁移：<code>supabase/migrations/20260626000000_resume_full_cms.sql</code></li>
+  <li>后台：<code>src/components/admin/ResumeEditor.tsx</code></li>
+  <li>数据层：<code>src/lib/cms/resume.ts</code></li>
+  <li>保存逻辑：<code>src/app/admin/(protected)/resume/actions.ts</code></li>
+</ul>
+
+<h3>3.2 作品管理增强</h3>
+<ul>
+  <li>批量操作：batchDeleteWorks、batchUpdateWorkStatus、batchUpdateWorkPlacement、publishScheduledWorks</li>
+  <li>新增状态筛选、搜索框</li>
+  <li><code>src/components/admin/WorkBatchToolbar.tsx</code> 批量选择组件</li>
+</ul>
+
+<h3>3.3 性能 SEO 补全</h3>
+<ul>
+  <li><code>src/app/robots.ts</code>、<code>src/app/manifest.ts</code>、<code>src/app/sitemap.ts</code></li>
+  <li>CMS 媒体自动转 WebP</li>
+</ul>
+
+<!-- 四 -->
+<h2 id="migrations">四、数据库迁移清单</h2>
+<div class="warning"><strong>⚠️ 重要：</strong>所有 SQL 必须在正确的 Supabase 项目 <code>hnujowombcgfxledpnxe</code> 上执行。</div>
+<table>
+  <tr><th>#</th><th>文件</th><th>说明</th><th>状态</th></tr>
+  <tr><td>1</td><td><code>20260620135759_create_contact_messages.sql</code></td><td>联系表单留言表</td><td><span class="badge badge-green">done</span></td></tr>
+  <tr><td>2</td><td><code>20260621085855_create_cms_foundation.sql</code></td><td>CMS 基础表</td><td><span class="badge badge-green">done</span></td></tr>
+  <tr><td>3</td><td><code>20260622121458_create_resumes.sql</code></td><td>简历基本表</td><td><span class="badge badge-green">done</span></td></tr>
+  <tr><td>4</td><td><code>20260623082900_create_text_content.sql</code></td><td>全局文字表</td><td><span class="badge badge-amber">待验证</span></td></tr>
+  <tr><td>5</td><td><code>20260623091000_insert_extra_text_content.sql</code></td><td>全局文字种子数据</td><td><span class="badge badge-amber">待验证</span></td></tr>
+  <tr><td>6</td><td><code>20260624000000_fix_text_content_production.sql</code></td><td>全局文字最终修复版</td><td><span class="badge badge-amber">待验证</span></td></tr>
+  <tr><td>7</td><td><code>20260625010000_work_scheduled_publish.sql</code></td><td>作品定时发布字段</td><td><span class="badge badge-amber">待验证</span></td></tr>
+  <tr><td>8</td><td><code>20260626000000_resume_full_cms.sql</code></td><td>简历完整 CMS 字段</td><td><span class="badge badge-amber">待验证</span></td></tr>
+</table>
+
+<!-- 五 -->
+<h2 id="files">五、关键文件索引</h2>
+
+<h3>5.1 数据与配置</h3>
+<table>
+  <tr><th>文件</th><th>说明</th></tr>
+  <tr><td><code>src/data/portfolio.ts</code></td><td>静态作品、简历、导航、站点设置回退数据</td></tr>
+  <tr><td><code>src/lib/cms/repository.ts</code></td><td>CMS 数据仓库（Supabase 查询 + 静态回退）</td></tr>
+  <tr><td><code>src/lib/cms/resume.ts</code></td><td>简历类型定义与读取函数</td></tr>
+  <tr><td><code>src/lib/cms/versions.ts</code></td><td>作品版本控制逻辑</td></tr>
+  <tr><td><code>src/lib/cms/analytics.ts</code></td><td>数据分析统计逻辑</td></tr>
+  <tr><td><code>src/lib/supabase/server.ts</code></td><td>服务端 Supabase 客户端</td></tr>
+  <tr><td><code>src/lib/admin-session.ts</code></td><td>管理员鉴权</td></tr>
+</table>
+
+<h3>5.2 后台页面与 Actions</h3>
+<table>
+  <tr><th>文件</th><th>说明</th></tr>
+  <tr><td><code>src/app/admin/(protected)/works/actions.ts</code></td><td>作品 CRUD、批量、定时发布、私密链接</td></tr>
+  <tr><td><code>src/components/admin/WorkWizard.tsx</code></td><td>三段式作品上传向导</td></tr>
+  <tr><td><code>src/components/admin/WorkBatchToolbar.tsx</code></td><td>作品批量操作工具栏</td></tr>
+  <tr><td><code>src/components/admin/ResumeEditor.tsx</code></td><td>简历完整编辑器</td></tr>
+  <tr><td><code>src/app/admin/(protected)/settings/text-content/page.tsx</code></td><td>全局文字管理</td></tr>
+  <tr><td><code>src/app/admin/(protected)/analytics/page.tsx</code></td><td>数据分析仪表盘</td></tr>
+</table>
+
+<h3>5.3 前台页面</h3>
+<table>
+  <tr><th>文件</th><th>说明</th></tr>
+  <tr><td><code>src/app/page.tsx</code></td><td>首页</td></tr>
+  <tr><td><code>src/app/works/page.tsx</code></td><td>作品列表</td></tr>
+  <tr><td><code>src/app/works/[slug]/page.tsx</code></td><td>作品详情</td></tr>
+  <tr><td><code>src/app/resume/page.tsx</code></td><td>简历页</td></tr>
+  <tr><td><code>src/app/sitemap.ts</code></td><td>动态 Sitemap</td></tr>
+</table>
+
+<!-- 六 -->
+<h2 id="env">六、环境变量</h2>
+<h3>本地开发（.env.local）</h3>
+<pre><code>NEXT_PUBLIC_SUPABASE_URL=&lt;Supabase Project URL&gt;
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=&lt;anon key&gt;
+SUPABASE_SECRET_KEY=&lt;service_role key&gt;
+CONTACT_RATE_LIMIT_SECRET=&lt;随机字符串&gt;
+ADMIN_EMAIL=3624457672@qq.com</code></pre>
+
+<!-- 七 -->
+<h2 id="dev">七、本地开发与部署</h2>
+<pre><code># 开发
+npm run dev
+
+# 构建
+npm run build
+
+# 测试
+npm test
+
+# 部署
+npx vercel deploy --prod --yes --token &lt;VERCEL_TOKEN&gt;</code></pre>
+<p>push 到 GitHub master 分支后，Vercel 自动构建部署。</p>
+
+<!-- 八 -->
+<h2 id="todo">八、待完成工作</h2>
+
+<h3>8.1 已知待办</h3>
+<ul class="checklist">
+  <li>定时发布自动触发：可配置 Vercel Cron 实现完全自动化</li>
+  <li>首页移动端细节优化（导航栏 logo、核心优势间距、CTA 横排等）</li>
+  <li>联系表单邮件发送需配置 Resend</li>
+  <li>更多真机测试（iOS Safari、Android Chrome、微信内置浏览器）</li>
+  <li>3D 粒子在低端机上的性能优化</li>
+</ul>
+
+<h3>8.2 可继续迭代</h3>
+<ul class="checklist">
+  <li>作品批量拖拽排序</li>
+  <li>媒体库支持文件夹/标签管理</li>
+  <li>前台可视化编辑（所见即所得）</li>
+  <li>分享卡片二维码自动生成</li>
+  <li>Lighthouse 持续优化</li>
+</ul>
+
+<!-- 九 -->
+<h2 id="faq">九、常见问题与注意事项</h2>
+<ol>
+  <li><strong>Supabase 项目 ID 是 <code>hnujowombcgfxledpnxe</code></strong>，所有 SQL 必须在该项目上执行。</li>
+  <li><strong>管理员角色</strong>：Auth 用户 app_metadata 中必须包含 "role": "admin"（直引号）。</li>
+  <li><strong>软删除</strong>：所有 delete 操作都使用 deleted_at 字段，不物理删除。</li>
+  <li><strong>静态回退</strong>：当 Supabase 不可用时，前台自动回退到静态数据。</li>
+  <li><strong>编码问题</strong>：如果中文显示为问号，检查 SQL 编码和 hasEncodingCorruption 检测逻辑。</li>
+</ol>
+
+<hr>
+
+<h2>十、下一步建议</h2>
+<ol>
+  <li>提交并推送当前改动 → Vercel 自动部署</li>
+  <li>执行最新数据库迁移：<code>20260626000000_resume_full_cms.sql</code></li>
+  <li>验证后台：登录 <code>/admin/resume</code> 测试</li>
+  <li>验证前台：访问 <code>/resume</code> 确认 CMS 数据正确渲染</li>
+</ol>
+
+<div class="info">
+  <strong>最后验证结果：</strong>npm run build 通过；21 个测试文件 / 59 个测试全部通过 ✅
+</div>
+
+</div>
+</body>
+</html>
