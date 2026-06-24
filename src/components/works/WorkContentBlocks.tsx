@@ -66,12 +66,11 @@ function renderBlock(block: ContentBlock, index: number, coverTone: string) {
 }
 
 function layoutWidthClass(layout?: BlockLayout): string {
-  // 已移除所有宽度约束 - 2026-06-24
   if (!layout || !layout.width || layout.width === "contained") {
-    return "mx-auto px-5 md:px-8";  // 移除 max-w-6xl
+    return "max-w-6xl mx-auto px-5 md:px-8";
   }
-  if (layout.width === "narrow") return "mx-auto px-5 md:px-8";  // 移除 max-w-4xl
-  if (layout.width === "free") return "relative mx-auto";  // 移除 max-w-7xl
+  if (layout.width === "narrow") return "max-w-4xl mx-auto px-5 md:px-8";
+  if (layout.width === "free") return "relative mx-auto max-w-7xl";
   return ""; // full - 无约束
 }
 
@@ -122,8 +121,8 @@ function MediaBlock({
           isGallery
             ? `grid gap-2 md:gap-3 ${cols}`
             : isFree
-              ? "relative"
-              : ""
+              ? "relative h-[580px] md:h-[880px]"
+              : "relative w-full overflow-hidden md:min-h-[80vh]"
         }
       >
         {block.items.map((media, i) => (
@@ -133,7 +132,7 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative w-full overflow-hidden"
+                  ? "relative w-full overflow-hidden md:min-h-[60vh]"
                   : "relative w-full overflow-hidden"
             }
             style={
@@ -171,7 +170,7 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black">
+      <div className="relative w-full overflow-hidden bg-black md:min-h-[80vh]">
         <video
           src={block.items[0].url}
           controls
@@ -215,7 +214,7 @@ function BeforeAfterBlock({
             <span className="font-mono text-xs text-white/40">
               {i === 0 ? block.beforeLabel : block.afterLabel}
             </span>
-            <div className="relative w-full overflow-hidden rounded-sm bg-white/[0.03] min-h-[300px]">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-white/[0.03]">
               {media ? (
                 <WorkMediaFrame media={media} tone={tone as never} className="w-full" />
               ) : (

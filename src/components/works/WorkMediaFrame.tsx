@@ -30,7 +30,7 @@ export function WorkMediaFrame({
       {showImage ? (
         <Image
           alt={media.alt}
-          className={`object-contain ${className} ${hover ? "transition duration-700 group-hover:scale-105" : ""}`}
+          className={`object-cover ${className} ${hover ? "transition duration-700 group-hover:scale-105" : ""}`}
           fill
           loading="lazy"
           sizes="(max-width: 768px) 100vw, 50vw"
