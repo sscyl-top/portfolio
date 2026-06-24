@@ -120,9 +120,9 @@ function MediaBlock({
         className={
           isGallery
             ? `grid gap-2 md:gap-3 ${cols}`
-            : isFree
-              ? "relative h-[520px] md:h-[720px]"
-              : ""
+              : isFree
+                ? "relative h-[580px] md:h-[800px]"
+                : ""
         }
       >
         {block.items.map((media, i) => (
@@ -132,8 +132,8 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative aspect-[4/3] overflow-hidden"
-                  : "relative aspect-video w-full overflow-hidden md:aspect-[16/9]"
+                  ? "relative aspect-[3/2] overflow-hidden"
+                  : "relative w-full overflow-hidden md:min-h-[65vh]"
             }
             style={
               isFree && free
@@ -170,7 +170,7 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative aspect-video w-full overflow-hidden bg-black md:aspect-[16/9]">
+      <div className="relative w-full overflow-hidden bg-black md:min-h-[65vh]">
         <video
           src={block.items[0].url}
           controls

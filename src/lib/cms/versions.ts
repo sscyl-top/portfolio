@@ -167,6 +167,9 @@ async function writeAuditLog(
  * @param adminUserId 操作者 ID，用于审计日志
  * @param label 版本备注（可选）
  * @param source 版本来源，auto=自动归档，manual=手动保存
+ *
+ * 节流规则：同一作品的自动归档（source="auto"）至少间隔 3 分钟，
+ * 避免频繁操作产生大量冗余版本。手动归档不受限制。
  */
 export async function archiveWorkVersion(
   client: SupabaseClient,
@@ -175,6 +178,29 @@ export async function archiveWorkVersion(
   label?: string,
   source: "auto" | "manual" = "auto",
 ): Promise<number | null> {
+  // ── 自动归档节流：检查最近一次 auto 版本的时间 ──
+  if (source === "auto") {
+    const { data: lastAuto } = await client
+      .from("work_versions")
+      .select("created_at")
+      .eq("work_id", workId)
+      .like("snapshot->>meta->>source", '"auto"')
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (lastAuto?.created_at) {
+      const lastTime = new Date(lastAuto.created_at).getTime();
+      const now = Date.now();
+      const MIN_AUTO_INTERVAL_MS = 3 * 60 * 1000; // 3 分钟
+
+      if (now - lastTime < MIN_AUTO_INTERVAL_MS) {
+        // 跳过本次自动归档，静默返回
+        return null;
+      }
+    }
+  }
+
   const snapshot = await captureWorkSnapshot(client, workId);
   if (!snapshot) return null;
 
