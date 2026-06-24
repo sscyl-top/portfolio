@@ -47,7 +47,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
               <span className="block font-mono text-[11px] uppercase text-white/38">
                 Email
               </span>
-              <span className="mt-2 block break-all text-base font-medium text-white/82 md:text-lg">{email}</span>
+              <span className="mt-1.5 block break-all text-sm font-medium text-white/82 md:text-lg">{email}</span>
             </span>
           </a>
           <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center sm:border-r sm:border-b-0">
