@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, GripVertical } from "lucide-react";
+import { Plus, Trash2, Save, GripVertical, CheckCircle, AlertCircle } from "lucide-react";
 
 import { saveResume } from "@/app/admin/(protected)/resume/actions";
 import type {
@@ -21,11 +21,25 @@ interface Props {
 
 export function ResumeEditor({ resume }: Props) {
   const [isPending, setIsPending] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'ok' | 'err'>('idle');
+  const [saveMsg, setSaveMsg] = useState('');
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
+    setSaveStatus('idle');
     try {
-      await saveResume(formData);
+      const result = await saveResume(formData);
+      if (result && !result.success) {
+        setSaveStatus('err');
+        setSaveMsg(result.error || '未知错误');
+      } else {
+        setSaveStatus('ok');
+        setSaveMsg('保存成功');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+    } catch (e) {
+      setSaveStatus('err');
+      setSaveMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setIsPending(false);
     }
@@ -46,7 +60,19 @@ export function ResumeEditor({ resume }: Props) {
       <CampusList defaultItems={resume.campus} />
       <EducationSection education={resume.education} />
 
-      <div className="flex justify-end pt-4">
+      <div className="flex items-center justify-between pt-4">
+        <div>
+          {saveStatus === 'ok' && (
+            <span className="flex items-center gap-1.5 text-sm text-green-400">
+              <CheckCircle className="h-4 w-4" />{saveMsg}
+            </span>
+          )}
+          {saveStatus === 'err' && (
+            <span className="flex items-center gap-1.5 text-sm text-red-400" title={saveMsg}>
+              <AlertCircle className="h-4 w-4" />保存失败：{saveMsg}
+            </span>
+          )}
+        </div>
         <button
           disabled={isPending}
           type="submit"
