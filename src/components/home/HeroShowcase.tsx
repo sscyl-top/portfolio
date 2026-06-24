@@ -80,7 +80,7 @@ function MeteorShower() {
       return;
     }
 
-    const ANIM_DURATION = 1300;
+    const ANIM_DURATION = 1000;
 
     const triggerMeteor = () => {
       const m1 = meteor1Ref.current;
@@ -93,8 +93,8 @@ function MeteorShower() {
         setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 100);
       }
 
-      if (Math.random() > 0.45) {
-        const m2Delay = 200 + Math.random() * 300;
+      if (Math.random() > 0.5) {
+        const m2Delay = 150 + Math.random() * 250;
         setTimeout(() => {
           if (m2) {
             m2.classList.remove("is-animating");
@@ -105,11 +105,11 @@ function MeteorShower() {
         }, m2Delay);
       }
 
-      const nextDelay = 9000 + Math.random() * 7000;
+      const nextDelay = 10000 + Math.random() * 6000;
       timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
     };
 
-    const initialDelay = 2500 + Math.random() * 1500;
+    const initialDelay = 3000 + Math.random() * 2000;
     timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
 
     return () => {
@@ -124,16 +124,20 @@ function MeteorShower() {
       <div
         ref={meteor1Ref}
         className="meteor"
-        style={{ top: "5%", right: "-60px" }}
+        style={{ top: "12%", right: "-30px" }}
       >
-        <div className="meteor-body" />
+        <div className="meteor-y">
+          <div className="meteor-visual" />
+        </div>
       </div>
       <div
         ref={meteor2Ref}
         className="meteor meteor-secondary"
-        style={{ top: "12%", right: "-40px" }}
+        style={{ top: "18%", right: "-20px" }}
       >
-        <div className="meteor-body" />
+        <div className="meteor-y">
+          <div className="meteor-visual" />
+        </div>
       </div>
     </div>
   );
