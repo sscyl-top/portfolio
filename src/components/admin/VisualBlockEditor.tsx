@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   GripHorizontal,
@@ -1232,6 +1232,9 @@ function BlockCard({
   const [isDragging, setIsDragging] = useState(false);
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
+  // 稳定 layout 对象，避免 LayoutBar 因引用变化反复重渲染
+  const layout = useMemo(() => getLayout(block.payload), [block.payload]);
+
   // 布局切换专用防抖：600ms 内只触发一次保存，避免快速点击产生大量版本
   const layoutDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedUpdatePayload = useCallback(
@@ -1331,21 +1334,19 @@ function BlockCard({
       {isEditing ? (
         <LayoutBar
           blockType={block.block_type}
-          layout={getLayout(block.payload)}
+          layout={layout}
           onChange={(patch) => {
             const newPayload = withLayout(block.payload, patch);
-            // 立即乐观更新（UI 即时响应，不等待防抖）
             onOptimisticUpdate(newPayload);
-            // 布局切换防抖 600ms 后保存后端
             debouncedUpdatePayload(block.id, newPayload);
           }}
         />
       ) : null}
-      {isEditing && getLayout(block.payload).width === "free" && (block.block_type === "media" || block.block_type === "video") ? (
+      {isEditing && layout.width === "free" && (block.block_type === "media" || block.block_type === "video") ? (
         <FreePositionPanel
-          free={getLayout(block.payload).free}
+          free={layout.free}
           onChange={(patch) => {
-            const current = getLayout(block.payload).free ?? { x: 0, y: 0, w: 50, h: 50 };
+            const current = layout.free ?? { x: 0, y: 0, w: 50, h: 50 };
             const newPayload = withLayout(block.payload, { free: { ...current, ...patch } });
             onUpdatePayload(newPayload);
           }}
