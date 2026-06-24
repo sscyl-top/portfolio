@@ -72,10 +72,10 @@ export function WorksExplorer({
           <p className="font-mono text-xs uppercase text-copper">
             Projects / Works Archive
           </p>
-          <h2 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-7xl">
+          <h2 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-7xl" data-text-key="works.allWorksTitle">
             全部作品
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/58 md:mt-6 md:text-lg md:leading-8">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/58 md:mt-6 md:text-lg md:leading-8" data-text-key="works.allWorksDescription">
             按视觉设计、品牌全案、概念设计、包装设计、电商设计和工作案例切换。后续接入后台后，每个分类会自动读取你发布的作品数量。
           </p>
         </div>
@@ -186,7 +186,7 @@ export function WorksExplorer({
             })}
           </div>
         ) : (
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6 text-center text-sm text-white/55 md:p-10">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6 text-center text-sm text-white/55 md:p-10" data-text-key="works.emptyCategory">
             这个分类还没有发布作品，后续可从后台添加。
           </div>
         )}

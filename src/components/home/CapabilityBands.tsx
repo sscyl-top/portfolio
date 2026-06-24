@@ -346,7 +346,7 @@ function FinalContactPanel({
           }`}
         >
           <div className="flex w-fit max-w-full flex-col items-start">
-            <p className="text-base font-light text-white">
+            <p className="text-base font-light text-white" data-text-key="home.strengths.contactInvitation">
               {textOverrides.contactInvitation || "期待一起共事："}
             </p>
             <p className="mt-3 whitespace-nowrap text-4xl font-light leading-none tracking-[0.035em] text-white md:font-extralight md:text-7xl xl:text-[7.5rem]">
@@ -364,7 +364,7 @@ function FinalContactPanel({
               href="/works"
               className="group inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full bg-white px-3.5 text-xs font-semibold text-black transition hover:bg-cyan md:min-h-12 md:px-6 md:text-sm md:w-52"
             >
-              {textOverrides.ctaWorks || "浏览作品"}
+              <span data-text-key="home.strengths.ctaWorks">{textOverrides.ctaWorks || "浏览作品"}</span>
               <ArrowUpRight
                 aria-hidden="true"
                 className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -374,14 +374,14 @@ function FinalContactPanel({
               href="/resume"
               className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
-              {textOverrides.ctaResume || "查看简历"}
+              <span data-text-key="home.strengths.ctaResume">{textOverrides.ctaResume || "查看简历"}</span>
               <FileText aria-hidden="true" className="h-4 w-4" />
             </Link>
             <Link
               href="/resume#hiring-contact"
               className="inline-flex min-h-10 items-center justify-between gap-1.5 rounded-full border border-white/15 bg-black/45 px-3.5 text-xs text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white md:min-h-12 md:px-6 md:text-sm md:w-48"
             >
-              {textOverrides.ctaHiring || "聘用联系"}
+              <span data-text-key="home.strengths.ctaHiring">{textOverrides.ctaHiring || "聘用联系"}</span>
               <Mail aria-hidden="true" className="h-4 w-4" />
             </Link>
           </div>
@@ -409,7 +409,7 @@ function FinalContactPanel({
             ))}
           </div>
 
-          <p className="mt-5 font-mono text-[0.65rem] uppercase text-white/30">
+          <p className="mt-5 font-mono text-[0.65rem] uppercase text-white/30" data-text-key="home.strengths.footerCopyright">
             {textOverrides.footerCopyright || "© 2026 SSCYL Portfolio"}
           </p>
         </div>
@@ -447,7 +447,7 @@ function StrengthPanel({
             {slide.kicker}
           </p>
           <h2 className="mt-5 text-5xl font-semibold leading-[1.04] text-white md:text-8xl md:leading-[0.98]">
-            {slide.title.split("\n").map((line, i) => (<span key={i}>{i > 0 && <br />}{line}</span>))}
+            {slide.title.split("\n").map((line, i) => (<span key={i} data-text-key={`home.strengths.slide${index + 1}.title`}>{i > 0 && <br />}{line}</span>))}
             <span className="mt-3 block text-4xl leading-[1.05] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.58)] md:mt-8 md:text-7xl">
               {slide.outline}
             </span>
@@ -456,6 +456,7 @@ function StrengthPanel({
             className={`mt-8 max-w-xl text-lg leading-9 text-white/66 ${
               isReversed ? "lg:ml-auto" : ""
             }`}
+            data-text-key={`home.strengths.slide${index + 1}.body`}
           >
             {slide.body}
           </p>

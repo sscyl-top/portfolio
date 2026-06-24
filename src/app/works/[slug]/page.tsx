@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
+import { Text } from "@/components/cms/Text";
 import { getPublishedWorks } from "@/data/portfolio";
 import {
   createServerCmsRepository,
@@ -89,7 +90,7 @@ export default async function WorkDetailPage({
           className="inline-flex items-center gap-2 text-sm text-white/45 transition hover:text-white"
         >
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          返回全部作品
+          <Text k="work.detail.backToWorks" fallback="返回全部作品" />
         </Link>
 
         <div className="mt-8 md:mt-12">
@@ -131,7 +132,9 @@ export default async function WorkDetailPage({
       {/* 相关作品 */}
       {relatedWorks.length > 0 ? (
         <aside className="mx-auto mt-16 max-w-5xl border-t border-white/10 px-5 pt-10 md:px-8">
-          <h2 className="text-2xl font-semibold text-white">相关作品</h2>
+          <h2 className="text-2xl font-semibold text-white">
+            <Text k="work.detail.relatedWorks" fallback="相关作品" />
+          </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {relatedWorks.map((related) => (
               <Link
