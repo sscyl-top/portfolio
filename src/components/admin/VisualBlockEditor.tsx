@@ -115,6 +115,7 @@ const LAYOUT_ALIGN_OPTIONS = [
 ];
 
 const GALLERY_COLUMN_OPTIONS = [
+  { value: 1 as const, label: "1列" },
   { value: 2 as const, label: "2列" },
   { value: 3 as const, label: "3列" },
   { value: 4 as const, label: "4列" },
@@ -131,14 +132,14 @@ type FreeLayout = {
 function getLayout(payload: Record<string, unknown>): {
   width: LayoutWidth;
   align: "left" | "center";
-  columns: 2 | 3 | 4;
+  columns: 1 | 2 | 3 | 4;
   free?: FreeLayout;
 } {
   const l = (payload.layout ?? {}) as Record<string, unknown>;
   return {
     width:  (l.width  as LayoutWidth) ?? "contained",
     align:  (l.align  as "left" | "center") ?? "left",
-    columns: (l.columns as 2 | 3 | 4) ?? 3,
+    columns: (l.columns as 1 | 2 | 3 | 4) ?? 3,
     free:   l.free as FreeLayout | undefined,
   };
 }
@@ -146,7 +147,7 @@ function getLayout(payload: Record<string, unknown>): {
 /** 将 layout 合并写回 payload */
 function withLayout(
   payload: Record<string, unknown>,
-  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4; free?: FreeLayout }>,
+  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4; free?: FreeLayout }>,
 ): Record<string, unknown> {
   return {
     ...payload,
@@ -162,8 +163,8 @@ function LayoutBar({
   onChange,
 }: {
   blockType: string;
-  layout: { width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 };
-  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 2 | 3 | 4 }>) => void;
+  layout: { width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4 };
+  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4 }>) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-4 py-2">

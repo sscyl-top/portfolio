@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import type { ContentBlock, BlockLayout } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
 import { PdfBlockRenderer } from "./PdfBlockRenderer";
@@ -33,6 +34,101 @@ function blockProps<T extends ContentBlock>(block: T): Omit<T, "type" | "layout"
   return Object.fromEntries(
     Object.entries(block).filter(([key]) => key !== "type" && key !== "layout"),
   ) as Omit<T, "type" | "layout">;
+}
+
+// ── 图库 Lightbox（点击查看大图）─────────────────────────────
+function GalleryLightbox({
+  items,
+  initialIndex,
+  onClose,
+}: {
+  items: { url?: string; alt?: string }[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const hasPrev = index > 0;
+  const hasNext = index < items.length - 1;
+
+  const go = useCallback((delta: number) => {
+    setIndex((i) => Math.max(0, Math.min(items.length - 1, i + delta)));
+  }, [items.length]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasPrev) go(-1);
+      if (e.key === "ArrowRight" && hasNext) go(1);
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, hasPrev, hasNext, go]);
+
+  const current = items[index];
+  if (!current?.url) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {/* 关闭按钮 */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+        aria-label="关闭"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* 上一张 */}
+      {hasPrev ? (
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="absolute left-3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white md:left-6"
+          aria-label="上一张"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+      ) : null}
+
+      {/* 图片 */}
+      <img
+        src={current.url}
+        alt={current.alt ?? `${index + 1}/${items.length}`}
+        className="max-h-[85vh] max-w-[90vw] object-contain"
+      />
+
+      {/* 下一张 */}
+      {hasNext ? (
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="absolute right-3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white md:right-6"
+          aria-label="下一张"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      ) : null }
+
+      {/* 计数器 */}
+      <span className="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs font-medium text-white/40">
+        {index + 1} / {items.length}
+      </span>
+    </div>
+  );
 }
 
 function renderBlock(block: ContentBlock, index: number, coverTone: string) {
@@ -102,13 +198,18 @@ function MediaBlock({
   const free = block.layout?.free;
   const isGallery = block.type === "gallery";
 
+  // 图库 Lightbox 状态
+  const [lightboxIdx, setLightboxIdx] = useState(-1);
+
   // 画廊列数
   const cols = isGallery
-    ? block.layout?.columns === 2
-      ? "grid-cols-2"
-      : block.layout?.columns === 4
-        ? "grid-cols-2 md:grid-cols-4"
-        : "grid-cols-2 md:grid-cols-3"
+    ? block.layout?.columns === 1
+      ? "grid-cols-1"
+      : block.layout?.columns === 2
+        ? "grid-cols-2"
+        : block.layout?.columns === 4
+          ? "grid-cols-2 md:grid-cols-4"
+          : "grid-cols-2 md:grid-cols-3"
     : "";
 
   return (
@@ -133,7 +234,7 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative w-full overflow-hidden md:min-h-[60vh]"
+                  ? "relative cursor-zoom-in overflow-hidden md:min-h-[60vh]"
                   : "relative w-full overflow-hidden"
             }
             style={
@@ -146,6 +247,7 @@ function MediaBlock({
                   }
                 : undefined
             }
+            onClick={isGallery ? () => setLightboxIdx(i) : undefined}
           >
             <WorkMediaFrame
               media={media}
@@ -160,6 +262,15 @@ function MediaBlock({
           </div>
         ))}
       </div>
+
+      {/* 图库 Lightbox */}
+      {isGallery && lightboxIdx >= 0 && (
+        <GalleryLightbox
+          items={block.items}
+          initialIndex={lightboxIdx}
+          onClose={() => setLightboxIdx(-1)}
+        />
+      )}
     </section>
   );
 }
