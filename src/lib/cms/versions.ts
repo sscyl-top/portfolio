@@ -127,7 +127,7 @@ function snapshotsEqual(
   return deepEqual(a.work, b.work) && deepEqual(a.blocks, b.blocks);
 }
 
-async function writeAuditLog(
+export async function writeAuditLog(
   client: SupabaseClient,
   {
     adminUserId,

@@ -10,6 +10,9 @@ import {
   ChevronRight,
   ArrowRight,
   Eye,
+  Trash2,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 
 import type { WorkVersionListItem } from "@/lib/cms/versions";
@@ -17,6 +20,7 @@ import {
   archiveWorkVersionAction,
   rollbackWorkVersionAction,
   restoreForwardWorkVersionAction,
+  deleteWorkVersionsAction,
 } from "@/app/admin/(protected)/works/actions";
 
 type Props = {
@@ -33,9 +37,45 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
     versionNumber: number;
     direction: "back" | "forward";
   } | null>(null);
+  const [selectedVersions, setSelectedVersions] = useState<Set<number>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const router = useRouter();
 
   const currentIndex = versions.findIndex((v) => v.is_current);
+
+  const toggleSelect = (versionNumber: number) => {
+    setSelectedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(versionNumber)) {
+        next.delete(versionNumber);
+      } else {
+        next.add(versionNumber);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedVersions.size === versions.length) {
+      setSelectedVersions(new Set());
+    } else {
+      setSelectedVersions(new Set(versions.map((v) => v.version_number)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedVersions.size === 0) return;
+    const formData = new FormData();
+    formData.set("work_id", workId);
+    formData.set("work_slug", workSlug);
+    formData.set("version_numbers", Array.from(selectedVersions).join(","));
+    startTransition(() => {
+      deleteWorkVersionsAction(formData);
+      setSelectedVersions(new Set());
+      setConfirmDelete(false);
+      router.refresh();
+    });
+  };
 
   const handleSave = (formData: FormData) => {
     startTransition(() => {
@@ -113,6 +153,58 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* ── 批量操作工具栏 ── */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="inline-flex items-center gap-1.5 text-xs text-white/40 transition hover:text-white/70"
+            >
+              {selectedVersions.size === versions.length ? (
+                <CheckSquare className="h-3.5 w-3.5" />
+              ) : (
+                <Square className="h-3.5 w-3.5" />
+              )}
+              {selectedVersions.size > 0
+                ? `已选 ${selectedVersions.size} / ${versions.length}`
+                : `全选（${versions.length}）`}
+            </button>
+
+            {selectedVersions.size > 0 ? (
+              confirmDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-200/70">
+                    删除 {selectedVersions.size} 个版本？
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    disabled={isPending}
+                    className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs text-red-200 transition hover:bg-red-500/30 disabled:opacity-30"
+                  >
+                    确认
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="rounded-md border border-white/10 px-2.5 py-1 text-xs text-white/50 transition hover:text-white/80"
+                  >
+                    取消
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1 rounded-md border border-red-500/25 px-2.5 py-1 text-xs text-red-300 transition hover:bg-red-500/10"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  删除选中
+                </button>
+              )
+            ) : null}
+          </div>
+
           {versions.map((version, index) => {
             const isCurrent = version.is_current;
             const isExpanded = expandedNumber === version.version_number;
@@ -131,6 +223,28 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  {/* 勾选框 */}
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(version.version_number)}
+                    className={`transition ${
+                      selectedVersions.has(version.version_number)
+                        ? "text-cyan"
+                        : "text-white/20 hover:text-white/50"
+                    }`}
+                    title={
+                      selectedVersions.has(version.version_number)
+                        ? "取消选择"
+                        : "选择此版本"
+                    }
+                  >
+                    {selectedVersions.has(version.version_number) ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </button>
+
                   <button
                     type="button"
                     onClick={() =>

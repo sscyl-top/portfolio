@@ -15,11 +15,14 @@ import {
   archiveWorkVersion,
   listWorkVersions,
   rollbackWorkVersion,
+  writeAuditLog,
 } from "@/lib/cms/versions";
 
 /**
  * 静默自动归档：在修改作品成功后调用。
  * 失败时只记录日志，不阻断主操作。
+ * 自动归档已彻底关闭，版本仅通过手动"保存当前版本"产生。
+ * 此函数保留签名以兼容调用点，但不执行任何操作。
  */
 async function autoArchiveAfterChange(
   client: Awaited<ReturnType<typeof requireAdmin>>["client"],
@@ -27,11 +30,8 @@ async function autoArchiveAfterChange(
   adminUserId: string,
   label?: string,
 ) {
-  try {
-    await archiveWorkVersion(client, workId, adminUserId, label, "auto");
-  } catch (err) {
-    console.error("[autoArchive] 自动归档失败:", err);
-  }
+  // 自动归档已禁用 — 仅手动归档产生版本
+  void client; void workId; void adminUserId; void label;
 }
 
 const draftWorkSchema = z.object({
@@ -1612,6 +1612,67 @@ export async function batchUpdateWorkPlacement(formData: FormData) {
 
   revalidatePath("/admin/works");
   parsed.data.work_ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+}
+
+/**
+ * 删除指定版本（支持单选/多选）。
+ * 基于 work_id + version_number 唯一约束删除，不物理删除当前活跃版本。
+ * 不允许删除当前正在使用的版本（is_current）。
+ */
+export async function deleteWorkVersionsAction(formData: FormData) {
+  const parsed = z
+    .object({
+      work_id: z.string().uuid(),
+      work_slug: z
+        .string()
+        .trim()
+        .min(1)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      version_numbers: z
+        .string() // 逗号分隔的版本号
+        .transform((s) => s.split(",").map(Number).filter((n) => n > 0)),
+    })
+    .safeParse({
+      work_id: formData.get("work_id"),
+      work_slug: formData.get("work_slug"),
+      version_numbers: formData.get("version_numbers"),
+    });
+
+  if (!parsed.success || parsed.data.version_numbers.length === 0) return;
+
+  const { client, user } = await requireAdmin();
+  const { work_id, work_slug, version_numbers } = parsed.data;
+
+  // 检查所有目标版本都不是当前版本
+  const { data: allVersions } = await client
+    .from("work_versions")
+    .select("version_number")
+    .eq("work_id", work_id)
+    .in("version_number", version_numbers)
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  const maxVersion = allVersions && allVersions.length > 0
+    ? (allVersions[0].version_number as number)
+    : 0;
+
+  const { error: deleteError } = await client
+    .from("work_versions")
+    .delete()
+    .eq("work_id", work_id)
+    .in("version_number", version_numbers);
+
+  if (deleteError) throw new Error(deleteError.message);
+
+  await writeAuditLog(client, {
+    adminUserId: user.id,
+    action: "delete_work_versions",
+    workId: work_id,
+    details: { deleted_versions: version_numbers },
+  });
+
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath(`/works/${work_slug}`);
 }
 
 /**
