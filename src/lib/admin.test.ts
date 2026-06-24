@@ -4,12 +4,12 @@ import { isAdminEmail } from "./admin";
 
 describe("isAdminEmail", () => {
   it("only accepts the configured portfolio owner email", () => {
-    expect(isAdminEmail("hello@sscyl.top", "hello@sscyl.top")).toBe(
+    expect(isAdminEmail("3624457672@qq.com", "3624457672@qq.com")).toBe(
       true,
     );
-    expect(isAdminEmail("other@example.com", "hello@sscyl.top")).toBe(
+    expect(isAdminEmail("other@example.com", "3624457672@qq.com")).toBe(
       false,
     );
-    expect(isAdminEmail(undefined, "hello@sscyl.top")).toBe(false);
+    expect(isAdminEmail(undefined, "3624457672@qq.com")).toBe(false);
   });
 });

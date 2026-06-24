@@ -71,7 +71,7 @@ describe("portfolio data", () => {
 
   it("keeps resume contact aligned with the provided resume", () => {
     expect(resume.positioning).toContain("求职面试");
-    expect(resume.contact.email).toBe("hello@sscyl.top");
+    expect(resume.contact.email).toBe("3624457672@qq.com");
     expect(resume.contact.phone).toBe("19276690901");
   });
 

@@ -7,13 +7,13 @@ describe("ContactFinale", () => {
   it("renders contact details, two enquiry forms, and the marquee", () => {
     render(
       <ContactFinale
-        email="hello@sscyl.top"
+        email="3624457672@qq.com"
         phone="19276690901"
         location="广东-深圳"
       />,
     );
 
-    expect(screen.getByText("hello@sscyl.top")).toBeInTheDocument();
+    expect(screen.getByText("3624457672@qq.com")).toBeInTheDocument();
     expect(screen.getByText("19276690901")).toBeInTheDocument();
     expect(screen.getByText("广东-深圳")).toBeInTheDocument();
     expect(screen.getByText("CTT522423")).toBeInTheDocument();
