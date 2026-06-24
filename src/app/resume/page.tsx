@@ -4,7 +4,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  Printer,
   Trophy,
 } from "lucide-react";
 
@@ -70,7 +69,7 @@ export default async function ResumePage() {
             <p className="max-w-3xl text-[15px] leading-7 text-white/66 md:text-lg md:leading-8">
               我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <a
                 href={resume.downloads.pdf}
                 download
@@ -86,15 +85,6 @@ export default async function ResumePage() {
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
                 下载简历 JPG
-              </a>
-              <a
-                href="/resume/print"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 px-4 py-2.5 text-[13px] text-white/72 transition hover:border-white/40 hover:text-white md:px-5 md:py-3 md:text-sm"
-              >
-                <Printer aria-hidden="true" className="h-4 w-4" />
-                打印 / 导出 PDF
               </a>
             </div>
           </div>
