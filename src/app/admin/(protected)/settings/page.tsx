@@ -44,7 +44,7 @@ export default async function AdminSettingsPage() {
     supabase
       .from("site_settings")
       .select(
-        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links",
+        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,social_links",
       )
       .single(),
     supabase
@@ -67,6 +67,10 @@ export default async function AdminSettingsPage() {
     cta_card_media_id: null,
     cta_figure_media_id: null,
     cta_ticker_logo_media_id: null,
+    hero_main_video_media_id: null,
+    hero_side1_video_media_id: null,
+    hero_side2_video_media_id: null,
+    hero_side3_video_media_id: null,
     social_links: siteSettings.socialLinks.map((link) => ({
       label: link.label,
       url: link.href,
@@ -188,6 +192,47 @@ export default async function AdminSettingsPage() {
               assets={mediaAssets}
               defaultValue={settings.cta_ticker_logo_media_id ?? ""}
               hint="终场横向滚动条幅中重复出现的 logo/图案，建议 PNG 透明底。不上传则使用默认「无限进步」logo"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
+          <h3 className="text-sm font-medium text-white/70">首页第一屏 Hero 视频</h3>
+          <p className="mt-1 text-xs text-white/40">
+            首页第一屏4个卡片的背景视频。支持直接拖拽上传或从媒体库选择，MP4/WEBM/OGG/MOV 格式，最大 80MB。不上传则显示渐变占位色。
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <SettingsVideoField
+              label="主卡片视频（大卡片）"
+              name="hero_main_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_main_video_media_id ?? ""}
+              hint="首页第一屏大卡片背景视频，建议 16:9 比例，画面尽量简洁"
+              aspectRatio="video"
+            />
+            <SettingsVideoField
+              label="小卡片 1（左上）"
+              name="hero_side1_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_side1_video_media_id ?? ""}
+              hint="左上浮动小卡片，建议 1:1 比例"
+              aspectRatio="square"
+            />
+            <SettingsVideoField
+              label="小卡片 2（左侧）"
+              name="hero_side2_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_side2_video_media_id ?? ""}
+              hint="左侧浮动小卡片，建议 1:1 比例"
+              aspectRatio="square"
+            />
+            <SettingsVideoField
+              label="小卡片 3（右下）"
+              name="hero_side3_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_side3_video_media_id ?? ""}
+              hint="右下浮动宽卡片，建议 2:1 比例"
+              aspectRatio="wide"
             />
           </div>
         </div>
