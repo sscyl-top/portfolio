@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import type { Work } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
@@ -24,6 +24,91 @@ const fanSlots = [
 ];
 
 const CARD_COUNT = 7;
+
+type RepresentativeCardProps = {
+  work: Work;
+  index: number;
+  isActive: boolean;
+  hasActive: boolean;
+  onEnter: () => void;
+  onMove: (e: React.PointerEvent<HTMLAnchorElement>) => void;
+  onLeave: (e: React.PointerEvent<HTMLAnchorElement>) => void;
+};
+
+const RepresentativeCard = memo(function RepresentativeCard({
+  work,
+  index,
+  isActive,
+  hasActive,
+  onEnter,
+  onMove,
+  onLeave,
+}: RepresentativeCardProps) {
+  const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];
+  const cardStyle: RepresentativeCardStyle = {
+    zIndex: isActive ? 30 : slot.z,
+    opacity: hasActive && !isActive ? 0.7 : 1,
+    "--slot-x": `${slot.x}vw`,
+    "--slot-y": `${slot.y}px`,
+    "--slot-r": `${slot.r}deg`,
+    "--slot-spread": `${hasActive && !isActive ? slot.x * 0.06 : 0}vw`,
+    "--card-lift": `${isActive ? -32 : 0}px`,
+    "--card-scale": isActive ? 1.06 : hasActive ? 0.95 : 1,
+    "--tilt-x": "0deg",
+    "--tilt-y": "0deg",
+    "--intro-delay": `${index * 80}ms`,
+  };
+
+  return (
+    <Link
+      key={work.slug}
+      href={`/works/${work.slug}`}
+      onPointerEnter={onEnter}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-white/35 hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
+      style={cardStyle}
+    >
+      <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
+        <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} hover />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(to_bottom,transparent_42%,rgba(0,0,0,0.84))]" />
+        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          <span>{work.year}</span>
+        </div>
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/12 bg-black/36 p-3 shadow-2xl backdrop-blur-lg transition duration-300 group-hover:bg-black/52">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>
+              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-white">{work.title}</h2>
+            </div>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="mt-1 h-5 w-5 flex-none text-white/45 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
+            />
+          </div>
+          <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/62">{work.summary}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {work.tags.slice(0, 1).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-white/55"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.hasActive === nextProps.hasActive &&
+    prevProps.work.slug === nextProps.work.slug
+  );
+});
 
 export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, CARD_COUNT);
@@ -60,9 +145,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     });
     setWrapped(nextWrapped);
     setCenterIndex(idx);
-    // Clear wrap skip after a frame so wrapped cards resume transform animation
     setTimeout(() => setWrapped(new Set()), 50);
-    setTimeout(() => setIsAnimating(false), 450);
+    setTimeout(() => setIsAnimating(false), 400);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -114,8 +198,6 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     }
   };
 
-  // Each card gets a relPos based on its realIndex and current centerIndex
-  // relPos determines visual position: -3=far left ... 0=center ... +3=far right
   const visibleCards: { work: Work; realIndex: number; relPos: number }[] = displayWorks.map((work, realIndex) => {
     const rawPos = (realIndex - centerIndex + CARD_COUNT + 3) % CARD_COUNT;
     const relPos = rawPos - 3;
@@ -132,85 +214,71 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         </p>
 
         {/* DESKTOP: fan */}
-        <div className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
-          onPointerLeave={() => { setActiveIndex(null); if (frameRef.current !== null) { cancelAnimationFrame(frameRef.current); frameRef.current = null; } }}>
+        <div
+          className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
+          onPointerLeave={() => {
+            setActiveIndex(null);
+            if (frameRef.current !== null) {
+              cancelAnimationFrame(frameRef.current);
+              frameRef.current = null;
+            }
+          }}
+        >
           <div className="pointer-events-none absolute left-1/2 top-[45%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
           {displayWorks.map((work, index) => {
-            const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];
-            const isActive = activeIndex === index; const hasActive = activeIndex !== null;
-            const cardStyle: RepresentativeCardStyle = {
-              zIndex: isActive ? 30 : slot.z, opacity: hasActive && !isActive ? 0.82 : 1,
-              filter: hasActive && !isActive ? "saturate(0.88)" : "none",
-              "--slot-x": `${slot.x}vw`, "--slot-y": `${slot.y}px`, "--slot-r": `${slot.r}deg`,
-              "--slot-spread": `${hasActive && !isActive ? slot.x * 0.055 : 0}vw`,
-              "--card-lift": `${isActive ? -26 : 0}px`, "--card-scale": isActive ? 1.045 : hasActive ? 0.965 : 1,
-              "--tilt-x": "0deg", "--tilt-y": "0deg", "--intro-delay": `${index * 95}ms`,
-            };
+            const isActive = activeIndex === index;
+            const hasActive = activeIndex !== null;
             return (
-              <Link key={work.slug} href={`/works/${work.slug}`}
-                onPointerEnter={() => setActiveIndex(index)}
-                onPointerMove={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect(); const target = event.currentTarget;
+              <RepresentativeCard
+                key={work.slug}
+                work={work}
+                index={index}
+                isActive={isActive}
+                hasActive={hasActive}
+                onEnter={() => setActiveIndex(index)}
+                onMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const target = event.currentTarget;
                   const nx = ((event.clientX - rect.left) / rect.width - 0.5) * 5.5;
                   const ny = ((event.clientY - rect.top) / rect.height - 0.5) * -4.5;
                   if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-                  frameRef.current = requestAnimationFrame(() => { target.style.setProperty("--tilt-x", `${ny}deg`); target.style.setProperty("--tilt-y", `${nx}deg`); frameRef.current = null; });
+                  frameRef.current = requestAnimationFrame(() => {
+                    target.style.setProperty("--tilt-x", `${ny}deg`);
+                    target.style.setProperty("--tilt-y", `${nx}deg`);
+                    frameRef.current = null;
+                  });
                 }}
-                onPointerLeave={(e) => { e.currentTarget.style.setProperty("--tilt-x", "0deg"); e.currentTarget.style.setProperty("--tilt-y", "0deg"); }}
-                className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-[filter,opacity,border-color,box-shadow] duration-700 hover:border-white/35 hover:shadow-[0_34px_96px_rgba(0,0,0,0.62)] focus-visible:border-copper"
-                style={cardStyle}>
-                <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
-                  <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} hover />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(to_bottom,transparent_42%,rgba(0,0,0,0.84))]" />
-                  <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
-                    <span>{String(index + 1).padStart(2, "0")}</span><span>{work.year}</span>
-                  </div>
-                  <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/12 bg-black/36 p-3 shadow-2xl backdrop-blur-xl transition duration-500 group-hover:bg-black/48">
-                    <div className="flex items-start justify-between gap-3">
-                      <div><p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p><h2 className="mt-1.5 text-lg font-semibold leading-tight text-white">{work.title}</h2></div>
-                      <ArrowUpRight aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-white/45 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
-                    </div>
-                    <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/62">{work.summary}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">{work.tags.slice(0, 1).map((tag) => (<span key={tag} className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-white/55">{tag}</span>))}</div>
-                  </div>
-                </article>
-              </Link>
+                onLeave={(e) => {
+                  e.currentTarget.style.setProperty("--tilt-x", "0deg");
+                  e.currentTarget.style.setProperty("--tilt-y", "0deg");
+                }}
+              />
             );
           })}
         </div>
 
         {/* MOBILE: 扇形展开 */}
-        <div className="relative mt-8 md:hidden select-none"
+        <div
+          className="relative mt-8 md:hidden select-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}>
+          onMouseLeave={handleMouseUp}
+        >
           <div className="relative mx-auto h-[420px] w-full max-w-[320px] overflow-visible">
             {visibleCards.map(({ work, realIndex, relPos }) => {
               const absPos = Math.abs(relPos);
               const isCenter = relPos === 0;
-              
-              // Position: spread cards left and right
               const x = relPos * 85;
-              
-              // Scale: center full, edges smaller
               const scale = isCenter ? 1 : 0.82 - absPos * 0.04;
-              
-              // Y: center lowest, edges higher
               const y = absPos * 14;
-              
-              // Rotation
               const rotate = relPos * 4;
-              
-              // Opacity
               const opacity = isCenter ? 1 : 0.55 - absPos * 0.09;
-              
-              // Z-index
               const zIdx = isCenter ? 20 : 10 - absPos;
-              
+
               const style: CSSProperties = {
                 position: "absolute",
                 left: "50%",
@@ -218,8 +286,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 width: "80%",
                 transform: `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
                 transition: wrapped.has(realIndex)
-                  ? "opacity 0.4s ease"
-                  : "transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease",
+                  ? "opacity 0.35s ease"
+                  : "transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease",
                 zIndex: zIdx,
                 opacity: opacity,
                 pointerEvents: isCenter ? "auto" : "none",
@@ -263,7 +331,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
           <div className="mt-4 flex items-center justify-center gap-1.5">
             {displayWorks.map((_, i) => (
               <span key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-250 ${
                   i === centerIndex ? "w-6 bg-copper" : "w-1.5 bg-white/20"
                 }`} />
             ))}
