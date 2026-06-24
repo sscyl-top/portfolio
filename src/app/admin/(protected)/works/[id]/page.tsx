@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { listWorkVersions } from "@/lib/cms/versions";
 import type { WorkVersionListItem } from "@/lib/cms/versions";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
@@ -12,6 +11,7 @@ import { Toast } from "@/components/admin/Toast";
 import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { StatusSelect } from "@/components/admin/StatusSelect";
+import { WorkMediaSelect } from "@/components/admin/WorkMediaSelect";
 
 import {
   clearPrivatePreviewLink,
@@ -322,17 +322,6 @@ function MediaForm({
   mediaAssets: MediaOptionRow[];
   work: WorkEditorRow;
 }) {
-  const assetById = new Map(mediaAssets.map((a) => [a.id, a]));
-  const selectedCover = work.cover_media_id
-    ? assetById.get(work.cover_media_id)
-    : null;
-  const selectedHover = work.hover_media_id
-    ? assetById.get(work.hover_media_id)
-    : null;
-  const selectedShare = work.share_media_id
-    ? assetById.get(work.share_media_id)
-    : null;
-
   return (
     <form
       action={updateWorkMedia}
@@ -343,33 +332,26 @@ function MediaForm({
       <h3 className="text-sm font-semibold text-white/80">作品媒体</h3>
 
       <div className="mt-3 grid gap-3">
-        <MediaSelect
+        <WorkMediaSelect
           label="封面"
           name="cover_media_id"
           assets={mediaAssets}
           defaultValue={work.cover_media_id ?? ""}
-          selectedAsset={selectedCover ?? null}
         />
         <div className="grid gap-1">
-          <MediaSelect
+          <WorkMediaSelect
             label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
             name="hover_media_id"
             assets={mediaAssets}
             defaultValue={work.hover_media_id ?? ""}
-            selectedAsset={selectedHover ?? null}
+            hint={work.is_composite ? "复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）" : undefined}
           />
-          {work.is_composite ? (
-            <p className="text-[11px] text-copper/80">
-              复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）
-            </p>
-          ) : null}
         </div>
-        <MediaSelect
+        <WorkMediaSelect
           label="分享图"
           name="share_media_id"
           assets={mediaAssets}
           defaultValue={work.share_media_id ?? ""}
-          selectedAsset={selectedShare ?? null}
         />
       </div>
 
@@ -379,96 +361,6 @@ function MediaForm({
         </button>
       </div>
     </form>
-  );
-}
-function MediaSelect({
-  assets,
-  defaultValue,
-  label,
-  name,
-  selectedAsset,
-}: {
-  assets: MediaOptionRow[];
-  defaultValue: string;
-  label: string;
-  name: string;
-  selectedAsset: MediaOptionRow | null;
-}) {
-  return (
-    <div className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
-
-      {selectedAsset ? (
-        <MediaSelectPreview
-          storageKey={selectedAsset.storage_key}
-          mimeType={selectedAsset.mime_type}
-          alt={selectedAsset.alt_text || selectedAsset.original_name}
-          name={selectedAsset.original_name}
-        />
-      ) : (
-        <span className="grid h-28 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-          未选择
-        </span>
-      )}
-
-      <select
-        name={name}
-        defaultValue={defaultValue}
-        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-      >
-        <option value="">未选择</option>
-        {assets.map((asset) => (
-          <option key={asset.id} value={asset.id}>
-            {asset.original_name}
-          </option>
-        ))}
-      </select>
-      {assets.length === 0 ? (
-        <span className="text-xs text-white/34">媒体库暂无素材。</span>
-      ) : null}
-    </div>
-  );
-}
-
-function MediaSelectPreview({
-  storageKey,
-  mimeType,
-  alt,
-  name,
-}: {
-  storageKey: string;
-  mimeType: string;
-  alt: string;
-  name: string;
-}) {
-  const url = buildPublicMediaUrl(storageKey);
-
-  if (mimeType.startsWith("image/")) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={url}
-        alt={alt}
-        className="h-28 w-full rounded-md border border-white/10 object-cover"
-      />
-    );
-  }
-
-  if (mimeType.startsWith("video/")) {
-    return (
-      <video
-        src={url}
-        muted
-        playsInline
-        className="h-28 w-full rounded-md border border-white/10 object-cover"
-      />
-    );
-  }
-
-  return (
-    <span className="grid h-28 place-items-center rounded-md border border-white/10 bg-black/30 text-xs text-white/40">
-      {name || "file"}
-    </span>
   );
 }
 
