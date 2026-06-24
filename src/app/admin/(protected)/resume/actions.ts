@@ -232,15 +232,8 @@ export async function saveResume(formData: FormData) {
   try {
     const { client } = await requireAdmin();
 
-    // 先读取现有数据，防止 upsert 整行覆盖丢失未修改字段
-    const { data: existingRow } = await client
-      .from("resumes")
-      .select("*")
-      .maybeSingle();
-
     const upsertPayload: Record<string, unknown> = {
       id: true,
-      // 表单提交的字段（优先使用）
       ...parsed.data,
       strengths,
       highlights,
@@ -251,18 +244,6 @@ export async function saveResume(formData: FormData) {
       services,
       downloads: dlResult.data,
     };
-
-    // 如果数据库已有记录，用表单数据做浅合并（保留未被表单覆盖的字段）
-    if (existingRow) {
-      // 删除系统字段，避免覆盖冲突
-      const { id, created_at, updated_at, deleted_at, ...safeExisting } = existingRow;
-      for (const [key, value] of Object.entries(safeExisting)) {
-        // 只在表单数据中没有该 key 或该 key 值为 undefined/null 时，才保留旧值
-        if (!(key in upsertPayload) || upsertPayload[key] === null || upsertPayload[key] === undefined) {
-          (upsertPayload as Record<string, unknown>)[key] = value;
-        }
-      }
-    }
 
     const { error } = await client.from("resumes").upsert(upsertPayload as Record<string, unknown>);
 
