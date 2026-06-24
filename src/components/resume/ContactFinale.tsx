@@ -11,7 +11,7 @@ type ContactFinaleProps = {
 
 const wechatId = "CTT522423";
 
-const defaultMarqueeItems = ["聊聊设计", "·", "BRAND & AI", "·", "LET'S TALK", "·"];
+const defaultMarqueeItems = ["聊聊设计", "·", "stroke:BRAND & AI", "·", "stroke:LET'S TALK", "·"];
 
 const marqueeGroups = [0, 1, 2, 3];
 
