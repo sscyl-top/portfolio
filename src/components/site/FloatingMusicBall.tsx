@@ -273,13 +273,38 @@ export function FloatingMusicBall() {
         className="flex items-end gap-3"
         style={{ padding: "40px 0 40px 40px", margin: "-40px 0 -40px -40px" }}
       >
-        {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球 */}
+        {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球(底部) */}
         {showColumn ? (
           <div className="music-bubble-column shrink-0">
-            {/* Options (hover时显示) - 靠近球，在column-reverse中先渲染 */}
-            {hoverActive ? (
-              <div key="options" className="music-options-column">
-                {categories.map((cat) => {
+            {/* Playing bar - DOM第一位，column-reverse下在最底部紧贴球 */}
+            {showPlayingBar ? (
+              <div className="music-bubble music-bubble-playing is-visible">
+                <Volume2 className="h-4 w-4 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
+                <p className="min-w-0 truncate text-sm text-white/90">
+                  {currentTrackTitle || "正在播放"}
+                  {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
+                </p>
+              </div>
+            ) : null}
+
+            {/* Tip bubble - DOM第二位，在playing上方(未播放时紧贴球) */}
+            {showTipBubble ? (
+              <div key={tipKey} className="music-bubble music-bubble-tip is-visible">
+                <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
+                {!hoverActive && (
+                  <button
+                    onClick={dismissTip}
+                    className="ml-2 text-white/40 hover:text-white/70"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : null}
+
+            {/* Options (hover时显示) - 平铺为直接子元素，统一宽度 */}
+            {hoverActive
+              ? categories.map((cat, idx) => {
                   const isCurrentCat = currentCatKeyRef.current === cat.key;
                   return (
                     <button
@@ -288,7 +313,8 @@ export function FloatingMusicBall() {
                         e.stopPropagation();
                         selectCategory(cat);
                       }}
-                      className={`music-option-item ${isCurrentCat ? "music-option-active" : ""}`}
+                      className={`music-option-item music-option-anim ${isCurrentCat ? "music-option-active" : ""}`}
+                      style={{ animationDelay: `${0.05 + idx * 0.07}s` }}
                     >
                       <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
                       <span className="truncate text-sm">{cat.label}</span>
@@ -304,35 +330,8 @@ export function FloatingMusicBall() {
                       )}
                     </button>
                   );
-                })}
-              </div>
-            ) : null}
-
-            {/* Playing bar - 在选项上方 */}
-            {showPlayingBar ? (
-              <div className="music-bubble music-bubble-playing is-visible">
-                <Volume2 className="h-4 w-4 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
-                <p className="min-w-0 truncate text-sm text-white/90">
-                  {currentTrackTitle || "正在播放"}
-                  {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
-                </p>
-              </div>
-            ) : null}
-
-            {/* Tip bubble - 最上方，远离球 */}
-            {showTipBubble ? (
-              <div key={tipKey} className="music-bubble music-bubble-tip is-visible">
-                <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
-                {!hoverActive && (
-                  <button
-                    onClick={dismissTip}
-                    className="ml-2 text-white/40 hover:text-white/70"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ) : null}
+                })
+              : null}
           </div>
         ) : null}
 
