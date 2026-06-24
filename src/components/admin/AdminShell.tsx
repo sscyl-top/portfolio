@@ -13,7 +13,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
   return (
     <main className="min-h-screen bg-[#07090b] text-white">
       <div className="mx-auto grid min-h-screen max-w-7xl md:grid-cols-[240px_1fr]">
-        <aside className="border-b border-white/10 p-4 md:border-b-0 md:border-r md:p-5">
+        <aside className="sticky top-0 self-start border-b border-white/10 p-4 md:border-b-0 md:border-r md:p-5">
           <div className="mb-5 flex items-center justify-between gap-4 md:block">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">
