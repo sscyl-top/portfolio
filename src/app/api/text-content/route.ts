@@ -129,9 +129,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH /api/text-content — 更新单个 key 的 content（需管理员鉴权）
+// PATCH /api/text-content — 更新单个 key 的 content 和样式（需管理员鉴权）
 export async function PATCH(request: NextRequest) {
-  // 鉴权：requireAdmin 失败会抛出 redirect，这里捕获并返回 401
   try {
     await requireAdmin()
   } catch {
@@ -142,11 +141,12 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { key, content } = await request.json()
+    const body = await request.json()
+    const { key, content, font_size, font_family, font_weight, color } = body
 
-    if (!key || typeof content !== 'string') {
+    if (!key) {
       return NextResponse.json(
-        { success: false, error: 'key and content are required' },
+        { success: false, error: 'key is required' },
         { status: 400 }
       )
     }
@@ -161,12 +161,26 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = await createSupabaseServerClient()
 
+    const updates: Record<string, string | null> = {}
+    if (typeof content === 'string') updates.content = content
+    if (font_size !== undefined) updates.font_size = font_size || null
+    if (font_family !== undefined) updates.font_family = font_family || null
+    if (font_weight !== undefined) updates.font_weight = font_weight || null
+    if (color !== undefined) updates.color = color || null
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No fields to update' },
+        { status: 400 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('text_content')
-      .update({ content })
+      .update(updates)
       .eq('key', key)
       .is('deleted_at', null)
-      .select('content')
+      .select('content, font_size, font_family, font_weight, color')
       .single()
 
     if (error) {
@@ -176,7 +190,16 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, content: data.content })
+    return NextResponse.json({
+      success: true,
+      content: data.content,
+      styles: {
+        ...(data.font_size && { fontSize: data.font_size }),
+        ...(data.font_family && { fontFamily: data.font_family }),
+        ...(data.font_weight && { fontWeight: data.font_weight }),
+        ...(data.color && { color: data.color }),
+      },
+    })
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },

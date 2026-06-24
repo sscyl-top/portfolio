@@ -41,9 +41,11 @@ type WizardMedia = UploadResult & { previewUrl?: string };
 type Props = {
   categories: WizardCategory[];
   tags: WizardTag[];
+  presetSection?: "all" | "composite" | "representative";
+  representativeSlot?: number;
 };
 
-export function WorkWizard({ categories, tags }: Props) {
+export function WorkWizard({ categories, tags, presetSection = "all", representativeSlot }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [mediaList, setMediaList] = useState<WizardMedia[]>([]);
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -175,6 +177,14 @@ export function WorkWizard({ categories, tags }: Props) {
     mediaList.forEach((m) => formData.append("media_ids", m.id));
     selectedCategoryIds.forEach((id) => formData.append("category_ids", id));
     selectedTagIds.forEach((id) => formData.append("tag_ids", id));
+
+    if (presetSection === "composite") {
+      formData.set("is_composite", "true");
+    }
+    if (presetSection === "representative" && representativeSlot) {
+      formData.set("is_representative", "true");
+      formData.set("representative_order", String(representativeSlot));
+    }
 
     startTransition(() => {
       createWorkFromWizard(formData);

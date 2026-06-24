@@ -166,10 +166,10 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* ══ 主布局：三列 — 左留白(居中) | 编辑区(约束宽度) | 辅助面板(右侧) ══ */}
+      {/* ══ 主布局：三列 — 左留白(少量) | 编辑区(1060px) | 辅助面板(320px) ══ */}
       <div
-        className="items-start gap-8 lg:gap-10"
-        style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 920px) 320px' }}
+        className="items-start gap-6"
+        style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 1060px) 320px' }}
       >
         {/* ═══ 左侧留白：用于将编辑区居中 ═══ */}
         <div />

@@ -1006,6 +1006,9 @@ const createWorkFromWizardSchema = z.object({
   media_ids: z.array(z.string().uuid()).min(1, "至少上传一个媒体文件"),
   category_ids: z.array(z.string().uuid()).default([]),
   tag_ids: z.array(z.string().uuid()).default([]),
+  is_representative: z.coerce.boolean().default(false),
+  representative_order: z.coerce.number().int().min(1).max(7).nullable().default(null),
+  is_composite: z.coerce.boolean().default(false),
 });
 
 /**
@@ -1026,6 +1029,9 @@ export async function createWorkFromWizard(formData: FormData) {
     media_ids: rawIds,
     category_ids: formData.getAll("category_ids").map(String).filter(Boolean),
     tag_ids: formData.getAll("tag_ids").map(String).filter(Boolean),
+    is_representative: formData.get("is_representative") === "on" || formData.get("is_representative") === "true",
+    representative_order: formData.get("representative_order") ? Number(formData.get("representative_order")) : null,
+    is_composite: formData.get("is_composite") === "on" || formData.get("is_composite") === "true",
   });
 
   if (!parsed.success) return;
@@ -1043,6 +1049,9 @@ export async function createWorkFromWizard(formData: FormData) {
     media_ids,
     category_ids,
     tag_ids,
+    is_representative,
+    representative_order,
+    is_composite,
   } = parsed.data;
 
   const paletteColors = palette
@@ -1051,6 +1060,29 @@ export async function createWorkFromWizard(formData: FormData) {
     .filter((s) => /^#[0-9a-fA-F]{3,6}$/.test(s));
 
   const published_at = status === "published" ? new Date().toISOString() : null;
+
+  // 如果要设置为代表作且指定了槽位，先清除该槽位现有作品
+  if (is_representative && representative_order) {
+    await client
+      .from("works")
+      .update({ is_representative: false, representative_order: null })
+      .eq("representative_order", representative_order)
+      .is("deleted_at", null);
+  }
+
+  // 如果要设置为复合设计，composite_order自动分配
+  let composite_order: number | null = null;
+  if (is_composite) {
+    const { data: maxComposite } = await client
+      .from("works")
+      .select("composite_order")
+      .eq("is_composite", true)
+      .is("deleted_at", null)
+      .order("composite_order", { ascending: false })
+      .limit(1);
+    composite_order = (maxComposite?.[0]?.composite_order as number) ?? 0;
+    composite_order += 1;
+  }
 
   const { data: work, error } = await client
     .from("works")
@@ -1066,6 +1098,10 @@ export async function createWorkFromWizard(formData: FormData) {
       sort_order: 0,
       cover_media_id: media_ids[0],
       published_at,
+      is_representative,
+      representative_order: is_representative ? representative_order : null,
+      is_composite,
+      composite_order,
     })
     .select("id")
     .single();
@@ -1862,4 +1898,71 @@ export async function deleteWorkCommentAction(formData: FormData) {
   }
 
   revalidatePath("/admin/analytics");
+}
+
+// ── 代表作槽位管理 Server Actions ──────────────────────────
+
+const representativeSlotSchema = z.object({
+  work_id: z.string().uuid(),
+  slot: z.coerce.number().int().min(1).max(7),
+});
+
+/**
+ * 将现有作品分配到指定代表作槽位。
+ * 如果该槽位已有作品，会先将其移出代表作。
+ */
+export async function assignToRepresentativeSlot(formData: FormData) {
+  const parsed = representativeSlotSchema.safeParse({
+    work_id: formData.get("work_id"),
+    slot: formData.get("slot"),
+  });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, slot } = parsed.data;
+
+  await client
+    .from("works")
+    .update({ is_representative: false, representative_order: null })
+    .eq("representative_order", slot)
+    .is("deleted_at", null);
+
+  await client
+    .from("works")
+    .update({ representative_order: null })
+    .eq("id", work_id)
+    .is("deleted_at", null);
+
+  const { error } = await client
+    .from("works")
+    .update({ is_representative: true, representative_order: slot })
+    .eq("id", work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath("/");
+  revalidatePath("/works");
+}
+
+/**
+ * 将作品从代表作移除（保留作品本身）。
+ */
+export async function removeFromRepresentative(formData: FormData) {
+  const parsed = z.object({ work_id: z.string().uuid() }).safeParse({
+    work_id: formData.get("work_id"),
+  });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { error } = await client
+    .from("works")
+    .update({ is_representative: false, representative_order: null })
+    .eq("id", parsed.data.work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath("/");
+  revalidatePath("/works");
 }

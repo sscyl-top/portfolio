@@ -14,6 +14,7 @@ export const viewport: Viewport = {
 
 
 import { AnalyticsTracker } from "@/components/admin/AnalyticsTracker";
+import { VisualEditorHint } from "@/components/cms/VisualEditorHint";
 import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { createServerCmsRepository } from "@/lib/cms/repository";
@@ -93,6 +94,7 @@ export default async function RootLayout({
         <SiteHeader siteSettings={settings} />
         {children}
         <FloatingMusicBall />
+        <VisualEditorHint />
         <AnalyticsTracker />
         <Analytics />
         <SpeedInsights />
