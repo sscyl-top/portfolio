@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { WorkWizard } from "@/components/admin/WorkWizard";
 import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
+import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { publishScheduledWorks, assignToRepresentativeSlot, removeFromRepresentative } from "./actions";
 
 type AdminWorkRow = {
@@ -106,13 +107,25 @@ export default async function AdminWorksPage({
     return true;
   });
 
-  const representativeSlots = Array.from({ length: 7 }, (_, i) => {
+  const representativeSlots: { slot: number; work: AdminWorkRow | null }[] = Array.from({ length: 7 }, (_, i) => {
     const slotNum = i + 1;
     const work = works.find((w) => w.is_representative && w.representative_order === slotNum);
     return { slot: slotNum, work: work ?? null };
   });
 
-  const nonRepresentativeWorks = works.filter((w) => !w.is_representative);
+  const unorderedRepresentativeWorks = works
+    .filter((w) => w.is_representative && w.representative_order == null)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+
+  for (const unorderedWork of unorderedRepresentativeWorks) {
+    const emptySlot = representativeSlots.find((s) => s.work === null);
+    if (emptySlot) {
+      emptySlot.work = unorderedWork;
+    }
+  }
+
+  const worksInSlots = new Set(representativeSlots.filter((s) => s.work).map((s) => s.work!.id));
+  const nonRepresentativeWorks = works.filter((w) => !w.is_representative && !worksInSlots.has(w.id));
 
   return (
     <div>
@@ -455,24 +468,15 @@ function RepresentativeSlotsManager({
                       <p className="truncate text-[10px] text-white/60">{work.title}</p>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition group-hover:opacity-100">
-                      <select
+                      <AutoSubmitSelect
                         name="slot"
+                        placeholder="添加到槽位"
                         className="min-h-7 rounded border border-cyan/40 bg-black/80 px-2 text-[11px] text-cyan outline-none"
-                        defaultValue=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const formEl = e.target.form;
-                            if (formEl) formEl.requestSubmit();
-                          }
-                        }}
-                      >
-                        <option value="" disabled>添加到槽位</option>
-                        {slots.map((s) => (
-                          <option key={s.slot} value={s.slot}>
-                            槽位 #{s.slot}{s.work ? ` (替换: ${s.work.title.slice(0, 8)}...)` : ""}
-                          </option>
-                        ))}
-                      </select>
+                        options={slots.map((s) => ({
+                          value: String(s.slot),
+                          label: `槽位 #${s.slot}${s.work ? ` (替换: ${s.work.title.slice(0, 8)}...)` : ""}`,
+                        }))}
+                      />
                     </div>
                   </div>
                 </form>
@@ -497,24 +501,12 @@ function SlotWorkSelector({
   return (
     <form action={assignToRepresentativeSlot} className="relative">
       <input type="hidden" name="slot" value={slot} />
-      <select
+      <AutoSubmitSelect
         name="work_id"
+        placeholder="从已有作品选择"
         className="w-full min-h-7 rounded border border-white/15 bg-black/40 px-2 text-[11px] text-white/70 outline-none focus:border-cyan/50"
-        defaultValue=""
-        onChange={(e) => {
-          if (e.target.value) {
-            const form = e.target.form;
-            if (form) form.requestSubmit();
-          }
-        }}
-      >
-        <option value="" disabled>从已有作品选择</option>
-        {allWorks.map((w) => (
-          <option key={w.id} value={w.id}>
-            {w.title}
-          </option>
-        ))}
-      </select>
+        options={allWorks.map((w) => ({ value: w.id, label: w.title }))}
+      />
     </form>
   );
 }
