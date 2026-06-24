@@ -330,7 +330,7 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
         href: link.url,
         label: normalizeUtf8(link.label),
       })) ?? settings.socialLinks,
-    title: normalizeUtf8(row.seo_title) || settings.title,
+    title: settings.title,
   };
 }
 
