@@ -13,6 +13,13 @@ import {
 } from "@/lib/cms/repository";
 import { WorkMediaFrame } from "@/components/works/WorkMediaFrame";
 import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
+import { WorkReactions } from "@/components/works/WorkReactions";
+import { CodeBlock } from "@/components/works/blocks/CodeBlock";
+import { QuoteBlock } from "@/components/works/blocks/QuoteBlock";
+import { EmbedBlock } from "@/components/works/blocks/EmbedBlock";
+import { DividerBlock } from "@/components/works/blocks/DividerBlock";
+import { CalloutBlock } from "@/components/works/blocks/CalloutBlock";
+import { StatsBlock } from "@/components/works/blocks/StatsBlock";
 
 /** 根据 layout 字段返回对应的宽度 CSS 类 */
 function layoutWidthClass(layout?: BlockLayout): string {
@@ -332,6 +339,8 @@ export default async function WorkDetailPage({
             );
           })}
         </div>
+
+        <WorkReactions workSlug={work.slug} />
 
         {relatedWorks.length > 0 ? (
           <aside className="mt-16 border-t border-white/10 pt-10">

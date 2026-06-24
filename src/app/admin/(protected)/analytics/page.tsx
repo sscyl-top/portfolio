@@ -2,12 +2,34 @@ import { Check, Eye, Globe, MapPin, MessageSquare, Smartphone, Trash2, Users } f
 import Link from "next/link";
 
 import { getAnalyticsStats } from "@/lib/cms/analytics";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { approveComment, deleteComment } from "./actions";
+import { approveWorkCommentAction, deleteWorkCommentAction } from "../works/actions";
 import { LiveVisitors } from "./LiveVisitors";
+
+type PendingComment = {
+  id: string;
+  work_id: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+};
+
+async function getPendingComments(): Promise<PendingComment[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("work_comments")
+    .select("id, work_id, author_name, content, created_at")
+    .eq("is_approved", false)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return (data ?? []) as PendingComment[];
+}
 
 export default async function AdminAnalyticsPage() {
   const stats = await getAnalyticsStats();
+  const pendingComments = await getPendingComments();
 
   return (
     <div>
@@ -201,6 +223,57 @@ export default async function AdminAnalyticsPage() {
               )}
             </div>
           </div>
+        </Panel>
+
+        {/* 作品评论审核 */}
+        <Panel title="作品评论审核" className="lg:col-span-2">
+          {pendingComments.length > 0 ? (
+            <ul className="divide-y divide-white/8">
+              {pendingComments.map((comment) => (
+                <li key={comment.id} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium text-white/80">
+                          {comment.author_name || "匿名"}
+                        </span>
+                        <span className="font-mono text-[10px] text-white/25">
+                          {formatRelativeTime(comment.created_at)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-white/62">
+                        {comment.content}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <form action={approveWorkCommentAction}>
+                        <input type="hidden" name="id" value={comment.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[10px] text-white/55 transition hover:border-cyan/30 hover:text-cyan"
+                        >
+                          <Check aria-hidden="true" className="h-3 w-3" />
+                          通过
+                        </button>
+                      </form>
+                      <form action={deleteWorkCommentAction}>
+                        <input type="hidden" name="id" value={comment.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center gap-1 rounded-md border border-red-300/20 px-2 py-1 text-[10px] text-red-200 transition hover:bg-red-300/10"
+                        >
+                          <Trash2 aria-hidden="true" className="h-3 w-3" />
+                          删除
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty text="暂无待审评论" />
+          )}
         </Panel>
 
         {/* 最近访客 */}

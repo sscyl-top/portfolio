@@ -66,6 +66,58 @@ export type ContentBlock =
       caption?: string;
       items: WorkMedia[];
       layout?: BlockLayout;
+    }
+  | {
+      type: "code";
+      heading: string;
+      language:
+        | "javascript"
+        | "typescript"
+        | "python"
+        | "css"
+        | "html"
+        | "json"
+        | "bash"
+        | "plaintext";
+      code: string;
+      caption?: string;
+      layout?: BlockLayout;
+    }
+  | {
+      type: "quote";
+      heading: string;
+      text: string;
+      author: string;
+      role?: string;
+      layout?: BlockLayout;
+    }
+  | {
+      type: "embed";
+      heading: string;
+      url: string;
+      embedType: "youtube" | "vimeo" | "figma" | "codepen" | "generic";
+      caption?: string;
+      layout?: BlockLayout;
+    }
+  | {
+      type: "divider";
+      heading: string;
+      style: "solid" | "dashed" | "dotted";
+      layout?: BlockLayout;
+    }
+  | {
+      type: "callout";
+      heading: string;
+      text: string;
+      icon: "info" | "warning" | "success" | "tip";
+      tone: "cyan" | "amber" | "green" | "red";
+      layout?: BlockLayout;
+    }
+  | {
+      type: "stats";
+      heading: string;
+      items: Array<{ value: string; label: string }>;
+      layout?: BlockLayout;
     };
 
 export type Work = {

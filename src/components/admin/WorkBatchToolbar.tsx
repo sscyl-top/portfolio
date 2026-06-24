@@ -1,8 +1,25 @@
 "use client";
 
-import { useState, useTransition, useCallback, useRef } from "react";
+import { useState, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { Loader2, Trash2, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import {
   batchDeleteWorks,
@@ -31,9 +48,6 @@ export function WorkBatchManager({ works }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [orderedWorks, setOrderedWorks] = useState(works);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
-  const dragCounter = useRef(0);
 
   // 同步外部 works 变化
   const worksKey = works.map((w) => w.id).join(",");
@@ -41,6 +55,21 @@ export function WorkBatchManager({ works }: Props) {
   if (worksKey !== orderedKey) {
     setOrderedWorks(works);
   }
+
+  // dnd-kit 传感器配置
+  // PointerSensor：桌面端鼠标拖拽
+  // TouchSensor：移动端长按 500ms 触发，避免误触滚动
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 500, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   const allSelected = orderedWorks.length > 0 && selected.size === orderedWorks.length;
   const selectedArray = Array.from(selected);
@@ -71,35 +100,33 @@ export function WorkBatchManager({ works }: Props) {
     withReset(batchDeleteWorks)(formData);
   };
 
-  // ── 拖拽排序 ───────────────────────────────────────────────
-  const handleDragStart = useCallback((index: number) => {
-    setDragIndex(index);
-  }, []);
+  // ── dnd-kit 拖拽排序 ──────────────────────────────────────────
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
 
-  const handleDragEnter = useCallback((index: number) => {
-    if (dragIndex === null || dragIndex === index) return;
-    setOrderedWorks((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(dragIndex, 1);
-      next.splice(index, 0, moved);
-      return next;
-    });
-    setDragIndex(index);
-  }, [dragIndex]);
+      setOrderedWorks((prev) => {
+        const oldIndex = prev.findIndex((w) => w.id === active.id);
+        const newIndex = prev.findIndex((w) => w.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return prev;
 
-  const handleDragEnd = useCallback(() => {
-    setDragIndex(null);
-    setOverIndex(null);
-    dragCounter.current = 0;
-    // 保存新顺序
-    if (orderedWorks.length > 1) {
-      const formData = new FormData();
-      formData.set("ordered_ids", JSON.stringify(orderedWorks.map((w) => w.id)));
-      startTransition(async () => {
-        await reorderWorksAction(formData);
+        const next = [...prev];
+        const [moved] = next.splice(oldIndex, 1);
+        next.splice(newIndex, 0, moved);
+
+        // 保存新顺序
+        const formData = new FormData();
+        formData.set("ordered_ids", JSON.stringify(next.map((w) => w.id)));
+        startTransition(async () => {
+          await reorderWorksAction(formData);
+        });
+
+        return next;
       });
-    }
-  }, [orderedWorks]);
+    },
+    [],
+  );
 
   if (orderedWorks.length === 0) {
     return (
@@ -127,7 +154,7 @@ export function WorkBatchManager({ works }: Props) {
         </span>
 
         <span className="hidden text-xs text-white/30 sm:inline">
-          拖拽 ⠿ 手柄可调整排序
+          拖拽 ⠿ 手柄可调整排序（移动端长按）
         </span>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -197,100 +224,148 @@ export function WorkBatchManager({ works }: Props) {
         </div>
       </div>
 
-      <div className="overflow-x-auto border-y border-white/10">
-        <table className="min-w-full text-left text-sm">
-          <thead className="font-mono text-[10px] uppercase text-white/36">
-            <tr>
-              <th className="py-3 pr-1 font-normal"></th>
-              <th className="py-3 pr-2 font-normal">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="h-4 w-4 accent-cyan"
-                />
-              </th>
-              <th className="py-3 pr-4 font-normal">Title</th>
-              <th className="px-4 py-3 font-normal">Status</th>
-              <th className="px-4 py-3 font-normal">Year</th>
-              <th className="px-4 py-3 font-normal">Placement</th>
-              <th className="py-3 pl-4 font-normal">Public URL</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {orderedWorks.map((work, index) => (
-              <tr
-                key={work.id}
-                className={`align-top transition ${
-                  dragIndex === index ? "opacity-40" : ""
-                } ${overIndex === index && dragIndex !== null && dragIndex !== index ? "border-t-2 border-t-cyan" : ""}`}
-              >
-                <td className="py-4 pr-1">
-                  <button
-                    type="button"
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragEnter={() => handleDragEnter(index)}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setOverIndex(index);
-                    }}
-                    className="cursor-grab text-white/25 transition hover:text-white/60 active:cursor-grabbing"
-                    title="拖拽调整排序"
-                  >
-                    <GripVertical className="h-4 w-4" />
-                  </button>
-                </td>
-                <td className="py-4 pr-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(work.id)}
-                    onChange={() => toggleOne(work.id)}
-                    className="h-4 w-4 accent-cyan"
+      {/* dnd-kit 拖拽排序区域 */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={orderedWorks.map((w) => w.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="overflow-x-auto border-y border-white/10">
+            <table className="min-w-full text-left text-sm">
+              <thead className="font-mono text-[10px] uppercase text-white/36">
+                <tr>
+                  <th className="py-3 pr-1 font-normal"></th>
+                  <th className="py-3 pr-2 font-normal">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      className="h-4 w-4 accent-cyan"
+                    />
+                  </th>
+                  <th className="py-3 pr-4 font-normal">Title</th>
+                  <th className="px-4 py-3 font-normal">Status</th>
+                  <th className="px-4 py-3 font-normal">Year</th>
+                  <th className="px-4 py-3 font-normal">Placement</th>
+                  <th className="py-3 pl-4 font-normal">Public URL</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {orderedWorks.map((work) => (
+                  <SortableRow
+                    key={work.id}
+                    work={work}
+                    isSelected={selected.has(work.id)}
+                    onToggle={() => toggleOne(work.id)}
+                    isPending={isPending}
                   />
-                </td>
-                <td className="py-4 pr-4">
-                  <Link
-                    href={`/admin/works/${work.id}`}
-                    className="font-medium text-white transition hover:text-cyan"
-                  >
-                    {work.title}
-                  </Link>
-                  <p className="mt-1 font-mono text-xs text-white/36">
-                    {work.slug}
-                  </p>
-                </td>
-                <td className="px-4 py-4">
-                  <StatusBadge status={work.status} />
-                </td>
-                <td className="px-4 py-4 text-white/56">{work.year || "-"}</td>
-                <td className="px-4 py-4 text-white/56">
-                  {[
-                    work.is_representative ? "代表作" : null,
-                    work.is_composite ? "复合设计" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" / ") || "-"}
-                </td>
-                <td className="py-4 pl-4">
-                  {work.status === "published" ? (
-                    <Link
-                      href={`/works/${work.slug}`}
-                      className="text-cyan hover:text-white"
-                    >
-                      查看
-                    </Link>
-                  ) : (
-                    <span className="text-white/28">未公开</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
+  );
+}
+
+/**
+ * 可拖拽排序的表格行
+ * 使用 dnd-kit 的 useSortable 钩子实现拖拽
+ */
+function SortableRow({
+  work,
+  isSelected,
+  onToggle,
+  isPending,
+}: {
+  work: WorkItem;
+  isSelected: boolean;
+  onToggle: () => void;
+  isPending: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: work.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`align-top transition ${isDragging ? "bg-cyan/[0.04]" : ""}`}
+    >
+      <td className="py-4 pr-1">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-white/25 transition hover:text-white/60 active:cursor-grabbing disabled:opacity-30"
+          title="拖拽调整排序（移动端长按）"
+          disabled={isPending}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      </td>
+      <td className="py-4 pr-2">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggle}
+          className="h-4 w-4 accent-cyan"
+        />
+      </td>
+      <td className="py-4 pr-4">
+        <Link
+          href={`/admin/works/${work.id}`}
+          className="font-medium text-white transition hover:text-cyan"
+        >
+          {work.title}
+        </Link>
+        <p className="mt-1 font-mono text-xs text-white/36">
+          {work.slug}
+        </p>
+      </td>
+      <td className="px-4 py-4">
+        <StatusBadge status={work.status} />
+      </td>
+      <td className="px-4 py-4 text-white/56">{work.year || "-"}</td>
+      <td className="px-4 py-4 text-white/56">
+        {[
+          work.is_representative ? "代表作" : null,
+          work.is_composite ? "复合设计" : null,
+        ]
+          .filter(Boolean)
+          .join(" / ") || "-"}
+      </td>
+      <td className="py-4 pl-4">
+        {work.status === "published" ? (
+          <Link
+            href={`/works/${work.slug}`}
+            className="text-cyan hover:text-white"
+          >
+            查看
+          </Link>
+        ) : (
+          <span className="text-white/28">未公开</span>
+        )}
+      </td>
+    </tr>
   );
 }
 

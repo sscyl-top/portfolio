@@ -2,12 +2,22 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowUpRight, Download, Sparkles } from "lucide-react";
 import gsap from "gsap";
 
-import { AmbientParticles } from "@/components/home/AmbientParticles";
 import { toneClass } from "@/lib/workTone";
 import { resume as staticResume } from "@/data/portfolio";
+
+// 使用 next/dynamic 懒加载 3D 粒子组件，将 three.js 从首屏 JS 包中拆分出去
+// ssr: false 避免 SSR 阶段初始化 WebGL 上下文，确保首屏不被 3D 阻塞
+const AmbientParticles = dynamic(
+  () =>
+    import("@/components/home/AmbientParticles").then(
+      (mod) => mod.AmbientParticles,
+    ),
+  { ssr: false, loading: () => null },
+);
 
 export type HeroTextOverrides = {
   desktopTitle?: string;

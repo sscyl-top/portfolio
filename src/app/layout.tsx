@@ -1,8 +1,23 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 
+import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+// 使用 next/font 自托管 Geist 字体，display: swap 确保文本不因字体加载而不可见
+// 通过 CSS 变量与 Tailwind v4 @theme inline 集成
+const geistSans = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -86,7 +101,10 @@ export default async function RootLayout({
   settings.navigation = applyNavTextOverrides(settings.navigation, navTexts);
 
   return (
-    <html lang="zh-CN">
+    <html
+      lang="zh-CN"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <SiteHeader siteSettings={settings} />
         {children}

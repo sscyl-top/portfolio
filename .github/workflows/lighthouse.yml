@@ -1,0 +1,50 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main, master]
+
+# 预览模式：Lighthouse 报告仅作参考，不阻塞部署与合并
+jobs:
+  lighthouse-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建生产版本
+        run: npm run build
+
+      - name: 启动生产服务器（后台）
+        run: |
+          npm run start &
+          # 轮询等待服务器就绪，最多等待 60 秒
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ | grep -q "200"; then
+              echo "服务器已就绪"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: 运行 Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: ./lighthouserc.json
+          temporaryPublicStorage: true
+
+      - name: 上传 Lighthouse 报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 30

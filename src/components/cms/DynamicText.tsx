@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 
+// re-export EditableText，方便调用方从同一入口替换 DynamicText
+export { EditableText } from './EditableText'
+
 type DynamicTextProps = {
   textKey: string
   fallback: string

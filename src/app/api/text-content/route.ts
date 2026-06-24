@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getBackendReadiness } from '@/lib/supabase/config'
+import { requireAdmin } from '@/lib/admin-session'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/text-content?key=home.hero.title
@@ -120,6 +121,62 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true, data: result })
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH /api/text-content — 更新单个 key 的 content（需管理员鉴权）
+export async function PATCH(request: NextRequest) {
+  // 鉴权：requireAdmin 失败会抛出 redirect，这里捕获并返回 401
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    )
+  }
+
+  try {
+    const { key, content } = await request.json()
+
+    if (!key || typeof content !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'key and content are required' },
+        { status: 400 }
+      )
+    }
+
+    const readiness = getBackendReadiness()
+    if (!readiness.supabase) {
+      return NextResponse.json(
+        { success: false, error: 'Database not configured' },
+        { status: 503 }
+      )
+    }
+
+    const supabase = await createSupabaseServerClient()
+
+    const { data, error } = await supabase
+      .from('text_content')
+      .update({ content })
+      .eq('key', key)
+      .is('deleted_at', null)
+      .select('content')
+      .single()
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true, content: data.content })
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },

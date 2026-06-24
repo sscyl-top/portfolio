@@ -1679,3 +1679,50 @@ export async function reorderWorksAction(formData: FormData) {
   revalidatePath("/admin/works");
   revalidatePath("/works");
 }
+
+// ── 作品评论审核 Server Actions ────────────────────────────
+
+const commentIdSchema = z.string().uuid();
+
+/**
+ * 审核通过作品评论：将 is_approved 置为 true。
+ */
+export async function approveWorkCommentAction(formData: FormData) {
+  const parsed = commentIdSchema.safeParse(String(formData.get("id") ?? ""));
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { error } = await client
+    .from("work_comments")
+    .update({ is_approved: true })
+    .eq("id", parsed.data);
+
+  if (error) {
+    console.error("Failed to approve work comment", error);
+    return;
+  }
+
+  revalidatePath("/admin/analytics");
+}
+
+/**
+ * 删除作品评论。
+ * 注：work_comments 表无 deleted_at 软删除字段，此处执行硬删除。
+ */
+export async function deleteWorkCommentAction(formData: FormData) {
+  const parsed = commentIdSchema.safeParse(String(formData.get("id") ?? ""));
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { error } = await client
+    .from("work_comments")
+    .delete()
+    .eq("id", parsed.data);
+
+  if (error) {
+    console.error("Failed to delete work comment", error);
+    return;
+  }
+
+  revalidatePath("/admin/analytics");
+}

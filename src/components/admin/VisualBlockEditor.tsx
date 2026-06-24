@@ -19,6 +19,14 @@ import {
   Images,
   Layers,
   Crosshair,
+  Code,
+  Quote,
+  Frame,
+  SeparatorHorizontal,
+  MessageSquare,
+  Hash,
+  ChevronDown,
+  Plus,
 } from "lucide-react";
 import {
   reorderWorkBlocks,
@@ -59,13 +67,35 @@ type Props = {
 // ── 块类型配置（仅用于图标/标签显示）────────────────────
 
 const BLOCK_TYPE_META = {
-  text:        { label: "文本",   icon: Type,        color: "text-blue-400"   },
-  media:       { label: "图片",   icon: ImageIcon,   color: "text-green-400"  },
-  gallery:     { label: "图库",   icon: Columns2,    color: "text-purple-400" },
-  video:       { label: "视频",   icon: Video,       color: "text-red-400"    },
-  pdf:         { label: "PDF",    icon: FileText,    color: "text-orange-400" },
-  before_after: { label: "对比",  icon: Columns2,    color: "text-yellow-400" },
+  text:         { label: "文本",   icon: Type,                color: "text-blue-400"   },
+  media:        { label: "图片",   icon: ImageIcon,           color: "text-green-400"  },
+  gallery:      { label: "图库",   icon: Columns2,            color: "text-purple-400" },
+  video:        { label: "视频",   icon: Video,               color: "text-red-400"    },
+  pdf:          { label: "PDF",    icon: FileText,            color: "text-orange-400" },
+  before_after: { label: "对比",   icon: Columns2,            color: "text-yellow-400" },
+  code:         { label: "代码",   icon: Code,                color: "text-green-300"  },
+  quote:        { label: "引用",   icon: Quote,               color: "text-copper"     },
+  embed:        { label: "嵌入",   icon: Frame,               color: "text-cyan"       },
+  divider:      { label: "分隔",   icon: SeparatorHorizontal, color: "text-white/50"   },
+  callout:      { label: "提示",   icon: MessageSquare,       color: "text-amber-400"  },
+  stats:        { label: "数据",   icon: Hash,                color: "text-purple-400" },
 } as const;
+
+// ── 新增块类型的创建选项（默认 payload）────────────────────
+
+const NEW_BLOCK_OPTIONS: Array<{
+  type: string;
+  label: string;
+  icon: typeof Code;
+  payload: Record<string, unknown>;
+}> = [
+  { type: "code",    label: "代码", icon: Code,                payload: { heading: "代码", language: "javascript", code: "// 在此输入代码", caption: "" } },
+  { type: "quote",   label: "引用", icon: Quote,               payload: { heading: "引用", text: "引用内容", author: "作者", role: "" } },
+  { type: "embed",   label: "嵌入", icon: Frame,               payload: { heading: "嵌入", url: "https://", embedType: "youtube", caption: "" } },
+  { type: "divider", label: "分隔", icon: SeparatorHorizontal, payload: { heading: "分隔", style: "solid" } },
+  { type: "callout", label: "提示", icon: MessageSquare,       payload: { heading: "提示", text: "提示内容", icon: "info", tone: "cyan" } },
+  { type: "stats",   label: "数据", icon: Hash,                payload: { heading: "数据", items: [{ value: "100", label: "标签" }] } },
+];
 
 // ── 布局类型 ─────────────────────────────────────────────
 
@@ -256,6 +286,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [showBlockMenu, setShowBlockMenu] = useState(false);
 
   // 多图排列方式询问
   const [imageLayoutChoice, setImageLayoutChoice] = useState<{
@@ -775,6 +806,37 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [workId, workSlug, router],
   );
 
+  // ── 通用块创建（用于新增的 6 种块类型）────────────────────
+
+  const handleAddBlock = useCallback(
+    async (blockType: string, payload: Record<string, unknown>, insertAt: number) => {
+      try {
+        const created = await createBlockDirect(
+          workId,
+          workSlug,
+          blockType,
+          payload,
+          insertAt,
+        );
+        setBlocks((prev) => {
+          const updated = [...prev];
+          updated.forEach((b) => { if (b.sort_order >= insertAt) b.sort_order += 1; });
+          return [...updated, {
+            id: created.id,
+            block_type: blockType,
+            sort_order: insertAt,
+            is_visible: true,
+            payload,
+          }].sort((a, b) => a.sort_order - b.sort_order);
+        });
+        router.refresh();
+      } catch (err) {
+        console.error("Add block failed:", err);
+      }
+    },
+    [workId, workSlug, router],
+  );
+
   // ── 更新块 payload ───────────────────────────────────────
 
   const handleUpdateBlock = useCallback(
@@ -831,6 +893,46 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
             <Type className="h-4 w-4" />
             添加文本
           </button>
+          {/* 添加更多块类型（下拉菜单）*/}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowBlockMenu((v) => !v)}
+              className="flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm text-white/70 transition hover:border-white/40 hover:text-white"
+            >
+              <Plus className="h-4 w-4" />
+              添加块
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {showBlockMenu ? (
+              <>
+                {/* 点击外部关闭菜单 */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowBlockMenu(false)}
+                />
+                <div className="absolute right-0 z-50 mt-1 w-44 overflow-hidden rounded-md border border-white/15 bg-[#1a1a2e] shadow-2xl">
+                  {NEW_BLOCK_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        onClick={() => {
+                          void handleAddBlock(opt.type, opt.payload, blocks.length);
+                          setShowBlockMenu(false);
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                      >
+                        <Icon className="h-4 w-4 text-white/50" />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -1102,7 +1204,13 @@ function BlockCard({
     block.block_type === "media" ||
     block.block_type === "video" ||
     block.block_type === "pdf" ||
-    block.block_type === "before_after"
+    block.block_type === "before_after" ||
+    block.block_type === "code" ||
+    block.block_type === "quote" ||
+    block.block_type === "embed" ||
+    block.block_type === "divider" ||
+    block.block_type === "callout" ||
+    block.block_type === "stats"
   );
 
   return (
@@ -1266,6 +1374,23 @@ function InlineBlockEditor({
         mediaAssets={mediaAssets}
         onUpdatePayload={onUpdatePayload}
         onAddImages={onAddImagesToGallery}
+      />
+    );
+  }
+
+  // 新增的 6 种块类型统一走通用内联编辑器
+  if (
+    block.block_type === "code" ||
+    block.block_type === "quote" ||
+    block.block_type === "embed" ||
+    block.block_type === "divider" ||
+    block.block_type === "callout" ||
+    block.block_type === "stats"
+  ) {
+    return (
+      <InlineContentBlockEditor
+        block={block}
+        onUpdatePayload={onUpdatePayload}
       />
     );
   }
@@ -1720,6 +1845,323 @@ function InlineBeforeAfterEditor({
   );
 }
 
+// ── 通用内联编辑器（code/quote/embed/divider/callout/stats）──
+
+function InlineContentBlockEditor({
+  block,
+  onUpdatePayload,
+}: {
+  block: VisualBlock;
+  onUpdatePayload: (newPayload: Record<string, unknown>) => void;
+}) {
+  const payload = block.payload;
+  const [state, setState] = useState<Record<string, unknown>>(() => ({ ...payload }));
+
+  // 防抖保存：state 变化后 800ms 触发
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onUpdatePayload({ ...state });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [state]);
+
+  /** 更新单个字段 */
+  const update = (key: string, value: unknown) => {
+    setState((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // 通用样式
+  const inputClass =
+    "w-full rounded-md border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-white/80 outline-none placeholder:text-white/20 focus:border-cyan/40";
+  const labelClass =
+    "mb-1 block text-[10px] font-medium uppercase tracking-wider text-white/30";
+
+  if (block.block_type === "code") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>语言</label>
+          <select
+            value={String(state.language ?? "javascript")}
+            onChange={(e) => update("language", e.target.value)}
+            className={inputClass}
+          >
+            {["javascript", "typescript", "python", "css", "html", "json", "bash", "plaintext"].map((lang) => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>代码</label>
+          <textarea
+            value={String(state.code ?? "")}
+            onChange={(e) => update("code", e.target.value)}
+            placeholder="输入代码…"
+            rows={6}
+            className={`resize-y font-mono ${inputClass}`}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>说明（可选）</label>
+          <input
+            value={String(state.caption ?? "")}
+            onChange={(e) => update("caption", e.target.value)}
+            placeholder="说明文字…"
+            className={inputClass}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "quote") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>引用内容</label>
+          <textarea
+            value={String(state.text ?? "")}
+            onChange={(e) => update("text", e.target.value)}
+            placeholder="引用内容…"
+            rows={4}
+            className={`resize-y ${inputClass}`}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>作者</label>
+            <input
+              value={String(state.author ?? "")}
+              onChange={(e) => update("author", e.target.value)}
+              placeholder="作者"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>职位（可选）</label>
+            <input
+              value={String(state.role ?? "")}
+              onChange={(e) => update("role", e.target.value)}
+              placeholder="职位"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "embed") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>嵌入类型</label>
+          <select
+            value={String(state.embedType ?? "youtube")}
+            onChange={(e) => update("embedType", e.target.value)}
+            className={inputClass}
+          >
+            {["youtube", "vimeo", "figma", "codepen", "generic"].map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>URL</label>
+          <input
+            value={String(state.url ?? "")}
+            onChange={(e) => update("url", e.target.value)}
+            placeholder="https://"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>说明（可选）</label>
+          <input
+            value={String(state.caption ?? "")}
+            onChange={(e) => update("caption", e.target.value)}
+            placeholder="说明文字…"
+            className={inputClass}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "divider") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>样式</label>
+          <select
+            value={String(state.style ?? "solid")}
+            onChange={(e) => update("style", e.target.value)}
+            className={inputClass}
+          >
+            <option value="solid">实线</option>
+            <option value="dashed">虚线</option>
+            <option value="dotted">点线</option>
+          </select>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "callout") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>内容</label>
+          <textarea
+            value={String(state.text ?? "")}
+            onChange={(e) => update("text", e.target.value)}
+            placeholder="提示内容…"
+            rows={3}
+            className={`resize-y ${inputClass}`}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>图标</label>
+            <select
+              value={String(state.icon ?? "info")}
+              onChange={(e) => update("icon", e.target.value)}
+              className={inputClass}
+            >
+              <option value="info">信息</option>
+              <option value="warning">警告</option>
+              <option value="success">成功</option>
+              <option value="tip">提示</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>色调</label>
+            <select
+              value={String(state.tone ?? "cyan")}
+              onChange={(e) => update("tone", e.target.value)}
+              className={inputClass}
+            >
+              <option value="cyan">青色</option>
+              <option value="amber">琥珀</option>
+              <option value="green">绿色</option>
+              <option value="red">红色</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "stats") {
+    const items = (state.items as Array<{ value: string; label: string }>) ?? [];
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelClass}>标题</label>
+          <input
+            value={String(state.heading ?? "")}
+            onChange={(e) => update("heading", e.target.value)}
+            placeholder="标题"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>数据项</label>
+          <div className="space-y-2">
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={item.value}
+                  onChange={(e) => {
+                    const next = [...items];
+                    next[i] = { ...next[i], value: e.target.value };
+                    update("items", next);
+                  }}
+                  placeholder="数值"
+                  className={`${inputClass} w-24`}
+                />
+                <input
+                  value={item.label}
+                  onChange={(e) => {
+                    const next = [...items];
+                    next[i] = { ...next[i], label: e.target.value };
+                    update("items", next);
+                  }}
+                  placeholder="标签"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => update("items", items.filter((_, idx) => idx !== i))}
+                  className="shrink-0 rounded p-1 text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
+                  title="删除"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => update("items", [...items, { value: "", label: "" }])}
+              className="flex items-center gap-1.5 rounded-md border border-dashed border-white/15 px-3 py-1.5 text-xs text-white/40 transition hover:border-cyan/30 hover:text-cyan/60"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              添加数据项
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 // ── 块内容预览 ─────────────────────────────────────────────
 
 function BlockPreview({
@@ -1837,6 +2279,113 @@ function BlockPreview({
           ) : (
             <div className="flex aspect-square items-center justify-center rounded-md bg-white/5 text-xs text-white/20">未选择</div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "code") {
+    return (
+      <div className="space-y-2">
+        {payload.heading ? (
+          <h4 className="text-base font-semibold text-white/90">{String(payload.heading)}</h4>
+        ) : null}
+        <div className="relative overflow-hidden rounded-md border border-white/10 bg-black/40">
+          <span className="absolute right-2 top-1 font-mono text-[10px] uppercase text-white/40">
+            {String(payload.language ?? "")}
+          </span>
+          <pre className="overflow-x-auto p-3 pr-16 font-mono text-xs text-green-300/90">
+            <code>{String(payload.code ?? "")}</code>
+          </pre>
+        </div>
+        {payload.caption ? (
+          <p className="text-sm text-white/50">{String(payload.caption)}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (block.block_type === "quote") {
+    return (
+      <div className="space-y-2">
+        {payload.heading ? (
+          <h4 className="text-base font-semibold text-white/90">{String(payload.heading)}</h4>
+        ) : null}
+        <blockquote className="border-l-2 border-copper pl-4">
+          <p className="text-sm leading-relaxed text-white/70">
+            {String(payload.text ?? "")}
+          </p>
+          <footer className="mt-1 text-xs">
+            <span className="font-medium text-copper">{String(payload.author ?? "")}</span>
+            {payload.role ? (
+              <span className="text-white/45"> · {String(payload.role)}</span>
+            ) : null}
+          </footer>
+        </blockquote>
+      </div>
+    );
+  }
+
+  if (block.block_type === "embed") {
+    return (
+      <div className="space-y-2">
+        {payload.heading ? (
+          <h4 className="text-base font-semibold text-white/90">{String(payload.heading)}</h4>
+        ) : null}
+        <div className="flex items-center gap-2 rounded-md bg-white/5 p-3">
+          <Frame className="h-5 w-5 text-cyan/60" />
+          <span className="truncate text-sm text-white/60">
+            {String(payload.embedType ?? "")}: {String(payload.url ?? "")}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.block_type === "divider") {
+    const style = String(payload.style ?? "solid");
+    const borderClass =
+      style === "dashed" ? "border-dashed" : style === "dotted" ? "border-dotted" : "border-solid";
+    return <hr className={`border-t border-white/15 ${borderClass}`} />;
+  }
+
+  if (block.block_type === "callout") {
+    const tone = String(payload.tone ?? "cyan");
+    const toneClass =
+      tone === "amber"
+        ? "border-amber-400/30 bg-amber-400/5"
+        : tone === "green"
+          ? "border-green-400/30 bg-green-400/5"
+          : tone === "red"
+            ? "border-red-400/30 bg-red-400/5"
+            : "border-cyan/30 bg-cyan/5";
+    return (
+      <div className={`rounded-md border p-3 ${toneClass}`}>
+        {payload.heading ? (
+          <p className="font-semibold text-white/90">{String(payload.heading)}</p>
+        ) : null}
+        <p className="text-sm text-white/60">{String(payload.text ?? "")}</p>
+      </div>
+    );
+  }
+
+  if (block.block_type === "stats") {
+    const items = (payload.items as Array<{ value: string; label: string }>) ?? [];
+    return (
+      <div className="space-y-2">
+        {payload.heading ? (
+          <h4 className="text-base font-semibold text-white/90">{String(payload.heading)}</h4>
+        ) : null}
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="rounded-md border border-white/10 bg-white/[0.035] p-2 text-center"
+            >
+              <p className="text-xl font-semibold text-copper">{item.value}</p>
+              <p className="text-xs text-white/50">{item.label}</p>
+            </div>
+          ))}
         </div>
       </div>
     );
