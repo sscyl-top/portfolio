@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { Text } from "@/components/cms/Text";
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -21,7 +22,6 @@ export async function SiteHeader({
 }: {
   siteSettings?: PublicSiteSettings;
 }) {
-  // 检测当前用户是否登录，决定头像点击跳转目标
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -38,13 +38,11 @@ export async function SiteHeader({
         >
           <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04] md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={siteSettings.logoMediaUrl}
                 alt=""
-                width={40}
-                height={40}
                 className="h-full w-full object-contain md:h-12 md:w-12"
-                priority
               />
             ) : (
               <span
@@ -65,32 +63,42 @@ export async function SiteHeader({
 
         <div className="justify-self-center">
           <div className="flex items-center gap-1">
-            {siteSettings.navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={true}
-                className="relative px-3 py-2 text-sm text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {siteSettings.navigation.map((item) => {
+              const navKeyMap: Record<string, string> = {
+                '/': 'global.nav.home',
+                '/works': 'global.nav.works',
+                '/resume': 'global.nav.resume',
+              }
+              const textKey = navKeyMap[item.href]
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  prefetch={true}
+                  className="relative px-3 py-2 text-sm text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
+                >
+                  {textKey ? (
+                    <Text k={textKey} fallback={item.label} />
+                  ) : (
+                    item.label
+                  )}
+                </Link>
+              )
+            })}
           </div>
         </div>
 
         {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="justify-self-end grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            className="justify-self-end grid place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={siteSettings.avatarMediaUrl}
               alt=""
-              width={48}
-              height={48}
               className="h-full w-full object-cover"
-              priority
             />
           </Link>
         ) : (

@@ -136,34 +136,44 @@ export default async function AdminSettingsPage() {
             name="logo_media_id"
             assets={mediaAssets}
             defaultValue={settings.logo_media_id ?? ""}
+            hint="导航栏左侧图标，支持 PNG/JPG/GIF/WEBP/SVG"
           />
           <SettingsMediaField
-            label="头像"
+            label="头像（导航栏右侧）"
             name="avatar_media_id"
             assets={mediaAssets}
             defaultValue={settings.avatar_media_id ?? ""}
+            circular
+            hint="导航栏右侧圆形头像，点击进入后台/简历，支持 PNG/JPG/GIF/WEBP/SVG"
           />
           <SettingsMediaField
             label="分享缩略图"
             name="share_media_id"
             assets={mediaAssets}
             defaultValue={settings.share_media_id ?? ""}
+            hint="社交分享卡片缩略图，建议 1200×630"
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <SettingsMediaField
-            label="作品终场背景卡"
-            name="cta_card_media_id"
-            assets={mediaAssets}
-            defaultValue={settings.cta_card_media_id ?? ""}
-          />
-          <SettingsMediaField
-            label="作品终场人物图"
-            name="cta_figure_media_id"
-            assets={mediaAssets}
-            defaultValue={settings.cta_figure_media_id ?? ""}
-          />
+        <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
+          <h3 className="text-sm font-medium text-white/70">作品终场图片（复合设计板块底部CTA区域）</h3>
+          <p className="mt-1 text-xs text-white/40">两张不同层级的图片：背景卡在下层，人物图在上层叠加。支持 PNG 透明底 / JPG / GIF 动图 / WEBP。</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <SettingsMediaField
+              label="终场背景卡（下层）"
+              name="cta_card_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.cta_card_media_id ?? ""}
+              hint="底层卡片/背景图，建议带透明或半透明设计"
+            />
+            <SettingsMediaField
+              label="终场人物图（上层）"
+              name="cta_figure_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.cta_figure_media_id ?? ""}
+              hint="上层人物/主体图，建议 PNG 透明底"
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

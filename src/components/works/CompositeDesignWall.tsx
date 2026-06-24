@@ -219,12 +219,11 @@ export function CompositeDesignWall({
 
           <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={ctaCardUrl}
                 alt=""
-                fill
-                sizes="(max-width: 768px) 92vw, 1100px"
-                className="object-contain object-center"
+                className="h-full w-full object-contain object-center"
               />
             ) : (
               <div className="cta-card-upload-slot h-full w-full" aria-hidden="true" />
@@ -264,12 +263,11 @@ export function CompositeDesignWall({
 
           <div className="absolute bottom-0 left-1/2 z-30 h-[440px] w-[min(560px,84vw)] -translate-x-1/2">
             {ctaFigureUrl ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={ctaFigureUrl}
                 alt=""
-                fill
-                sizes="(max-width: 768px) 84vw, 560px"
-                className="object-contain object-bottom"
+                className="h-full w-full object-contain object-bottom"
               />
             ) : (
               <div className="cta-figure-upload-slot h-full w-full" aria-hidden="true" />
