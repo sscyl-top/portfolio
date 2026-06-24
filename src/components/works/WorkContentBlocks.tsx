@@ -67,10 +67,10 @@ function renderBlock(block: ContentBlock, index: number, coverTone: string) {
 
 function layoutWidthClass(layout?: BlockLayout): string {
   if (!layout || !layout.width || layout.width === "contained") {
-    return "max-w-5xl mx-auto px-5 md:px-8";
+    return "max-w-6xl mx-auto px-5 md:px-8";
   }
-  if (layout.width === "narrow") return "max-w-3xl mx-auto px-5 md:px-8";
-  if (layout.width === "free") return "relative mx-auto max-w-6xl";
+  if (layout.width === "narrow") return "max-w-4xl mx-auto px-5 md:px-8";
+  if (layout.width === "free") return "relative mx-auto max-w-7xl";
   return ""; // full
 }
 
@@ -120,8 +120,8 @@ function MediaBlock({
         className={
           isGallery
             ? `grid gap-2 md:gap-3 ${cols}`
-              : isFree
-                ? "relative h-[580px] md:h-[800px]"
+              :               isFree
+                ? "relative h-[580px] md:h-[880px]"
                 : ""
         }
       >
@@ -132,8 +132,8 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative aspect-[3/2] overflow-hidden"
-                  : "relative w-full overflow-hidden md:min-h-[65vh]"
+                  ? "relative aspect-video overflow-hidden"
+                  : "relative w-full overflow-hidden md:min-h-[72vh]"
             }
             style={
               isFree && free
@@ -170,7 +170,7 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black md:min-h-[65vh]">
+      <div className="relative w-full overflow-hidden bg-black md:min-h-[72vh]">
         <video
           src={block.items[0].url}
           controls

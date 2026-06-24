@@ -26,6 +26,29 @@ const errorFieldClass =
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
+/** 桌面端：标签左 / 输入右，垂直居中对齐（仅 sm+ 断点生效） */
+function InlineField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <label
+        htmlFor={htmlFor}
+        className="shrink-0 w-[3.2rem] whitespace-nowrap text-right text-[13px] text-white/55"
+      >
+        {label}
+      </label>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
 export function ContactForm({
   id,
   type,
@@ -129,7 +152,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 grid gap-3 sm:grid-cols-2 sm:gap-4"
+        className="mt-3 space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
@@ -143,9 +166,8 @@ export function ContactForm({
           />
         </div>
 
-        {/* ── 姓名 ── */}
-        <div>
-          <label htmlFor={`${type}-name`} className="block mb-1 text-xs text-white/55">姓名</label>
+        {/* ── 姓名 / 邮箱（桌面端同行）── */}
+        <InlineField label="姓名" htmlFor={`${type}-name`}>
           <input
             id={`${type}-name`}
             className={fieldErrors.name ? errorFieldClass : fieldClass}
@@ -161,11 +183,9 @@ export function ContactForm({
               {fieldErrors.name}
             </p>
           ) : null}
-        </div>
+        </InlineField>
 
-        {/* ── 邮箱 ── */}
-        <div>
-          <label htmlFor={`${type}-email`} className="block mb-1 text-xs text-white/55">邮箱</label>
+        <InlineField label="邮箱" htmlFor={`${type}-email`}>
           <input
             id={`${type}-email`}
             className={fieldErrors.email ? errorFieldClass : fieldClass}
@@ -182,7 +202,7 @@ export function ContactForm({
               {fieldErrors.email}
             </p>
           ) : null}
-        </div>
+        </InlineField>
 
         {/* ── 公司（全宽）── */}
         <div className="sm:col-span-2">
@@ -197,9 +217,8 @@ export function ContactForm({
           />
         </div>
 
-        {/* ── 岗位名称 / 项目类型 ── */}
-        <div>
-          <label htmlFor={`${type}-subject`} className="block mb-1 text-xs text-white/55">{subjectLabel}</label>
+        {/* ── 岗位名称 / 薪资范围（桌面端同行）── */}
+        <InlineField label={subjectLabel} htmlFor={`${type}-subject`}>
           <input
             id={`${type}-subject`}
             className={fieldClass}
@@ -207,11 +226,9 @@ export function ContactForm({
             placeholder={subjectPlaceholder}
             maxLength={120}
           />
-        </div>
+        </InlineField>
 
-        {/* ── 薪资范围 / 预算范围 ── */}
-        <div>
-          <label htmlFor={`${type}-range`} className="block mb-1 text-xs text-white/55">{rangeLabel}</label>
+        <InlineField label={rangeLabel} htmlFor={`${type}-range`}>
           <input
             id={`${type}-range`}
             className={fieldClass}
@@ -219,7 +236,7 @@ export function ContactForm({
             placeholder={rangePlaceholder}
             maxLength={80}
           />
-        </div>
+        </InlineField>
 
         {/* ── 岗位描述 / 项目需求（全宽 textarea）── */}
         <div className="sm:col-span-2">

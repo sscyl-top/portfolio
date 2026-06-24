@@ -402,7 +402,7 @@ export async function updateTextBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新文本块");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -561,7 +561,8 @@ export async function updateMediaBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新媒体块");
+  // 媒体块调整属于高频微调操作，不触发自动归档（避免版本爆炸）
+  // 用户可通过手动"保存当前版本"按钮归档重要节点
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -676,7 +677,7 @@ export async function updateVideoBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新视频块");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -760,7 +761,7 @@ export async function updatePdfBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新 PDF 块");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -864,7 +865,7 @@ export async function updateBeforeAfterBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新 Before/After 块");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -1231,7 +1232,7 @@ export async function updateGalleryBlock(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, work_id, user.id, "更新图库块");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${work_id}`);
   revalidatePath(`/works/${work_slug}`);
@@ -1353,7 +1354,7 @@ export async function updateBlockDirect(
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, workId, user.id, `直接更新 ${blockType ?? "内容"} 块`);
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);
@@ -1410,7 +1411,7 @@ export async function updateBlockMediaRef(
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, workId, user.id, "更新块媒体引用");
+  // 高频微调操作，不触发自动归档
 
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath(`/works/${workSlug}`);

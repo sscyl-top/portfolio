@@ -168,7 +168,7 @@ async function writeAuditLog(
  * @param label 版本备注（可选）
  * @param source 版本来源，auto=自动归档，manual=手动保存
  *
- * 节流规则：同一作品的自动归档（source="auto"）至少间隔 3 分钟，
+ * 节流规则：同一作品的自动归档（source="auto"）至少间隔 5 分钟，
  * 避免频繁操作产生大量冗余版本。手动归档不受限制。
  */
 export async function archiveWorkVersion(
@@ -178,21 +178,20 @@ export async function archiveWorkVersion(
   label?: string,
   source: "auto" | "manual" = "auto",
 ): Promise<number | null> {
-  // ── 自动归档节流：检查最近一次 auto 版本的时间 ──
+  // ── 自动归档节流：检查最近一次版本的时间 ──
   if (source === "auto") {
-    const { data: lastAuto } = await client
+    const { data: lastVersion } = await client
       .from("work_versions")
-      .select("created_at")
+      .select("created_at, snapshot")
       .eq("work_id", workId)
-      .like("snapshot->>meta->>source", '"auto"')
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
-    if (lastAuto?.created_at) {
-      const lastTime = new Date(lastAuto.created_at).getTime();
+    if (lastVersion?.created_at) {
+      const lastTime = new Date(lastVersion.created_at).getTime();
       const now = Date.now();
-      const MIN_AUTO_INTERVAL_MS = 3 * 60 * 1000; // 3 分钟
+      const MIN_AUTO_INTERVAL_MS = 5 * 60 * 1000; // 5 分钟
 
       if (now - lastTime < MIN_AUTO_INTERVAL_MS) {
         // 跳过本次自动归档，静默返回
