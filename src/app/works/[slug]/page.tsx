@@ -47,40 +47,6 @@ export async function generateMetadata({
   };
 }
 
-/**
- * 将作品封面自动作为第一个 media 块前置，
- * 保证用户上传作品后详情页能直接从封面图开始（站酷风格）。
- * 如果用户已经在块编辑器中把封面放为第一块，则避免重复。
- */
-function buildBlocksWithCover(coverMedia?: WorkMedia, blocks: ContentBlock[] = []): ContentBlock[] {
-  if (!coverMedia) return blocks;
-
-  const firstBlock = blocks[0];
-  const firstBlockHasCover =
-    firstBlock &&
-    (firstBlock.type === "media" || firstBlock.type === "video") &&
-    firstBlock.items.some((item) => item.url === coverMedia.url);
-
-  if (firstBlockHasCover) return blocks;
-
-  const coverBlock: ContentBlock =
-    coverMedia.mimeType.startsWith("video/")
-      ? {
-          type: "video",
-          caption: "",
-          items: [coverMedia],
-          layout: { width: "full" },
-        }
-      : {
-          type: "media",
-          caption: "",
-          items: [coverMedia],
-          layout: { width: "full" },
-        };
-
-  return [coverBlock, ...blocks];
-}
-
 export default async function WorkDetailPage({
   params,
   searchParams,
@@ -101,7 +67,6 @@ export default async function WorkDetailPage({
   }
 
   const relatedWorks = await repository.getRelatedWorks(work.slug);
-  const displayBlocks = buildBlocksWithCover(work.coverMedia, work.blocks);
 
   return (
     <main className="min-h-screen bg-[#050505] pb-24 pt-28 md:pt-32">
@@ -143,7 +108,7 @@ export default async function WorkDetailPage({
 
       {/* 内容块区域：无框、自由排版 */}
       <div className="mt-8 md:mt-12">
-        <WorkContentBlocks blocks={displayBlocks} coverTone={work.coverTone} />
+        <WorkContentBlocks blocks={work.blocks} coverTone={work.coverTone} />
       </div>
 
       {/* 互动区 */}
