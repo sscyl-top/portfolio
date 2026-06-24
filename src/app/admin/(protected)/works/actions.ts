@@ -1361,6 +1361,26 @@ export async function updateBlockDirect(
 }
 
 /**
+ * 仅保存布局变更，不触发 revalidatePath — 用于后台布局按钮高频切换
+ * （避免乐观更新被服务端 RSC 重新渲染覆盖，导致按钮来回跳动）
+ */
+export async function updateBlockLayoutDirect(
+  workId: string,
+  blockId: string,
+  payload: Record<string, unknown>,
+) {
+  const { client } = await requireAdmin();
+
+  const { error } = await client
+    .from("work_blocks")
+    .update({ payload })
+    .eq("id", blockId)
+    .eq("work_id", workId);
+
+  if (error) throw new Error(error.message);
+}
+
+/**
  * 更新块的 media_ref（用于裁剪后替换媒体）
  */
 export async function updateBlockMediaRef(

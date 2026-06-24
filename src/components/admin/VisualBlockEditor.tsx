@@ -33,6 +33,7 @@ import {
   createBlockDirect,
   deleteBlockDirect,
   updateBlockDirect,
+  updateBlockLayoutDirect,
   updateBlockMediaRef,
 } from "@/app/admin/(protected)/works/actions";
 import { uploadMediaFiles, uploadMediaBlob } from "@/lib/cms/upload-media";
@@ -869,17 +870,17 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [workId, workSlug, router],
   );
 
-  // 布局保存（轻量版）：仅更新后端，不触发 router.refresh()
+  // 布局保存（轻量版）：仅更新后端，不触发 revalidatePath/router.refresh()
+  // 防止服务端 RSC 重新渲染覆盖本地乐观更新，导致布局按钮来回跳动
   const saveLayoutToServer = useCallback(
-    async (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+    async (blockId: string, newPayload: Record<string, unknown>) => {
       try {
-        const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
-        await updateBlockDirect(workId, workSlug, blockId, payloadToSend);
+        await updateBlockLayoutDirect(workId, blockId, newPayload);
       } catch (err) {
         console.error("Save layout failed:", err);
       }
     },
-    [workId, workSlug],
+    [workId],
   );
 
   // ── 渲染 ─────────────────────────────────────────────────
@@ -1090,7 +1091,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
-                onSaveLayout={(newPayload) => saveLayoutToServer(block.id, newPayload, block.block_type)}
+                onSaveLayout={(newPayload) => saveLayoutToServer(block.id, newPayload)}
                 onSaveAndClose={() => setEditingBlockId(null)}
                 onReplaceMedia={(blockId) => {
                   setFileInputIntent({ mode: "replace", blockId });
@@ -1234,7 +1235,7 @@ function BlockCard({
   // 布局切换专用防抖：600ms 内只触发一次保存，避免快速点击产生大量版本
   const layoutDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedUpdatePayload = useCallback(
-    (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+    (blockId: string, newPayload: Record<string, unknown>) => {
       if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
       layoutDebounceRef.current = setTimeout(() => {
         onSaveLayout(newPayload);
@@ -1336,7 +1337,7 @@ function BlockCard({
             // 立即乐观更新（UI 即时响应，不等待防抖）
             onOptimisticUpdate(newPayload);
             // 布局切换防抖 600ms 后保存后端
-            debouncedUpdatePayload(block.id, newPayload, block.block_type);
+            debouncedUpdatePayload(block.id, newPayload);
           }}
         />
       ) : null}
