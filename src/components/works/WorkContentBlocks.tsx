@@ -66,12 +66,13 @@ function renderBlock(block: ContentBlock, index: number, coverTone: string) {
 }
 
 function layoutWidthClass(layout?: BlockLayout): string {
+  // 已移除所有宽度约束 - 2026-06-24
   if (!layout || !layout.width || layout.width === "contained") {
-    return "max-w-6xl mx-auto px-5 md:px-8";
+    return "mx-auto px-5 md:px-8";  // 移除 max-w-6xl
   }
-  if (layout.width === "narrow") return "max-w-4xl mx-auto px-5 md:px-8";
-  if (layout.width === "free") return "relative mx-auto max-w-7xl";
-  return ""; // full
+  if (layout.width === "narrow") return "mx-auto px-5 md:px-8";  // 移除 max-w-4xl
+  if (layout.width === "free") return "relative mx-auto";  // 移除 max-w-7xl
+  return ""; // full - 无约束
 }
 
 function TextBlock({ block }: { block: Extract<ContentBlock, { type: "text" }> }) {
@@ -120,9 +121,9 @@ function MediaBlock({
         className={
           isGallery
             ? `grid gap-2 md:gap-3 ${cols}`
-              :               isFree
-                ? "relative h-[580px] md:h-[880px]"
-                : ""
+            : isFree
+              ? "relative"
+              : ""
         }
       >
         {block.items.map((media, i) => (
@@ -132,8 +133,8 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative w-full overflow-hidden md:min-h-[60vh]"
-                  : "relative w-full overflow-hidden md:min-h-[80vh]"
+                  ? "relative w-full overflow-hidden"
+                  : "relative w-full overflow-hidden"
             }
             style={
               isFree && free
@@ -149,7 +150,7 @@ function MediaBlock({
             <WorkMediaFrame
               media={media}
               tone={tone as never}
-              className="h-full w-full"
+              className={isFree ? "h-full w-full" : "w-full"}
               objectPosition={
                 block.type === "media" && block.focalPoint
                   ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
@@ -170,12 +171,12 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black md:min-h-[80vh]">
+      <div className="relative w-full overflow-hidden bg-black">
         <video
           src={block.items[0].url}
           controls
           preload="metadata"
-          className="h-full w-full"
+          className="w-full"
         />
       </div>
     </section>
@@ -214,11 +215,11 @@ function BeforeAfterBlock({
             <span className="font-mono text-xs text-white/40">
               {i === 0 ? block.beforeLabel : block.afterLabel}
             </span>
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-white/[0.03]">
+            <div className="relative w-full overflow-hidden rounded-sm bg-white/[0.03] min-h-[300px]">
               {media ? (
-                <WorkMediaFrame media={media} tone={tone as never} className="h-full w-full" />
+                <WorkMediaFrame media={media} tone={tone as never} className="w-full" />
               ) : (
-                <div className="h-full w-full" />
+                <div className="w-full h-48" />
               )}
             </div>
           </div>
