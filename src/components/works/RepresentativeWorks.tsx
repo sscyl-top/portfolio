@@ -47,7 +47,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
   const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];
   const cardStyle: RepresentativeCardStyle = {
     zIndex: isActive ? 30 : slot.z,
-    opacity: hasActive && !isActive ? 0.7 : 1,
+    opacity: hasActive && !isActive ? 0.65 : 1,
     "--slot-x": `${slot.x}vw`,
     "--slot-y": `${slot.y}px`,
     "--slot-r": `${slot.r}deg`,
