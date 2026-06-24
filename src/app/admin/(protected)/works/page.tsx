@@ -155,7 +155,7 @@ function FilterBar({
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-3">
-      <form className="contents">
+      <form className="contents" action="">
         <select
           name="status"
           defaultValue={currentStatus}

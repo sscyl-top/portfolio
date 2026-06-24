@@ -178,41 +178,57 @@ export default async function AdminWorkEditorPage({
         <div className="min-w-0">
           {/* 合并的编辑卡片 */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
-            {/* 标题输入（站酷风格，大字体无边框） */}
-            <div className="border-b border-white/[0.06] pb-5">
-              <div className="flex items-end gap-4">
-                <input
-                  id="work-title"
-                  name="title"
-                  defaultValue={workRow.title}
-                  required
-                  placeholder="输入作品名称"
-                  className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
-                  form="mainWorkForm"
-                />
-                <span className="shrink-0 pb-1 font-mono text-xs text-white/22 tabular-nums">
-                  {(workRow.title ?? "").length}
-                </span>
+            <form id="mainWorkForm" action={updateWork}>
+              <input type="hidden" name="id" value={workRow.id} />
+              <input type="hidden" name="slug" value={workRow.slug} />
+              <input type="hidden" name="subtitle" defaultValue={workRow.subtitle} />
+              <input type="hidden" name="year" defaultValue={workRow.year} />
+              <input type="hidden" name="client" defaultValue={workRow.client} />
+              <input type="hidden" name="sort_order" defaultValue={String(workRow.sort_order)} />
+              <input type="hidden" name="status" defaultValue={workRow.status} />
+              <input type="hidden" name="scheduled_publish_at" defaultValue={workRow.scheduled_publish_at ?? ""} />
+              <input type="hidden" name="is_representative" value={workRow.is_representative ? "on" : ""} />
+              <input type="hidden" name="is_composite" value={workRow.is_composite ? "on" : ""} />
+              <input type="hidden" name="seo_title" defaultValue={workRow.seo_title} />
+              <input type="hidden" name="seo_description" defaultValue={workRow.seo_description} />
+              {(workRow.palette ?? []).length > 0 && (
+                <input type="hidden" name="palette" defaultValue={workRow.palette.join(", ")} />
+              )}
+
+              {/* 标题输入（站酷风格，大字体无边框） */}
+              <div className="border-b border-white/[0.06] pb-5">
+                <div className="flex items-end gap-4">
+                  <input
+                    id="work-title"
+                    name="title"
+                    defaultValue={workRow.title}
+                    required
+                    placeholder="输入作品名称"
+                    className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                  />
+                  <span className="shrink-0 pb-1 font-mono text-xs text-white/22 tabular-nums">
+                    {(workRow.title ?? "").length}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* 设计说明文案（紧接标题下方） */}
-            <div className="pt-5">
-              <label className="block">
-                <span className="sr-only">设计说明</span>
-                <textarea
-                  name="summary"
-                  defaultValue={workRow.summary}
-                  rows={3}
-                  placeholder="简要介绍你的作品理念、设计思路或项目背景…"
-                  className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
-                  form="mainWorkForm"
-                />
-              </label>
-            </div>
+              {/* 设计说明文案（紧接标题下方） */}
+              <div className="pt-5">
+                <label className="block">
+                  <span className="sr-only">设计说明</span>
+                  <textarea
+                    name="summary"
+                    defaultValue={workRow.summary}
+                    rows={3}
+                    placeholder="简要介绍你的作品理念、设计思路或项目背景…"
+                    className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
+                  />
+                </label>
+              </div>
 
-            {/* 分隔线 */}
-            <div className="my-6 border-t border-white/[0.06]" />
+              {/* 分隔线 */}
+              <div className="my-6 border-t border-white/[0.06]" />
+            </form>
 
             {/* 内容块编辑器 — 拖拽上传 + 自由排版区域 */}
             <VisualBlockEditor
@@ -221,27 +237,18 @@ export default async function AdminWorkEditorPage({
               initialBlocks={blockRows}
               mediaAssets={mediaRows}
             />
-          </div>
 
-          {/* 隐藏表单字段（title 和 summary 已在上面通过 form 关联提交） */}
-          <form id="mainWorkForm" action={updateWork} className="sr-only">
-            <input type="hidden" name="id" value={workRow.id} />
-            <input type="hidden" name="slug" value={workRow.slug} />
-            <input type="hidden" name="subtitle" defaultValue={workRow.subtitle} />
-            <input type="hidden" name="year" defaultValue={workRow.year} />
-            <input type="hidden" name="client" defaultValue={workRow.client} />
-            <input type="hidden" name="sort_order" defaultValue={String(workRow.sort_order)} />
-            <input type="hidden" name="status" defaultValue={workRow.status} />
-            <input type="hidden" name="scheduled_publish_at" defaultValue={workRow.scheduled_publish_at ?? ""} />
-            <input type="hidden" name="is_representative" value={workRow.is_representative ? "on" : ""} />
-            <input type="hidden" name="is_composite" value={workRow.is_composite ? "on" : ""} />
-            <input type="hidden" name="seo_title" defaultValue={workRow.seo_title} />
-            <input type="hidden" name="seo_description" defaultValue={workRow.seo_description} />
-            {(workRow.palette ?? []).length > 0 && (
-              <input type="hidden" name="palette" defaultValue={workRow.palette.join(", ")} />
-            )}
-            <button type="submit">保存</button>
-          </form>
+            {/* 保存按钮 */}
+            <div className="mt-8 flex justify-end border-t border-white/[0.06] pt-6">
+              <button
+                type="submit"
+                form="mainWorkForm"
+                className="min-h-10 rounded-md bg-cyan px-6 text-sm font-medium text-black transition hover:bg-white"
+              >
+                保存作品
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* ═══ 右侧：辅助面板 ═══ */}

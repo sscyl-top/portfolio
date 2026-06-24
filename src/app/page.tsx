@@ -1,5 +1,5 @@
-import { CapabilityBands, type CapabilityTextOverrides } from "@/components/home/CapabilityBands";
 import { HeroShowcase, type HeroData, type HeroTextOverrides } from "@/components/home/HeroShowcase";
+import { CapabilityBands } from "@/components/home/CapabilityBands.client";
 import { resume as staticResume } from "@/data/portfolio";
 import { getBackendReadiness } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -8,6 +8,7 @@ import {
   getTextContentsByKeys,
   parseTextContentArray,
 } from "@/lib/cms/text-content";
+import type { CapabilityTextOverrides } from "@/components/home/CapabilityBands";
 
 type HeroVideoSettings = {
   mainVideoMediaId?: string | null;
