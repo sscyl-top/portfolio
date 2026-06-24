@@ -124,7 +124,17 @@ export async function saveResume(formData: FormData) {
   const experienceCompanies = formData.getAll("experience_company").map(String);
   const experienceTitles = formData.getAll("experience_title").map(String);
   const experiencePeriods = formData.getAll("experience_period").map(String);
-  const experiencePointsGroups = collectGroupArray(formData, "experience_points");
+  // 修复：用经历数量代替 collectGroupArray，避免空 points 导致提前终止
+  const expCount = experienceCompanies.length;
+  const experiencePointsGroups: string[][] = [];
+  for (let i = 0; i < expCount; i++) {
+    const items = formData
+      .getAll(`experience_points_${i}`)
+      .map(String)
+      .filter((s) => s.trim());
+    experiencePointsGroups.push(items);
+  }
+
   const experienceRaw = experienceCompanies
     .map((company, i) => ({
       company,
@@ -159,7 +169,17 @@ export async function saveResume(formData: FormData) {
     .map((r) => r.data);
 
   const expertiseTitles = formData.getAll("expertise_title").map(String);
-  const expertiseItemsGroups = collectGroupArray(formData, "expertise_items");
+  // 修复：用专长分类数量代替 collectGroupArray，避免空 items 导致提前终止
+  const expertiseCount = expertiseTitles.length;
+  const expertiseItemsGroups: string[][] = [];
+  for (let i = 0; i < expertiseCount; i++) {
+    const items = formData
+      .getAll(`expertise_items_${i}`)
+      .map(String)
+      .filter((s) => s.trim());
+    expertiseItemsGroups.push(items);
+  }
+
   const expertiseRaw = expertiseTitles
     .map((title, i) => ({
       title,

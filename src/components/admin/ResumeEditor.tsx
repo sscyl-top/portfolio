@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, GripVertical, CheckCircle, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Save, GripVertical, ChevronUp, ChevronDown, CheckCircle, AlertCircle } from "lucide-react";
 
 import { saveResume } from "@/app/admin/(protected)/resume/actions";
 import type {
@@ -265,11 +265,21 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
       : [{ company: "", title: "", period: "", points: [""] }],
   );
 
+  function moveItem(from: number, direction: "up" | "down") {
+    setItems((prev) => {
+      const to = direction === "up" ? from - 1 : from + 1;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      [next[from], next[to]] = [next[to], next[from]];
+      return next;
+    });
+  }
+
   return (
     <ListSection title="工作经验" addLabel="添加经历">
       {items.map((exp, i) => (
         <div key={i} className="rounded-md border border-white/10 bg-black/20 p-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
             <input
               name="experience_company"
               defaultValue={exp.company}
@@ -282,13 +292,33 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
               placeholder="职位"
               className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
             />
-            <button
-              type="button"
-              onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
-              className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex items-start gap-1">
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => moveItem(i, "up")}
+                  disabled={i === 0}
+                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveItem(i, "down")}
+                  disabled={i === items.length - 1}
+                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
+                className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <input
             name="experience_period"
@@ -353,11 +383,21 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
       : [{ company: "", title: "", period: "", description: "" }],
   );
 
+  function moveItem(from: number, direction: "up" | "down") {
+    setItems((prev) => {
+      const to = direction === "up" ? from - 1 : from + 1;
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      [next[from], next[to]] = [next[to], next[from]];
+      return next;
+    });
+  }
+
   return (
     <ListSection title="校园经历" addLabel="添加经历">
       {items.map((item, i) => (
         <div key={i} className="rounded-md border border-white/10 bg-black/20 p-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
             <input
               name="campus_company"
               defaultValue={item.company}
@@ -370,13 +410,33 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
               placeholder="职位"
               className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
             />
-            <button
-              type="button"
-              onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
-              className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex items-start gap-1">
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => moveItem(i, "up")}
+                  disabled={i === 0}
+                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveItem(i, "down")}
+                  disabled={i === items.length - 1}
+                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
+                className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <input
             name="campus_period"
