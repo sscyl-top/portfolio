@@ -33,7 +33,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </button>
           </form>
         </aside>
-        <section className="min-w-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8">{children}</section>
+        <section className="min-w-0 overflow-y-auto pt-20 md:pt-28 px-5 md:px-8 md:py-6">{children}</section>
       </div>
     </main>
   );

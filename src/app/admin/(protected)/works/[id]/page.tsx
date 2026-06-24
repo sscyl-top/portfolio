@@ -10,6 +10,7 @@ import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
 import { Toast } from "@/components/admin/Toast";
 import { ToastHandler } from "@/components/admin/ToastHandler";
+import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 
 import { SlugInput } from "./SlugInput";
 
@@ -146,24 +147,24 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
       {toast ? <ToastHandler message={toast} /> : null}
 
-      <Link
-        href="/admin/works"
-        className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
-      >
-        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        返回作品列表
-      </Link>
-
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
+      {/* 顶栏：返回 + 标题 + 删除 */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <Link
+            href="/admin/works"
+            className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            返回作品列表
+          </Link>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">
             Work editor
           </p>
-          <h2 className="mt-3 text-3xl font-semibold">{workRow.title}</h2>
-          <p className="mt-3 font-mono text-xs text-white/38">{workRow.slug}</p>
+          <h2 className="mt-1 text-2xl font-semibold md:text-3xl">{workRow.title}</h2>
+          <p className="mt-1 font-mono text-xs text-white/38">{workRow.slug}</p>
         </div>
         <form action={deleteWork}>
           <input type="hidden" name="id" value={workRow.id} />
@@ -174,27 +175,47 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      <WorkForm work={workRow} />
-      <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-      <MediaForm mediaAssets={mediaRows} work={workRow} />
-      <TaxonomyForm
-        categories={categoryRows}
-        selectedCategoryIds={selectedCategoryIds}
-        selectedTagIds={selectedTagIds}
-        tags={tagRows}
-        work={workRow}
-      />
-      <VisualBlockEditor
-        workId={workRow.id}
-        workSlug={workRow.slug}
-        initialBlocks={blockRows}
-        mediaAssets={mediaRows}
-      />
-      <VersionHistoryPanel
-        workId={workRow.id}
-        workSlug={workRow.slug}
-        versions={versionRows}
-      />
+      {/* 主内容区：左侧主表单 + 右侧辅助选项 */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        {/* 左列：主要编辑 */}
+        <div className="space-y-6 min-w-0">
+          <WorkForm work={workRow} />
+          <VisualBlockEditor
+            workId={workRow.id}
+            workSlug={workRow.slug}
+            initialBlocks={blockRows}
+            mediaAssets={mediaRows}
+          />
+          <VersionHistoryPanel
+            workId={workRow.id}
+            workSlug={workRow.slug}
+            versions={versionRows}
+          />
+        </div>
+
+        {/* 右列：辅助选项 */}
+        <div className="space-y-4">
+          <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
+          <MediaForm mediaAssets={mediaRows} work={workRow} />
+          <CollapsibleSection
+            title="分类与标签"
+            description="控制作品归属、列表筛选和前台标签展示"
+            action={
+              <span className="text-[10px] text-white/30">
+                {selectedCategoryIds.size + selectedTagIds.size} 项已选
+              </span>
+            }
+          >
+            <TaxonomyForm
+              categories={categoryRows}
+              selectedCategoryIds={selectedCategoryIds}
+              selectedTagIds={selectedTagIds}
+              tags={tagRows}
+              work={workRow}
+            />
+          </CollapsibleSection>
+        </div>
+      </div>
     </div>
   );
 }
@@ -210,36 +231,31 @@ function PrivatePreviewForm({
   const previewUrl = previewPath ? `${origin}${previewPath}` : null;
 
   return (
-    <section className="mt-6 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5">
-      <div>
-        <h3 className="text-xl font-semibold text-white">私密预览</h3>
-        <p className="mt-2 text-sm text-white/45">
-          生成带 token 的预览链接，作品不会进入公开列表；新链接会替换旧链接。
-        </p>
-      </div>
+    <section className="rounded-md border border-white/10 bg-white/[0.035] p-4">
+      <h3 className="text-sm font-semibold text-white/80">私密预览</h3>
 
       {previewUrl ? (
-        <div className="rounded-md border border-cyan/25 bg-cyan/10 p-4">
-          <p className="text-sm text-cyan">新的私密链接只显示这一次：</p>
-          <code className="mt-2 block break-all rounded-md bg-black/30 p-3 text-xs text-white/72">
+        <div className="mt-2 rounded-md border border-cyan/25 bg-cyan/10 p-2.5">
+          <p className="text-xs text-cyan">私密链接（仅显示一次）</p>
+          <code className="mt-1 block break-all rounded-md bg-black/30 p-2 text-[10px] text-white/72">
             {previewUrl}
           </code>
         </div>
       ) : null}
 
-      <div className="flex flex-wrap justify-end gap-3">
+      <div className="mt-3 flex flex-wrap gap-2">
         <form action={clearPrivatePreviewLink}>
           <input type="hidden" name="work_id" value={work.id} />
           <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-10 rounded-md border border-white/12 px-4 text-sm text-white/58 transition hover:border-white/30 hover:text-white">
-            清除私密链接
+          <button className="min-h-8 rounded-md border border-white/12 px-3 text-xs text-white/58 transition hover:border-white/30 hover:text-white">
+            清除链接
           </button>
         </form>
         <form action={generatePrivatePreviewLink}>
           <input type="hidden" name="work_id" value={work.id} />
           <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-            生成私密链接
+          <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
+            生成链接
           </button>
         </form>
       </div>
@@ -268,34 +284,29 @@ function MediaForm({
   return (
     <form
       action={updateWorkMedia}
-      className="mt-6 grid gap-5 rounded-md border border-white/10 bg-white/[0.035] p-5"
+      className="rounded-md border border-white/10 bg-white/[0.035] p-4"
     >
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
-      <div>
-        <h3 className="text-xl font-semibold text-white">作品媒体</h3>
-        <p className="mt-2 text-sm text-white/45">
-          从媒体库选择封面、悬停预览和分享图；素材先到媒体库上传。
-        </p>
-      </div>
+      <h3 className="text-sm font-semibold text-white/80">作品媒体</h3>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="mt-3 grid gap-3">
         <MediaSelect
-          label="封面媒体"
+          label="封面"
           name="cover_media_id"
           assets={mediaAssets}
           defaultValue={work.cover_media_id ?? ""}
           selectedAsset={selectedCover ?? null}
         />
         <MediaSelect
-          label="悬停媒体"
+          label="悬停预览"
           name="hover_media_id"
           assets={mediaAssets}
           defaultValue={work.hover_media_id ?? ""}
           selectedAsset={selectedHover ?? null}
         />
         <MediaSelect
-          label="分享媒体"
+          label="分享图"
           name="share_media_id"
           assets={mediaAssets}
           defaultValue={work.share_media_id ?? ""}
@@ -303,8 +314,8 @@ function MediaForm({
         />
       </div>
 
-      <div className="flex justify-end">
-        <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+      <div className="mt-3 flex justify-end">
+        <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
           保存媒体
         </button>
       </div>
@@ -547,26 +558,17 @@ function TaxonomyForm({
   work: WorkEditorRow;
 }) {
   return (
-    <form
-      action={updateWorkTaxonomy}
-      className="mt-6 grid gap-5 rounded-md border border-white/10 bg-white/[0.035] p-5"
-    >
+    <form action={updateWorkTaxonomy} className="grid gap-4">
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
-      <div>
-        <h3 className="text-xl font-semibold text-white">分类与标签</h3>
-        <p className="mt-2 text-sm text-white/45">
-          控制作品归属、列表筛选和前台标签展示。
-        </p>
-      </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <fieldset>
-          <legend className="text-sm font-medium text-white/75">作品分类</legend>
-          <div className="mt-3 grid gap-2">
+          <legend className="text-xs font-medium text-white/60 uppercase tracking-wider">分类</legend>
+          <div className="mt-2 grid gap-1.5">
             {categories.length === 0 ? (
-              <p className="border-y border-white/10 py-6 text-sm text-white/38">
-                暂无分类。可以先到“分类与标签”导入或创建分类。
+              <p className="py-4 text-xs text-white/35">
+                暂无分类
               </p>
             ) : (
               categories.map((category) => (
@@ -583,11 +585,11 @@ function TaxonomyForm({
         </fieldset>
 
         <fieldset>
-          <legend className="text-sm font-medium text-white/75">标签</legend>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <legend className="text-xs font-medium text-white/60 uppercase tracking-wider">标签</legend>
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {tags.length === 0 ? (
-              <p className="border-y border-white/10 py-6 text-sm text-white/38">
-                暂无标签。
+              <p className="py-4 text-xs text-white/35">
+                暂无标签
               </p>
             ) : (
               tags.map((tag) => (
@@ -605,8 +607,8 @@ function TaxonomyForm({
       </div>
 
       <div className="flex justify-end">
-        <button className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
-          保存分类与标签
+        <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
+          保存
         </button>
       </div>
     </form>
