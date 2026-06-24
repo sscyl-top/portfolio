@@ -154,6 +154,7 @@ export default async function AdminWorkEditorPage({
         marginRight: 'calc(-50vw + 50%)',
         paddingLeft: '2rem',
         paddingRight: '2rem',
+        paddingTop: '7rem',
       }}
     >
       {toast ? <ToastHandler message={toast} /> : null}
@@ -176,8 +177,8 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* 主布局：三列 grid — 左空白 | 红框(居中) | 蓝框(右侧剩余空间) */}
-      <div className="mt-8 items-start gap-8 lg:gap-10" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 920px) 1fr' }}>
+      {/* 主布局：三列 grid — 左空白 | 红框(居中,约导航栏内容宽) | 蓝框(右侧剩余) */}
+      <div className="mt-8 items-start gap-8 lg:gap-10" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 720px) 1fr' }}>
         {/* ═══ 左侧空白列：用于将红框居中 ═══ */}
         <div />
 
