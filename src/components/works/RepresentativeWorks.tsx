@@ -62,7 +62,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
   return (
     <Link
       key={work.slug}
-      href={`/works/${work.slug}`}
+      href={`/works/${work.slug}?from=featured`}
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
@@ -296,7 +296,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
               return (
                 <Link
                   key={`s-${realIndex}`}
-                  href={`/works/${work.slug}`}
+                  href={`/works/${work.slug}?from=featured`}
                   onClick={(e) => { if (hasDragged.current) e.preventDefault(); }}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"

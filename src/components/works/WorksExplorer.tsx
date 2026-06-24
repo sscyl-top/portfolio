@@ -173,7 +173,7 @@ export function WorksExplorer({
               return item.kind === "work" ? (
                 <Link
                   key={item.work.slug}
-                  href={`/works/${item.work.slug}`}
+                  href={`/works/${item.work.slug}?from=works`}
                   className="group block"
                 >
                   {card}

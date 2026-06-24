@@ -16,32 +16,43 @@ export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
 }
 
+const FROM_TITLES: Record<string, string> = {
+  featured: "sscyl.top-代表作",
+  works: "sscyl.top-全部作品",
+  composite: "sscyl.top-复合设计",
+};
+
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const { from } = await searchParams;
+  const fromKey = Array.isArray(from) ? from[0] : from;
+  const pageTitle = FROM_TITLES[fromKey ?? ""] ?? "sscyl.top-全部作品";
+
   const repository = await createServerCmsRepository();
   const work = await repository.getWorkBySlug(slug);
 
-  if (!work) return { title: `${slug} - sscyl.top` };
+  if (!work) return { title: pageTitle };
 
   const ogImage = work.shareMedia?.url ?? work.coverMedia?.url;
-  const fullTitle = `${work.title} - sscyl.top`;
 
   return {
-    title: fullTitle,
+    title: pageTitle,
     description: work.summary,
     openGraph: {
-      title: fullTitle,
+      title: pageTitle,
       description: work.summary,
       type: "article",
       ...(ogImage ? { images: [{ url: ogImage, alt: work.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: fullTitle,
+      title: pageTitle,
       description: work.summary,
       ...(ogImage ? { images: [ogImage] } : {}),
     },
