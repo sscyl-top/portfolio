@@ -116,5 +116,57 @@ git revert <commit-hash>
 ---
 
 **备份创建时间**: 2026-06-24 20:52
+**最后更新时间**: 2026-06-24 21:04 (约束已恢复，再次备份后准备移除)
 **操作人**: Buddy
 **项目**: sscyl.top 作品集网站
+
+---
+
+# 第二次备份 - 2026-06-24 21:04
+
+> 在第二次移除布局约束前的备份（第一次移除后已恢复）
+
+## 当前约束状态（与第一次备份相同）
+
+### 1. WorkContentBlocks.tsx (行 68-75) - 布局宽度
+```tsx
+function layoutWidthClass(layout?: BlockLayout): string {
+  if (!layout || !layout.width || layout.width === "contained") {
+    return "max-w-6xl mx-auto px-5 md:px-8";  // 1152px max
+  }
+  if (layout.width === "narrow") return "max-w-4xl mx-auto px-5 md:px-8";  // 896px max
+  if (layout.width === "free") return "relative mx-auto max-w-7xl";  // 1280px max
+  return ""; // full - 无约束
+}
+```
+
+### 2. WorkContentBlocks.tsx (行 124-136) - 媒体高度
+```tsx
+// 自由排版模式 - 固定容器高度
+isFree
+  ? "relative h-[580px] md:h-[880px]"
+  : isGallery
+    ? "relative w-full overflow-hidden md:min-h-[80vh]"
+    : "relative w-full overflow-hidden md:min-h-[80vh]";
+```
+
+### 3. WorkContentBlocks.tsx (行 173) - 视频块高度
+```tsx
+<div className="relative w-full overflow-hidden bg-black md:min-h-[80vh]">
+```
+
+### 4. WorkContentBlocks.tsx (行 217) - Before/After 固定比例
+```tsx
+<div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-white/[0.03]">
+```
+
+### 5. WorkMediaFrame.tsx - 图片填充方式
+```tsx
+<Image
+  className={`object-cover ${className} ...`}
+/>
+```
+
+## 回滚方法
+
+与方法 1 相同，使用 `git revert` 或手动恢复。
