@@ -83,19 +83,35 @@ const slides: StrengthSlide[] = [
 ];
 
 const rocketOutline: Point2[] = [
-  [0, 2.18],
-  [0.42, 1.26],
-  [0.48, -0.74],
-  [0.9, -1.22],
-  [0.34, -1.1],
-  [0.18, -1.6],
-  [0, -2.12],
-  [-0.18, -1.6],
-  [-0.34, -1.1],
-  [-0.9, -1.22],
-  [-0.48, -0.74],
-  [-0.42, 1.26],
-  [0, 2.18],
+  [0, 2.22],
+  [0.46, 1.18],
+  [0.52, -0.68],
+  [1.28, -1.32],
+  [0.42, -1.12],
+  [0.22, -1.58],
+  [0, -2.08],
+  [-0.22, -1.58],
+  [-0.42, -1.12],
+  [-1.28, -1.32],
+  [-0.52, -0.68],
+  [-0.46, 1.18],
+  [0, 2.22],
+];
+
+const rocketFinFront: Point2[] = [
+  [0.12, -0.82],
+  [0.28, -1.42],
+  [-0.08, -1.68],
+  [-0.24, -1.08],
+  [0.12, -0.82],
+];
+
+const rocketFinBack: Point2[] = [
+  [-0.12, -0.82],
+  [0.24, -1.08],
+  [0.08, -1.68],
+  [-0.28, -1.42],
+  [-0.12, -0.82],
 ];
 
 const satellitePanelLeft: Point2[] = [
@@ -1436,29 +1452,37 @@ function ambientDustPoint(index: number, t: number, shape: number) {
 }
 
 function rocketPoint(index: number, part: number) {
-  if (part < 0.48) {
-    return samplePolyline(index, rocketOutline, 0.035, 0.18, 211);
+  if (part < 0.36) {
+    return samplePolyline(index, rocketOutline, 0.032, 0.16, 211);
   }
 
-  if (part < 0.62) {
-    return sampleEllipse(index, 0, 0.05, 0.28, 1.18, 0.45);
+  if (part < 0.5) {
+    return sampleEllipse(index, 0, 0.0, 0.3, 1.22, 0.42);
   }
 
-  if (part < 0.72) {
-    const p = sampleTriangle(index, -0.36, 1.26, 0.36, 1.26, 0, 2.02);
+  if (part < 0.58) {
+    const p = sampleTriangle(index, -0.38, 1.18, 0.38, 1.18, 0, 2.12);
     return { ...p, z: 0.06 };
   }
 
-  if (part < 0.82) {
-    return sampleLine(index, -0.34, -1.08, 0.34, -1.08, 0.04);
+  if (part < 0.68) {
+    return samplePolyline(index, rocketFinFront, 0.035, 0.38, 212);
   }
 
-  if (part < 0.91) {
-    return sampleEllipseRing(index, 0, 0.34, 0.22, 0.22, 1.2, 0.03);
+  if (part < 0.78) {
+    return samplePolyline(index, rocketFinBack, 0.035, -0.38, 213);
   }
 
-  const flame = sampleTriangle(index, -0.27, -1.2, 0.27, -1.2, 0, -2.05);
-  return { ...flame, z: 0.18 };
+  if (part < 0.86) {
+    return sampleLine(index, -0.38, -1.06, 0.38, -1.06, 0.035);
+  }
+
+  if (part < 0.92) {
+    return sampleEllipseRing(index, 0, 0.38, 0.24, 0.24, 1.1, 0.03);
+  }
+
+  const flame = sampleTriangle(index, -0.3, -1.24, 0.3, -1.24, 0, -2.15);
+  return { ...flame, z: 0.18 + (pseudoRandom(index, 999) - 0.5) * 0.1 };
 }
 
 function satellitePoint(index: number, part: number) {
