@@ -288,6 +288,16 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [showBlockMenu, setShowBlockMenu] = useState(false);
 
+  // 乐观更新：仅更新本地 state，不触发 router.refresh()，用于布局等高频操作
+  const handleOptimisticUpdate = useCallback(
+    (blockId: string, newPayload: Record<string, unknown>) => {
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
+      );
+    },
+    [],
+  );
+
   // 多图排列方式询问
   const [imageLayoutChoice, setImageLayoutChoice] = useState<{
     files: File[];
@@ -859,6 +869,19 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [workId, workSlug, router],
   );
 
+  // 布局保存（轻量版）：仅更新后端，不触发 router.refresh()
+  const saveLayoutToServer = useCallback(
+    async (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+      try {
+        const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
+        await updateBlockDirect(workId, workSlug, blockId, payloadToSend);
+      } catch (err) {
+        console.error("Save layout failed:", err);
+      }
+    },
+    [workId, workSlug],
+  );
+
   // ── 渲染 ─────────────────────────────────────────────────
 
   return (
@@ -1066,6 +1089,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 }}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
+                onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
+                onSaveLayout={(newPayload) => saveLayoutToServer(block.id, newPayload, block.block_type)}
                 onSaveAndClose={() => setEditingBlockId(null)}
                 onReplaceMedia={(blockId) => {
                   setFileInputIntent({ mode: "replace", blockId });
@@ -1178,6 +1203,8 @@ function BlockCard({
   onDrop,
   mediaAssets,
   onUpdatePayload,
+  onOptimisticUpdate,
+  onSaveLayout,
   onSaveAndClose,
   onReplaceMedia,
   onAddImagesToGallery,
@@ -1193,6 +1220,8 @@ function BlockCard({
   onDrop: (e: React.DragEvent) => void;
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
+  onOptimisticUpdate: (newPayload: Record<string, unknown>) => void;
+  onSaveLayout: (newPayload: Record<string, unknown>) => void;
   onSaveAndClose: () => void;
   onReplaceMedia: (blockId: string) => void;
   onAddImagesToGallery: (blockId: string, files: File[]) => void;
@@ -1208,11 +1237,10 @@ function BlockCard({
     (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
       if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
       layoutDebounceRef.current = setTimeout(() => {
-        onUpdatePayload(newPayload);
-        // 同时更新本地 blocks 状态以立即反映 UI 变化（不等待服务端）
+        onSaveLayout(newPayload);
       }, 600);
     },
-    [onUpdatePayload],
+    [onSaveLayout],
   );
 
   // 组件卸载时清除防抖定时器
@@ -1305,7 +1333,9 @@ function BlockCard({
           layout={getLayout(block.payload)}
           onChange={(patch) => {
             const newPayload = withLayout(block.payload, patch);
-            // 布局切换防抖 600ms，避免快速点击产生大量版本
+            // 立即乐观更新（UI 即时响应，不等待防抖）
+            onOptimisticUpdate(newPayload);
+            // 布局切换防抖 600ms 后保存后端
             debouncedUpdatePayload(block.id, newPayload, block.block_type);
           }}
         />
