@@ -6,9 +6,21 @@ import {
   Phone,
   Trophy,
 } from "lucide-react";
+import type { Metadata } from "next";
 
 import { ContactFinale } from "@/components/resume/ContactFinale";
 import { getResumeData } from "@/lib/cms/resume";
+
+export const metadata: Metadata = {
+  title: "简历 | 陈涛涛",
+  description:
+    "品牌/视觉 AI 设计师陈涛涛的个人简历 — 专注品牌全链路视觉、商业设计落地与 AIGC 工作流。",
+  openGraph: {
+    title: "简历 | 陈涛涛",
+    description:
+      "品牌/视觉 AI 设计师陈涛涛的个人简历 — 专注品牌全链路视觉、商业设计落地与 AIGC 工作流。",
+  },
+};
 
 export default async function ResumePage() {
   const resume = await getResumeData();

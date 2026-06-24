@@ -74,7 +74,7 @@ export async function uploadMediaAsset(formData: FormData) {
       upsert: false,
     });
 
-  if (uploadError) return;
+  if (uploadError) throw new Error(uploadError.message);
 
   // Read the first 2 KiB for image dimension detection. Sharp is not
   // required; PNG/JPEG/GIF/WebP headers are parsed in pure JS.
@@ -102,7 +102,7 @@ export async function uploadMediaAsset(formData: FormData) {
     }
   }
 
-  await client.from("media_assets").insert({
+  const { error: dbError } = await client.from("media_assets").insert({
     id,
     storage_key: storageKey,
     mime_type: mimeType,
@@ -113,6 +113,12 @@ export async function uploadMediaAsset(formData: FormData) {
     duration_ms: durationMs,
     alt_text: altText || file.name,
   });
+
+  if (dbError) {
+    // DB 插入失败时回滚 Storage 中的文件，避免孤儿文件
+    await client.storage.from("portfolio-media").remove([storageKey]);
+    throw new Error(dbError.message);
+  }
 
   revalidatePath("/admin/media");
 }

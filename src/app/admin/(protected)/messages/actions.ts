@@ -14,10 +14,13 @@ export async function updateMessageStatus(formData: FormData) {
   if (!id.success || !status.success) return;
 
   const { client } = await requireAdmin();
-  await client
+  const { error } = await client
     .from("contact_messages")
     .update({ status: status.data })
     .eq("id", id.data);
+
+  if (error) throw new Error(error.message);
+
   revalidatePath("/admin/messages");
 }
 
@@ -26,6 +29,9 @@ export async function deleteMessage(formData: FormData) {
   if (!id.success) return;
 
   const { client } = await requireAdmin();
-  await client.from("contact_messages").delete().eq("id", id.data);
+  const { error } = await client.from("contact_messages").delete().eq("id", id.data);
+
+  if (error) throw new Error(error.message);
+
   revalidatePath("/admin/messages");
 }

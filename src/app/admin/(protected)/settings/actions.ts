@@ -30,7 +30,7 @@ export async function saveSiteSettings(formData: FormData) {
   const urls = formData.getAll("social_url").map(String);
   const social_links = labels
     .map((label, index) => ({ label, url: urls[index] ?? "" }))
-    .filter((link) => link.label.trim() || link.url.trim());
+    .filter((link) => link.label.trim() && link.url.trim());
 
   const parsed = settingsSchema.safeParse({
     name: formData.get("name"),

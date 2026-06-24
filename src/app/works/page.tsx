@@ -15,16 +15,29 @@ const WORKS_TEXT_KEYS = [
 ];
 
 export default async function WorksPage() {
-  const repository = await createServerCmsRepository();
-  const [works, featuredWorks, compositeWorks, visibleCategories, texts, siteSettings] =
-    await Promise.all([
-      repository.listPublishedWorks(),
-      repository.listFeaturedWorks(),
-      repository.listCompositeWorks(),
-      repository.listVisibleCategories(),
-      getTextContentsByKeys(WORKS_TEXT_KEYS),
-      repository.getSiteSettings(),
-    ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let works: any[] = [];
+  let featuredWorks: any[] = [];
+  let compositeWorks: any[] = [];
+  let visibleCategories: any[] = [];
+  let texts: Record<string, { content: string; styles: Record<string, string> }> = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let siteSettings: any = { ctaCardMediaUrl: null, ctaFigureMediaUrl: null };
+
+  try {
+    const repository = await createServerCmsRepository();
+    [works, featuredWorks, compositeWorks, visibleCategories, texts, siteSettings] =
+      await Promise.all([
+        repository.listPublishedWorks(),
+        repository.listFeaturedWorks(),
+        repository.listCompositeWorks(),
+        repository.listVisibleCategories(),
+        getTextContentsByKeys(WORKS_TEXT_KEYS),
+        repository.getSiteSettings(),
+      ]);
+  } catch (error) {
+    console.error("[works/page] 数据获取失败，使用空数据:", error);
+  }
   const categoryNames = visibleCategories.map((category) => category.name);
 
   const textOverrides = {

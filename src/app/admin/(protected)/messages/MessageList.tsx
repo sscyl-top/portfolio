@@ -1,3 +1,5 @@
+"use client";
+
 import { Archive, Check, Mail, Trash2 } from "lucide-react";
 
 import { deleteMessage, updateMessageStatus } from "./actions";
@@ -89,7 +91,7 @@ export function MessageList({ messages }: { messages: ContactMessage[] }) {
           <div className="mt-5 flex flex-wrap gap-2 border-t border-white/10 pt-4">
             <StatusButton id={message.id} status="read" label="标记已读" />
             <StatusButton id={message.id} status="archived" label="归档" />
-            <form action={deleteMessage}>
+            <form action={deleteMessage} onSubmit={(e) => { if (!confirm("确定删除此消息？此操作不可撤销。")) e.preventDefault(); }}>
               <input type="hidden" name="id" value={message.id} />
               <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-4 text-xs text-red-200 transition hover:bg-red-300/10">
                 <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />

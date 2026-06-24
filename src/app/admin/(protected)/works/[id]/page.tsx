@@ -233,11 +233,11 @@ export default async function AdminWorkEditorPage({
             <input type="hidden" name="sort_order" defaultValue={String(workRow.sort_order)} />
             <input type="hidden" name="status" defaultValue={workRow.status} />
             <input type="hidden" name="scheduled_publish_at" defaultValue={workRow.scheduled_publish_at ?? ""} />
-            <input type="hidden" name="is_representative" defaultChecked={workRow.is_representative} />
-            <input type="hidden" name="is_composite" defaultChecked={workRow.is_composite} />
+            <input type="hidden" name="is_representative" value={workRow.is_representative ? "on" : ""} />
+            <input type="hidden" name="is_composite" value={workRow.is_composite ? "on" : ""} />
             <input type="hidden" name="seo_title" defaultValue={workRow.seo_title} />
             <input type="hidden" name="seo_description" defaultValue={workRow.seo_description} />
-            {workRow.palette.length > 0 && (
+            {(workRow.palette ?? []).length > 0 && (
               <input type="hidden" name="palette" defaultValue={workRow.palette.join(", ")} />
             )}
             <button type="submit">保存</button>
@@ -484,6 +484,9 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
     <form action={updateWork} className="grid gap-4">
       <input type="hidden" name="id" value={work.id} />
       <input type="hidden" name="slug" value={work.slug} />
+      <input type="hidden" name="title" value={work.title} />
+      <input type="hidden" name="summary" value={work.summary} />
+      <input type="hidden" name="scheduled_publish_at" value={work.scheduled_publish_at ?? ""} />
 
       <div className="grid gap-3 md:grid-cols-2">
         <Field label="副标题" name="subtitle" defaultValue={work.subtitle} compact />

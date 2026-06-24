@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -7,12 +8,8 @@ export const runtime = "nodejs";
 /**
  * 定时发布任务入口。
  *
- * 鉴权方式（按优先级）：
- * 1. Authorization: Bearer <CRON_SECRET>  — Vercel Cron 推荐方式
- * 2. ?secret=<CRON_SECRET>                — 手动触发 / 向后兼容
- *
- * 查找 scheduled_publish_at <= now 且 status = 'draft' 的作品，
- * 将其设为已发布并清空 scheduled_publish_at。
+ * 鉴权方式：Authorization: Bearer <CRON_SECRET>（Vercel Cron 自动注入）
+ * 使用时序安全比较防止密钥泄露。
  */
 export async function GET(request: Request) {
   if (!isAuthorized(request)) {
@@ -39,21 +36,23 @@ export async function GET(request: Request) {
   });
 }
 
+/** 时序安全的字符串比较 */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 function isAuthorized(request: Request): boolean {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) return false;
 
-  // 优先检查 Authorization header（Vercel Cron 自动注入）
   const authHeader = request.headers.get("authorization");
   if (authHeader) {
     const bearer = authHeader.replace(/^Bearer\s+/i, "");
-    if (bearer === cronSecret) return true;
+    if (bearer && safeEqual(bearer, cronSecret)) return true;
   }
-
-  // 向后兼容：query string ?secret=
-  const { searchParams } = new URL(request.url);
-  const querySecret = searchParams.get("secret");
-  if (querySecret && querySecret === cronSecret) return true;
 
   return false;
 }

@@ -193,15 +193,17 @@ export async function clearPrivatePreviewLink(formData: FormData) {
 
   const { client } = await requireAdmin();
   const { work_id, work_slug } = parsed.data;
+  // 清除 token 的同时将状态恢复为 draft，避免作品永久隐藏
   const { error } = await client
     .from("works")
-    .update({ private_token_hash: null })
+    .update({ private_token_hash: null, status: "draft" })
     .eq("id", work_id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
   revalidatePath(`/works/${work_slug}`);
 }
 
@@ -304,10 +306,21 @@ export async function updateWork(formData: FormData) {
   if (!parsed.success) return;
 
   const { id, ...values } = parsed.data;
-  const published_at =
-    values.status === "published" ? new Date().toISOString() : null;
 
   const { client, user } = await requireAdmin();
+
+  // 查询当前 published_at，仅在首次发布时设置，避免覆盖原始发布时间
+  const { data: currentWork } = await client
+    .from("works")
+    .select("published_at")
+    .eq("id", id)
+    .single();
+
+  const existingPublishedAt = currentWork?.published_at as string | null;
+  const published_at =
+    values.status === "published"
+      ? existingPublishedAt ?? new Date().toISOString()
+      : existingPublishedAt; // 取消发布时保留历史发布时间，不清空
 
   const { error } = await client
     .from("works")
@@ -326,6 +339,14 @@ export async function deleteWork(formData: FormData) {
   if (!id.success) return;
 
   const { client } = await requireAdmin();
+
+  // 查询 slug 用于清理公开缓存
+  const { data: workRow } = await client
+    .from("works")
+    .select("slug")
+    .eq("id", id.data)
+    .single();
+
   const { error } = await client
     .from("works")
     .update({ deleted_at: new Date().toISOString() })
@@ -334,6 +355,12 @@ export async function deleteWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
+  revalidatePath("/works");
+  if (workRow?.slug) {
+    revalidatePath(`/works/${workRow.slug}`);
+  }
+
+  redirect("/admin/works");
 }
 
 export async function createTextBlock(formData: FormData) {
@@ -1549,17 +1576,50 @@ export async function batchUpdateWorkStatus(formData: FormData) {
   if (!parsed.success) return;
 
   const { client } = await requireAdmin();
-  const published_at =
-    parsed.data.status === "published" ? new Date().toISOString() : null;
 
-  const { error } = await client
-    .from("works")
-    .update({ status: parsed.data.status, published_at })
-    .in("id", parsed.data.work_ids);
+  // 批量发布时：保留已有 published_at，仅首次发布时设置；同时清除 scheduled_publish_at
+  const updateData: Record<string, unknown> = {
+    status: parsed.data.status,
+    scheduled_publish_at: null,
+  };
 
-  if (error) throw new Error(error.message);
+  if (parsed.data.status === "published") {
+    // 查询已有 published_at，仅对未发布过的作品设置当前时间
+    const { data: existingWorks } = await client
+      .from("works")
+      .select("id,published_at")
+      .in("id", parsed.data.work_ids);
+
+    const now = new Date().toISOString();
+    const needsPublishAt = (existingWorks ?? []).filter(
+      (w) => !w.published_at,
+    );
+    if (needsPublishAt.length > 0) {
+      // 对没有 published_at 的作品单独更新
+      const newIds = needsPublishAt.map((w) => w.id);
+      await client
+        .from("works")
+        .update({ ...updateData, published_at: now })
+        .in("id", newIds);
+    }
+    // 已有 published_at 的作品只更新 status 和 scheduled_publish_at
+    const existingIds = (existingWorks ?? [])
+      .filter((w) => w.published_at)
+      .map((w) => w.id);
+    if (existingIds.length > 0) {
+      await client.from("works").update(updateData).in("id", existingIds);
+    }
+  } else {
+    // 非发布状态：保留已有 published_at，不清空
+    const { error } = await client
+      .from("works")
+      .update(updateData)
+      .in("id", parsed.data.work_ids);
+    if (error) throw new Error(error.message);
+  }
 
   revalidatePath("/admin/works");
+  revalidatePath("/works");
   parsed.data.work_ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
 }
 
@@ -1741,7 +1801,7 @@ export async function reorderWorksAction(formData: FormData) {
 
   // sort_order 从高到低：第一个作品 sort_order 最大
   const base = parsed.data.length;
-  await Promise.all(
+  const results = await Promise.all(
     parsed.data.map((workId, index) =>
       client
         .from("works")
@@ -1749,6 +1809,9 @@ export async function reorderWorksAction(formData: FormData) {
         .eq("id", workId),
     ),
   );
+
+  const firstError = results.find((r) => r.error);
+  if (firstError?.error) throw new Error(firstError.error.message);
 
   revalidatePath("/admin/works");
   revalidatePath("/works");

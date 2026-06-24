@@ -1,78 +1,104 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-session";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+const createTextContentSchema = z.object({
+  key: z.string().trim().min(1).max(120),
+  content: z.string().trim().min(1).max(10000),
+  page: z.string().trim().min(1).max(80),
+  section: z.string().trim().max(80).optional(),
+  font_size: z.string().trim().max(20).optional(),
+  font_family: z.string().trim().max(80).optional(),
+  font_weight: z.string().trim().max(20).optional(),
+  color: z.string().trim().max(20).optional(),
+});
+
+const updateTextContentSchema = z.object({
+  id: z.string().uuid(),
+  content: z.string().trim().min(1).max(10000),
+  font_size: z.string().trim().max(20).optional(),
+  font_family: z.string().trim().max(80).optional(),
+  font_weight: z.string().trim().max(20).optional(),
+  color: z.string().trim().max(20).optional(),
+});
 
 export async function createTextContent(formData: FormData) {
-  await requireAdmin();
+  const { client } = await requireAdmin();
 
-  const key = formData.get("key") as string;
-  const content = formData.get("content") as string;
-  const page = formData.get("page") as string;
-  const section = (formData.get("section") as string) || null;
-  const fontSize = (formData.get("font_size") as string) || null;
-  const fontFamily = (formData.get("font_family") as string) || null;
-  const fontWeight = (formData.get("font_weight") as string) || null;
-  const color = (formData.get("color") as string) || null;
-
-  if (!key || !content || !page) {
-    return;
-  }
-
-  const supabase = await createSupabaseServerClient();
-  await supabase.from("text_content").insert({
-    key,
-    content,
-    page,
-    section,
-    font_size: fontSize,
-    font_family: fontFamily,
-    font_weight: fontWeight,
-    color,
+  const parsed = createTextContentSchema.safeParse({
+    key: formData.get("key"),
+    content: formData.get("content"),
+    page: formData.get("page"),
+    section: formData.get("section") || undefined,
+    font_size: formData.get("font_size") || undefined,
+    font_family: formData.get("font_family") || undefined,
+    font_weight: formData.get("font_weight") || undefined,
+    color: formData.get("color") || undefined,
   });
+
+  if (!parsed.success) return;
+
+  const { error } = await client.from("text_content").insert({
+    key: parsed.data.key,
+    content: parsed.data.content,
+    page: parsed.data.page,
+    section: parsed.data.section ?? null,
+    font_size: parsed.data.font_size ?? null,
+    font_family: parsed.data.font_family ?? null,
+    font_weight: parsed.data.font_weight ?? null,
+    color: parsed.data.color ?? null,
+  });
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
 }
 
 export async function updateTextContent(formData: FormData) {
-  await requireAdmin();
+  const { client } = await requireAdmin();
 
-  const id = formData.get("id") as string;
-  const content = formData.get("content") as string;
-  const fontSize = (formData.get("font_size") as string) || null;
-  const fontFamily = (formData.get("font_family") as string) || null;
-  const fontWeight = (formData.get("font_weight") as string) || null;
-  const color = (formData.get("color") as string) || null;
+  const parsed = updateTextContentSchema.safeParse({
+    id: formData.get("id"),
+    content: formData.get("content"),
+    font_size: formData.get("font_size") || undefined,
+    font_family: formData.get("font_family") || undefined,
+    font_weight: formData.get("font_weight") || undefined,
+    color: formData.get("color") || undefined,
+  });
 
-  if (!id || !content) {
-    return;
-  }
+  if (!parsed.success) return;
 
-  const supabase = await createSupabaseServerClient();
-  await supabase
+  const { error } = await client
     .from("text_content")
     .update({
-      content,
-      font_size: fontSize,
-      font_family: fontFamily,
-      font_weight: fontWeight,
-      color,
+      content: parsed.data.content,
+      font_size: parsed.data.font_size ?? null,
+      font_family: parsed.data.font_family ?? null,
+      font_weight: parsed.data.font_weight ?? null,
+      color: parsed.data.color ?? null,
     })
-    .eq("id", id)
+    .eq("id", parsed.data.id)
     .is("deleted_at", null);
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
 }
 
 export async function deleteTextContent(id: string) {
-  await requireAdmin();
+  const { client } = await requireAdmin();
 
-  const supabase = await createSupabaseServerClient();
-  await supabase
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) return;
+
+  const { error } = await client
     .from("text_content")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", idParsed.data);
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
 }

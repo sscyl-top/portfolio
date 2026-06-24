@@ -70,8 +70,8 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
     formData.set("work_id", workId);
     formData.set("work_slug", workSlug);
     formData.set("version_numbers", Array.from(selectedVersions).join(","));
-    startTransition(() => {
-      deleteWorkVersionsAction(formData);
+    startTransition(async () => {
+      await deleteWorkVersionsAction(formData);
       setSelectedVersions(new Set());
       setConfirmDelete(false);
       router.refresh();
@@ -79,8 +79,8 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
   };
 
   const handleSave = (formData: FormData) => {
-    startTransition(() => {
-      archiveWorkVersionAction(formData);
+    startTransition(async () => {
+      await archiveWorkVersionAction(formData);
       setLabel("");
       router.refresh();
     });
@@ -91,8 +91,8 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
     formData.set("work_id", workId);
     formData.set("work_slug", workSlug);
     formData.set("version_number", String(versionNumber));
-    startTransition(() => {
-      rollbackWorkVersionAction(formData);
+    startTransition(async () => {
+      await rollbackWorkVersionAction(formData);
       setConfirmTarget(null);
       router.refresh();
     });
@@ -103,8 +103,8 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
     formData.set("work_id", workId);
     formData.set("work_slug", workSlug);
     formData.set("version_number", String(versionNumber));
-    startTransition(() => {
-      restoreForwardWorkVersionAction(formData);
+    startTransition(async () => {
+      await restoreForwardWorkVersionAction(formData);
       setConfirmTarget(null);
       router.refresh();
     });

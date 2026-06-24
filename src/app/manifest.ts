@@ -12,14 +12,20 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   let theme: "dark" | "light" | "system" = "dark";
   let iconSrc: string | undefined;
 
+  let iconMimeType: string = "image/png";
+
   if (isSupabaseConfigured()) {
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("site_settings")
       .select(
         "name,nickname,default_theme,logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text)",
       )
       .single();
+
+    if (error) {
+      console.warn("[manifest] query failed:", error.message);
+    }
 
     if (data) {
       const row = data as {
@@ -41,6 +47,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         : row.logo_media;
       if (media?.storage_key) {
         iconSrc = buildPublicMediaUrl(media.storage_key);
+        iconMimeType = media.mime_type || "image/png";
       }
     }
   }
@@ -50,8 +57,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
 
   const icons: MetadataRoute.Manifest["icons"] = iconSrc
     ? [
-        { src: iconSrc, sizes: "192x192", type: "image/png" },
-        { src: iconSrc, sizes: "512x512", type: "image/png" },
+        { src: iconSrc, sizes: "192x192", type: iconMimeType },
+        { src: iconSrc, sizes: "512x512", type: iconMimeType },
       ]
     : [{ src: "/favicon.ico", sizes: "any" }];
 

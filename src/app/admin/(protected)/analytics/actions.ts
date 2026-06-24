@@ -17,10 +17,7 @@ export async function approveComment(formData: FormData) {
     .update({ is_approved: true })
     .eq("id", id.data);
 
-  if (error) {
-    console.error("Failed to approve comment", error);
-    return;
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/analytics");
 }
@@ -35,10 +32,7 @@ export async function deleteComment(formData: FormData) {
     .delete()
     .eq("id", id.data);
 
-  if (error) {
-    console.error("Failed to delete comment", error);
-    return;
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin/analytics");
 }
