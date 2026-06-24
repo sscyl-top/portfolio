@@ -84,7 +84,7 @@ export default async function WorkDetailPage({
           <p className="font-mono text-xs uppercase tracking-[0.26em] text-copper">
             {work.category} / {work.year}
           </p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-6xl lg:text-7xl">
+          <h1 className="mt-4 text-4xl font-black leading-[0.9] tracking-tight text-white md:text-6xl lg:text-7xl">
             {work.title}
           </h1>
         </div>
