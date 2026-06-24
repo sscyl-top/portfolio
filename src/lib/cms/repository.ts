@@ -432,6 +432,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     alt: ref.alt_text ?? "",
     mimeType: ref.mime_type ?? "",
     url: buildMediaUrl(ref.storage_key, ref.mime_type),
+    storage_key: ref.storage_key,
   });
 
   const toItems = (refs: MediaRef[]) => refs.map(toMedia);

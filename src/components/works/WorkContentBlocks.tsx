@@ -202,6 +202,7 @@ function MediaBlock({
   const isFree = block.layout?.width === "free";
   const free = block.layout?.free;
   const isGallery = block.type === "gallery";
+  const isSingle = !isGallery && !isFree;
 
   // 图库 Lightbox 状态
   const [lightboxIdx, setLightboxIdx] = useState(-1);
@@ -229,7 +230,7 @@ function MediaBlock({
             ? `grid gap-2 md:gap-3 ${cols}`
             : isFree
               ? "relative h-[580px] md:h-[880px]"
-              : "relative w-full overflow-hidden"
+              : "w-full"
         }
       >
         {block.items.map((media, i) => (
@@ -240,7 +241,7 @@ function MediaBlock({
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
                   ? "relative cursor-zoom-in overflow-hidden md:min-h-[60vh]"
-                  : "relative w-full overflow-hidden"
+                  : "w-full"
             }
             style={
               isFree && free
@@ -254,16 +255,49 @@ function MediaBlock({
             }
             onClick={isGallery ? () => setLightboxIdx(i) : undefined}
           >
-            <WorkMediaFrame
-              media={media}
-              tone={tone as never}
-              className={isFree ? "h-full w-full" : "w-full"}
-              objectPosition={
-                block.type === "media" && block.focalPoint
-                  ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
-                  : undefined
-              }
-            />
+            {isSingle ? (
+              media.mimeType?.startsWith("image/") ? (
+                <img
+                  src={media.url}
+                  alt={media.alt ?? ""}
+                  className="block w-full h-auto"
+                  style={
+                    block.type === "media" && block.focalPoint
+                      ? { objectPosition: `${block.focalPoint.x}% ${block.focalPoint.y}%` }
+                      : undefined
+                  }
+                />
+              ) : media.mimeType?.startsWith("video/") ? (
+                <video
+                  src={media.url}
+                  controls
+                  preload="metadata"
+                  className="w-full h-auto"
+                />
+              ) : (
+                <WorkMediaFrame
+                  media={media}
+                  tone={tone as never}
+                  className="h-full w-full"
+                  objectPosition={
+                    block.type === "media" && block.focalPoint
+                      ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
+                      : undefined
+                  }
+                />
+              )
+            ) : (
+              <WorkMediaFrame
+                media={media}
+                tone={tone as never}
+                className={isFree ? "h-full w-full" : "w-full"}
+                objectPosition={
+                  block.type === "media" && block.focalPoint
+                    ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
+                    : undefined
+                }
+              />
+            )}
           </div>
         ))}
       </div>
@@ -309,7 +343,19 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: "pdf" }> }) 
       ) : null}
       {pdf.storage_key ? (
         <PdfBlockRenderer storageKey={pdf.storage_key} caption={block.caption} />
-      ) : null}
+      ) : (
+        <a
+          href={pdf.url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 p-4 text-sm text-white/70 transition hover:border-white/25 hover:text-white"
+        >
+          <svg className="h-6 w-6 text-orange-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          查看 PDF
+        </a>
+      )}
     </section>
   );
 }
