@@ -19,35 +19,12 @@ type ContactFormProps = {
 type FieldError = { name?: string; email?: string; message?: string };
 
 const fieldClass =
-  "min-h-9 w-full rounded-lg border border-white/[0.03] bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/45 focus:bg-white/[0.04]";
+  "min-h-9 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
 
 const errorFieldClass =
-  "min-h-9 w-full rounded-lg border border-red-400/25 bg-white/[0.02] px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-copper/45 focus:bg-white/[0.04]";
+  "min-h-9 w-full rounded-lg border border-red-400/40 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
-
-/** 桌面端：标签左 / 输入右，垂直居中对齐（仅 sm+ 断点生效） */
-function InlineField({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  htmlFor?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <label
-        htmlFor={htmlFor}
-        className="shrink-0 w-[3.2rem] whitespace-nowrap text-right text-[13px] text-white/55"
-      >
-        {label}
-      </label>
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
-  );
-}
 
 export function ContactForm({
   id,
@@ -138,21 +115,21 @@ export function ContactForm({
     <article
       id={id}
       data-testid={`${type}-contact-card`}
-      className="scroll-mt-24 rounded-lg border border-white/10 bg-white/[0.035] p-3.5 md:p-5"
+      className="scroll-mt-24 rounded-lg border border-white/10 bg-white/[0.035] p-4 md:p-5"
     >
-      <div className="border-b border-white/10 pb-3">
+      <div className="border-b border-white/10 pb-4">
         <p className="font-mono text-[10px] uppercase text-copper">
           {type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
         </p>
-        <h3 className="mt-2 text-2xl font-semibold text-white md:text-3xl">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-white/58 md:mt-3 md:text-[15px] md:leading-7">
+        <h3 className="mt-3 text-3xl font-semibold text-white">{title}</h3>
+        <p className="mt-3 max-w-xl text-[15px] leading-7 text-white/58">
           {description}
         </p>
       </div>
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
+        className="mt-4 grid gap-4 sm:grid-cols-2"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
@@ -166,122 +143,183 @@ export function ContactForm({
           />
         </div>
 
-        {/* ── 姓名 / 邮箱（桌面端同行）── */}
-        <InlineField label="姓名" htmlFor={`${type}-name`}>
-          <input
-            id={`${type}-name`}
-            className={fieldErrors.name ? errorFieldClass : fieldClass}
-            name="name"
-            placeholder="您的姓名"
-            autoComplete="name"
-            maxLength={80}
-            onChange={() => setFieldErrors((prev) => ({ ...prev, name: undefined }))}
-          />
-          {fieldErrors.name ? (
-            <p className={errorTextClass}>
-              <AlertCircle aria-hidden="true" className="h-3 w-3" />
-              {fieldErrors.name}
-            </p>
-          ) : null}
-        </InlineField>
-
-        <InlineField label="邮箱" htmlFor={`${type}-email`}>
-          <input
-            id={`${type}-email`}
-            className={fieldErrors.email ? errorFieldClass : fieldClass}
-            type="email"
-            name="email"
-            placeholder="your@email.com"
-            autoComplete="email"
-            maxLength={160}
-            onChange={() => setFieldErrors((prev) => ({ ...prev, email: undefined }))}
-          />
-          {fieldErrors.email ? (
-            <p className={errorTextClass}>
-              <AlertCircle aria-hidden="true" className="h-3 w-3" />
-              {fieldErrors.email}
-            </p>
-          ) : null}
-        </InlineField>
-
-        {/* ── 公司（全宽）── */}
-        <div className="sm:col-span-2">
-          <label htmlFor={`${type}-company`} className="block mb-1 text-xs text-white/55">公司</label>
-          <input
-            id={`${type}-company`}
-            className={fieldClass}
-            name="company"
-            placeholder="您的公司名称"
-            autoComplete="organization"
-            maxLength={120}
-          />
+        {/* 姓名 */}
+        <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <label
+            htmlFor={`${type}-name`}
+            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+          >
+            姓名
+          </label>
+          <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+            <input
+              id={`${type}-name`}
+              className={fieldErrors.name ? errorFieldClass : fieldClass}
+              name="name"
+              placeholder="您的姓名"
+              autoComplete="name"
+              maxLength={80}
+              onChange={() => setFieldErrors((prev) => ({ ...prev, name: undefined }))}
+            />
+            {fieldErrors.name ? (
+              <p className={errorTextClass}>
+                <AlertCircle aria-hidden="true" className="h-3 w-3" />
+                {fieldErrors.name}
+              </p>
+            ) : null}
+          </div>
         </div>
 
-        {/* ── 岗位名称 / 薪资范围（桌面端同行）── */}
-        <InlineField label={subjectLabel} htmlFor={`${type}-subject`}>
-          <input
-            id={`${type}-subject`}
-            className={fieldClass}
-            name="subject"
-            placeholder={subjectPlaceholder}
-            maxLength={120}
-          />
-        </InlineField>
-
-        <InlineField label={rangeLabel} htmlFor={`${type}-range`}>
-          <input
-            id={`${type}-range`}
-            className={fieldClass}
-            name="range"
-            placeholder={rangePlaceholder}
-            maxLength={80}
-          />
-        </InlineField>
-
-        {/* ── 岗位描述 / 项目需求（全宽 textarea）── */}
-        <div className="sm:col-span-2">
-          <label htmlFor={`${type}-message`} className="block mb-1 text-xs text-white/55">{messageLabel}</label>
-          <textarea
-            id={`${type}-message`}
-            className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5`}
-            name="message"
-            placeholder={messagePlaceholder}
-            maxLength={3000}
-            onChange={() => setFieldErrors((prev) => ({ ...prev, message: undefined }))}
-          />
-          {fieldErrors.message ? (
-            <p className={errorTextClass}>
-              <AlertCircle aria-hidden="true" className="h-3 w-3" />
-              {fieldErrors.message}
-            </p>
-          ) : null}
+        {/* 邮箱 */}
+        <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <label
+            htmlFor={`${type}-email`}
+            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+          >
+            邮箱
+          </label>
+          <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+            <input
+              id={`${type}-email`}
+              className={fieldErrors.email ? errorFieldClass : fieldClass}
+              type="email"
+              name="email"
+              placeholder="your@email.com"
+              autoComplete="email"
+              maxLength={160}
+              onChange={() => setFieldErrors((prev) => ({ ...prev, email: undefined }))}
+            />
+            {fieldErrors.email ? (
+              <p className={errorTextClass}>
+                <AlertCircle aria-hidden="true" className="h-3 w-3" />
+                {fieldErrors.email}
+              </p>
+            ) : null}
+          </div>
         </div>
 
-        {/* ── 备注（全宽 textarea）── */}
+        {/* 公司 */}
         <div className="sm:col-span-2">
-          <label htmlFor={`${type}-note`} className="block mb-1 text-xs text-white/55">备注</label>
-          <textarea
-            id={`${type}-note`}
-            className={`${fieldClass} min-h-12 resize-y py-2.5`}
-            name="note"
-            placeholder="补充时间安排、联系方式或其他说明"
-            maxLength={1000}
-          />
+          <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+            <label
+              htmlFor={`${type}-company`}
+              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            >
+              公司
+            </label>
+            <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+              <input
+                id={`${type}-company`}
+                className={fieldClass}
+                name="company"
+                placeholder="您的公司名称"
+                autoComplete="organization"
+                maxLength={120}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* ── 提交按钮 ── */}
+        {/* subject */}
+        <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <label
+            htmlFor={`${type}-subject`}
+            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+          >
+            {subjectLabel}
+          </label>
+          <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+            <input
+              id={`${type}-subject`}
+              className={fieldClass}
+              name="subject"
+              placeholder={subjectPlaceholder}
+              maxLength={120}
+            />
+          </div>
+        </div>
+
+        {/* range */}
+        <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
+          <label
+            htmlFor={`${type}-range`}
+            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+          >
+            {rangeLabel}
+          </label>
+          <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+            <input
+              id={`${type}-range`}
+              className={fieldClass}
+              name="range"
+              placeholder={rangePlaceholder}
+              maxLength={80}
+            />
+          </div>
+        </div>
+
+        {/* message */}
+        <div className="sm:col-span-2">
+          <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
+            <label
+              htmlFor={`${type}-message`}
+              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            >
+              {messageLabel}
+            </label>
+            <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+              <textarea
+                id={`${type}-message`}
+                className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5 sm:min-h-20`}
+                name="message"
+                placeholder={messagePlaceholder}
+                maxLength={3000}
+                onChange={() => setFieldErrors((prev) => ({ ...prev, message: undefined }))}
+              />
+              {fieldErrors.message ? (
+                <p className={errorTextClass}>
+                  <AlertCircle aria-hidden="true" className="h-3 w-3" />
+                  {fieldErrors.message}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {/* 备注 */}
+        <div className="sm:col-span-2">
+          <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
+            <label
+              htmlFor={`${type}-note`}
+              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            >
+              备注
+            </label>
+            <div className="min-w-0 flex-1 sm:w-full sm:flex-none">
+              <textarea
+                id={`${type}-note`}
+                className={`${fieldClass} min-h-12 resize-y py-2.5 sm:min-h-16`}
+                name="note"
+                placeholder="补充时间安排、联系方式或其他说明"
+                maxLength={1000}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 提交按钮 */}
         <div className="sm:col-span-2">
           <button
             type="submit"
             disabled={status === "pending"}
-            className="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-[#edf8ff] px-5 py-2 text-sm font-semibold text-black/90 transition hover:bg-[#f6fcff] disabled:cursor-wait disabled:opacity-55"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-[#edf8ff] px-6 text-sm font-semibold text-black/90 transition hover:bg-[#f6fcff] disabled:cursor-wait disabled:opacity-55"
           >
             <Send aria-hidden="true" className="h-4 w-4" />
             {status === "pending" ? "正在发送" : "发送消息"}
           </button>
           <p
             aria-live="polite"
-            className={`mt-2 min-h-5 text-center text-xs ${
+            className={`mt-3 min-h-5 text-center text-xs ${
               status === "error"
                 ? "text-red-300"
                 : status === "success"
