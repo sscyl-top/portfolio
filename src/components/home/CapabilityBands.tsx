@@ -353,7 +353,7 @@ function FinalContactPanel({
             <p className="text-base font-light text-white">
               {textOverrides.contactInvitation || "期待一起共事："}
             </p>
-            <p className="mt-3 whitespace-nowrap text-4xl font-light leading-none tracking-[0.035em] text-white md:text-7xl xl:text-[7.5rem]">
+            <p className="mt-3 whitespace-nowrap text-4xl font-light leading-none tracking-[0.035em] text-white md:font-extralight md:text-7xl xl:text-[7.5rem]">
               {resume.contact.email}
             </p>
           </div>
