@@ -71,11 +71,11 @@ export default async function AdminSettingsPage() {
     hero_side1_video_media_id: null,
     hero_side2_video_media_id: null,
     hero_side3_video_media_id: null,
-    social_links: siteSettings.socialLinks.map((link) => ({
+    social_links: siteSettings.socialLinks.map((link: { label: string; href: string }) => ({
       label: link.label,
       url: link.href,
     })),
-  };
+  } satisfies SettingsRow;
   const settings = (data as SettingsRow | null) ?? fallback;
   const socialLinks =
     settings.social_links.length > 0
