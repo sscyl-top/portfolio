@@ -80,7 +80,7 @@ function MeteorShower() {
       return;
     }
 
-    const ANIM_DURATION = 1000;
+    const ANIM_DURATION = 5000;
 
     const triggerMeteor = () => {
       const m1 = meteor1Ref.current;
@@ -90,26 +90,26 @@ function MeteorShower() {
         m1.classList.remove("is-animating");
         void m1.offsetWidth;
         m1.classList.add("is-animating");
-        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 100);
+        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 200);
       }
 
       if (Math.random() > 0.5) {
-        const m2Delay = 150 + Math.random() * 250;
+        const m2Delay = 300 + Math.random() * 600;
         setTimeout(() => {
           if (m2) {
             m2.classList.remove("is-animating");
             void m2.offsetWidth;
             m2.classList.add("is-animating");
-            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 100);
+            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 200);
           }
         }, m2Delay);
       }
 
-      const nextDelay = 10000 + Math.random() * 6000;
+      const nextDelay = 12000 + Math.random() * 8000;
       timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
     };
 
-    const initialDelay = 3000 + Math.random() * 2000;
+    const initialDelay = 4000 + Math.random() * 3000;
     timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
 
     return () => {
@@ -124,7 +124,7 @@ function MeteorShower() {
       <div
         ref={meteor1Ref}
         className="meteor"
-        style={{ top: "12%", right: "-30px" }}
+        style={{ top: "6%", right: "-60px" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />
@@ -133,7 +133,7 @@ function MeteorShower() {
       <div
         ref={meteor2Ref}
         className="meteor meteor-secondary"
-        style={{ top: "18%", right: "-20px" }}
+        style={{ top: "10%", right: "-40px" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />

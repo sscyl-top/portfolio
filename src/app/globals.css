@@ -301,15 +301,15 @@ button {
     opacity: 0;
     transform: translateX(0);
   }
-  8% {
+  3% {
     opacity: 1;
   }
-  92% {
+  95% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateX(-100vw);
+    transform: translateX(-75vw);
   }
 }
 
@@ -318,7 +318,16 @@ button {
     transform: translateY(0);
   }
   100% {
-    transform: translateY(50vh);
+    transform: translateY(75vh);
+  }
+}
+
+@keyframes meteor-rotate {
+  0% {
+    transform: rotate(-12deg);
+  }
+  100% {
+    transform: rotate(-45deg);
   }
 }
 
@@ -334,10 +343,10 @@ button {
 }
 
 .meteor-visual {
-  width: 140px;
-  height: 30px;
+  width: 190px;
+  height: 40px;
   position: relative;
-  transform: rotate(-42deg);
+  transform: rotate(-12deg);
   transform-origin: left center;
 }
 
@@ -352,13 +361,14 @@ button {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.9) 6%,
-    rgba(225, 240, 255, 0.6) 20%,
-    rgba(180, 215, 255, 0.25) 45%,
-    rgba(160, 200, 255, 0.08) 75%,
+    rgba(255, 255, 255, 0.92) 5%,
+    rgba(225, 240, 255, 0.65) 15%,
+    rgba(180, 215, 255, 0.3) 35%,
+    rgba(160, 200, 255, 0.12) 60%,
+    rgba(140, 180, 255, 0.03) 82%,
     rgba(255, 255, 255, 0) 100%
   );
-  clip-path: polygon(0 15%, 4px 0%, 100% 50%, 4px 100%, 0 85%);
+  clip-path: polygon(0 12%, 5px 0%, 100% 50%, 5px 100%, 0 88%);
 }
 
 .meteor-visual::after {
@@ -386,15 +396,19 @@ button {
 }
 
 .meteor.is-animating {
-  animation: meteor-move-x 1s linear forwards;
+  animation: meteor-move-x 5s linear forwards;
 }
 
 .meteor.is-animating .meteor-y {
-  animation: meteor-move-y 1s cubic-bezier(0.4, 0, 0.82, 0.5) forwards;
+  animation: meteor-move-y 5s cubic-bezier(0.33, 0, 0.67, 0.15) forwards;
+}
+
+.meteor.is-animating .meteor-visual {
+  animation: meteor-rotate 5s cubic-bezier(0.33, 0, 0.67, 0.15) forwards;
 }
 
 .meteor-secondary .meteor-visual {
-  width: 100px;
+  width: 140px;
 }
 
 .meteor-secondary .meteor-visual::before {
@@ -402,8 +416,9 @@ button {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.95) 0%,
-    rgba(225, 240, 255, 0.45) 22%,
-    rgba(180, 215, 255, 0.15) 50%,
+    rgba(225, 240, 255, 0.5) 18%,
+    rgba(180, 215, 255, 0.2) 42%,
+    rgba(150, 190, 255, 0.06) 70%,
     rgba(255, 255, 255, 0) 100%
   );
 }
