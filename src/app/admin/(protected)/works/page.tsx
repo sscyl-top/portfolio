@@ -2,10 +2,14 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { WorkWizard } from "@/components/admin/WorkWizard";
 import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
-import { publishScheduledWorks, assignToRepresentativeSlot, removeFromRepresentative } from "./actions";
+import {
+  publishScheduledWorks,
+  assignToRepresentativeSlot,
+  removeFromRepresentative,
+  createEmptyWork,
+} from "./actions";
 
 type AdminWorkRow = {
   id: string;
@@ -45,11 +49,9 @@ export default async function AdminWorksPage({
     section?: string;
     status?: string;
     q?: string;
-    wizardOpen?: string;
-    slot?: string;
   }>;
 }) {
-  const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "", wizardOpen, slot } = await searchParams;
+  const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "" } = await searchParams;
   const section: Section = ["all", "representative", "composite"].includes(rawSection ?? "all")
     ? (rawSection as Section)
     : "all";
@@ -57,8 +59,6 @@ export default async function AdminWorksPage({
     ? (rawStatus as StatusFilter)
     : "all";
   const query = q.trim().toLowerCase();
-  const isWizardOpen = wizardOpen === "true";
-  const activeSlot = slot ? Number(slot) : undefined;
 
   const supabase = await createSupabaseServerClient();
   const [
@@ -167,33 +167,24 @@ export default async function AdminWorksPage({
           slots={representativeSlots}
           allWorks={nonRepresentativeWorks}
           getCoverUrl={getCoverUrl}
-          isWizardOpen={isWizardOpen}
-          activeSlot={activeSlot}
-          categories={categories}
-          tags={tags}
         />
       ) : (
         <>
           <div className="mt-6 flex items-center justify-between">
             <div />
-            <Link
-              href={`/admin/works?section=${section}&wizardOpen=true`}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              {section === "composite" ? "上传复合设计" : "上传新作品"}
-            </Link>
+            <form action={createEmptyWork}>
+              <input type="hidden" name="section" value={section === "composite" ? "composite" : "all"} />
+              <button
+                type="submit"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {section === "composite" ? "上传复合设计" : "上传新作品"}
+              </button>
+            </form>
           </div>
-
-          {isWizardOpen ? (
-            <WorkWizard
-              categories={categories}
-              tags={tags}
-              presetSection={section === "composite" ? "composite" : "all"}
-            />
-          ) : null}
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <FilterBar currentStatus={status} query={query} section={section} />
@@ -322,43 +313,13 @@ function RepresentativeSlotsManager({
   slots,
   allWorks,
   getCoverUrl,
-  isWizardOpen,
-  activeSlot,
-  categories,
-  tags,
 }: {
   slots: { slot: number; work: AdminWorkRow | null }[];
   allWorks: AdminWorkRow[];
   getCoverUrl: (work: AdminWorkRow) => string | null;
-  isWizardOpen: boolean;
-  activeSlot?: number;
-  categories: TaxonomyRow[];
-  tags: TaxonomyRow[];
 }) {
   return (
     <div className="mt-6 space-y-6">
-      {isWizardOpen && activeSlot ? (
-        <div className="rounded-md border border-cyan/30 bg-cyan/5 p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-cyan">
-              上传新作品到代表作位 #{activeSlot}
-            </h3>
-            <Link
-              href="/admin/works?section=representative"
-              className="text-xs text-white/50 hover:text-white"
-            >
-              取消
-            </Link>
-          </div>
-          <WorkWizard
-            categories={categories}
-            tags={tags}
-            presetSection="representative"
-            representativeSlot={activeSlot}
-          />
-        </div>
-      ) : null}
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {slots.map(({ slot, work }) => (
           <div
@@ -420,15 +381,19 @@ function RepresentativeSlotsManager({
                 <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-white/10 bg-black/20 p-3">
                   <span className="text-xs text-white/25">空槽位</span>
                   <div className="flex flex-col gap-1.5">
-                    <Link
-                      href={`/admin/works?section=representative&wizardOpen=true&slot=${slot}`}
-                      className="inline-flex items-center justify-center gap-1 rounded-md bg-cyan/90 px-2.5 py-1.5 text-[11px] font-medium text-black transition hover:bg-cyan"
-                    >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
-                      上传新作品
-                    </Link>
+                    <form action={createEmptyWork}>
+                      <input type="hidden" name="section" value="representative" />
+                      <input type="hidden" name="representative_slot" value={slot} />
+                      <button
+                        type="submit"
+                        className="inline-flex w-full items-center justify-center gap-1 rounded-md bg-cyan/90 px-2.5 py-1.5 text-[11px] font-medium text-black transition hover:bg-cyan"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        上传新作品
+                      </button>
+                    </form>
                     <SlotWorkSelector slot={slot} allWorks={allWorks} />
                   </div>
                 </div>

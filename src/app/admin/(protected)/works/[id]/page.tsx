@@ -175,15 +175,14 @@ export default async function AdminWorkEditorPage({
         {/* ═══ 左侧留白：用于将编辑区居中 ═══ */}
         <div />
 
-        {/* ═══ 中间：统一编辑板块（标题 + 文案 + 拖拽上传编辑器）═══ */}
+        {/* ═══ 中间：统一编辑板块（标题 + 文案 + 拖拽上传编辑器，融为一体）═══ */}
         <div className="min-w-0">
-          {/* 合并的编辑卡片 */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
             <form id="mainWorkForm" action={updateWork}>
               <input type="hidden" name="id" value={workRow.id} />
               <input type="hidden" name="slug" value={workRow.slug} />
 
-              {/* 标题输入（站酷风格，大字体无边框） */}
+              {/* 标题输入（大字体无边框） */}
               <div className="border-b border-white/[0.06] pb-5">
                 <div className="flex items-end gap-4">
                   <input
@@ -194,9 +193,6 @@ export default async function AdminWorkEditorPage({
                     placeholder="输入作品名称"
                     className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
                   />
-                  <span className="shrink-0 pb-1 font-mono text-xs text-white/22 tabular-nums">
-                    {(workRow.title ?? "").length}
-                  </span>
                 </div>
               </div>
 
@@ -208,22 +204,20 @@ export default async function AdminWorkEditorPage({
                     name="summary"
                     defaultValue={workRow.summary}
                     rows={3}
-                    placeholder="简要介绍你的作品理念、设计思路或项目背景…"
+                    placeholder="可以直接输入文字，在这里介绍你的作品理念、设计思路或项目背景…"
                     className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
                   />
                 </label>
               </div>
-
-              {/* 分隔线 */}
-              <div className="my-6 border-t border-white/[0.06]" />
             </form>
 
-            {/* 内容块编辑器 — 拖拽上传 + 自由排版区域 */}
+            {/* 内容块编辑器 — 与标题/文案融为一体，操作按钮通过悬浮⊕提供 */}
             <VisualBlockEditor
               workId={workRow.id}
               workSlug={workRow.slug}
               initialBlocks={blockRows}
               mediaAssets={mediaRows}
+              embedded
             />
 
             {/* 保存按钮 */}

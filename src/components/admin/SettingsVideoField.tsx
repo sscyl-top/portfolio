@@ -1,0 +1,235 @@
+"use client";
+
+import { useRef, useState, useCallback } from "react";
+import { UploadCloud, Loader2, X, Film, Play } from "lucide-react";
+
+import { uploadMediaFiles } from "@/lib/cms/upload-media";
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+
+type MediaAsset = {
+  id: string;
+  storage_key: string;
+  mime_type: string;
+  original_name: string;
+  alt_text: string;
+};
+
+type Props = {
+  name: string;
+  label: string;
+  assets: MediaAsset[];
+  defaultValue: string;
+  hint?: string;
+  aspectRatio?: "video" | "square" | "wide";
+};
+
+const ACCEPTED_VIDEO_TYPES = "video/mp4,video/webm,video/ogg,video/quicktime";
+
+const ASPECT_CLASS: Record<NonNullable<Props["aspectRatio"]>, string> = {
+  video: "aspect-video",
+  square: "aspect-square",
+  wide: "aspect-[2/1]",
+};
+
+export function SettingsVideoField({
+  name,
+  label,
+  assets,
+  defaultValue,
+  hint,
+  aspectRatio = "video",
+}: Props) {
+  const [value, setValue] = useState(defaultValue);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = assets.find((a) => a.id === value);
+  const previewUrl = selected ? buildPublicMediaUrl(selected.storage_key) : undefined;
+
+  const handleUpload = useCallback(async (files: FileList | File[] | null) => {
+    if (!files || files.length === 0) return;
+    const file = Array.isArray(files) ? files[0] : files[0];
+
+    if (!file.type.startsWith("video/")) {
+      setError("请选择视频格式文件（MP4/WEBM/OGG/MOV）");
+      return;
+    }
+
+    if (file.size > 80 * 1024 * 1024) {
+      setError("视频文件大小不能超过 80MB");
+      return;
+    }
+
+    setError(null);
+    setIsUploading(true);
+
+    try {
+      const results = await uploadMediaFiles([file], () => {});
+      const result = results[0];
+      if (!result) return;
+      setValue(result.id);
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "上传失败");
+    } finally {
+      setIsUploading(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    handleUpload(e.dataTransfer.files);
+  }, [handleUpload]);
+
+  const handleMouseEnter = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <label className="grid gap-2 text-sm">
+      <span className="text-white/58">{label}</span>
+
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative rounded-md border transition-all ${
+          isDragging
+            ? "border-cyan bg-cyan/10"
+            : "border-white/10 bg-white/[0.035]"
+        }`}
+      >
+        {previewUrl ? (
+          <div className="p-3">
+            <div className="flex items-start gap-3">
+              <div
+                className={`relative shrink-0 w-40 ${ASPECT_CLASS[aspectRatio]} overflow-hidden rounded border border-white/20 bg-black/30`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <video
+                  ref={videoRef}
+                  src={previewUrl}
+                  muted
+                  playsInline
+                  loop
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 grid place-items-center bg-black/20 transition pointer-events-none">
+                  <Play className="h-6 w-6 text-white/70 fill-white/40" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <p className="truncate text-xs text-white/60">{selected?.original_name}</p>
+                <p className="mt-0.5 text-[10px] text-white/30">{selected?.mime_type}</p>
+                <p className="mt-2 text-[10px] text-white/25">
+                  鼠标悬停视频预览播放
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex w-full flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
+          >
+            {isUploading ? (
+              <Loader2 className="h-8 w-8 animate-spin text-cyan" />
+            ) : (
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10">
+                <Film className="h-6 w-6 text-white/40" />
+              </div>
+            )}
+            <div className="text-center">
+              <p className="text-xs text-white/50">
+                {isUploading ? "上传中..." : "点击或拖拽视频到此处上传"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-white/25">
+                支持 MP4 / WEBM / OGG / MOV，最大 80MB
+              </p>
+            </div>
+          </button>
+        )}
+      </div>
+
+      <input type="hidden" name={name} value={value} />
+
+      <div className="flex items-center gap-2">
+        <select
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+        >
+          <option value="">从媒体库选择已上传的视频</option>
+          {assets
+            .filter((a) => a.mime_type.startsWith("video/"))
+            .map((asset) => (
+              <option key={asset.id} value={asset.id}>
+                {asset.original_name}
+              </option>
+            ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={isUploading}
+          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
+        >
+          {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+          上传
+        </button>
+
+        {value ? (
+          <button
+            type="button"
+            onClick={() => setValue("")}
+            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED_VIDEO_TYPES}
+        className="sr-only"
+        onChange={(e) => void handleUpload(e.target.files)}
+      />
+
+      {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
+      {error ? <p className="text-xs text-red-300">{error}</p> : null}
+    </label>
+  );
+}

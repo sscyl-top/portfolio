@@ -23,6 +23,10 @@ const settingsSchema = z.object({
   cta_card_media_id: z.string().uuid().nullable(),
   cta_figure_media_id: z.string().uuid().nullable(),
   cta_ticker_logo_media_id: z.string().uuid().nullable(),
+  hero_main_video_media_id: z.string().uuid().nullable(),
+  hero_side1_video_media_id: z.string().uuid().nullable(),
+  hero_side2_video_media_id: z.string().uuid().nullable(),
+  hero_side3_video_media_id: z.string().uuid().nullable(),
   social_links: z.array(socialLinkSchema),
 });
 
@@ -46,6 +50,10 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: formData.get("cta_card_media_id") || null,
     cta_figure_media_id: formData.get("cta_figure_media_id") || null,
     cta_ticker_logo_media_id: formData.get("cta_ticker_logo_media_id") || null,
+    hero_main_video_media_id: formData.get("hero_main_video_media_id") || null,
+    hero_side1_video_media_id: formData.get("hero_side1_video_media_id") || null,
+    hero_side2_video_media_id: formData.get("hero_side2_video_media_id") || null,
+    hero_side3_video_media_id: formData.get("hero_side3_video_media_id") || null,
     social_links,
   });
 

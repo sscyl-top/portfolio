@@ -31,6 +31,10 @@ export type PublicSiteSettings = {
   ctaFigureMediaUrl?: string;
   ctaTickerLogoMediaUrl?: string;
   description: string;
+  heroMainVideoUrl?: string;
+  heroSide1VideoUrl?: string;
+  heroSide2VideoUrl?: string;
+  heroSide3VideoUrl?: string;
   logoMediaUrl?: string;
   name: string;
   navigation: Array<{ href: string; label: string }>;
@@ -237,7 +241,11 @@ export async function createServerCmsRepository() {
           share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
           cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
           cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text),
-          cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text)`)
+          cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text),
+          hero_main_video_media:media_assets!site_settings_hero_main_video_media_id_fkey(storage_key,mime_type,alt_text),
+          hero_side1_video_media:media_assets!site_settings_hero_side1_video_media_id_fkey(storage_key,mime_type,alt_text),
+          hero_side2_video_media:media_assets!site_settings_hero_side2_video_media_id_fkey(storage_key,mime_type,alt_text),
+          hero_side3_video_media:media_assets!site_settings_hero_side3_video_media_id_fkey(storage_key,mime_type,alt_text)`)
         .single();
 
       if (error) throw error;
@@ -286,6 +294,14 @@ type CmsSiteSettingsRow = {
   cta_figure_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   cta_ticker_logo_media_id?: string | null;
   cta_ticker_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  hero_main_video_media_id?: string | null;
+  hero_main_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  hero_side1_video_media_id?: string | null;
+  hero_side1_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  hero_side2_video_media_id?: string | null;
+  hero_side2_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  hero_side3_video_media_id?: string | null;
+  hero_side3_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   social_links: Array<{ label: string; url: string }> | null;
 };
 
@@ -323,6 +339,10 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
     ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
     ctaTickerLogoMediaUrl: toPublicMediaUrl(row.cta_ticker_logo_media),
     description: normalizeUtf8(row.seo_description) || settings.description,
+    heroMainVideoUrl: toPublicMediaUrl(row.hero_main_video_media),
+    heroSide1VideoUrl: toPublicMediaUrl(row.hero_side1_video_media),
+    heroSide2VideoUrl: toPublicMediaUrl(row.hero_side2_video_media),
+    heroSide3VideoUrl: toPublicMediaUrl(row.hero_side3_video_media),
     logoMediaUrl: toPublicMediaUrl(row.logo_media),
     name: normalizeUtf8(row.name) || settings.name,
     navigation: settings.navigation,

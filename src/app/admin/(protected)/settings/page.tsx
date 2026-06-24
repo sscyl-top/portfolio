@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
+import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { saveSiteSettings } from "./actions";
 
 type SettingsRow = {
@@ -20,6 +21,10 @@ type SettingsRow = {
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
+  hero_main_video_media_id: string | null;
+  hero_side1_video_media_id: string | null;
+  hero_side2_video_media_id: string | null;
+  hero_side3_video_media_id: string | null;
   social_links: Array<{ label: string; url: string }>;
 };
 

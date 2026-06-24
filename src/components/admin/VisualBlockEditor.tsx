@@ -63,6 +63,7 @@ type Props = {
   workSlug: string;
   initialBlocks: VisualBlock[];
   mediaAssets: MediaAsset[];
+  embedded?: boolean;
 };
 
 // ── 块类型配置（仅用于图标/标签显示）────────────────────
@@ -280,7 +281,7 @@ function FreePositionPanel({
 
 // ── 主组件 ─────────────────────────────────────────────────
 
-export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets }: Props) {
+export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets, embedded = false }: Props) {
   const [blocks, setBlocks] = useState<VisualBlock[]>(
     () => [...initialBlocks].sort((a, b) => a.sort_order - b.sort_order),
   );
@@ -888,83 +889,84 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   // ── 渲染 ─────────────────────────────────────────────────
 
   return (
-    <section className="mt-6" ref={containerRef}>
-      {/* 标题栏 + 操作按钮 */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-semibold text-white">内容编辑</h3>
-          <p className="mt-1 text-sm text-white/45">
-            拖拽文件到任意位置插入；或点击「上传文件」批量添加
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* 上传文件按钮 */}
-          <button
-            type="button"
-            onClick={() => {
-              setFileInputIntent({ mode: "upload" });
-              if (fileInputRef.current) {
-                fileInputRef.current.accept = "image/*,video/*,application/pdf";
-                fileInputRef.current.multiple = true;
-                fileInputRef.current.click();
-              }
-            }}
-            className="flex items-center gap-2 rounded-md border border-cyan/35 px-4 py-2 text-sm text-cyan transition hover:bg-cyan/10"
-          >
-            <UploadCloud className="h-4 w-4" />
-            上传文件
-          </button>
-          {/* 添加文本按钮 */}
-          <button
-            type="button"
-            onClick={() => handleAddTextBlock(blocks.length)}
-            className="flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm text-white/70 transition hover:border-white/40 hover:text-white"
-          >
-            <Type className="h-4 w-4" />
-            添加文本
-          </button>
-          {/* 添加更多块类型（下拉菜单）*/}
-          <div className="relative">
+    <section
+      className={embedded ? "relative" : "mt-6"}
+      ref={containerRef}
+    >
+      {/* 标题栏 + 操作按钮（非embedded模式显示） */}
+      {!embedded ? (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-semibold text-white">内容编辑</h3>
+            <p className="mt-1 text-sm text-white/45">
+              拖拽文件到任意位置插入；或点击「上传文件」批量添加
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowBlockMenu((v) => !v)}
+              onClick={() => {
+                setFileInputIntent({ mode: "upload" });
+                if (fileInputRef.current) {
+                  fileInputRef.current.accept = "image/*,video/*,application/pdf";
+                  fileInputRef.current.multiple = true;
+                  fileInputRef.current.click();
+                }
+              }}
+              className="flex items-center gap-2 rounded-md border border-cyan/35 px-4 py-2 text-sm text-cyan transition hover:bg-cyan/10"
+            >
+              <UploadCloud className="h-4 w-4" />
+              上传文件
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddTextBlock(blocks.length)}
               className="flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm text-white/70 transition hover:border-white/40 hover:text-white"
             >
-              <Plus className="h-4 w-4" />
-              添加块
-              <ChevronDown className="h-3.5 w-3.5" />
+              <Type className="h-4 w-4" />
+              添加文本
             </button>
-            {showBlockMenu ? (
-              <>
-                {/* 点击外部关闭菜单 */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowBlockMenu(false)}
-                />
-                <div className="absolute right-0 z-50 mt-1 w-44 overflow-hidden rounded-md border border-white/15 bg-[#1a1a2e] shadow-2xl">
-                  {NEW_BLOCK_OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    return (
-                      <button
-                        key={opt.type}
-                        type="button"
-                        onClick={() => {
-                          void handleAddBlock(opt.type, opt.payload, blocks.length);
-                          setShowBlockMenu(false);
-                        }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
-                      >
-                        <Icon className="h-4 w-4 text-white/50" />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowBlockMenu((v) => !v)}
+                className="flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm text-white/70 transition hover:border-white/40 hover:text-white"
+              >
+                <Plus className="h-4 w-4" />
+                添加块
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+              {showBlockMenu ? (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowBlockMenu(false)}
+                  />
+                  <div className="absolute right-0 z-50 mt-1 w-44 overflow-hidden rounded-md border border-white/15 bg-[#1a1a2e] shadow-2xl">
+                    {NEW_BLOCK_OPTIONS.map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.type}
+                          type="button"
+                          onClick={() => {
+                            void handleAddBlock(opt.type, opt.payload, blocks.length);
+                            setShowBlockMenu(false);
+                          }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                        >
+                          <Icon className="h-4 w-4 text-white/50" />
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* 文件拖拽覆盖层 */}
       {isDraggingFile ? (
@@ -1053,6 +1055,45 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
       {/* 块列表 */}
       {blocks.length === 0 && !uploading ? (
+        embedded ? (
+          <div
+            className={`flex min-h-[320px] flex-col items-center justify-center rounded-xl text-center transition ${
+              dragOverIndex === 0
+                ? "border-2 border-dashed border-cyan/50 bg-cyan/[0.04]"
+                : ""
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(0); }}
+            onDrop={(e) => onDropAt(e, 0)}
+          >
+            <button
+              type="button"
+              onClick={() => handleAddTextBlock(0)}
+              className="group flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white/30 transition hover:text-cyan"
+            >
+              <Plus className="h-4 w-4 transition group-hover:scale-110" />
+              <span>可以直接输入文字，在这里介绍你的作品</span>
+            </button>
+            <p className="mt-2 max-w-md text-xs text-white/20">
+              可对文字和图片进行自由排版，点击左侧 ⊕ 可选择你需要的功能（图片/视频/PDF/图库等）；也可以直接拖拽文件到此处上传
+            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFileInputIntent({ mode: "upload" });
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = "image/*,video/*,application/pdf";
+                    fileInputRef.current.multiple = true;
+                    fileInputRef.current.click();
+                  }
+                }}
+                className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-white/40 transition hover:border-cyan/40 hover:text-cyan"
+              >
+                上传图片/视频
+              </button>
+            </div>
+          </div>
+        ) : (
         <div
           className={`flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed text-center transition ${
             dragOverIndex === 0
@@ -1088,6 +1129,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
             选择文件上传
           </button>
         </div>
+        )
       ) : (
         <div className="space-y-0">
           <InsertTrigger
@@ -1186,6 +1228,76 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
             setCroppingBlockId(null);
           }}
         />
+      ) : null}
+
+      {/* embedded 模式：悬浮 ⊕ 添加按钮（右下角） */}
+      {embedded ? (
+        <div className="pointer-events-none fixed bottom-8 right-[348px] z-40 flex flex-col items-end gap-2">
+          {showBlockMenu ? (
+            <div
+              className="pointer-events-auto mb-1 w-48 overflow-hidden rounded-xl border border-white/15 bg-[#141424]/95 shadow-2xl backdrop-blur-md"
+              onMouseLeave={() => setShowBlockMenu(false)}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setFileInputIntent({ mode: "upload" });
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = "image/*,video/*,application/pdf";
+                    fileInputRef.current.multiple = true;
+                    fileInputRef.current.click();
+                  }
+                  setShowBlockMenu(false);
+                }}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+              >
+                <UploadCloud className="h-4 w-4 text-cyan" />
+                上传图片/视频
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleAddTextBlock(blocks.length);
+                  setShowBlockMenu(false);
+                }}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+              >
+                <Type className="h-4 w-4 text-blue-400" />
+                添加文本
+              </button>
+              <div className="my-1 border-t border-white/8" />
+              {NEW_BLOCK_OPTIONS.map((opt) => {
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.type}
+                    type="button"
+                    onClick={() => {
+                      void handleAddBlock(opt.type, opt.payload, blocks.length);
+                      setShowBlockMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                  >
+                    <Icon className="h-4 w-4 text-white/50" />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setShowBlockMenu((v) => !v)}
+            className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition ${
+              showBlockMenu
+                ? "rotate-45 bg-white text-black"
+                : "bg-cyan text-black hover:bg-white hover:scale-105"
+            }`}
+            title="添加内容"
+          >
+            <Plus className="h-5 w-5" strokeWidth={2.5} />
+          </button>
+        </div>
       ) : null}
     </section>
   );

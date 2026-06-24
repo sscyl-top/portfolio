@@ -2008,3 +2008,87 @@ export async function removeFromRepresentative(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/works");
 }
+
+const emptyWorkSchema = z.object({
+  section: z.enum(["all", "representative", "composite"]).default("all"),
+  representative_slot: z.coerce.number().int().min(1).max(7).optional(),
+});
+
+/**
+ * 快速创建空作品：点击"上传新作品"直接进入编辑页。
+ * 默认已发布状态，带唯一slug，不创建任何内容块。
+ */
+export async function createEmptyWork(formData: FormData) {
+  const parsed = emptyWorkSchema.safeParse({
+    section: formData.get("section") ?? "all",
+    representative_slot: formData.get("representative_slot") ?? undefined,
+  });
+  if (!parsed.success) redirect("/admin/works");
+
+  const { section, representative_slot } = parsed.data;
+  const { client, user } = await requireAdmin();
+
+  const timestamp = Date.now().toString(36);
+  const randomSuffix = Math.random().toString(36).slice(2, 6);
+  const baseSlug = `untitled-${timestamp}${randomSuffix}`;
+
+  const isRepresentative = section === "representative";
+  const isComposite = section === "composite";
+
+  let representative_order: number | null = null;
+  let composite_order: number | null = null;
+
+  if (isRepresentative) {
+    const slot = representative_slot ?? null;
+    if (slot) {
+      await client
+        .from("works")
+        .update({ is_representative: false, representative_order: null })
+        .eq("representative_order", slot)
+        .is("deleted_at", null);
+      representative_order = slot;
+    }
+  }
+
+  if (isComposite) {
+    const { data: maxComposite } = await client
+      .from("works")
+      .select("composite_order")
+      .eq("is_composite", true)
+      .is("deleted_at", null)
+      .order("composite_order", { ascending: false })
+      .limit(1);
+    composite_order = ((maxComposite?.[0]?.composite_order as number) ?? 0) + 1;
+  }
+
+  const { data: work, error } = await client
+    .from("works")
+    .insert({
+      title: "未命名作品",
+      slug: baseSlug,
+      subtitle: "",
+      summary: "",
+      year: "",
+      client: "",
+      status: "published",
+      palette: [],
+      sort_order: 0,
+      cover_media_id: null,
+      published_at: new Date().toISOString(),
+      is_representative: isRepresentative,
+      representative_order,
+      is_composite: isComposite,
+      composite_order,
+      seo_title: "",
+      seo_description: "",
+    })
+    .select("id")
+    .single();
+
+  if (error || !work) throw new Error(error?.message ?? "作品创建失败");
+
+  await autoArchiveAfterChange(client, work.id, user.id, "创建空作品（快速上传）");
+
+  revalidatePath("/admin/works");
+  redirect(`/admin/works/${work.id}`);
+}
