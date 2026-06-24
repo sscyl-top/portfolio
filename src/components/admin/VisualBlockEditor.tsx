@@ -308,7 +308,10 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlocks([...initialBlocks].sort((a, b) => a.sort_order - b.sort_order));
-  }, [initialBlocks]);
+  // 仅在首次挂载和 initialBlocks 引用真正新数据时同步，
+  // 避免 router.refresh() 回传的浅层拷贝导致布局跳动。
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── 持久化顺序 ───────────────────────────────────────────
 
@@ -838,21 +841,22 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
 
   // ── 更新块 payload ───────────────────────────────────────
+  // 采用乐观更新策略：先 setBlocks 即时反馈，再异步持久化到服务器。
+  // 不 await 服务器响应，避免 Next.js RSC reconciliation 带来的状态回弹。
 
   const handleUpdateBlock = useCallback(
-    async (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
-      try {
-        const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
-        await updateBlockDirect(workId, workSlug, blockId, payloadToSend);
-        setBlocks((prev) =>
-          prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
-        );
-        router.refresh();
-      } catch (err) {
+    (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+      // 1. 立即更新本地状态
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
+      );
+      // 2. 异步持久化到服务器（不等待）
+      const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
+      updateBlockDirect(workId, workSlug, blockId, payloadToSend).catch((err) => {
         console.error("Update block failed:", err);
-      }
+      });
     },
-    [workId, workSlug, router],
+    [workId, workSlug],
   );
 
   // ── 渲染 ─────────────────────────────────────────────────
