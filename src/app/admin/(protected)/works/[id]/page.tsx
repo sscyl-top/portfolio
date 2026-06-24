@@ -8,6 +8,8 @@ import { listWorkVersions } from "@/lib/cms/versions";
 import type { WorkVersionListItem } from "@/lib/cms/versions";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
+import { Toast } from "@/components/admin/Toast";
+import { ToastHandler } from "@/components/admin/ToastHandler";
 
 import { SlugInput } from "./SlugInput";
 
@@ -80,10 +82,10 @@ export default async function AdminWorkEditorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ privatePreview?: string }>;
+  searchParams: Promise<{ privatePreview?: string; toast?: string }>;
 }) {
   const { id } = await params;
-  const { privatePreview } = await searchParams;
+  const { privatePreview, toast } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const [
     { data: work },
@@ -145,6 +147,8 @@ export default async function AdminWorkEditorPage({
 
   return (
     <div>
+      {toast ? <ToastHandler message={decodeURIComponent(toast)} /> : null}
+
       <Link
         href="/admin/works"
         className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
