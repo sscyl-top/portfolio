@@ -11,7 +11,7 @@ const defaultSiteSettings: PublicSiteSettings = {
   navigation: staticSiteSettings.navigation,
   nickname: staticSiteSettings.logo,
   seoDescription: staticSiteSettings.description,
-  seoTitle: `${staticSiteSettings.name} | ${staticSiteSettings.title}`,
+  seoTitle: staticSiteSettings.name,
   socialLinks: staticSiteSettings.socialLinks,
   title: staticSiteSettings.title,
 };

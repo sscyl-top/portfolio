@@ -294,7 +294,7 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
     navigation: settings.navigation,
     nickname: settings.logo,
     seoDescription: settings.description,
-    seoTitle: `${settings.name} | ${settings.title}`,
+    seoTitle: settings.name,
     socialLinks: settings.socialLinks,
     title: settings.title,
   };
@@ -323,7 +323,7 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
     navigation: settings.navigation,
     nickname: normalizeUtf8(row.nickname) || settings.logo,
     seoDescription: normalizeUtf8(row.seo_description) || settings.description,
-    seoTitle: normalizeUtf8(row.seo_title) || `${settings.name} | ${settings.title}`,
+    seoTitle: normalizeUtf8(row.seo_title) || settings.name,
     shareMediaUrl: toPublicMediaUrl(row.share_media),
     socialLinks:
       row.social_links?.map((link) => ({

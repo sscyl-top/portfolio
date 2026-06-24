@@ -148,7 +148,7 @@ export type WorkMedia = {
 };
 
 export const siteSettings = {
-  name: "CHEN TAOTAO",
+  name: "sscyl.top",
   logo: "CT",
   title: "Brand Visual + AI Designer",
   description:
