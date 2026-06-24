@@ -12,8 +12,6 @@ import { Toast } from "@/components/admin/Toast";
 import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 
-import { SlugInput } from "./SlugInput";
-
 import {
   clearPrivatePreviewLink,
   deleteWork,
@@ -147,11 +145,20 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div className="mx-auto max-w-[1200px]">
+    /* 全宽突破：脱离 AdminShell 的 max-w-7xl 约束，从导航栏右边缘到屏幕右侧 */
+    <div
+      className="-mx-5 md:-mx-8"
+      style={{
+        marginLeft: "calc(-50vw + 50% + 120px)",
+        marginRight: "calc(-50vw + 50% + 120px)",
+        paddingLeft: "calc(50vw - 50% - 120px + 2rem)",
+        paddingRight: "calc(50vw - 50% - 120px + 2rem)",
+      }}
+    >
       {toast ? <ToastHandler message={toast} /> : null}
 
       {/* 顶栏：返回 + 删除 */}
-      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-5">
+      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
         <Link
           href="/admin/works"
           className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
@@ -168,94 +175,106 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* 站酷风格：标题 → 文案 → 内容编辑 */}
-      <div className="mt-8 space-y-8">
-        {/* 标题区（站酷风格：大标题输入） */}
-        <div>
-          <div className="flex items-end justify-between gap-4">
-            <div className="flex-1">
-              <label htmlFor="work-title" className="sr-only">作品标题</label>
+      {/* 主布局：红框（编辑区）| 蓝框（辅助选项） */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_280px]">
+        {/* ═══ 红框：标题 + 文案 + 内容编辑器（合并为统一编辑画布） ═══ */}
+        <div className="min-w-0 space-y-6">
+          {/* 标题输入（站酷风格） */}
+          <div>
+            <div className="flex items-end gap-4">
               <input
                 id="work-title"
                 name="title"
                 defaultValue={workRow.title}
                 required
                 placeholder="输入作品名称"
-                className="w-full border-0 bg-transparent pb-2 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                className="flex-1 border-0 bg-transparent pb-2 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
                 form="mainWorkForm"
               />
+              <span className="shrink-0 pb-2 font-mono text-xs text-white/22 tabular-nums">{(workRow.title ?? "").length}</span>
             </div>
-            <span className="pb-2 font-mono text-xs text-white/22">{(workRow.title ?? "").length}</span>
-          </div>
-          <p className="mt-2 flex items-center gap-2 text-sm text-white/40">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px] text-white/40">+</span>
-            可以直接输入文字，在这里介绍你的作品
-          </p>
-        </div>
-
-        {/* 文案说明区域（站酷风格：描述 + Palette） */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-          <div className="space-y-4">
-            <label className="block">
-              <span className="text-sm font-medium text-white/60">设计说明</span>
-              <textarea
-                name="summary"
-                defaultValue={workRow.summary}
-                rows={6}
-                placeholder="可对文字和图片进行自由排版，点击左侧 ⊕ 可选择你需要的功能（图片 / 视频 / 文本）"
-                className="mt-2 w-full resize-y rounded-lg border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-white/80 outline-none placeholder:text-white/25 focus:border-cyan/40"
-                form="mainWorkForm"
-              />
-            </label>
+            <p className="mt-2 flex items-center gap-2 text-sm text-white/40">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">+</span>
+              可以直接输入文字，在这里介绍你的作品
+            </p>
           </div>
 
-          {/* 右侧辅助信息 */}
-          <div className="space-y-4">
-            <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-            <MediaForm mediaAssets={mediaRows} work={workRow} />
-          </div>
-        </div>
+          {/* 设计说明文案 */}
+          <label className="block">
+            <span className="sr-only">设计说明</span>
+            <textarea
+              name="summary"
+              defaultValue={workRow.summary}
+              rows={4}
+              placeholder="可对文字和图片进行自由排版，点击下方 ⊕ 可选择你需要的功能（图片 / 视频 / 文本 / 图库）"
+              className="w-full resize-y rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm leading-relaxed text-white/70 outline-none placeholder:text-white/20 focus:border-cyan/30"
+              form="mainWorkForm"
+            />
+          </label>
 
-        {/* 更多设置（折叠） */}
-        <CollapsibleSection
-          title="更多设置"
-          description="Slug、年份、分类、SEO 等"
-        >
-          <WorkForm work={workRow} />
-        </CollapsibleSection>
-
-        {/* 分类与标签（折叠） */}
-        <CollapsibleSection
-          title="分类与标签"
-          action={
-            <span className="text-[10px] text-white/30">
-              {selectedCategoryIds.size + selectedTagIds.size} 项已选
-            </span>
-          }
-        >
-          <TaxonomyForm
-            categories={categoryRows}
-            selectedCategoryIds={selectedCategoryIds}
-            selectedTagIds={selectedTagIds}
-            tags={tagRows}
-            work={workRow}
+          {/* 内容块编辑器 — 核心自由排版区域 */}
+          <VisualBlockEditor
+            workId={workRow.id}
+            workSlug={workRow.slug}
+            initialBlocks={blockRows}
+            mediaAssets={mediaRows}
           />
-        </CollapsibleSection>
 
-        {/* 内容块编辑器（站酷核心：拖拽上传自由排版） */}
-        <VisualBlockEditor
-          workId={workRow.id}
-          workSlug={workRow.slug}
-          initialBlocks={blockRows}
-          mediaAssets={mediaRows}
-        />
+          {/* 隐藏表单字段（title 和 summary 已在上面通过 form 关联提交） */}
+          <form id="mainWorkForm" action={updateWork} className="sr-only">
+            <input type="hidden" name="id" value={workRow.id} />
+            <input type="hidden" name="slug" value={workRow.slug} />
+            <input type="hidden" name="subtitle" defaultValue={workRow.subtitle} />
+            <input type="hidden" name="year" defaultValue={workRow.year} />
+            <input type="hidden" name="client" defaultValue={workRow.client} />
+            <input type="hidden" name="sort_order" defaultValue={String(workRow.sort_order)} />
+            <input type="hidden" name="status" defaultValue={workRow.status} />
+            <input type="hidden" name="scheduled_publish_at" defaultValue={workRow.scheduled_publish_at ?? ""} />
+            <input type="hidden" name="is_representative" defaultChecked={workRow.is_representative} />
+            <input type="hidden" name="is_composite" defaultChecked={workRow.is_composite} />
+            <input type="hidden" name="seo_title" defaultValue={workRow.seo_title} />
+            <input type="hidden" name="seo_description" defaultValue={workRow.seo_description} />
+            {workRow.palette.length > 0 && (
+              <input type="hidden" name="palette" defaultValue={workRow.palette.join(", ")} />
+            )}
+            <button type="submit">保存</button>
+          </form>
+        </div>
 
-        {/* 版本历史（折叠） */}
-        <VersionHistoryPanel
-          workId={workRow.id}
-          workSlug={workRow.slug}
-          versions={versionRows}
-        />
+        {/* ═══ 蓝框：所有辅助选项 ═══ */}
+        <div className="space-y-4">
+          {/* 私密预览 */}
+          <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
+          {/* 媒体选择 */}
+          <MediaForm mediaAssets={mediaRows} work={workRow} />
+          {/* 分类与标签（折叠） */}
+          <CollapsibleSection
+            title="分类与标签"
+            action={
+              <span className="text-[10px] text-white/30">
+                {selectedCategoryIds.size + selectedTagIds.size} 项已选
+              </span>
+            }
+          >
+            <TaxonomyForm
+              categories={categoryRows}
+              selectedCategoryIds={selectedCategoryIds}
+              selectedTagIds={selectedTagIds}
+              tags={tagRows}
+              work={workRow}
+            />
+          </CollapsibleSection>
+          {/* 更多设置（折叠） */}
+          <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
+            <SettingsPanel work={workRow} />
+          </CollapsibleSection>
+          {/* 版本历史（折叠） */}
+          <VersionHistoryPanel
+            workId={workRow.id}
+            workSlug={workRow.slug}
+            versions={versionRows}
+          />
+        </div>
       </div>
     </div>
   );
@@ -454,90 +473,80 @@ function MediaSelectPreview({
   );
 }
 
-function WorkForm({ work }: { work: WorkEditorRow }) {
+/* ═══════ 蓝框组件：辅助面板（紧凑版） ═══════ */
+
+/** 更多设置面板：Slug/年份/客户/状态/Palette/SEO 等 */
+function SettingsPanel({ work }: { work: WorkEditorRow }) {
   return (
-    <form
-      id="mainWorkForm"
-      action={updateWork}
-      className="grid gap-5"
-    >
+    <form action={updateWork} className="grid gap-4">
       <input type="hidden" name="id" value={work.id} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <SlugInput defaultValue={work.slug} />
-        <Field label="副标题" name="subtitle" defaultValue={work.subtitle} />
-        <Field label="年份" name="year" defaultValue={work.year} />
-        <Field label="客户" name="client" defaultValue={work.client} />
-        <Field
-          label="排序"
-          name="sort_order"
-          type="number"
-          defaultValue={String(work.sort_order)}
-        />
+      <input type="hidden" name="slug" value={work.slug} />
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="副标题" name="subtitle" defaultValue={work.subtitle} compact />
+        <Field label="年份" name="year" defaultValue={work.year} compact />
+        <Field label="客户" name="client" defaultValue={work.client} compact />
+        <Field label="排序" name="sort_order" type="number" defaultValue={String(work.sort_order)} compact />
       </div>
 
       <PaletteEditor palette={work.palette} />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <label className="grid gap-2 text-sm">
-          <span className="text-white/58">状态</span>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="grid gap-1 text-xs">
+          <span className="text-white/50">状态</span>
           <select
             name="status"
             defaultValue={work.status}
-            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            className="min-h-8 rounded border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
           >
             <option value="draft">草稿</option>
             <option value="published">已发布</option>
             <option value="private">私密</option>
           </select>
         </label>
-        <label className="grid gap-2 text-sm">
-          <span className="text-white/58">定时发布</span>
-          <input
-            name="scheduled_publish_at"
-            type="datetime-local"
-            defaultValue={work.scheduled_publish_at ? toDatetimeLocalValue(work.scheduled_publish_at) : ""}
-            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-          />
-        </label>
-        <CheckField
-          label="代表作"
-          name="is_representative"
-          defaultChecked={work.is_representative}
-        />
-        <Field
-          label="代表作排序"
-          name="representative_order"
-          type="number"
-          defaultValue={work.representative_order?.toString() ?? ""}
-        />
-        <CheckField
-          label="复合设计"
-          name="is_composite"
-          defaultChecked={work.is_composite}
-        />
-        <Field
-          label="复合设计排序"
-          name="composite_order"
-          type="number"
-          defaultValue={work.composite_order?.toString() ?? ""}
-        />
+        <CheckField label="代表作" name="is_representative" defaultChecked={work.is_representative} compact />
+        <CheckField label="复合设计" name="is_composite" defaultChecked={work.is_composite} compact />
+        <Field label="SEO 标题" name="seo_title" defaultValue={work.seo_title} compact />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="SEO 标题" name="seo_title" defaultValue={work.seo_title} />
-        <Field
-          label="SEO 描述"
-          name="seo_description"
-          defaultValue={work.seo_description}
-        />
-      </div>
+      <Field label="SEO 描述" name="seo_description" defaultValue={work.seo_description} compact />
 
-      <div className="flex justify-end pt-2">
-        <button className="min-h-10 rounded-md bg-cyan px-6 text-sm font-medium text-black transition hover:bg-white">
-          保存作品
+      <div className="flex justify-end pt-1">
+        <button className="min-h-8 rounded-md bg-cyan px-4 text-xs font-medium text-black transition hover:bg-white">
+          保存设置
         </button>
       </div>
     </form>
+  );
+}
+
+/** 紧凑版字段 */
+function Field({
+  label,
+  name,
+  defaultValue,
+  required,
+  type = "text",
+  compact = false,
+}: {
+  label: string;
+  name: string;
+  defaultValue: string;
+  required?: boolean;
+  type?: string;
+  compact?: boolean;
+}) {
+  return (
+    <label className={`grid gap-1 ${compact ? "text-xs" : "text-sm"}`}>
+      <span className="text-white/50">{label}</span>
+      <input
+        name={name}
+        type={type}
+        required={required}
+        defaultValue={defaultValue}
+        className={`min-h-8 rounded border border-white/10 bg-black/20 px-2.5 ${compact ? "text-xs" : "text-sm"} outline-none focus:border-cyan`}
+      />
+    </label>
   );
 }
 
@@ -646,34 +655,6 @@ function TaxonomyForm({
   );
 }
 
-function Field({
-  label,
-  name,
-  defaultValue,
-  required,
-  type = "text",
-}: {
-  label: string;
-  name: string;
-  defaultValue: string;
-  required?: boolean;
-  type?: string;
-}) {
-  return (
-    <label className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
-      <input
-        name={name}
-        type={type}
-        required={required}
-        defaultValue={defaultValue}
-        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-      />
-    </label>
-  );
-}
-
-
 function toDatetimeLocalValue(isoString: string): string {
   const date = new Date(isoString);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -685,20 +666,22 @@ function CheckField({
   name,
   defaultChecked,
   value = "on",
+  compact = false,
 }: {
   label: string;
   name: string;
   defaultChecked: boolean;
   value?: string;
+  compact?: boolean;
 }) {
   return (
-    <label className="flex min-h-10 items-center gap-3 self-end rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/68">
+    <label className={`flex items-center gap-2 self-end rounded border border-white/10 bg-black/20 px-2 ${compact ? "min-h-7 text-xs text-white/60" : "min-h-10 gap-3 px-3 text-sm text-white/68"}`}>
       <input
         name={name}
         type="checkbox"
         value={value}
         defaultChecked={defaultChecked}
-        className="h-4 w-4 accent-cyan"
+        className={`accent-cyan ${compact ? "h-3 w-3" : "h-4 w-4"}`}
       />
       {label}
     </label>
