@@ -265,14 +265,12 @@ export function FloatingMusicBall() {
   const showAnyBubble = showTipBubble || showPlayingBar;
   const showColumn = showAnyBubble || hoverActive;
 
-  const outerAlignClass = hoverActive ? "items-end" : "items-center";
-
   return (
     <div className="fixed bottom-6 right-6 z-50 md:bottom-8 md:right-8">
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`flex ${outerAlignClass} gap-3`}
+        className="flex items-end gap-3"
         style={{ padding: "40px 0 40px 40px", margin: "-40px 0 -40px -40px" }}
       >
         {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球(底部) */}
