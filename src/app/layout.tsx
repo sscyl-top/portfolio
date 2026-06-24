@@ -14,6 +14,7 @@ export const viewport: Viewport = {
 
 
 import { AnalyticsTracker } from "@/components/admin/AnalyticsTracker";
+import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
@@ -91,6 +92,7 @@ export default async function RootLayout({
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <SiteHeader siteSettings={settings} />
         {children}
+        <FloatingMusicBall />
         <AnalyticsTracker />
         <Analytics />
         <SpeedInsights />

@@ -80,7 +80,7 @@ function MeteorShower() {
       return;
     }
 
-    const ANIM_DURATION = 5000;
+    const ANIM_DURATION = 10000;
 
     const triggerMeteor = () => {
       const m1 = meteor1Ref.current;
@@ -90,26 +90,26 @@ function MeteorShower() {
         m1.classList.remove("is-animating");
         void m1.offsetWidth;
         m1.classList.add("is-animating");
-        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 200);
+        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 300);
       }
 
       if (Math.random() > 0.5) {
-        const m2Delay = 300 + Math.random() * 600;
+        const m2Delay = 500 + Math.random() * 1200;
         setTimeout(() => {
           if (m2) {
             m2.classList.remove("is-animating");
             void m2.offsetWidth;
             m2.classList.add("is-animating");
-            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 200);
+            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 300);
           }
         }, m2Delay);
       }
 
-      const nextDelay = 12000 + Math.random() * 8000;
+      const nextDelay = 15000 + Math.random() * 10000;
       timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
     };
 
-    const initialDelay = 4000 + Math.random() * 3000;
+    const initialDelay = 5000 + Math.random() * 4000;
     timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
 
     return () => {
@@ -120,11 +120,11 @@ function MeteorShower() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
       <div
         ref={meteor1Ref}
         className="meteor"
-        style={{ top: "6%", right: "-60px" }}
+        style={{ top: "4%", right: "-80px" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />
@@ -133,7 +133,7 @@ function MeteorShower() {
       <div
         ref={meteor2Ref}
         className="meteor meteor-secondary"
-        style={{ top: "10%", right: "-40px" }}
+        style={{ top: "8%", right: "-50px" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />
