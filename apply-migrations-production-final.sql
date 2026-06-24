@@ -18,11 +18,12 @@ CREATE INDEX IF NOT EXISTS works_scheduled_publish_at_idx
   WHERE status = 'draft' AND scheduled_publish_at IS NOT NULL;
 COMMENT ON COLUMN public.works.scheduled_publish_at IS '定时发布时间，到达该时间后由任务自动改为已发布';
 
--- ─── 迁移 3: text_content 表（如不存在则创建）───
--- 注意：此脚本含 DROP TABLE IF EXISTS，会清空已有 text_content 数据
--- 如果 text_content 已存在且有数据，请注释掉下一行
--- DROP TABLE IF EXISTS public.text_content CASCADE;
+-- ─── 迁移 3: text_content 表（安全幂等版）───
+-- ⚠️ 警告：如果 text_content 表已存在且有数据，请勿执行 CREATE TABLE 之后的种子数据插入
+-- 建议：分别执行 3 个独立迁移文件，而非此合并脚本
+-- 独立文件位于：supabase/migrations/20260623120000_...sql
 
+-- 仅当表不存在时才创建（不会修改已有表）
 CREATE TABLE IF NOT EXISTS public.text_content (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   key TEXT UNIQUE NOT NULL,
