@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { CompositeDesignWall } from "@/components/works/CompositeDesignWall";
 import { RepresentativeWorks } from "@/components/works/RepresentativeWorks";
+import { SectionTitleObserver } from "@/components/works/SectionTitleObserver";
 import { WorksExplorer } from "@/components/works/WorksExplorer";
 import { WorksPageShell } from "@/components/works/WorksPageShell";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
+
+export const metadata: Metadata = {
+  title: "sscyl.top-代表作",
+};
 
 const WORKS_TEXT_KEYS = [
   "works.composite.kicker",
@@ -51,6 +57,7 @@ export default async function WorksPage() {
 
   return (
     <WorksPageShell>
+      <SectionTitleObserver />
       <RepresentativeWorks works={featuredWorks} />
       <WorksExplorer works={works} categoryNames={categoryNames} />
       <CompositeDesignWall

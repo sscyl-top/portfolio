@@ -107,7 +107,7 @@ export function CompositeDesignWall({
   }
 
   return (
-    <section className="relative overflow-hidden px-4 pb-8 pt-24 md:px-8 md:pt-48 md:pb-10">
+    <section id="section-composite" className="relative overflow-hidden px-4 pb-8 pt-24 md:px-8 md:pt-48 md:pb-10">
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-16 text-center md:mb-28">
           <p className="font-mono text-xs uppercase text-copper">

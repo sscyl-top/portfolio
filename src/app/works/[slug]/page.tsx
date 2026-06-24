@@ -25,22 +25,23 @@ export async function generateMetadata({
   const repository = await createServerCmsRepository();
   const work = await repository.getWorkBySlug(slug);
 
-  if (!work) return { title: slug };
+  if (!work) return { title: `${slug} - sscyl.top` };
 
   const ogImage = work.shareMedia?.url ?? work.coverMedia?.url;
+  const fullTitle = `${work.title} - sscyl.top`;
 
   return {
-    title: work.title,
+    title: fullTitle,
     description: work.summary,
     openGraph: {
-      title: work.title,
+      title: fullTitle,
       description: work.summary,
       type: "article",
       ...(ogImage ? { images: [{ url: ogImage, alt: work.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: work.title,
+      title: fullTitle,
       description: work.summary,
       ...(ogImage ? { images: [ogImage] } : {}),
     },

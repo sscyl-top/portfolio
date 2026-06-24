@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HeroShowcase, type HeroData, type HeroTextOverrides } from "@/components/home/HeroShowcase";
 import { CapabilityBands } from "@/components/home/CapabilityBands.client";
 import { resume as staticResume } from "@/data/portfolio";
@@ -9,6 +10,10 @@ import {
   parseTextContentArray,
 } from "@/lib/cms/text-content";
 import type { CapabilityTextOverrides } from "@/components/home/CapabilityBands";
+
+export const metadata: Metadata = {
+  title: "sscyl.top-首页",
+};
 
 type HeroVideoSettings = {
   mainVideoMediaId?: string | null;

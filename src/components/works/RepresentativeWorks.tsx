@@ -205,7 +205,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   });
 
   return (
-    <section className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
+    <section id="section-featured" className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase text-white/45">代表作 / Featured Works</p>
         <h1 className="mt-4 text-5xl font-semibold text-white md:text-7xl">代表作</h1>
