@@ -148,6 +148,7 @@ function MediaBlock({
             <WorkMediaFrame
               media={media}
               tone={tone as never}
+              fit="contain"
               className={isFree ? "h-full w-full" : "w-full"}
               objectPosition={
                 block.type === "media" && block.focalPoint
@@ -215,7 +216,7 @@ function BeforeAfterBlock({
             </span>
             <div className="relative w-full overflow-hidden rounded-sm bg-white/[0.03] min-h-[300px]">
               {media ? (
-                <WorkMediaFrame media={media} tone={tone as never} className="w-full" />
+                <WorkMediaFrame media={media} tone={tone as never} fit="contain" className="w-full" />
               ) : (
                 <div className="w-full h-48" />
               )}
