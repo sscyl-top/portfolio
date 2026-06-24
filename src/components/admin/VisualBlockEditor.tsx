@@ -304,10 +304,14 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const initializedRef = useRef(false);
 
+  // 仅在首次挂载时从 initialBlocks 初始化，避免 router.refresh() 覆盖正在编辑的本地状态
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBlocks([...initialBlocks].sort((a, b) => a.sort_order - b.sort_order));
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      setBlocks([...initialBlocks].sort((a, b) => a.sort_order - b.sort_order));
+    }
   }, [initialBlocks]);
 
   // ── 持久化顺序 ───────────────────────────────────────────
@@ -1198,6 +1202,26 @@ function BlockCard({
   const [isDragging, setIsDragging] = useState(false);
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
+  // 布局切换专用防抖：600ms 内只触发一次保存，避免快速点击产生大量版本
+  const layoutDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedUpdatePayload = useCallback(
+    (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+      if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
+      layoutDebounceRef.current = setTimeout(() => {
+        onUpdatePayload(newPayload);
+        // 同时更新本地 blocks 状态以立即反映 UI 变化（不等待服务端）
+      }, 600);
+    },
+    [onUpdatePayload],
+  );
+
+  // 组件卸载时清除防抖定时器
+  useEffect(() => {
+    return () => {
+      if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
+    };
+  }, []);
+
   // 判断编辑模式下显示什么
   const showInlineEditor = isEditing && (
     block.block_type === "text" ||
@@ -1281,7 +1305,8 @@ function BlockCard({
           layout={getLayout(block.payload)}
           onChange={(patch) => {
             const newPayload = withLayout(block.payload, patch);
-            onUpdatePayload(newPayload);
+            // 布局切换防抖 600ms，避免快速点击产生大量版本
+            debouncedUpdatePayload(block.id, newPayload, block.block_type);
           }}
         />
       ) : null}

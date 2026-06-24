@@ -132,8 +132,8 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative aspect-video overflow-hidden"
-                  : "relative w-full overflow-hidden md:min-h-[72vh]"
+                  ? "relative w-full overflow-hidden md:min-h-[60vh]"
+                  : "relative w-full overflow-hidden md:min-h-[80vh]"
             }
             style={
               isFree && free
@@ -170,7 +170,7 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black md:min-h-[72vh]">
+      <div className="relative w-full overflow-hidden bg-black md:min-h-[80vh]">
         <video
           src={block.items[0].url}
           controls
