@@ -262,6 +262,9 @@ export function FloatingMusicBall() {
   const showTipBubble = !isPlaying && !isPaused && tipOn && !dismissed;
   const showPlayingBar = isPlaying || isPaused;
 
+  const showAnyBubble = showTipBubble || showPlayingBar;
+  const showColumn = showAnyBubble || hoverActive;
+
   return (
     <div className="fixed bottom-6 right-6 z-50 md:bottom-8 md:right-8">
       <div
@@ -270,61 +273,66 @@ export function FloatingMusicBall() {
         className="flex items-end gap-3"
         style={{ padding: "40px 0 40px 40px", margin: "-40px 0 -40px -40px" }}
       >
-        {/* Tip bubble */}
-        {showTipBubble ? (
-          <div key={tipKey} className="music-bubble music-bubble-tip is-visible shrink-0">
-            <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
-            {!hoverActive && (
-              <button
-                onClick={dismissTip}
-                className="ml-2 text-white/40 hover:text-white/70"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        ) : null}
+        {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球 */}
+        {showColumn ? (
+          <div className="music-bubble-column shrink-0">
+            {/* Options (hover时显示) - 靠近球，在column-reverse中先渲染 */}
+            {hoverActive ? (
+              <div key="options" className="music-options-column">
+                {categories.map((cat) => {
+                  const isCurrentCat = currentCatKeyRef.current === cat.key;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        selectCategory(cat);
+                      }}
+                      className={`music-option-item ${isCurrentCat ? "music-option-active" : ""}`}
+                    >
+                      <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
+                      <span className="truncate text-sm">{cat.label}</span>
+                      {isCurrentCat && isPlaying && (
+                        <span className="ml-1 flex items-center gap-0.5">
+                          <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0s" }} />
+                          <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.15s" }} />
+                          <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.3s" }} />
+                        </span>
+                      )}
+                      {isCurrentCat && isPaused && (
+                        <Pause className="ml-1 h-3 w-3 text-cyan/70" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
 
-        {/* Playing bar */}
-        {showPlayingBar ? (
-          <div className="music-bubble music-bubble-playing is-visible shrink-0">
-            <Volume2 className="h-4 w-4 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
-            <p className="min-w-0 truncate text-sm text-white/90">
-              {currentTrackTitle || "正在播放"}
-              {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
-            </p>
-          </div>
-        ) : null}
+            {/* Playing bar - 在选项上方 */}
+            {showPlayingBar ? (
+              <div className="music-bubble music-bubble-playing is-visible">
+                <Volume2 className="h-4 w-4 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
+                <p className="min-w-0 truncate text-sm text-white/90">
+                  {currentTrackTitle || "正在播放"}
+                  {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
+                </p>
+              </div>
+            ) : null}
 
-        {/* Options panel (hover时显示) */}
-        {hoverActive ? (
-          <div key="options" className="music-options-panel-static shrink-0">
-            {categories.map((cat) => {
-              const isCurrentCat = currentCatKeyRef.current === cat.key;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectCategory(cat);
-                  }}
-                  className={`music-option-item ${isCurrentCat ? "music-option-active" : ""}`}
-                >
-                  <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
-                  <span className="truncate text-sm">{cat.label}</span>
-                  {isCurrentCat && isPlaying && (
-                    <span className="ml-1 flex items-center gap-0.5">
-                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0s" }} />
-                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.15s" }} />
-                      <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.3s" }} />
-                    </span>
-                  )}
-                  {isCurrentCat && isPaused && (
-                    <Pause className="ml-1 h-3 w-3 text-cyan/70" />
-                  )}
-                </button>
-              );
-            })}
+            {/* Tip bubble - 最上方，远离球 */}
+            {showTipBubble ? (
+              <div key={tipKey} className="music-bubble music-bubble-tip is-visible">
+                <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
+                {!hoverActive && (
+                  <button
+                    onClick={dismissTip}
+                    className="ml-2 text-white/40 hover:text-white/70"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
