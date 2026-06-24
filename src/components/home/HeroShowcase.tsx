@@ -70,6 +70,7 @@ function MeteorShower() {
   const meteor1Ref = useRef<HTMLDivElement>(null);
   const meteor2Ref = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRunningRef = useRef(false);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -81,38 +82,66 @@ function MeteorShower() {
     }
 
     const ANIM_DURATION = 10000;
+    const FADE_OUT = 800;
 
-    const triggerMeteor = () => {
+    const playMeteor = (el: HTMLDivElement | null) => {
+      return new Promise<void>((resolve) => {
+        if (!el) {
+          resolve();
+          return;
+        }
+        el.classList.remove("is-animating");
+        void el.offsetWidth;
+        el.classList.add("is-animating");
+        setTimeout(() => {
+          el.classList.remove("is-animating");
+          resolve();
+        }, ANIM_DURATION + FADE_OUT);
+      });
+    };
+
+    const triggerMeteor = async () => {
+      if (isRunningRef.current) return;
+      isRunningRef.current = true;
+
       const m1 = meteor1Ref.current;
       const m2 = meteor2Ref.current;
 
-      if (m1) {
-        m1.classList.remove("is-animating");
-        void m1.offsetWidth;
-        m1.classList.add("is-animating");
-        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 300);
+      const m1Promise = playMeteor(m1);
+
+      let m2Delay = 0;
+      if (Math.random() > 0.5) {
+        m2Delay = 600 + Math.random() * 1000;
       }
 
-      if (Math.random() > 0.5) {
-        const m2Delay = 500 + Math.random() * 1200;
+      if (m2Delay > 0 && m2) {
         setTimeout(() => {
-          if (m2) {
-            m2.classList.remove("is-animating");
-            void m2.offsetWidth;
-            m2.classList.add("is-animating");
-            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 300);
-          }
+          playMeteor(m2);
         }, m2Delay);
       }
+
+      await m1Promise;
+
+      const totalBatchTime = ANIM_DURATION + FADE_OUT + m2Delay;
+      const waitAfter = m2Delay > 0
+        ? Math.max(0, totalBatchTime - (ANIM_DURATION + FADE_OUT))
+        : 0;
+
+      if (waitAfter > 0) {
+        await new Promise((r) => setTimeout(r, waitAfter + 300));
+      }
+
+      isRunningRef.current = false;
 
       const nextDelay = 7000 + Math.random() * 3000;
       timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
     };
 
-    const initialDelay = 5000 + Math.random() * 4000;
+    const initialDelay = 4000 + Math.random() * 3000;
     timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
 
     return () => {
+      isRunningRef.current = true;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -124,7 +153,7 @@ function MeteorShower() {
       <div
         ref={meteor1Ref}
         className="meteor"
-        style={{ top: "4%", right: "-80px" }}
+        style={{ top: "-2%", right: "-3%" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />
@@ -133,7 +162,7 @@ function MeteorShower() {
       <div
         ref={meteor2Ref}
         className="meteor meteor-secondary"
-        style={{ top: "8%", right: "-50px" }}
+        style={{ top: "0%", right: "0%" }}
       >
         <div className="meteor-y">
           <div className="meteor-visual" />
