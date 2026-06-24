@@ -145,84 +145,80 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    /* ══ 突破 AdminShell 的 max-w-3xl 约束，全宽显示红蓝分区 ══ */
-    <div
-      style={{
-        width: '100vw',
-        maxWidth: 'none',
-        marginLeft: 'calc(-50vw + 50%)',
-        marginRight: 'calc(-50vw + 50%)',
-        paddingLeft: '2rem',
-        paddingRight: '2rem',
-        paddingTop: '7rem',
-      }}
-    >
+    <div className="space-y-6">
       {toast ? <ToastHandler message={toast} /> : null}
 
-      {/* 主布局：两列 grid — 左侧红框（主编辑区）| 右侧绿框（辅助面板） */}
+      {/* ══ 顶部工具栏：返回 + 删除 ══ */}
+      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
+        <Link
+          href="/admin/works"
+          className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          返回作品列表
+        </Link>
+        <form action={deleteWork}>
+          <input type="hidden" name="id" value={workRow.id} />
+          <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+            删除作品
+          </button>
+        </form>
+      </div>
+
+      {/* ══ 主布局：两列 — 左侧编辑区 | 右侧辅助面板 ══ */}
       <div
         className="items-start gap-8 lg:gap-10"
-        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px' }}
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px' }}
       >
-        {/* ═══ 红框：返回 + 标题 + 文案 + 内容编辑器 ═══ */}
-        <div className="min-w-0 space-y-6">
-          {/* 返回按钮 — 合并到主编辑区顶部 */}
-          <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
-            <Link
-              href="/admin/works"
-              className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
-            >
-              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-              返回作品列表
-            </Link>
-            <form action={deleteWork}>
-              <input type="hidden" name="id" value={workRow.id} />
-              <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
-                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-                删除作品
-              </button>
-            </form>
-          </div>
-          {/* 标题输入（站酷风格） */}
-          <div>
-            <div className="flex items-end gap-4">
-              <input
-                id="work-title"
-                name="title"
-                defaultValue={workRow.title}
-                required
-                placeholder="输入作品名称"
-                className="flex-1 border-0 bg-transparent pb-2 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
-                form="mainWorkForm"
-              />
-              <span className="shrink-0 pb-2 font-mono text-xs text-white/22 tabular-nums">{(workRow.title ?? "").length}</span>
+        {/* ═══ 左侧：统一编辑板块（标题 + 文案 + 拖拽上传编辑器）═══ */}
+        <div className="min-w-0">
+          {/* 合并的编辑卡片 */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
+            {/* 标题输入（站酷风格，大字体无边框） */}
+            <div className="border-b border-white/[0.06] pb-5">
+              <div className="flex items-end gap-4">
+                <input
+                  id="work-title"
+                  name="title"
+                  defaultValue={workRow.title}
+                  required
+                  placeholder="输入作品名称"
+                  className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                  form="mainWorkForm"
+                />
+                <span className="shrink-0 pb-1 font-mono text-xs text-white/22 tabular-nums">
+                  {(workRow.title ?? "").length}
+                </span>
+              </div>
             </div>
-            <p className="mt-2 flex items-center gap-2 text-sm text-white/40">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">+</span>
-              可以直接输入文字，在这里介绍你的作品
-            </p>
-          </div>
 
-          {/* 设计说明文案 */}
-          <label className="block">
-            <span className="sr-only">设计说明</span>
-            <textarea
-              name="summary"
-              defaultValue={workRow.summary}
-              rows={4}
-              placeholder="可对文字和图片进行自由排版，点击下方 ⊕ 可选择你需要的功能（图片 / 视频 / 文本 / 图库）"
-              className="w-full resize-y rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm leading-relaxed text-white/70 outline-none placeholder:text-white/20 focus:border-cyan/30"
-              form="mainWorkForm"
+            {/* 设计说明文案（紧接标题下方） */}
+            <div className="pt-5">
+              <label className="block">
+                <span className="sr-only">设计说明</span>
+                <textarea
+                  name="summary"
+                  defaultValue={workRow.summary}
+                  rows={3}
+                  placeholder="简要介绍你的作品理念、设计思路或项目背景…"
+                  className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
+                  form="mainWorkForm"
+                />
+              </label>
+            </div>
+
+            {/* 分隔线 */}
+            <div className="my-6 border-t border-white/[0.06]" />
+
+            {/* 内容块编辑器 — 拖拽上传 + 自由排版区域 */}
+            <VisualBlockEditor
+              workId={workRow.id}
+              workSlug={workRow.slug}
+              initialBlocks={blockRows}
+              mediaAssets={mediaRows}
             />
-          </label>
-
-          {/* 内容块编辑器 — 核心自由排版区域 */}
-          <VisualBlockEditor
-            workId={workRow.id}
-            workSlug={workRow.slug}
-            initialBlocks={blockRows}
-            mediaAssets={mediaRows}
-          />
+          </div>
 
           {/* 隐藏表单字段（title 和 summary 已在上面通过 form 关联提交） */}
           <form id="mainWorkForm" action={updateWork} className="sr-only">
@@ -245,7 +241,7 @@ export default async function AdminWorkEditorPage({
           </form>
         </div>
 
-        {/* ═══ 绿框：辅助面板 ═══ */}
+        {/* ═══ 右侧：辅助面板 ═══ */}
         <div className="min-w-0 space-y-4">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />

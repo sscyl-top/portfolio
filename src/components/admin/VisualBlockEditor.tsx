@@ -1054,15 +1054,39 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       {/* 块列表 */}
       {blocks.length === 0 && !uploading ? (
         <div
-          className="flex min-h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 text-center"
+          className={`flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed text-center transition ${
+            dragOverIndex === 0
+              ? "border-cyan/50 bg-cyan/[0.04]"
+              : "border-white/10 bg-white/[0.01]"
+          }`}
           onDragOver={(e) => { e.preventDefault(); setDragOverIndex(0); }}
           onDrop={(e) => onDropAt(e, 0)}
         >
-          <UploadCloud className="h-10 w-10 text-white/20" />
-          <p className="mt-4 text-base text-white/40">暂无内容块</p>
-          <p className="mt-2 text-sm text-white/25">
-            拖拽文件到此处，或点击「上传文件」开始创作
+          <div className={`flex h-16 w-16 items-center justify-center rounded-full transition ${
+            dragOverIndex === 0 ? "bg-cyan/15" : "bg-white/[0.03]"
+          }`}>
+            <UploadCloud className={`h-8 w-8 transition ${dragOverIndex === 0 ? "text-cyan" : "text-white/25"}`} />
+          </div>
+          <p className="mt-5 text-lg font-medium text-white/50">
+            {dragOverIndex === 0 ? "松开鼠标即可上传" : "拖拽文件到此处上传"}
           </p>
+          <p className="mt-2 text-sm text-white/30">
+            支持多选、多格式：JPG / PNG / GIF / PDF / MP4
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setFileInputIntent({ mode: "upload" });
+              if (fileInputRef.current) {
+                fileInputRef.current.accept = "image/*,video/*,application/pdf";
+                fileInputRef.current.multiple = true;
+                fileInputRef.current.click();
+              }
+            }}
+            className="mt-5 rounded-md border border-cyan/35 px-5 py-2 text-sm text-cyan transition hover:bg-cyan/10"
+          >
+            选择文件上传
+          </button>
         </div>
       ) : (
         <div className="space-y-0">
