@@ -343,8 +343,8 @@ button {
 }
 
 .meteor-visual {
-  width: 380px;
-  height: 120px;
+  width: 570px;
+  height: 180px;
   position: relative;
   transform: rotate(-10deg);
   transform-origin: left center;
@@ -361,14 +361,14 @@ button {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.92) 3%,
-    rgba(225, 240, 255, 0.65) 10%,
-    rgba(180, 215, 255, 0.28) 28%,
-    rgba(160, 200, 255, 0.1) 50%,
-    rgba(140, 180, 255, 0.03) 75%,
+    rgba(255, 255, 255, 0.92) 2%,
+    rgba(225, 240, 255, 0.6) 7%,
+    rgba(180, 215, 255, 0.25) 20%,
+    rgba(160, 200, 255, 0.08) 45%,
+    rgba(140, 180, 255, 0.02) 72%,
     rgba(255, 255, 255, 0) 100%
   );
-  clip-path: polygon(0 10%, 4px 0%, 100% 50%, 4px 100%, 0 90%);
+  clip-path: polygon(0 8%, 4px 0%, 100% 50%, 4px 100%, 0 92%);
 }
 
 .meteor-visual::after {
@@ -408,8 +408,8 @@ button {
 }
 
 .meteor-secondary .meteor-visual {
-  width: 260px;
-  height: 100px;
+  width: 390px;
+  height: 140px;
 }
 
 .meteor-secondary .meteor-visual::before {
@@ -417,9 +417,9 @@ button {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.95) 0%,
-    rgba(225, 240, 255, 0.5) 12%,
-    rgba(180, 215, 255, 0.18) 35%,
-    rgba(150, 190, 255, 0.05) 62%,
+    rgba(225, 240, 255, 0.45) 8%,
+    rgba(180, 215, 255, 0.15) 25%,
+    rgba(150, 190, 255, 0.04) 55%,
     rgba(255, 255, 255, 0) 100%
   );
 }

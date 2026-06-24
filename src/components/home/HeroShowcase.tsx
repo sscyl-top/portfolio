@@ -105,7 +105,7 @@ function MeteorShower() {
         }, m2Delay);
       }
 
-      const nextDelay = 15000 + Math.random() * 10000;
+      const nextDelay = 7000 + Math.random() * 3000;
       timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
     };
 
