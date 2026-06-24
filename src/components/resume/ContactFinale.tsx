@@ -26,10 +26,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
         </div>
 
         <div className="mt-8 grid grid-cols-2 border-y border-white/10 lg:grid-cols-4 md:mt-10">
-          <a
-            href={`tel:${phone}`}
-            className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center transition hover:bg-white/[0.035] sm:border-r lg:border-b-0"
-          >
+          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center sm:border-r lg:border-b-0">
             <Phone aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
               <span className="block font-mono text-[11px] uppercase text-white/38">
@@ -37,11 +34,8 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
               </span>
               <span className="mt-1.5 block text-sm font-medium text-white/82 md:text-lg">{phone}</span>
             </span>
-          </a>
-          <a
-            href={`mailto:${email}`}
-            className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center transition hover:bg-white/[0.035] lg:border-b-0 lg:border-r"
-          >
+          </div>
+          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center lg:border-b-0 lg:border-r">
             <Mail aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
               <span className="block font-mono text-[11px] uppercase text-white/38">
@@ -49,7 +43,7 @@ export function ContactFinale({ email, phone, location }: ContactFinaleProps) {
               </span>
               <span className="mt-1.5 block break-all text-sm font-medium text-white/82 md:text-lg">{email}</span>
             </span>
-          </a>
+          </div>
           <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center sm:border-r sm:border-b-0">
             <MapPin aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>

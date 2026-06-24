@@ -66,13 +66,10 @@ export function MessageList({ messages }: { messages: ContactMessage[] }) {
             <div className="space-y-2 text-white/54">
               <p className="text-white/80">{message.name || "未填写姓名"}</p>
               {message.email ? (
-                <a
-                  href={`mailto:${message.email}`}
-                  className="inline-flex items-center gap-2 hover:text-white"
-                >
+                <p className="inline-flex items-center gap-2">
                   <Mail aria-hidden="true" className="h-4 w-4" />
                   {message.email}
-                </a>
+                </p>
               ) : (
                 <p>未填写邮箱</p>
               )}

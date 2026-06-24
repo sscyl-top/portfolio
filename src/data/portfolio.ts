@@ -108,7 +108,7 @@ export const siteSettings = {
   ],
   socialLinks: [
     { label: "Zcool", href: "https://www.zcool.com.cn/u/25717361" },
-    { label: "Email", href: "mailto:hello@sscyl.top" },
+    { label: "Email", href: "#" },
   ],
 };
 

@@ -28,20 +28,14 @@ export default async function ResumePage() {
               <p>Portfolio / Resume 2026</p>
             </div>
             <div className="grid gap-2 text-[13px] text-white/64 md:justify-items-end md:text-sm">
-              <a
-                className="inline-flex items-center gap-2 transition hover:text-white"
-                href={`mailto:${resume.contact.email}`}
-              >
+              <span className="inline-flex items-center gap-2">
                 <Mail aria-hidden="true" className="h-4 w-4" />
                 {resume.contact.email}
-              </a>
-              <a
-                className="inline-flex items-center gap-2 transition hover:text-white"
-                href={`tel:${resume.contact.phone}`}
-              >
+              </span>
+              <span className="inline-flex items-center gap-2">
                 <Phone aria-hidden="true" className="h-4 w-4" />
                 {resume.contact.phone}
-              </a>
+              </span>
               <span className="inline-flex items-center gap-2">
                 <MapPin aria-hidden="true" className="h-4 w-4" />
                 {resume.location}
