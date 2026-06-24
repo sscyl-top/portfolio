@@ -368,13 +368,20 @@ function MediaForm({
           defaultValue={work.cover_media_id ?? ""}
           selectedAsset={selectedCover ?? null}
         />
-        <MediaSelect
-          label="悬停预览"
-          name="hover_media_id"
-          assets={mediaAssets}
-          defaultValue={work.hover_media_id ?? ""}
-          selectedAsset={selectedHover ?? null}
-        />
+        <div className="grid gap-1">
+          <MediaSelect
+            label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
+            name="hover_media_id"
+            assets={mediaAssets}
+            defaultValue={work.hover_media_id ?? ""}
+            selectedAsset={selectedHover ?? null}
+          />
+          {work.is_composite ? (
+            <p className="text-[11px] text-copper/80">
+              复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）
+            </p>
+          ) : null}
+        </div>
         <MediaSelect
           label="分享图"
           name="share_media_id"
