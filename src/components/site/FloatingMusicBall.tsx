@@ -17,6 +17,9 @@ const TIP_MESSAGES = [
   "听听动感节拍，恢复活力。",
 ];
 
+const TIP_DISPLAY_MS = 3200;
+const TIP_GAP_MS = 300;
+
 const categoryEmoji: Record<string, string> = {
   relax: "🌿",
   energetic: "🔥",
@@ -33,14 +36,18 @@ export function FloatingMusicBall() {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [currentTrackTitle, setCurrentTrackTitle] = useState<string>("");
   const [tipText, setTipText] = useState(TIP_MESSAGES[0]);
+  const [tipIndex, setTipIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentCategoryRef = useRef<string | null>(null);
   const categoriesRef = useRef<MusicCategory[]>([]);
-  const tipTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const tipShowTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tipHideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasInteractedRef = useRef(false);
+  const tipIndexRef = useRef(0);
+  const isPlayingRef = useRef(false);
+  const showOptionsRef = useRef(false);
 
   useEffect(() => {
     currentCategoryRef.current = currentCategory;
@@ -49,6 +56,14 @@ export function FloatingMusicBall() {
   useEffect(() => {
     categoriesRef.current = categories;
   }, [categories]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    showOptionsRef.current = showOptions;
+  }, [showOptions]);
 
   useEffect(() => {
     fetch("/api/music")
@@ -63,37 +78,60 @@ export function FloatingMusicBall() {
       .catch(() => setLoaded(true));
   }, []);
 
+  const stopTipCarousel = () => {
+    if (tipShowTimerRef.current) {
+      clearTimeout(tipShowTimerRef.current);
+      tipShowTimerRef.current = null;
+    }
+    if (tipHideTimerRef.current) {
+      clearTimeout(tipHideTimerRef.current);
+      tipHideTimerRef.current = null;
+    }
+    setShowTip(false);
+  };
+
+  const showNextTip = () => {
+    if (hasInteractedRef.current || isPlayingRef.current || showOptionsRef.current) {
+      return;
+    }
+
+    const nextIdx = (tipIndexRef.current + 1) % TIP_MESSAGES.length;
+    tipIndexRef.current = nextIdx;
+    setTipIndex(nextIdx);
+    setTipText(TIP_MESSAGES[nextIdx]);
+    setShowTip(true);
+
+    tipHideTimerRef.current = setTimeout(() => {
+      setShowTip(false);
+      tipShowTimerRef.current = setTimeout(() => {
+        showNextTip();
+      }, TIP_GAP_MS);
+    }, TIP_DISPLAY_MS);
+  };
+
   useEffect(() => {
     if (!loaded || categories.length === 0) return;
 
-    const showRandomTip = () => {
-      if (hasInteractedRef.current || isPlaying || showOptions) return;
-      const msg = TIP_MESSAGES[Math.floor(Math.random() * TIP_MESSAGES.length)];
-      setTipText(msg);
+    hasInteractedRef.current = false;
+    tipIndexRef.current = 0;
+    setTipIndex(0);
+    setTipText(TIP_MESSAGES[0]);
+
+    const startTimer = setTimeout(() => {
       setShowTip(true);
-      if (tipHideTimerRef.current) clearTimeout(tipHideTimerRef.current);
       tipHideTimerRef.current = setTimeout(() => {
         setShowTip(false);
-      }, 5000);
-    };
-
-    const firstDelay = 6000 + Math.random() * 4000;
-    const firstTimer = setTimeout(showRandomTip, firstDelay);
-
-    const scheduleNext = () => {
-      tipTimerRef.current = setTimeout(() => {
-        showRandomTip();
-        scheduleNext();
-      }, 18000 + Math.random() * 20000);
-    };
-    scheduleNext();
+        tipShowTimerRef.current = setTimeout(() => {
+          showNextTip();
+        }, TIP_GAP_MS);
+      }, TIP_DISPLAY_MS);
+    }, 800);
 
     return () => {
-      clearTimeout(firstTimer);
-      if (tipTimerRef.current) clearTimeout(tipTimerRef.current);
-      if (tipHideTimerRef.current) clearTimeout(tipHideTimerRef.current);
+      clearTimeout(startTimer);
+      stopTipCarousel();
     };
-  }, [loaded, categories.length, isPlaying, showOptions]);
+  }, [loaded, categories.length]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -145,17 +183,16 @@ export function FloatingMusicBall() {
   const playCategory = (category: MusicCategory) => {
     if (category.tracks.length === 0) return;
     hasInteractedRef.current = true;
+    stopTipCarousel();
 
     if (currentCategory === category.key && isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
       setShowOptions(false);
-      setShowTip(false);
       return;
     }
 
     setShowOptions(false);
-    setShowTip(false);
     playRandomTrackFromCategory(category.key);
   };
 
@@ -181,14 +218,19 @@ export function FloatingMusicBall() {
 
   const handleBallClick = () => {
     hasInteractedRef.current = true;
-    setShowTip(false);
-    if (tipHideTimerRef.current) clearTimeout(tipHideTimerRef.current);
+    stopTipCarousel();
 
     if (isPlaying) {
       togglePlay();
     } else {
       setShowOptions(!showOptions);
     }
+  };
+
+  const dismissTip = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    hasInteractedRef.current = true;
+    stopTipCarousel();
   };
 
   if (!loaded || categories.length === 0) return null;
@@ -201,14 +243,10 @@ export function FloatingMusicBall() {
     >
       {/* Tip bubble */}
       {showTip && !showOptions && !isPlaying ? (
-        <div className="music-bubble music-bubble-tip is-visible">
+        <div key={tipIndex} className="music-bubble music-bubble-tip is-visible">
           <p className="whitespace-nowrap text-sm text-white/90">{tipText}</p>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTip(false);
-              if (tipHideTimerRef.current) clearTimeout(tipHideTimerRef.current);
-            }}
+            onClick={dismissTip}
             className="ml-2 text-white/40 hover:text-white/70"
           >
             <X className="h-3.5 w-3.5" />
