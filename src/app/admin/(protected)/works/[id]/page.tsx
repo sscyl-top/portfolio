@@ -166,10 +166,10 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* 主布局：红框（编辑区，约束宽度）| 蓝框（辅助选项，填满剩余空间） */}
+      {/* 主布局：红框（编辑区，固定宽度约束）| 蓝框（辅助选项，填满到屏幕右边缘） */}
       <div className="mt-8 flex gap-8 lg:gap-10">
-        {/* ═══ 红框：标题 + 文案 + 内容编辑器（统一编辑画布，max-w 约束） ═══ */}
-        <div className="min-w-0 space-y-6" style={{ maxWidth: 960 }}>
+        {/* ═══ 红框：标题 + 文案 + 内容编辑器（统一编辑画布，固定宽度约束） ═══ */}
+        <div className="min-w-0 shrink-0 space-y-6" style={{ width: 880 }}>
           {/* 标题输入（站酷风格） */}
           <div>
             <div className="flex items-end gap-4">
@@ -232,8 +232,8 @@ export default async function AdminWorkEditorPage({
           </form>
         </div>
 
-        {/* ═══ 蓝框：所有辅助选项（flex-1 填满红框右侧剩余空间） ═══ */}
-        <div className="min-w-0 flex-1 space-y-4" style={{ maxWidth: 360 }}>
+        {/* ═══ 蓝框：所有辅助选项（flex-1 填满红框右侧到屏幕边缘的全部空间） ═══ */}
+        <div className="min-w-0 flex-1 space-y-4">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
           {/* 媒体选择 */}
