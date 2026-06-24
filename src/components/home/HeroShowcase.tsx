@@ -66,6 +66,79 @@ const heroFloatingMediaCards = [
   },
 ];
 
+function MeteorShower() {
+  const meteor1Ref = useRef<HTMLDivElement>(null);
+  const meteor2Ref = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const ANIM_DURATION = 1300;
+
+    const triggerMeteor = () => {
+      const m1 = meteor1Ref.current;
+      const m2 = meteor2Ref.current;
+
+      if (m1) {
+        m1.classList.remove("is-animating");
+        void m1.offsetWidth;
+        m1.classList.add("is-animating");
+        setTimeout(() => m1.classList.remove("is-animating"), ANIM_DURATION + 100);
+      }
+
+      if (Math.random() > 0.45) {
+        const m2Delay = 200 + Math.random() * 300;
+        setTimeout(() => {
+          if (m2) {
+            m2.classList.remove("is-animating");
+            void m2.offsetWidth;
+            m2.classList.add("is-animating");
+            setTimeout(() => m2.classList.remove("is-animating"), ANIM_DURATION + 100);
+          }
+        }, m2Delay);
+      }
+
+      const nextDelay = 9000 + Math.random() * 7000;
+      timeoutRef.current = setTimeout(triggerMeteor, nextDelay);
+    };
+
+    const initialDelay = 2500 + Math.random() * 1500;
+    timeoutRef.current = setTimeout(triggerMeteor, initialDelay);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+      <div
+        ref={meteor1Ref}
+        className="meteor"
+        style={{ top: "5%", right: "-60px" }}
+      >
+        <div className="meteor-body" />
+      </div>
+      <div
+        ref={meteor2Ref}
+        className="meteor meteor-secondary"
+        style={{ top: "12%", right: "-40px" }}
+      >
+        <div className="meteor-body" />
+      </div>
+    </div>
+  );
+}
+
 export function HeroShowcase({ data }: { data?: HeroData }) {
   const resume = useMemo(
     () => ({
@@ -127,6 +200,7 @@ export function HeroShowcase({ data }: { data?: HeroData }) {
       className="relative min-h-screen overflow-hidden px-4 pb-16 pt-24 md:px-8 md:pt-32"
     >
       <AmbientParticles />
+      <MeteorShower />
       <div className="grain" />
       <HeroTicker textOverrides={heroTextOverrides} resume={resume} />
 
