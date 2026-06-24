@@ -147,74 +147,115 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="mx-auto max-w-[1200px]">
       {toast ? <ToastHandler message={toast} /> : null}
 
-      {/* 顶栏：返回 + 标题 + 删除 */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <Link
-            href="/admin/works"
-            className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
-          >
-            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-            返回作品列表
-          </Link>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">
-            Work editor
-          </p>
-          <h2 className="mt-1 text-2xl font-semibold md:text-3xl">{workRow.title}</h2>
-          <p className="mt-1 font-mono text-xs text-white/38">{workRow.slug}</p>
-        </div>
+      {/* 顶栏：返回 + 删除 */}
+      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-5">
+        <Link
+          href="/admin/works"
+          className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          返回作品列表
+        </Link>
         <form action={deleteWork}>
           <input type="hidden" name="id" value={workRow.id} />
-          <button className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-300/20 px-4 text-sm text-red-200 transition hover:bg-red-300/10">
-            <Trash2 aria-hidden="true" className="h-4 w-4" />
-            删除
+          <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+            删除作品
           </button>
         </form>
       </div>
 
-      {/* 主内容区：左侧主表单 + 右侧辅助选项 */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* 左列：主要编辑 */}
-        <div className="space-y-6 min-w-0">
-          <WorkForm work={workRow} />
-          <VisualBlockEditor
-            workId={workRow.id}
-            workSlug={workRow.slug}
-            initialBlocks={blockRows}
-            mediaAssets={mediaRows}
-          />
-          <VersionHistoryPanel
-            workId={workRow.id}
-            workSlug={workRow.slug}
-            versions={versionRows}
-          />
+      {/* 站酷风格：标题 → 文案 → 内容编辑 */}
+      <div className="mt-8 space-y-8">
+        {/* 标题区（站酷风格：大标题输入） */}
+        <div>
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex-1">
+              <label htmlFor="work-title" className="sr-only">作品标题</label>
+              <input
+                id="work-title"
+                name="title"
+                defaultValue={workRow.title}
+                required
+                placeholder="输入作品名称"
+                className="w-full border-0 bg-transparent pb-2 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                form="mainWorkForm"
+              />
+            </div>
+            <span className="pb-2 font-mono text-xs text-white/22">{(workRow.title ?? "").length}</span>
+          </div>
+          <p className="mt-2 flex items-center gap-2 text-sm text-white/40">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px] text-white/40">+</span>
+            可以直接输入文字，在这里介绍你的作品
+          </p>
         </div>
 
-        {/* 右列：辅助选项 */}
-        <div className="space-y-4">
-          <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-          <MediaForm mediaAssets={mediaRows} work={workRow} />
-          <CollapsibleSection
-            title="分类与标签"
-            description="控制作品归属、列表筛选和前台标签展示"
-            action={
-              <span className="text-[10px] text-white/30">
-                {selectedCategoryIds.size + selectedTagIds.size} 项已选
-              </span>
-            }
-          >
-            <TaxonomyForm
-              categories={categoryRows}
-              selectedCategoryIds={selectedCategoryIds}
-              selectedTagIds={selectedTagIds}
-              tags={tagRows}
-              work={workRow}
-            />
-          </CollapsibleSection>
+        {/* 文案说明区域（站酷风格：描述 + Palette） */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-sm font-medium text-white/60">设计说明</span>
+              <textarea
+                name="summary"
+                defaultValue={workRow.summary}
+                rows={6}
+                placeholder="可对文字和图片进行自由排版，点击左侧 ⊕ 可选择你需要的功能（图片 / 视频 / 文本）"
+                className="mt-2 w-full resize-y rounded-lg border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-white/80 outline-none placeholder:text-white/25 focus:border-cyan/40"
+                form="mainWorkForm"
+              />
+            </label>
+          </div>
+
+          {/* 右侧辅助信息 */}
+          <div className="space-y-4">
+            <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
+            <MediaForm mediaAssets={mediaRows} work={workRow} />
+          </div>
         </div>
+
+        {/* 更多设置（折叠） */}
+        <CollapsibleSection
+          title="更多设置"
+          description="Slug、年份、分类、SEO 等"
+        >
+          <WorkForm work={workRow} />
+        </CollapsibleSection>
+
+        {/* 分类与标签（折叠） */}
+        <CollapsibleSection
+          title="分类与标签"
+          action={
+            <span className="text-[10px] text-white/30">
+              {selectedCategoryIds.size + selectedTagIds.size} 项已选
+            </span>
+          }
+        >
+          <TaxonomyForm
+            categories={categoryRows}
+            selectedCategoryIds={selectedCategoryIds}
+            selectedTagIds={selectedTagIds}
+            tags={tagRows}
+            work={workRow}
+          />
+        </CollapsibleSection>
+
+        {/* 内容块编辑器（站酷核心：拖拽上传自由排版） */}
+        <VisualBlockEditor
+          workId={workRow.id}
+          workSlug={workRow.slug}
+          initialBlocks={blockRows}
+          mediaAssets={mediaRows}
+        />
+
+        {/* 版本历史（折叠） */}
+        <VersionHistoryPanel
+          workId={workRow.id}
+          workSlug={workRow.slug}
+          versions={versionRows}
+        />
       </div>
     </div>
   );
@@ -416,12 +457,12 @@ function MediaSelectPreview({
 function WorkForm({ work }: { work: WorkEditorRow }) {
   return (
     <form
+      id="mainWorkForm"
       action={updateWork}
-      className="mt-6 grid gap-5 rounded-md border border-white/10 bg-white/[0.035] p-5"
+      className="grid gap-5"
     >
       <input type="hidden" name="id" value={work.id} />
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="标题" name="title" defaultValue={work.title} required />
         <SlugInput defaultValue={work.slug} />
         <Field label="副标题" name="subtitle" defaultValue={work.subtitle} />
         <Field label="年份" name="year" defaultValue={work.year} />
@@ -434,19 +475,9 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
         />
       </div>
 
-      <label className="grid gap-2 text-sm">
-        <span className="text-white/58">摘要</span>
-        <textarea
-          name="summary"
-          defaultValue={work.summary}
-          rows={4}
-          className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
-        />
-      </label>
-
       <PaletteEditor palette={work.palette} />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <label className="grid gap-2 text-sm">
           <span className="text-white/58">状态</span>
           <select
@@ -501,8 +532,8 @@ function WorkForm({ work }: { work: WorkEditorRow }) {
         />
       </div>
 
-      <div className="flex justify-end">
-        <button className="min-h-10 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white">
+      <div className="flex justify-end pt-2">
+        <button className="min-h-10 rounded-md bg-cyan px-6 text-sm font-medium text-black transition hover:bg-white">
           保存作品
         </button>
       </div>
