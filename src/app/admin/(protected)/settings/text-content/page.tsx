@@ -56,7 +56,7 @@ export default async function TextContentPage() {
   );
 
   return (
-    <div>
+    <div className="mx-auto max-w-7xl">
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Content management
       </p>

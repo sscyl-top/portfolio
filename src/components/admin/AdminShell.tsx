@@ -34,10 +34,8 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
         </form>
       </aside>
 
-      {/* ══ 右侧内容区：默认受 max-w-7xl 约束，作品编辑页自行突破 ══ */}
-      <section className="flex min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-7xl px-5 py-6 md:px-8 md:pt-28">{children}</div>
-      </section>
+      {/* ══ 右侧内容区：不套宽度约束，各页面自行决定 ══ */}
+      <section className="flex min-w-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:pt-28">{children}</section>
     </main>
   );
 }

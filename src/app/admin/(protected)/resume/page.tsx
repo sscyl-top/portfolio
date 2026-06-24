@@ -12,7 +12,7 @@ export default async function AdminResumePage() {
   const resume = await getResumeData();
 
   return (
-    <div>
+    <div className="mx-auto max-w-7xl">
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Resume
       </p>

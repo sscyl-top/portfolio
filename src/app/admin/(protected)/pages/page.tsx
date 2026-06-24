@@ -78,7 +78,7 @@ export default async function AdminPagesPage() {
   const pages = defaultPages.map((page) => pageBySlug.get(page.slug) ?? page);
 
   return (
-    <div>
+    <div className="mx-auto max-w-7xl">
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Pages
       </p>
