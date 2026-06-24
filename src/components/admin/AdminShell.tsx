@@ -34,9 +34,9 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
         </form>
       </aside>
 
-      {/* ══ 右侧内容区：全局宽度约束（作品编辑页自行突破） ══ */}
+      {/* ══ 右侧内容区：默认铺满剩余宽度（作品编辑页自行突破） ══ */}
       <section className="flex min-w-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:pt-28">
-        <div className="mx-auto w-full max-w-3xl">{children}</div>
+        <div className="mx-auto w-full">{children}</div>
       </section>
     </main>
   );

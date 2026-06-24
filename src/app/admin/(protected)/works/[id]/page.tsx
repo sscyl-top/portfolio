@@ -159,31 +159,30 @@ export default async function AdminWorkEditorPage({
     >
       {toast ? <ToastHandler message={toast} /> : null}
 
-      {/* 顶栏：返回 + 删除 */}
-      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <Link
-          href="/admin/works"
-          className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
-        >
-          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          返回作品列表
-        </Link>
-        <form action={deleteWork}>
-          <input type="hidden" name="id" value={workRow.id} />
-          <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
-            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-            删除作品
-          </button>
-        </form>
-      </div>
-
-      {/* 主布局：三列 grid — 左空白 | 红框(居中,约导航栏内容宽) | 蓝框(右侧剩余) */}
-      <div className="mt-8 items-start gap-8 lg:gap-10" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 720px) 1fr' }}>
-        {/* ═══ 左侧空白列：用于将红框居中 ═══ */}
-        <div />
-
-        {/* ═══ 红框：标题 + 文案 + 内容编辑器（固定宽度，自动水平居中） ═══ */}
+      {/* 主布局：两列 grid — 左侧红框（主编辑区）| 右侧绿框（辅助面板） */}
+      <div
+        className="items-start gap-8 lg:gap-10"
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px' }}
+      >
+        {/* ═══ 红框：返回 + 标题 + 文案 + 内容编辑器 ═══ */}
         <div className="min-w-0 space-y-6">
+          {/* 返回按钮 — 合并到主编辑区顶部 */}
+          <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
+            <Link
+              href="/admin/works"
+              className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
+            >
+              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+              返回作品列表
+            </Link>
+            <form action={deleteWork}>
+              <input type="hidden" name="id" value={workRow.id} />
+              <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                删除作品
+              </button>
+            </form>
+          </div>
           {/* 标题输入（站酷风格） */}
           <div>
             <div className="flex items-end gap-4">
@@ -246,7 +245,7 @@ export default async function AdminWorkEditorPage({
           </form>
         </div>
 
-        {/* ═══ 蓝框：所有辅助选项（占据右侧 1fr 列，从红框边缘到屏幕右边缘） ═══ */}
+        {/* ═══ 绿框：辅助面板 ═══ */}
         <div className="min-w-0 space-y-4">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
