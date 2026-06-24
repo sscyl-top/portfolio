@@ -70,8 +70,8 @@ export default async function WorkDetailPage({
 
   return (
     <main className="min-h-screen bg-[#050505] pb-24 pt-28 md:pt-32">
-      {/* 头部信息：站酷风格，顶部标题 + 文字介绍 */}
-      <header className="mx-auto max-w-5xl px-5 md:px-8">
+      {/* 头部信息：标题 + 文字介绍，宽度与导航栏/内容块对齐 */}
+      <header className="mx-auto max-w-[1420px] px-3 md:px-8">
         <Link
           href="/works"
           className="inline-flex items-center gap-2 text-sm text-white/45 transition hover:text-white"
@@ -112,7 +112,7 @@ export default async function WorkDetailPage({
       </div>
 
       {/* 互动区 */}
-      <section className="mx-auto mt-16 max-w-5xl px-5 md:px-8">
+      <section className="mx-auto mt-16 max-w-[1420px] px-3 md:px-8">
         <WorkReactions workSlug={work.slug} />
       </section>
 

@@ -112,6 +112,7 @@ const LAYOUT_WIDTH_OPTIONS = [
 const LAYOUT_ALIGN_OPTIONS = [
   { value: "left"   as const, label: "左对齐" },
   { value: "center" as const, label: "居中" },
+  { value: "right"  as const, label: "右对齐" },
 ];
 
 const GALLERY_COLUMN_OPTIONS = [
@@ -131,14 +132,14 @@ type FreeLayout = {
 /** 从 payload 中安全读取 layout 字段 */
 function getLayout(payload: Record<string, unknown>): {
   width: LayoutWidth;
-  align: "left" | "center";
+  align: "left" | "center" | "right";
   columns: 1 | 2 | 3 | 4;
   free?: FreeLayout;
 } {
   const l = (payload.layout ?? {}) as Record<string, unknown>;
   return {
     width:  (l.width  as LayoutWidth) ?? "contained",
-    align:  (l.align  as "left" | "center") ?? "left",
+    align:  (l.align  as "left" | "center" | "right") ?? "left",
     columns: (l.columns as 1 | 2 | 3 | 4) ?? 3,
     free:   l.free as FreeLayout | undefined,
   };
@@ -147,7 +148,7 @@ function getLayout(payload: Record<string, unknown>): {
 /** 将 layout 合并写回 payload */
 function withLayout(
   payload: Record<string, unknown>,
-  layout: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4; free?: FreeLayout }>,
+  layout: Partial<{ width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4; free?: FreeLayout }>,
 ): Record<string, unknown> {
   return {
     ...payload,
@@ -163,8 +164,8 @@ function LayoutBar({
   onChange,
 }: {
   blockType: string;
-  layout: { width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4 };
-  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center"; columns: 1 | 2 | 3 | 4 }>) => void;
+  layout: { width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4 };
+  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4 }>) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-4 py-2">

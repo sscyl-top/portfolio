@@ -172,7 +172,12 @@ function layoutWidthClass(layout?: BlockLayout): string {
 }
 
 function TextBlock({ block }: { block: Extract<ContentBlock, { type: "text" }> }) {
-  const align = block.layout?.align === "center" ? "text-center" : "text-left";
+  const align =
+    block.layout?.align === "center"
+      ? "text-center"
+      : block.layout?.align === "right"
+        ? "text-right"
+        : "text-left";
   return (
     <section className={`py-14 md:py-20 ${layoutWidthClass(block.layout)} ${align}`}>
       <h2 className="text-2xl font-semibold text-white md:text-3xl">

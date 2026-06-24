@@ -147,7 +147,7 @@ export default async function AdminWorkEditorPage({
 
   return (
     <div>
-      {toast ? <ToastHandler message={decodeURIComponent(toast)} /> : null}
+      {toast ? <ToastHandler message={toast} /> : null}
 
       <Link
         href="/admin/works"

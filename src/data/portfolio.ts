@@ -2,7 +2,7 @@ export type WorkStatus = "draft" | "published" | "private";
 
 export type BlockLayout = {
   width?: "full" | "contained" | "narrow" | "free";
-  align?: "left" | "center";
+  align?: "left" | "center" | "right";
   columns?: 1 | 2 | 3 | 4;
   free?: {
     x: number;

@@ -5,7 +5,6 @@ import { Toast } from "./Toast";
 
 export function ToastHandler({ message }: { message: string }) {
   const [show, setShow] = useState(true);
-  const router = useRouter();
 
   const handleClose = useCallback(() => {
     setShow(false);
