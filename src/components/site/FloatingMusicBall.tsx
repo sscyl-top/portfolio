@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Music, Pause, Play, Volume2, X } from "lucide-react";
+import { Music, Pause, Volume2, X } from "lucide-react";
 
 type MusicCategory = {
   id: string;
@@ -293,32 +293,6 @@ export function FloatingMusicBall() {
               {currentTrackTitle || "正在播放"}
               {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
             </p>
-            {!hoverActive ? (
-              <div className="ml-1 flex items-center gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlayPause();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-3.5 w-3.5" />
-                  ) : (
-                    <Play className="h-3.5 w-3.5 pl-0.5" />
-                  )}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    stopMusic();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : null}
           </div>
         ) : null}
 
@@ -351,30 +325,6 @@ export function FloatingMusicBall() {
                 </button>
               );
             })}
-            {showPlayingBar ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePlayPause();
-                }}
-                className="music-option-item"
-              >
-                <span className="text-lg">{isPlaying ? "⏸" : "▶"}</span>
-                <span className="truncate text-sm">{isPlaying ? "暂停" : "继续播放"}</span>
-              </button>
-            ) : null}
-            {showPlayingBar ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  stopMusic();
-                }}
-                className="music-option-item music-option-stop"
-              >
-                <span className="text-lg">⏹</span>
-                <span className="truncate text-sm">停止播放</span>
-              </button>
-            ) : null}
           </div>
         ) : null}
 
