@@ -60,20 +60,20 @@ const workUpdateSchema = z.object({
     .min(1)
     .max(120)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  subtitle: z.string().trim().max(160),
-  summary: z.string().trim().max(1000),
-  year: z.string().trim().max(20),
-  client: z.string().trim().max(120),
-  palette: z.array(paletteColorSchema).default([]),
-  status: z.enum(["draft", "published", "private"]),
-  sort_order: z.coerce.number().int().default(0),
-  is_representative: z.boolean(),
-  representative_order: z.coerce.number().int().nullable(),
-  is_composite: z.boolean(),
-  composite_order: z.coerce.number().int().nullable(),
-  seo_title: z.string().trim().max(120),
-  seo_description: z.string().trim().max(300),
-  scheduled_publish_at: z.string().datetime().nullable().default(null),
+  subtitle: z.string().trim().max(160).optional(),
+  summary: z.string().trim().max(1000).optional(),
+  year: z.string().trim().max(20).optional(),
+  client: z.string().trim().max(120).optional(),
+  palette: z.array(paletteColorSchema).optional(),
+  status: z.enum(["draft", "published", "private"]).optional(),
+  sort_order: z.coerce.number().int().optional(),
+  is_representative: z.boolean().optional(),
+  representative_order: z.coerce.number().int().nullable().optional(),
+  is_composite: z.boolean().optional(),
+  composite_order: z.coerce.number().int().nullable().optional(),
+  seo_title: z.string().trim().max(120).optional(),
+  seo_description: z.string().trim().max(300).optional(),
+  scheduled_publish_at: z.string().datetime().nullable().optional(),
 });
 
 const textBlockSchema = z.object({
@@ -274,64 +274,106 @@ export async function updateWorkTaxonomy(formData: FormData) {
 }
 
 export async function updateWork(formData: FormData) {
-  const parsed = workUpdateSchema.safeParse({
-    id: formData.get("id"),
-    title: formData.get("title"),
-    slug: formData.get("slug"),
-    subtitle: formData.get("subtitle") ?? "",
-    summary: formData.get("summary") ?? "",
-    year: formData.get("year") ?? "",
-    client: formData.get("client") ?? "",
-    palette: String(formData.get("palette") ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-    status: formData.get("status"),
-    sort_order: formData.get("sort_order") || 0,
-    is_representative: formData.get("is_representative") === "on",
-    representative_order: formData.get("representative_order")
-      ? formData.get("representative_order")
-      : null,
-    is_composite: formData.get("is_composite") === "on",
-    composite_order: formData.get("composite_order")
-      ? formData.get("composite_order")
-      : null,
-    seo_title: formData.get("seo_title") ?? "",
-    seo_description: formData.get("seo_description") ?? "",
-    scheduled_publish_at: formData.get("scheduled_publish_at")
-      ? new Date(String(formData.get("scheduled_publish_at"))).toISOString()
-      : null,
-  });
-
-  if (!parsed.success) return;
-
-  const { id, ...values } = parsed.data;
+  const id = formData.get("id");
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) return;
+  const workId = idParsed.data;
 
   const { client, user } = await requireAdmin();
 
-  // 查询当前 published_at，仅在首次发布时设置，避免覆盖原始发布时间
   const { data: currentWork } = await client
     .from("works")
-    .select("published_at")
-    .eq("id", id)
+    .select("*")
+    .eq("id", workId)
+    .is("deleted_at", null)
     .single();
 
-  const existingPublishedAt = currentWork?.published_at as string | null;
+  if (!currentWork) return;
+
+  const updates: Record<string, unknown> = {};
+
+  const title = formData.get("title");
+  if (title !== null && typeof title === "string" && title.trim()) updates.title = title.trim();
+
+  const slug = formData.get("slug");
+  if (slug !== null && typeof slug === "string" && slug.trim()) updates.slug = slug.trim();
+
+  const subtitle = formData.get("subtitle");
+  if (subtitle !== null) updates.subtitle = String(subtitle).trim().slice(0, 160);
+
+  const summary = formData.get("summary");
+  if (summary !== null) updates.summary = String(summary).trim().slice(0, 1000);
+
+  const year = formData.get("year");
+  if (year !== null) updates.year = String(year).trim().slice(0, 20);
+
+  const clientVal = formData.get("client");
+  if (clientVal !== null) updates.client = String(clientVal).trim().slice(0, 120);
+
+  const paletteRaw = formData.get("palette");
+  if (paletteRaw !== null) {
+    const colors = String(paletteRaw)
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => /^#[0-9a-fA-F]{3,6}$/.test(s));
+    updates.palette = colors;
+  }
+
+  const status = formData.get("status");
+  if (status !== null && typeof status === "string" && ["draft", "published", "private"].includes(status)) {
+    updates.status = status;
+  }
+
+  const sortOrder = formData.get("sort_order");
+  if (sortOrder !== null) {
+    const n = Number(sortOrder);
+    if (Number.isInteger(n)) updates.sort_order = n;
+  }
+
+  if (formData.has("is_representative")) {
+    updates.is_representative = formData.get("is_representative") === "on";
+  }
+  if (formData.has("representative_order")) {
+    const v = formData.get("representative_order");
+    updates.representative_order = v ? Number(v) : null;
+  }
+  if (formData.has("is_composite")) {
+    updates.is_composite = formData.get("is_composite") === "on";
+  }
+  if (formData.has("composite_order")) {
+    const v = formData.get("composite_order");
+    updates.composite_order = v ? Number(v) : null;
+  }
+
+  const seoTitle = formData.get("seo_title");
+  if (seoTitle !== null) updates.seo_title = String(seoTitle).trim().slice(0, 120);
+
+  const seoDesc = formData.get("seo_description");
+  if (seoDesc !== null) updates.seo_description = String(seoDesc).trim().slice(0, 300);
+
+  if (formData.has("scheduled_publish_at")) {
+    const v = formData.get("scheduled_publish_at");
+    updates.scheduled_publish_at = v ? new Date(String(v)).toISOString() : null;
+  }
+
+  const existingPublishedAt = (currentWork as { published_at: string | null }).published_at;
+  const newStatus = (updates.status as "draft" | "published" | "private" | undefined) ?? (currentWork as { status: string }).status;
   const published_at =
-    values.status === "published"
+    newStatus === "published"
       ? existingPublishedAt ?? new Date().toISOString()
-      : existingPublishedAt; // 取消发布时保留历史发布时间，不清空
+      : existingPublishedAt;
+  updates.published_at = published_at;
 
   const { error } = await client
     .from("works")
-    .update({ ...values, published_at })
-    .eq("id", id);
+    .update(updates)
+    .eq("id", workId);
 
   if (error) throw new Error(error.message);
 
-  await autoArchiveAfterChange(client, id, user.id, "更新作品元数据");
+  await autoArchiveAfterChange(client, workId, user.id, "更新作品元数据");
 
-  redirect(`/admin/works/${id}?toast=${encodeURIComponent("作品保存成功")}`);
+  redirect(`/admin/works/${workId}?toast=${encodeURIComponent("作品保存成功")}`);
 }
 
 export async function deleteWork(formData: FormData) {

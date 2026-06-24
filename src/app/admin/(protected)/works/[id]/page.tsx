@@ -11,6 +11,7 @@ import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
 import { Toast } from "@/components/admin/Toast";
 import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
+import { StatusSelect } from "@/components/admin/StatusSelect";
 
 import {
   clearPrivatePreviewLink,
@@ -181,19 +182,6 @@ export default async function AdminWorkEditorPage({
             <form id="mainWorkForm" action={updateWork}>
               <input type="hidden" name="id" value={workRow.id} />
               <input type="hidden" name="slug" value={workRow.slug} />
-              <input type="hidden" name="subtitle" defaultValue={workRow.subtitle} />
-              <input type="hidden" name="year" defaultValue={workRow.year} />
-              <input type="hidden" name="client" defaultValue={workRow.client} />
-              <input type="hidden" name="sort_order" defaultValue={String(workRow.sort_order)} />
-              <input type="hidden" name="status" defaultValue={workRow.status} />
-              <input type="hidden" name="scheduled_publish_at" defaultValue={workRow.scheduled_publish_at ?? ""} />
-              <input type="hidden" name="is_representative" value={workRow.is_representative ? "on" : ""} />
-              <input type="hidden" name="is_composite" value={workRow.is_composite ? "on" : ""} />
-              <input type="hidden" name="seo_title" defaultValue={workRow.seo_title} />
-              <input type="hidden" name="seo_description" defaultValue={workRow.seo_description} />
-              {(workRow.palette ?? []).length > 0 && (
-                <input type="hidden" name="palette" defaultValue={workRow.palette.join(", ")} />
-              )}
 
               {/* 标题输入（站酷风格，大字体无边框） */}
               <div className="border-b border-white/[0.06] pb-5">
@@ -498,9 +486,6 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
     <form action={updateWork} className="grid gap-4">
       <input type="hidden" name="id" value={work.id} />
       <input type="hidden" name="slug" value={work.slug} />
-      <input type="hidden" name="title" value={work.title} />
-      <input type="hidden" name="summary" value={work.summary} />
-      <input type="hidden" name="scheduled_publish_at" value={work.scheduled_publish_at ?? ""} />
 
       <div className="grid gap-3 md:grid-cols-2">
         <Field label="副标题" name="subtitle" defaultValue={work.subtitle} compact />
@@ -514,15 +499,7 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-xs">
           <span className="text-white/50">状态</span>
-          <select
-            name="status"
-            defaultValue={work.status}
-            className="min-h-8 rounded border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
-          >
-            <option value="draft">草稿</option>
-            <option value="published">已发布</option>
-            <option value="private">私密</option>
-          </select>
+          <StatusSelect name="status" defaultValue={work.status as "draft" | "published" | "private"} />
         </label>
         <CheckField label="代表作" name="is_representative" defaultChecked={work.is_representative} compact />
         <CheckField label="复合设计" name="is_composite" defaultChecked={work.is_composite} compact />

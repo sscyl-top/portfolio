@@ -62,7 +62,7 @@ export function WorkWizard({ categories, tags, presetSection = "all", representa
   const [palette, setPalette] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
-  const [status, setStatus] = useState<"draft" | "published" | "private">("draft");
+  const [status, setStatus] = useState<"draft" | "published" | "private">("published");
 
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -586,11 +586,17 @@ function Step2Metadata({
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as "draft" | "published" | "private")}
-            className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            className={`min-h-10 rounded-md border px-3 text-sm font-medium outline-none transition ${
+              status === "published"
+                ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                : status === "draft"
+                  ? "border-yellow-400/40 bg-yellow-400/10 text-yellow-300"
+                  : "border-slate-400/40 bg-slate-400/10 text-slate-300"
+            }`}
           >
-            <option value="draft">草稿</option>
-            <option value="published">已发布</option>
-            <option value="private">私密</option>
+            <option value="draft" className="bg-neutral-900 text-yellow-300">草稿</option>
+            <option value="published" className="bg-neutral-900 text-emerald-300">已发布</option>
+            <option value="private" className="bg-neutral-900 text-slate-300">私密</option>
           </select>
         </label>
       </div>
