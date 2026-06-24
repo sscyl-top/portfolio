@@ -26,24 +26,6 @@ const errorFieldClass =
 
 const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
 
-/** 统一的短字段：标签左 / 输入右，垂直居中对齐 */
-function InlineField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="shrink-0 w-[3rem] whitespace-nowrap text-left text-[13px] text-white/55 sm:w-[3.2rem] sm:text-right">
-        {label}
-      </span>
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
-  );
-}
-
 export function ContactForm({
   id,
   type,
@@ -147,7 +129,7 @@ export function ContactForm({
 
       <form
         data-testid={`${type}-contact-form`}
-        className="mt-3 space-y-2.5 sm:grid sm:max-w-full sm:grid-cols-2 sm:gap-4 sm:space-y-0"
+        className="mt-3 grid gap-3 sm:grid-cols-2 sm:gap-4"
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="type" value={type} />
@@ -161,10 +143,11 @@ export function ContactForm({
           />
         </div>
 
-        {/* ── 短字段：标签左 / 输入右（统一模式）── */}
-        <InlineField label="姓名">
+        {/* ── 姓名 ── */}
+        <div>
+          <label htmlFor={`${type}-name`} className="block mb-1 text-xs text-white/55">姓名</label>
           <input
-            aria-label="姓名"
+            id={`${type}-name`}
             className={fieldErrors.name ? errorFieldClass : fieldClass}
             name="name"
             placeholder="您的姓名"
@@ -178,11 +161,13 @@ export function ContactForm({
               {fieldErrors.name}
             </p>
           ) : null}
-        </InlineField>
+        </div>
 
-        <InlineField label="邮箱">
+        {/* ── 邮箱 ── */}
+        <div>
+          <label htmlFor={`${type}-email`} className="block mb-1 text-xs text-white/55">邮箱</label>
           <input
-            aria-label="邮箱"
+            id={`${type}-email`}
             className={fieldErrors.email ? errorFieldClass : fieldClass}
             type="email"
             name="email"
@@ -197,43 +182,50 @@ export function ContactForm({
               {fieldErrors.email}
             </p>
           ) : null}
-        </InlineField>
+        </div>
 
-        <InlineField label="公司">
+        {/* ── 公司（全宽）── */}
+        <div className="sm:col-span-2">
+          <label htmlFor={`${type}-company`} className="block mb-1 text-xs text-white/55">公司</label>
           <input
-            aria-label="公司"
+            id={`${type}-company`}
             className={fieldClass}
             name="company"
             placeholder="您的公司名称"
             autoComplete="organization"
             maxLength={120}
           />
-        </InlineField>
+        </div>
 
-        <InlineField label={subjectLabel}>
+        {/* ── 岗位名称 / 项目类型 ── */}
+        <div>
+          <label htmlFor={`${type}-subject`} className="block mb-1 text-xs text-white/55">{subjectLabel}</label>
           <input
-            aria-label={subjectLabel}
+            id={`${type}-subject`}
             className={fieldClass}
             name="subject"
             placeholder={subjectPlaceholder}
             maxLength={120}
           />
-        </InlineField>
+        </div>
 
-        <InlineField label={rangeLabel}>
+        {/* ── 薪资范围 / 预算范围 ── */}
+        <div>
+          <label htmlFor={`${type}-range`} className="block mb-1 text-xs text-white/55">{rangeLabel}</label>
           <input
-            aria-label={rangeLabel}
+            id={`${type}-range`}
             className={fieldClass}
             name="range"
             placeholder={rangePlaceholder}
             maxLength={80}
           />
-        </InlineField>
+        </div>
 
+        {/* ── 岗位描述 / 项目需求（全宽 textarea）── */}
         <div className="sm:col-span-2">
-          <span className="block mb-1 text-xs text-white/55">{messageLabel}</span>
+          <label htmlFor={`${type}-message`} className="block mb-1 text-xs text-white/55">{messageLabel}</label>
           <textarea
-            aria-label={messageLabel}
+            id={`${type}-message`}
             className={`${fieldErrors.message ? errorFieldClass : fieldClass} min-h-16 resize-y py-2.5`}
             name="message"
             placeholder={messagePlaceholder}
@@ -248,11 +240,11 @@ export function ContactForm({
           ) : null}
         </div>
 
-        {/* 备注 — 全宽 textarea */}
+        {/* ── 备注（全宽 textarea）── */}
         <div className="sm:col-span-2">
-          <span className="block mb-1 text-xs text-white/55">备注</span>
+          <label htmlFor={`${type}-note`} className="block mb-1 text-xs text-white/55">备注</label>
           <textarea
-            aria-label="备注"
+            id={`${type}-note`}
             className={`${fieldClass} min-h-12 resize-y py-2.5`}
             name="note"
             placeholder="补充时间安排、联系方式或其他说明"
@@ -260,6 +252,7 @@ export function ContactForm({
           />
         </div>
 
+        {/* ── 提交按钮 ── */}
         <div className="sm:col-span-2">
           <button
             type="submit"
