@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
     .limit(3);
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Dashboard
       </p>

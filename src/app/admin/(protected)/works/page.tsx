@@ -79,7 +79,7 @@ export default async function AdminWorksPage({
   });
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">

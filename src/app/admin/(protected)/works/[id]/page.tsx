@@ -145,7 +145,17 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div>
+    /* ══ 突破 AdminShell 的 max-w-3xl 约束，全宽显示红蓝分区 ══ */
+    <div
+      style={{
+        width: '100vw',
+        maxWidth: 'none',
+        marginLeft: 'calc(-50vw + 50%)',
+        marginRight: 'calc(-50vw + 50%)',
+        paddingLeft: '2rem',
+        paddingRight: '2rem',
+      }}
+    >
       {toast ? <ToastHandler message={toast} /> : null}
 
       {/* 顶栏：返回 + 删除 */}
