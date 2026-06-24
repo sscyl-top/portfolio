@@ -166,10 +166,13 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* 主布局：红框（编辑区，固定宽度约束）| 蓝框（辅助选项，填满到屏幕右边缘） */}
-      <div className="mt-8 flex gap-8 lg:gap-10">
-        {/* ═══ 红框：标题 + 文案 + 内容编辑器（统一编辑画布，固定宽度约束） ═══ */}
-        <div className="min-w-0 shrink-0 space-y-6" style={{ width: 880 }}>
+      {/* 主布局：三列 grid — 左空白 | 红框(居中) | 蓝框(右侧剩余空间) */}
+      <div className="mt-8 items-start gap-8 lg:gap-10" style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 920px) 1fr' }}>
+        {/* ═══ 左侧空白列：用于将红框居中 ═══ */}
+        <div />
+
+        {/* ═══ 红框：标题 + 文案 + 内容编辑器（固定宽度，自动水平居中） ═══ */}
+        <div className="min-w-0 space-y-6">
           {/* 标题输入（站酷风格） */}
           <div>
             <div className="flex items-end gap-4">
@@ -232,8 +235,8 @@ export default async function AdminWorkEditorPage({
           </form>
         </div>
 
-        {/* ═══ 蓝框：所有辅助选项（flex-1 填满红框右侧到屏幕边缘的全部空间） ═══ */}
-        <div className="min-w-0 flex-1 space-y-4">
+        {/* ═══ 蓝框：所有辅助选项（占据右侧 1fr 列，从红框边缘到屏幕右边缘） ═══ */}
+        <div className="min-w-0 space-y-4">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
           {/* 媒体选择 */}
