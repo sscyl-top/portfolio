@@ -294,14 +294,6 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
       </div>
 
       <div className="relative z-10 -mt-[100vh]">
-        {capabilityTextOverrides.strengthsTitle ? (
-          <div className="flex min-h-[50vh] items-center justify-center px-4 md:min-h-[60vh]">
-            <h2 className="text-center text-3xl font-semibold text-white md:text-5xl">
-              {capabilityTextOverrides.strengthsTitle}
-            </h2>
-          </div>
-        ) : null}
-
         {slides.slice(0, -1).map((slide, index) => (
           <StrengthPanel
             key={slide.kicker}
