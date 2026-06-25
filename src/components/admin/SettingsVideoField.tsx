@@ -53,10 +53,6 @@ export function SettingsVideoField({
   const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
   const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
 
-  const triggerFileSelect = useCallback(() => {
-    inputRef.current?.click();
-  }, []);
-
   const handleUpload = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     const file = Array.isArray(files) ? files[0] : files[0];
@@ -86,6 +82,23 @@ export function SettingsVideoField({
       setIsUploading(false);
     }
   }, []);
+
+  const triggerFileSelect = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.click();
+    } else {
+      const fallback = document.createElement("input");
+      fallback.type = "file";
+      fallback.accept = ACCEPTED_VIDEO_TYPES;
+      fallback.onchange = (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.files && target.files.length > 0) {
+          void handleUpload(target.files);
+        }
+      };
+      fallback.click();
+    }
+  }, [handleUpload]);
 
   useEffect(() => {
     const el = dropZoneRef.current;
@@ -269,7 +282,7 @@ export function SettingsVideoField({
         ref={inputRef}
         type="file"
         accept={ACCEPTED_VIDEO_TYPES}
-        className="sr-only"
+        style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
         onChange={(e) => {
           void handleUpload(e.target.files);
           e.target.value = "";
