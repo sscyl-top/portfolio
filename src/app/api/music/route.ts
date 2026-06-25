@@ -1,6 +1,6 @@
 import { DEFAULT_MUSIC_SETTINGS, type MusicSettings } from "@/app/admin/(protected)/music/types";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runMusicSettingsMigration } from "@/lib/cms/migrations";
+import { getDbPool, runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -47,28 +47,57 @@ export async function GET() {
           .is("deleted_at", null),
       ]);
 
-    // 单独查询settings，表不存在时优雅降级
     let settings: MusicSettings = DEFAULT_MUSIC_SETTINGS;
-    try {
-      const { data: s } = await supabase
-        .from("music_settings")
-        .select("hide_frontend,hide_backend,tip_messages,playing_label")
-        .eq("id", true)
-        .maybeSingle();
 
-      if (s) {
-        const tips = Array.isArray(s.tip_messages)
-          ? s.tip_messages.filter((t: unknown): t is string => typeof t === "string" && t.trim().length > 0)
-          : [];
-        settings = {
-          hide_frontend: !!s.hide_frontend,
-          hide_backend: !!s.hide_backend,
-          tip_messages: tips.length > 0 ? tips : DEFAULT_MUSIC_SETTINGS.tip_messages,
-          playing_label: (s.playing_label && String(s.playing_label).trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
-        };
+    const pool = getDbPool();
+    let pgSettingsOk = false;
+    if (pool) {
+      try {
+        const result = await pool.query(
+          `SELECT hide_frontend, hide_backend, tip_messages, playing_label FROM public.music_settings WHERE id = true LIMIT 1`
+        );
+        if (result.rows.length > 0) {
+          const s = result.rows[0];
+          const tips = Array.isArray(s.tip_messages)
+            ? s.tip_messages.filter((t: unknown): t is string => typeof t === "string" && t.trim().length > 0)
+            : [];
+          settings = {
+            hide_frontend: !!s.hide_frontend,
+            hide_backend: !!s.hide_backend,
+            tip_messages: tips.length > 0 ? tips : DEFAULT_MUSIC_SETTINGS.tip_messages,
+            playing_label: (s.playing_label && String(s.playing_label).trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
+          };
+          pgSettingsOk = true;
+        }
+      } catch {
+        // pg失败，继续用Supabase fallback
+      } finally {
+        await pool.end();
       }
-    } catch {
-      // 表不存在，使用默认设置
+    }
+
+    if (!pgSettingsOk) {
+      try {
+        const { data: s } = await supabase
+          .from("music_settings")
+          .select("hide_frontend,hide_backend,tip_messages,playing_label")
+          .eq("id", true)
+          .maybeSingle();
+
+        if (s) {
+          const tips = Array.isArray(s.tip_messages)
+            ? s.tip_messages.filter((t: unknown): t is string => typeof t === "string" && t.trim().length > 0)
+            : [];
+          settings = {
+            hide_frontend: !!s.hide_frontend,
+            hide_backend: !!s.hide_backend,
+            tip_messages: tips.length > 0 ? tips : DEFAULT_MUSIC_SETTINGS.tip_messages,
+            playing_label: (s.playing_label && String(s.playing_label).trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
+          };
+        }
+      } catch {
+        // 表不存在，使用默认设置
+      }
     }
 
     const mediaMap = new Map<string, MediaRow>();

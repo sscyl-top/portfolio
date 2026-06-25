@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
-import { runMusicSettingsMigration } from "@/lib/cms/migrations";
+import { getDbPool, runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -31,6 +31,23 @@ function normalizeMusicSettings(row: {
 export async function getMusicSettings(): Promise<MusicSettings> {
   try {
     await runMusicSettingsMigration().catch(() => {});
+
+    const pool = getDbPool();
+    if (pool) {
+      try {
+        const result = await pool.query(
+          `SELECT hide_frontend, hide_backend, tip_messages, playing_label FROM public.music_settings WHERE id = true LIMIT 1`
+        );
+        if (result.rows.length > 0) {
+          return normalizeMusicSettings(result.rows[0]);
+        }
+      } catch (pgErr) {
+        console.warn("[getMusicSettings] pg query failed, falling back to Supabase:", pgErr);
+      } finally {
+        await pool.end();
+      }
+    }
+
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("music_settings")
@@ -67,20 +84,44 @@ export async function saveMusicSettings(formData: FormData) {
       tipMessages.push(...DEFAULT_TIP_MESSAGES);
     }
 
-    const service = createSupabaseServiceClient();
-    const { error } = await service.from("music_settings").upsert(
-      {
-        id: true,
-        hide_frontend: hideFrontend,
-        hide_backend: hideBackend,
-        tip_messages: tipMessages,
-        playing_label: playingLabel,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
+    const pool = getDbPool();
+    let saved = false;
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label, updated_at)
+           VALUES (true, $1, $2, $3::jsonb, $4, now())
+           ON CONFLICT (id) DO UPDATE SET
+             hide_frontend = EXCLUDED.hide_frontend,
+             hide_backend = EXCLUDED.hide_backend,
+             tip_messages = EXCLUDED.tip_messages,
+             playing_label = EXCLUDED.playing_label,
+             updated_at = now()`,
+          [hideFrontend, hideBackend, JSON.stringify(tipMessages), playingLabel]
+        );
+        saved = true;
+      } catch (pgErr) {
+        console.warn("[saveMusicSettings] pg upsert failed, falling back to Supabase:", pgErr);
+      } finally {
+        await pool.end();
+      }
+    }
 
-    if (error) return { error: error.message };
+    if (!saved) {
+      const service = createSupabaseServiceClient();
+      const { error } = await service.from("music_settings").upsert(
+        {
+          id: true,
+          hide_frontend: hideFrontend,
+          hide_backend: hideBackend,
+          tip_messages: tipMessages,
+          playing_label: playingLabel,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      );
+      if (error) return { error: error.message };
+    }
 
     revalidatePath("/admin/music");
     revalidatePath("/");
@@ -231,13 +272,32 @@ export async function updateCategory(formData: FormData) {
 
     const emoji = parsed.data.emoji.trim() || "🎵";
 
-    const service = createSupabaseServiceClient();
-    const { error } = await service
-      .from("music_categories")
-      .update({ label: parsed.data.label, emoji })
-      .eq("id", parsed.data.categoryId);
+    await runMusicSettingsMigration().catch(() => {});
 
-    if (error) return { error: error.message };
+    const pool = getDbPool();
+    let saved = false;
+    if (pool) {
+      try {
+        await pool.query(
+          `UPDATE public.music_categories SET label = $1, emoji = $2 WHERE id = $3`,
+          [parsed.data.label, emoji, parsed.data.categoryId]
+        );
+        saved = true;
+      } catch (pgErr) {
+        console.warn("[updateCategory] pg update failed, falling back to Supabase:", pgErr);
+      } finally {
+        await pool.end();
+      }
+    }
+
+    if (!saved) {
+      const service = createSupabaseServiceClient();
+      const { error } = await service
+        .from("music_categories")
+        .update({ label: parsed.data.label, emoji })
+        .eq("id", parsed.data.categoryId);
+      if (error) return { error: error.message };
+    }
 
     revalidatePath("/admin/music");
     revalidatePath("/api/music");

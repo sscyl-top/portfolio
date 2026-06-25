@@ -13,6 +13,12 @@ function getDbConnectionString(): string | null {
   );
 }
 
+export function getDbPool(): Pool | null {
+  const connectionString = getDbConnectionString();
+  if (!connectionString) return null;
+  return new Pool({ connectionString });
+}
+
 export async function runMusicSettingsMigration(): Promise<boolean> {
   if (musicSettingsMigrationPromise) return musicSettingsMigrationPromise;
 
@@ -46,8 +52,10 @@ export async function runMusicSettingsMigration(): Promise<boolean> {
         UPDATE public.music_categories SET emoji = '🔥' WHERE key = 'energetic' AND emoji = '🎵';
         UPDATE public.music_categories SET emoji = '🌊' WHERE key = 'summer' AND emoji = '🎵';
         UPDATE public.music_categories SET emoji = '😎' WHERE key = 'badass' AND emoji = '🎵';
+
+        NOTIFY pgrst, 'reload schema';
       `);
-      console.log("[DB Migration] Music settings table ready, categories emoji column ready");
+      console.log("[DB Migration] Music settings table ready, categories emoji column ready, schema reloaded");
       return true;
     } catch (err) {
       console.error("[DB Migration] Failed to run music settings migration:", err);
