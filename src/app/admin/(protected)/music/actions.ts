@@ -30,6 +30,7 @@ function normalizeMusicSettings(row: {
 
 export async function getMusicSettings(): Promise<MusicSettings> {
   try {
+    await runMusicSettingsMigration().catch(() => {});
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("music_settings")
@@ -205,5 +206,43 @@ export async function updateTrackTitle(formData: FormData) {
     revalidatePath("/admin/music");
   } catch (e) {
     console.error("updateTrackTitle error:", e);
+  }
+}
+
+export async function updateCategory(formData: FormData) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) return { error: "未授权" };
+
+    const parsed = z.object({
+      categoryId: z.string().uuid(),
+      label: z.string().trim().min(1, "分类名称不能为空").max(50, "分类名称最多50个字符"),
+      emoji: z.string().trim().max(8, "emoji最多8个字符").default("🎵"),
+    }).safeParse({
+      categoryId: formData.get("categoryId"),
+      label: formData.get("label") ?? "",
+      emoji: formData.get("emoji") ?? "🎵",
+    });
+
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "参数无效" };
+    }
+
+    const emoji = parsed.data.emoji.trim() || "🎵";
+
+    const service = createSupabaseServiceClient();
+    const { error } = await service
+      .from("music_categories")
+      .update({ label: parsed.data.label, emoji })
+      .eq("id", parsed.data.categoryId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/music");
+    revalidatePath("/api/music");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
 }

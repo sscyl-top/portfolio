@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { getMusicSettings } from "./actions";
 import type { MusicSettings } from "./types";
 import { MusicManager } from "./MusicManager";
@@ -9,6 +10,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
@@ -28,11 +30,12 @@ type Track = {
 
 async function fetchMusicData() {
   try {
+    await runMusicSettingsMigration().catch(() => {});
     const supabase = await createSupabaseServerClient();
 
     const [{ data: categories, error: catErr }, { data: tracks, error: trkErr }] =
       await Promise.all([
-        supabase.from("music_categories").select("*").order("sort_order"),
+        supabase.from("music_categories").select("id,key,label,emoji,sort_order").order("sort_order"),
         supabase
           .from("music_tracks")
           .select("id,category_id,title,sort_order,media_id")

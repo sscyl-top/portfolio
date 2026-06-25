@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, useTransition } from "react";
-import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff } from "lucide-react";
+import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff, Check } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
@@ -9,6 +9,7 @@ import {
   addMusicTrack,
   deleteMusicTrack,
   saveMusicSettings,
+  updateCategory,
   updateTrackTitle,
 } from "./actions";
 import type { MusicSettings } from "./types";
@@ -17,6 +18,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
@@ -330,6 +332,52 @@ function CategorySection({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [titleValue, setTitleValue] = useState("");
+  const [isEditingCat, setIsEditingCat] = useState(false);
+  const [catLabel, setCatLabel] = useState(category.label);
+  const [catEmoji, setCatEmoji] = useState(category.emoji || "🎵");
+  const [catSaving, setCatSaving] = useState(false);
+
+  const startEditCat = () => {
+    setCatLabel(category.label);
+    setCatEmoji(category.emoji || "🎵");
+    setIsEditingCat(true);
+  };
+
+  const cancelEditCat = () => {
+    setIsEditingCat(false);
+    setMessage(null);
+  };
+
+  const handleSaveCategory = async () => {
+    const label = catLabel.trim();
+    const emoji = catEmoji.trim() || "🎵";
+    if (!label) {
+      setMessage({ type: "error", text: "分类名称不能为空" });
+      return;
+    }
+    if (label.length > 50) {
+      setMessage({ type: "error", text: "分类名称最多50个字符" });
+      return;
+    }
+    setCatSaving(true);
+    setMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("categoryId", category.id);
+      formData.append("label", label);
+      formData.append("emoji", emoji);
+      const result = await updateCategory(formData);
+      if ("error" in result && result.error) {
+        setMessage({ type: "error", text: result.error });
+      } else {
+        setMessage({ type: "ok", text: "分类已更新" });
+        setIsEditingCat(false);
+        setTimeout(() => window.location.reload(), 800);
+      }
+    } finally {
+      setCatSaving(false);
+    }
+  };
 
   const uploadSingle = useCallback(
     async (file: File, title: string) => {
@@ -459,10 +507,71 @@ function CategorySection({
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10">
           <Music className="h-5 w-5 text-cyan" />
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white">{category.label}</h3>
-          <p className="text-xs text-white/38">{tracks.length} 首音乐</p>
-        </div>
+        {isEditingCat ? (
+          <div className="flex flex-1 flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={catEmoji}
+              onChange={(e) => setCatEmoji(e.target.value)}
+              maxLength={8}
+              className="h-9 w-16 shrink-0 rounded-md border border-cyan/40 bg-black/30 px-2 text-center text-lg outline-none focus:border-cyan"
+              placeholder="🎵"
+              title="输入emoji"
+            />
+            <input
+              type="text"
+              value={catLabel}
+              onChange={(e) => setCatLabel(e.target.value)}
+              maxLength={50}
+              className="h-9 min-w-0 flex-1 rounded-md border border-cyan/40 bg-black/30 px-3 text-sm text-white outline-none focus:border-cyan"
+              placeholder="分类名称"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveCategory();
+                if (e.key === "Escape") cancelEditCat();
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSaveCategory}
+              disabled={catSaving}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cyan text-black transition hover:bg-white disabled:opacity-50"
+              title="保存"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={cancelEditCat}
+              disabled={catSaving}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              title="取消"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onDoubleClick={startEditCat}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-xl transition hover:bg-white/10"
+              title="双击编辑emoji和名称"
+            >
+              {category.emoji || "🎵"}
+            </button>
+            <div>
+              <h3
+                className="cursor-text text-lg font-semibold text-white transition hover:text-cyan"
+                onDoubleClick={startEditCat}
+                title="双击编辑分类名称和emoji"
+              >
+                {category.label}
+              </h3>
+              <p className="text-xs text-white/38">{tracks.length} 首音乐 · 双击名称或emoji可编辑</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleUpload} className="mt-4">

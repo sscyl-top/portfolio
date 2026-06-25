@@ -15,17 +15,11 @@ const DEFAULT_PLAYING_LABEL = "正在播放";
 const TIP_SHOW_MS = 3200;
 const TIP_HIDE_MS = 300;
 
-const categoryEmoji: Record<string, string> = {
-  relax: "🌿",
-  energetic: "🔥",
-  summer: "🌊",
-  badass: "😎",
-};
-
 type MusicCategory = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   tracks: { id: string; title: string; url: string }[];
 };
 
@@ -342,7 +336,7 @@ export function FloatingMusicBall() {
                       className={`music-option-item music-option-anim ${isCurrentCat ? "music-option-active" : ""}`}
                       style={{ animationDelay: `${0.05 + idx * 0.07}s` }}
                     >
-                      <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
+                      <span className="text-lg">{cat.emoji || "🎵"}</span>
                       <span className="truncate text-sm">{cat.label}</span>
                       {isCurrentCat && isPlaying && (
                         <span className="ml-1 flex items-center gap-0.5">
