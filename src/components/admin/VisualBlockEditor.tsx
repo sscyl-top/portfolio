@@ -747,16 +747,32 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     };
   }, []);
 
-  // 拖拽自动滚动：当鼠标接近视口顶部/底部时自动滚动页面
+  // 拖拽自动滚动：当鼠标接近滚动容器顶部/底部时自动滚动
   const autoScrollRafRef = useRef<number | null>(null);
   const autoScrollMouseYRef = useRef(0);
   const autoScrollActiveRef = useRef(false);
-  const listRef = useRef<HTMLDivElement>(null);
+  const autoScrollContainerRef = useRef<HTMLElement | null>(null);
 
-  const startAutoScroll = useCallback((clientY: number) => {
+  const findScrollContainer = (startEl: HTMLElement | null): HTMLElement => {
+    let el: HTMLElement | null = startEl;
+    while (el) {
+      const style = window.getComputedStyle(el);
+      const overflowY = style.overflowY;
+      if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 1) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return document.scrollingElement as HTMLElement || document.documentElement;
+  };
+
+  const startAutoScroll = useCallback((clientY: number, targetEl: HTMLElement | null) => {
     autoScrollMouseYRef.current = clientY;
     if (autoScrollActiveRef.current) return;
     autoScrollActiveRef.current = true;
+    autoScrollContainerRef.current = findScrollContainer(targetEl);
+
+    const container = autoScrollContainerRef.current;
 
     const updateInsertIndicator = (y: number) => {
       const el = document.elementFromPoint(window.innerWidth / 2, y);
@@ -784,21 +800,25 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     const scrollStep = () => {
       if (!autoScrollActiveRef.current) return;
       const y = autoScrollMouseYRef.current;
-      const viewportH = window.innerHeight;
-      const edgeZone = 180;
-      const maxSpeed = 14;
+      const rect = container.getBoundingClientRect();
+      const containerTop = rect.top;
+      const containerBottom = rect.bottom;
+      const containerHeight = rect.height;
+      const edgeZone = Math.min(120, containerHeight * 0.2);
+      const maxSpeed = 12;
 
       let delta = 0;
-      if (y < edgeZone) {
-        const factor = Math.max(0, Math.min(1, 1 - y / edgeZone));
+      const relY = y - containerTop;
+      if (relY < edgeZone && relY >= 0) {
+        const factor = Math.max(0, Math.min(1, 1 - relY / edgeZone));
         delta = -maxSpeed * Math.pow(factor, 1.3);
-      } else if (y > viewportH - edgeZone) {
-        const factor = Math.max(0, Math.min(1, (y - (viewportH - edgeZone)) / edgeZone));
+      } else if (relY > containerHeight - edgeZone && relY <= containerHeight) {
+        const factor = Math.max(0, Math.min(1, (relY - (containerHeight - edgeZone)) / edgeZone));
         delta = maxSpeed * Math.pow(factor, 1.3);
       }
 
       if (delta !== 0) {
-        window.scrollBy({ top: delta, behavior: "auto" });
+        container.scrollTop += delta;
       }
 
       updateInsertIndicator(y);
@@ -811,6 +831,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
   const stopAutoScroll = useCallback(() => {
     autoScrollActiveRef.current = false;
+    autoScrollContainerRef.current = null;
     if (autoScrollRafRef.current !== null) {
       cancelAnimationFrame(autoScrollRafRef.current);
       autoScrollRafRef.current = null;
@@ -1399,7 +1420,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 onDragStart={(e) => {
                   if (e.button !== 0) return;
                   setDraggedBlockId(block.id);
-                  startAutoScroll(e.clientY);
+                  startAutoScroll(e.clientY, e.currentTarget as HTMLElement);
                 }}
                 onDragEnd={() => { setDraggedBlockId(null); setDragOverIndex(null); stopAutoScroll(); }}
                 onContextMenu={(e) => {
@@ -2199,12 +2220,18 @@ function InlineGalleryEditor({
   const [caption, setCaption] = useState(String(payload.caption ?? ""));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
+  // 使用ref保存最新的payload引用，避免拖拽后caption自动保存覆盖排序结果
+  const latestPayloadRef = useRef(payload);
+  useEffect(() => {
+    latestPayloadRef.current = payload;
+  }, [payload]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onUpdatePayload({ ...payload, caption });
+      onUpdatePayload({ ...latestPayloadRef.current, caption });
     }, 600);
     return () => clearTimeout(timer);
-  }, [caption]);
+  }, [caption, onUpdatePayload]);
 
   const reorder = (from: number, to: number) => {
     if (from === to) return;
@@ -2214,7 +2241,9 @@ function InlineGalleryEditor({
     const [movedRef] = nextRefs.splice(from, 1);
     nextIds.splice(to, 0, movedId);
     nextRefs.splice(to, 0, movedRef);
-    onUpdatePayload({ ...payload, media_ids: nextIds, media_refs: nextRefs });
+    const newPayload = { ...latestPayloadRef.current, media_ids: nextIds, media_refs: nextRefs };
+    latestPayloadRef.current = newPayload;
+    onUpdatePayload(newPayload);
   };
 
   const removeImage = (index: number) => {
@@ -2222,7 +2251,9 @@ function InlineGalleryEditor({
     const nextRefs = [...refs];
     nextIds.splice(index, 1);
     nextRefs.splice(index, 1);
-    onUpdatePayload({ ...payload, media_ids: nextIds, media_refs: nextRefs });
+    const newPayload = { ...latestPayloadRef.current, media_ids: nextIds, media_refs: nextRefs };
+    latestPayloadRef.current = newPayload;
+    onUpdatePayload(newPayload);
   };
 
   return (
