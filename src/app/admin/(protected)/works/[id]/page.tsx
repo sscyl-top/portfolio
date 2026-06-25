@@ -167,9 +167,9 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: main canvas aligned with top nav content width, tools panel fills remaining right space. */}
-      <div className="grid w-full grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1060px)_minmax(320px,1fr)]">
-        {/* Main editing canvas: title, summary, and visual content blocks. Max 1060px, can shrink on smaller screens. */}
+      {/* Work editor layout: main canvas fills available width, tools panel fixed at 340px on the right. */}
+      <div className="grid w-full grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Main editing canvas: title, summary, and visual content blocks. Fills remaining space. */}
         <div className="min-w-0">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
             <form id="mainWorkForm" action={updateWork}>
@@ -217,7 +217,7 @@ export default async function AdminWorkEditorPage({
           </div>
         </div>
 
-        {/* Tools panel: media, taxonomy, settings, and version history. Fills remaining right space. */}
+        {/* Tools panel: media, taxonomy, settings, and version history. Fixed 340px width on the right. */}
         <div className="min-w-0 self-start space-y-3 scrollbar-thin xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           {/* 私密预览 */}
           <div className="grid gap-3">
