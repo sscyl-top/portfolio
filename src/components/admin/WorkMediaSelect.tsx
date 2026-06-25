@@ -21,6 +21,7 @@ type Props = {
   defaultValue: string;
   accept?: string;
   hint?: string;
+  autoSave?: boolean;
 };
 
 const ACCEPTED_MEDIA_TYPES = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml,video/mp4,video/webm,video/ogg,video/quicktime,application/pdf";
@@ -32,17 +33,34 @@ export function WorkMediaSelect({
   defaultValue,
   accept = ACCEPTED_MEDIA_TYPES,
   hint,
+  autoSave = false,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const selected = assets.find((a) => a.id === value);
   const previewUrl = selected ? buildPublicMediaUrl(selected.storage_key) : undefined;
   const isGif = selected?.mime_type === "image/gif";
-  const isVideo = selected?.mime_type.startsWith("video/");
+  const isVideo = selected?.mime_type?.startsWith("video/");
+
+  const submitForm = useCallback(() => {
+    if (!autoSave) return;
+    const form = inputRef.current?.form;
+    if (form) {
+      form.requestSubmit();
+    }
+  }, [autoSave]);
+
+  const handleValueChange = useCallback((newValue: string) => {
+    setValue(newValue);
+    if (autoSave) {
+      setTimeout(() => submitForm(), 0);
+    }
+  }, [autoSave, submitForm]);
 
   const handleUpload = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
@@ -64,13 +82,14 @@ export function WorkMediaSelect({
       const result = results[0];
       if (!result) return;
       setValue(result.id);
-      window.location.reload();
+      if (autoSave) {
+        setTimeout(() => submitForm(), 100);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
-    } finally {
       setIsUploading(false);
     }
-  }, []);
+  }, [autoSave, submitForm]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -171,7 +190,7 @@ export function WorkMediaSelect({
       <div className="flex items-center gap-2">
         <select
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleValueChange(e.target.value)}
           className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           <option value="">从媒体库选择已上传的文件</option>
@@ -195,7 +214,7 @@ export function WorkMediaSelect({
         {value ? (
           <button
             type="button"
-            onClick={() => setValue("")}
+            onClick={() => handleValueChange("")}
             className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
           >
             <X className="h-3.5 w-3.5" />

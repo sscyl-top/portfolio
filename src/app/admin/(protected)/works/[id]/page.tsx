@@ -322,6 +322,8 @@ function MediaForm({
   mediaAssets: MediaOptionRow[];
   work: WorkEditorRow;
 }) {
+  const isComposite = work.is_composite;
+
   return (
     <form
       action={updateWorkMedia}
@@ -337,28 +339,24 @@ function MediaForm({
           name="cover_media_id"
           assets={mediaAssets}
           defaultValue={work.cover_media_id ?? ""}
+          autoSave
         />
-        <div className="grid gap-1">
-          <WorkMediaSelect
-            label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
-            name="hover_media_id"
-            assets={mediaAssets}
-            defaultValue={work.hover_media_id ?? ""}
-            hint={work.is_composite ? "复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）" : undefined}
-          />
-        </div>
-        <WorkMediaSelect
-          label="分享图"
-          name="share_media_id"
-          assets={mediaAssets}
-          defaultValue={work.share_media_id ?? ""}
-        />
-      </div>
-
-      <div className="mt-3 flex justify-end">
-        <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
-          保存媒体
-        </button>
+        {isComposite && (
+          <div className="grid gap-1">
+            <WorkMediaSelect
+              label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
+              name="hover_media_id"
+              assets={mediaAssets}
+              defaultValue={work.hover_media_id ?? ""}
+              hint={work.is_composite ? "复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）" : undefined}
+              autoSave
+            />
+          </div>
+        )}
+        {!isComposite && (
+          <input type="hidden" name="hover_media_id" value="" />
+        )}
+        <input type="hidden" name="share_media_id" value="" />
       </div>
     </form>
   );
