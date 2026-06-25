@@ -94,17 +94,17 @@ export default async function RootLayout({
       <head>
         <style
           dangerouslySetInnerHTML={{
-            __html: `#__initial_loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#050505;transition:opacity .6s ease;}#__initial_loader.hidden{opacity:0;pointer-events:none;}#__initial_loader-text{color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:clamp(1.25rem,5vw,2.75rem);font-weight:300;letter-spacing:.035em;line-height:1;}#__initial_loader-cursor{display:inline-block;width:.5em;height:1em;margin-left:2px;background:#8bd7cd;vertical-align:-0.1em;animation:__blink 1s steps(1) infinite;}@keyframes __blink{0%,50%{opacity:1}51%,100%{opacity:0}}`,
+            __html: `#__initial_loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#050505;transition:opacity .6s ease;}#__initial_loader.hidden{opacity:0;pointer-events:none;}#__initial_loader-text{color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:clamp(1.25rem,5vw,2.75rem);font-weight:300;letter-spacing:.035em;line-height:1;}#__initial_loader-pct{color:#8bd7cd;font-variant-numeric:tabular-nums;margin-left:.35em;}`,
           }}
         />
       </head>
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <div id="__initial_loader" aria-hidden="true">
-          <p id="__initial_loader-text">hello@sscyl.top<span id="__initial_loader-cursor" /></p>
+          <p id="__initial_loader-text">hello@sscyl.top<span id="__initial_loader-pct">0%</span></p>
         </div>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var _f=0;function done(){if(_f)return;_f=1;var l=document.getElementById("__initial_loader");if(!l){return;}l.classList.add("hidden");setTimeout(function(){if(l.parentNode)l.parentNode.removeChild(l);},650);}var start=performance.now();var minDisplay=600;var maxTimeout=setTimeout(done,4000);function finish(){if(_f)return;clearTimeout(maxTimeout);var elapsed=performance.now()-start;var wait=Math.max(0,minDisplay-elapsed);setTimeout(done,wait);}if(document.readyState==="complete"){setTimeout(done,100);}else{window.addEventListener("load",finish);window.addEventListener("pageshow",function(e){if(e.persisted)done();});(function c(){if(_f)return;if(document.readyState==="complete"){finish();}else{requestAnimationFrame(c);}})();}})();`,
+            __html: `(function(){var _f=0,_p=0,_loaded=!1;var pctEl=document.getElementById("__initial_loader-pct");function setPct(v){v=Math.min(100,Math.max(0,Math.round(v)));if(v!==_p){_p=v;if(pctEl)pctEl.textContent=v+"%";}}function done(){if(_f)return;_f=1;setPct(100);var l=document.getElementById("__initial_loader");if(!l){return;}l.classList.add("hidden");setTimeout(function(){if(l.parentNode)l.parentNode.removeChild(l);},650);}var alreadyComplete=document.readyState==="complete";var dur=alreadyComplete?400:1200;var minDisplay=alreadyComplete?200:600;var start=performance.now();var maxTimeout=setTimeout(done,4000);function tick(now){if(_f)return;var elapsed=now-start;var t=Math.min(1,elapsed/dur);setPct(t*100);if(_loaded&&t>=1){var wait=Math.max(0,minDisplay-elapsed);setTimeout(done,wait);return;}if(t>=1){setPct(100);if(_loaded){done();}return;}requestAnimationFrame(tick);}function onLoad(){if(_f)return;_loaded=!0;clearTimeout(maxTimeout);if(_p>=100){var elapsed=performance.now()-start;var wait=Math.max(0,minDisplay-elapsed);setTimeout(done,wait);}}if(alreadyComplete){_loaded=!0;}else{window.addEventListener("load",onLoad);window.addEventListener("pageshow",function(e){if(e.persisted)done();});}requestAnimationFrame(tick);})();`,
           }}
         />
         <GlobalDragDropPrevention />
