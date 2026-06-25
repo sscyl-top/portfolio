@@ -18,7 +18,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
-  emoji: string;
+  emoji?: string;
   sort_order: number;
 };
 

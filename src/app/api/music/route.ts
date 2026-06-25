@@ -10,7 +10,7 @@ type CategoryRow = {
   id: string;
   key: string;
   label: string;
-  emoji: string;
+  emoji?: string;
   sort_order: number;
 };
 
@@ -36,7 +36,7 @@ export async function GET() {
       await Promise.all([
         supabase
           .from("music_categories")
-          .select("id,key,label,emoji,sort_order")
+          .select("*")
           .order("sort_order"),
         supabase
           .from("music_tracks")

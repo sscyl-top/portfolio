@@ -19,7 +19,7 @@ type MusicCategory = {
   id: string;
   key: string;
   label: string;
-  emoji: string;
+  emoji?: string;
   tracks: { id: string; title: string; url: string }[];
 };
 
