@@ -47,6 +47,7 @@ export async function GET() {
           .is("deleted_at", null),
       ]);
 
+    // 单独查询settings，表不存在时优雅降级
     let settings: MusicSettings = DEFAULT_MUSIC_SETTINGS;
     try {
       const { data: s } = await supabase
