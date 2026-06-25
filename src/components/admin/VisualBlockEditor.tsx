@@ -697,13 +697,22 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [uploadAndCreateBlocks],
   );
 
-  // 全局拖拽检测（拖入窗口时显示覆盖层）
+  // 全局拖拽检测（拖入内容编辑区域时显示覆盖层，媒体上传区域不显示）
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("Files")) setIsDraggingFile(true);
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      if (document.body.hasAttribute("data-media-dragging")) return;
+      setIsDraggingFile(true);
+    };
+    const handleDragOver = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      if (document.body.hasAttribute("data-media-dragging")) {
+        setIsDraggingFile(false);
+        return;
+      }
+      setIsDraggingFile(true);
     };
     const handleDragLeave = (e: DragEvent) => {
-      // 只有当鼠标离开窗口时才关闭
       if (!e.relatedTarget || e.relatedTarget === document.body) {
         setIsDraggingFile(false);
       }
@@ -713,10 +722,12 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       setDragOverIndex(null);
     };
     document.addEventListener("dragenter", handleDragEnter);
+    document.addEventListener("dragover", handleDragOver);
     document.addEventListener("dragleave", handleDragLeave);
     document.addEventListener("drop", handleDrop);
     return () => {
       document.removeEventListener("dragenter", handleDragEnter);
+      document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("dragleave", handleDragLeave);
       document.removeEventListener("drop", handleDrop);
     };
@@ -1055,7 +1066,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       {/* 文件拖拽覆盖层 */}
       {isDraggingFile ? (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="pointer-events-auto rounded-2xl border-2 border-dashed border-cyan bg-cyan/5 px-12 py-10 text-center">
+          <div className="pointer-events-none rounded-2xl border-2 border-dashed border-cyan bg-cyan/5 px-12 py-10 text-center">
             <UploadCloud className="mx-auto h-12 w-12 text-cyan/60" />
             <p className="mt-4 text-lg font-medium text-white">拖拽文件到此处释放</p>
             <p className="mt-2 text-sm text-white/50">支持图片、视频、PDF，可同时选择多个文件</p>

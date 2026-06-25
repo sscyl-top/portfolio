@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { UploadCloud, Loader2, X, Image as ImageIcon } from "lucide-react";
 
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
@@ -40,6 +40,7 @@ export function SettingsMediaField({
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const selected = assets.find((a) => a.id === value);
   const previewUrl = selected ? buildPublicMediaUrl(selected.storage_key) : undefined;
@@ -70,23 +71,58 @@ export function SettingsMediaField({
     }
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
+  useEffect(() => {
+    const el = dropZoneRef.current;
+    if (!el) return;
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
+    const onDragEnter = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.setAttribute("data-media-dragging", "true");
+      setIsDragging(true);
+    };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    handleUpload(e.dataTransfer.files);
+    const onDragOver = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.setAttribute("data-media-dragging", "true");
+      setIsDragging(true);
+    };
+
+    const onDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return;
+      document.body.removeAttribute("data-media-dragging");
+      setIsDragging(false);
+    };
+
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.removeAttribute("data-media-dragging");
+      setIsDragging(false);
+      if (e.dataTransfer?.files) {
+        void handleUpload(e.dataTransfer.files);
+      }
+    };
+
+    el.addEventListener("dragenter", onDragEnter);
+    el.addEventListener("dragover", onDragOver);
+    el.addEventListener("dragleave", onDragLeave);
+    el.addEventListener("drop", onDrop);
+
+    return () => {
+      el.removeEventListener("dragenter", onDragEnter);
+      el.removeEventListener("dragover", onDragOver);
+      el.removeEventListener("dragleave", onDragLeave);
+      el.removeEventListener("drop", onDrop);
+    };
   }, [handleUpload]);
 
   return (
@@ -94,12 +130,11 @@ export function SettingsMediaField({
       <span className="text-white/58">{label}</span>
 
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        ref={dropZoneRef}
+        data-media-upload-zone
         className={`relative rounded-md border transition-all ${
           isDragging
-            ? "border-cyan bg-cyan/10"
+            ? "border-cyan bg-cyan/10 z-[60]"
             : "border-white/10 bg-white/[0.035]"
         }`}
       >
