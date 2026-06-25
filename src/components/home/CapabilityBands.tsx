@@ -154,51 +154,14 @@ const particleModelUrls = [
   "/models/particles/astronaut.gltf",
 ];
 const ambientParticleThreshold = 0.86;
-let hasShownCapabilityLoaderThisDocument = false;
 
 export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsProps) {
   const capabilityTextOverrides = textOverrides ?? {};
   const sectionRef = useRef<HTMLElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [shouldShowLoader] = useState(() => {
-    const shouldShow = !hasShownCapabilityLoaderThisDocument;
-    hasShownCapabilityLoaderThisDocument = true;
-    return shouldShow;
-  });
-  const [progress, setProgress] = useState(() => (shouldShowLoader ? 0 : 100));
-  const [isLoaded, setIsLoaded] = useState(() => !shouldShowLoader);
   const cursorRef = useRef<HTMLDivElement>(null);
   const scrollProgressRef = useRef(0);
   const entryProgressRef = useRef(0);
-
-  useEffect(() => {
-    if (!shouldShowLoader) {
-      return;
-    }
-
-    const startedAt = performance.now();
-    let frame = 0;
-    let timeout = 0;
-
-    const tick = () => {
-      const elapsed = performance.now() - startedAt;
-      const next = Math.min(100, Math.round((elapsed / 1200) * 100));
-      setProgress(next);
-
-      if (next < 100) {
-        frame = requestAnimationFrame(tick);
-      } else {
-        timeout = window.setTimeout(() => setIsLoaded(true), 120);
-      }
-    };
-
-    frame = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timeout);
-    };
-  }, [shouldShowLoader]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -270,7 +233,6 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
       }}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[6] h-44 -translate-y-full bg-gradient-to-b from-transparent via-black/60 to-black" />
-      {shouldShowLoader ? <Loader progress={progress} hidden={isLoaded} /> : null}
 
       <div className="sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_46%,rgba(139,215,205,0.08),transparent_32%),radial-gradient(circle_at_28%_66%,rgba(201,162,127,0.08),transparent_28%)]" />
@@ -307,22 +269,6 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
 
       <span className="sr-only">{strengths.join(" ")}</span>
     </section>
-  );
-}
-
-function Loader({ progress, hidden }: { progress: number; hidden: boolean }) {
-  return (
-    <div
-      className={`fixed inset-0 z-[60] grid place-items-center bg-black transition-opacity duration-500 ${
-        hidden ? "pointer-events-none opacity-0" : "opacity-100"
-      }`}
-    >
-      <div className="text-center font-sans text-white">
-        <p className="text-3xl font-light leading-none tracking-[0.035em] md:text-5xl">
-          hello@sscyl.top {progress}%
-        </p>
-      </div>
-    </div>
   );
 }
 

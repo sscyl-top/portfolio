@@ -91,7 +91,22 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN">
+      <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `#__initial_loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#050505;transition:opacity .6s ease;}#__initial_loader.hidden{opacity:0;pointer-events:none;}#__initial_loader-text{color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:clamp(1.25rem,5vw,2.75rem);font-weight:300;letter-spacing:.035em;line-height:1;}#__initial_loader-cursor{display:inline-block;width:.5em;height:1em;margin-left:2px;background:#8bd7cd;vertical-align:-0.1em;animation:__blink 1s steps(1) infinite;}@keyframes __blink{0%,50%{opacity:1}51%,100%{opacity:0}}`,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
+        <div id="__initial_loader" aria-hidden="true">
+          <p id="__initial_loader-text">hello@sscyl.top<span id="__initial_loader-cursor" /></p>
+        </div>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var _f=0;function done(){if(_f)return;_f=1;var l=document.getElementById("__initial_loader");if(!l){return;}l.classList.add("hidden");setTimeout(function(){if(l.parentNode)l.parentNode.removeChild(l);},650);}var start=performance.now();var minDisplay=600;var maxTimeout=setTimeout(done,4000);function finish(){if(_f)return;clearTimeout(maxTimeout);var elapsed=performance.now()-start;var wait=Math.max(0,minDisplay-elapsed);setTimeout(done,wait);}if(document.readyState==="complete"){setTimeout(done,100);}else{window.addEventListener("load",finish);window.addEventListener("pageshow",function(e){if(e.persisted)done();});(function c(){if(_f)return;if(document.readyState==="complete"){finish();}else{requestAnimationFrame(c);}})();}})();`,
+          }}
+        />
         <GlobalDragDropPrevention />
         <SiteHeader siteSettings={settings} />
         {children}
