@@ -288,12 +288,18 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     () => [...initialBlocks].sort((a, b) => a.sort_order - b.sort_order),
   );
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [pdfParseStatus, setPdfParseStatus] = useState<string | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [showBlockMenu, setShowBlockMenu] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    blockId: string;
+  } | null>(null);
 
   // 乐观更新：仅更新本地 state，不触发 router.refresh()，用于布局等高频操作
   const handleOptimisticUpdate = useCallback(
@@ -734,7 +740,139 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     };
   }, []);
 
-  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  // 拖拽自动滚动：当鼠标接近视口顶部/底部时自动滚动页面
+  const autoScrollRafRef = useRef<number | null>(null);
+  const autoScrollMouseYRef = useRef(0);
+  const autoScrollActiveRef = useRef(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const startAutoScroll = useCallback((clientY: number) => {
+    autoScrollMouseYRef.current = clientY;
+    if (autoScrollActiveRef.current) return;
+    autoScrollActiveRef.current = true;
+
+    const scrollStep = () => {
+      if (!autoScrollActiveRef.current) return;
+      const y = autoScrollMouseYRef.current;
+      const viewportH = window.innerHeight;
+      const edgeZone = 100;
+      const maxSpeed = 8;
+
+      let delta = 0;
+      if (y < edgeZone) {
+        const factor = 1 - y / edgeZone;
+        delta = -maxSpeed * Math.pow(factor, 1.5);
+      } else if (y > viewportH - edgeZone) {
+        const factor = (y - (viewportH - edgeZone)) / edgeZone;
+        delta = maxSpeed * Math.pow(factor, 1.5);
+      }
+
+      if (delta !== 0) {
+        window.scrollBy({ top: delta, behavior: "auto" });
+
+        const el = document.elementFromPoint(window.innerWidth / 2, y);
+        if (el) {
+          const blockEl = el.closest("[data-block-index]") as HTMLElement | null;
+          if (blockEl) {
+            const idx = Number(blockEl.getAttribute("data-block-index"));
+            if (!Number.isNaN(idx)) {
+              const rect = blockEl.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              const insertAt = y < midY ? idx : idx + 1;
+              setDragOverIndex(insertAt);
+            }
+          } else {
+            const triggerEl = el.closest("[data-insert-index]") as HTMLElement | null;
+            if (triggerEl) {
+              const idx = Number(triggerEl.getAttribute("data-insert-index"));
+              if (!Number.isNaN(idx)) {
+                setDragOverIndex(idx);
+              }
+            }
+          }
+        }
+      }
+
+      autoScrollRafRef.current = requestAnimationFrame(scrollStep);
+    };
+
+    autoScrollRafRef.current = requestAnimationFrame(scrollStep);
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    autoScrollActiveRef.current = false;
+    if (autoScrollRafRef.current !== null) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
+  }, []);
+
+  // 全局 dragover/dragend 用于自动滚动更新位置和停止
+  useEffect(() => {
+    if (!draggedBlockId) {
+      stopAutoScroll();
+      return;
+    }
+
+    const handleGlobalDragOver = (e: DragEvent) => {
+      autoScrollMouseYRef.current = e.clientY;
+    };
+    const handleGlobalDragEnd = () => {
+      stopAutoScroll();
+    };
+
+    document.addEventListener("dragover", handleGlobalDragOver);
+    document.addEventListener("dragend", handleGlobalDragEnd);
+    return () => {
+      document.removeEventListener("dragover", handleGlobalDragOver);
+      document.removeEventListener("dragend", handleGlobalDragEnd);
+      stopAutoScroll();
+    };
+  }, [draggedBlockId, stopAutoScroll]);
+
+  // 右键菜单：点击其他地方关闭
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClick = () => setContextMenu(null);
+    const handleScroll = () => setContextMenu(null);
+    setTimeout(() => {
+      document.addEventListener("click", handleClick);
+      document.addEventListener("scroll", handleScroll, true);
+    }, 0);
+    return () => {
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [contextMenu]);
+
+  // 移到最前/最后
+  const moveBlockToFront = useCallback((blockId: string) => {
+    setBlocks((prev) => {
+      const sourceIndex = prev.findIndex((b) => b.id === blockId);
+      if (sourceIndex <= 0) return prev;
+      const reordered = [...prev];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.unshift(moved);
+      reordered.forEach((b, i) => { b.sort_order = i; });
+      persistOrder(reordered);
+      return reordered;
+    });
+    setContextMenu(null);
+  }, [persistOrder]);
+
+  const moveBlockToEnd = useCallback((blockId: string) => {
+    setBlocks((prev) => {
+      const sourceIndex = prev.findIndex((b) => b.id === blockId);
+      if (sourceIndex === -1 || sourceIndex === prev.length - 1) return prev;
+      const reordered = [...prev];
+      const [moved] = reordered.splice(sourceIndex, 1);
+      reordered.push(moved);
+      reordered.forEach((b, i) => { b.sort_order = i; });
+      persistOrder(reordered);
+      return reordered;
+    });
+    setContextMenu(null);
+  }, [persistOrder]);
 
   const moveBlockToIndex = useCallback(
     (blockId: string, targetIndex: number) => {
@@ -759,6 +897,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       if (!isBlockDrag(e) && !isFileDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
+      autoScrollMouseYRef.current = e.clientY;
       const rect = e.currentTarget.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertAt = e.clientY < midY ? index : index + 1;
@@ -1248,8 +1387,17 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 isDropTargetAfter={dragOverIndex === index + 1}
                 onEdit={() => setEditingBlockId(editingBlockId === block.id ? null : block.id)}
                 onDelete={() => handleDeleteBlock(block.id)}
-                onDragStart={() => setDraggedBlockId(block.id)}
-                onDragEnd={() => { setDraggedBlockId(null); setDragOverIndex(null); }}
+                onDragStart={(e) => {
+                  if (e.button !== 0) return;
+                  setDraggedBlockId(block.id);
+                  startAutoScroll(e.clientY);
+                }}
+                onDragEnd={() => { setDraggedBlockId(null); setDragOverIndex(null); stopAutoScroll(); }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id });
+                }}
                 onDragOver={(e) => handleBlockDragOver(e, index)}
                 onDrop={(e) => handleBlockDrop(e, index)}
                 mediaAssets={mediaAssets}
@@ -1395,6 +1543,41 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           </button>
         </div>
       ) : null}
+
+      {/* 右键菜单 */}
+      {contextMenu ? (
+        <>
+          <div className="fixed inset-0 z-50" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} />
+          <div
+            className="fixed z-50 w-44 overflow-hidden rounded-lg border border-white/15 bg-[#1a1a2e]/95 py-1 shadow-2xl backdrop-blur-md"
+            style={{
+              left: Math.min(contextMenu.x, window.innerWidth - 180),
+              top: Math.min(contextMenu.y, window.innerHeight - 120),
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => moveBlockToFront(contextMenu.blockId)}
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              <svg className="h-4 w-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+              移到最前
+            </button>
+            <button
+              type="button"
+              onClick={() => moveBlockToEnd(contextMenu.blockId)}
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              <svg className="h-4 w-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              </svg>
+              移到最后
+            </button>
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
@@ -1402,6 +1585,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 // ── 插入触发区域（拖拽定位）──────────────────────────────
 
 function InsertTrigger({
+  index,
   onDragOver,
   onDrop,
   isDragOver,
@@ -1413,6 +1597,7 @@ function InsertTrigger({
 }) {
   return (
     <div
+      data-insert-index={index}
       className={`group relative transition-all ${isDragOver ? "h-10" : "h-4 hover:h-6"}`}
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -1447,6 +1632,7 @@ function BlockCard({
   onDelete,
   onDragStart,
   onDragEnd,
+  onContextMenu,
   onDragOver,
   onDrop,
   mediaAssets,
@@ -1467,8 +1653,9 @@ function BlockCard({
   isDropTargetAfter: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onDragStart: () => void;
+  onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   mediaAssets: MediaAsset[];
@@ -1517,7 +1704,7 @@ function BlockCard({
   );
 
   return (
-    <div className="relative">
+    <div className="relative" onContextMenu={onContextMenu}>
       {/* 插入指示线 - 块之前 */}
       {isDropTargetBefore ? (
         <div className="absolute -top-1 left-0 right-0 z-10 flex items-center gap-2 px-2">
@@ -1546,13 +1733,17 @@ function BlockCard({
           <div
             draggable
             onDragStart={(e) => {
+              if (e.button !== 0) {
+                e.preventDefault();
+                return;
+              }
               e.dataTransfer.setData("block-id", block.id);
               e.dataTransfer.effectAllowed = "move";
-              onDragStart();
+              onDragStart(e);
             }}
             onDragEnd={onDragEnd}
             className="flex cursor-grab items-center rounded p-0.5 text-white/20 transition hover:bg-white/10 hover:text-white/60 active:cursor-grabbing"
-            title="拖拽排序"
+            title="拖拽排序（右键可移到最前/最后）"
           >
             <GripHorizontal className="h-4 w-4" />
           </div>
