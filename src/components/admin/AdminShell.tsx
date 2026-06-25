@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 
 import { logoutAdmin } from "@/app/admin/actions";
 
+import { AdminContent } from "./AdminContent";
 import { AdminNav } from "./AdminNav";
 
 type AdminShellProps = {
@@ -34,9 +35,9 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
         </form>
       </aside>
 
-      {/* ══ 右侧内容区：约束到前台导航栏同宽（作品编辑页自行突破） ══ */}
+      {/* ══ 右侧内容区：作品编辑页全宽，其他页面约束到1420px ══ */}
       <section className="flex min-w-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:pt-28">
-        <div className="mx-auto w-full max-w-[1420px]">{children}</div>
+        <AdminContent>{children}</AdminContent>
       </section>
     </main>
   );
