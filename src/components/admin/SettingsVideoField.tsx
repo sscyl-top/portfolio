@@ -43,12 +43,15 @@ export function SettingsVideoField({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadedPreview, setUploadedPreview] = useState<{ id: string; url: string; original_name: string; mime_type: string } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const selected = assets.find((a) => a.id === value);
-  const previewUrl = selected ? buildPublicMediaUrl(selected.storage_key) : undefined;
+  const previewUrl = uploadedPreview ? uploadedPreview.url : (selected ? buildPublicMediaUrl(selected.storage_key) : undefined);
+  const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
+  const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
 
   const handleUpload = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
@@ -72,7 +75,12 @@ export function SettingsVideoField({
       const result = results[0];
       if (!result) return;
       setValue(result.id);
-      window.location.reload();
+      setUploadedPreview({
+        id: result.id,
+        url: buildPublicMediaUrl(result.storage_key),
+        original_name: result.original_name,
+        mime_type: result.mime_type,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
     } finally {
@@ -183,8 +191,8 @@ export function SettingsVideoField({
                 </div>
               </div>
               <div className="flex-1 min-w-0 pt-1">
-                <p className="truncate text-xs text-white/60">{selected?.original_name}</p>
-                <p className="mt-0.5 text-[10px] text-white/30">{selected?.mime_type}</p>
+                <p className="truncate text-xs text-white/60">{previewName}</p>
+                <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
                 <p className="mt-2 text-[10px] text-white/25">
                   鼠标悬停视频预览播放
                 </p>
@@ -221,7 +229,7 @@ export function SettingsVideoField({
       <div className="flex items-center gap-2">
         <select
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => { setValue(e.target.value); setUploadedPreview(null); }}
           className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           <option value="">从媒体库选择已上传的视频</option>
@@ -247,7 +255,7 @@ export function SettingsVideoField({
         {value ? (
           <button
             type="button"
-            onClick={() => setValue("")}
+            onClick={() => { setValue(""); setUploadedPreview(null); }}
             className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
           >
             <X className="h-3.5 w-3.5" />

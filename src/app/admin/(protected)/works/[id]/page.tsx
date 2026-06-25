@@ -167,9 +167,9 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: main editing canvas fills available width, compact tools rail on the right. */}
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        {/* Main editing canvas: title, summary, and visual content blocks. */}
+      {/* Work editor layout: fixed-width editing canvas (1060px) aligned with top nav content, tools panel fills remaining right space. */}
+      <div className="grid grid-cols-1 items-start gap-6 2xl:grid-cols-[1060px_minmax(320px,1fr)]">
+        {/* Main editing canvas: title, summary, and visual content blocks. Fixed 1060px width. */}
         <div className="min-w-0">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
             <form id="mainWorkForm" action={updateWork}>
@@ -217,8 +217,8 @@ export default async function AdminWorkEditorPage({
           </div>
         </div>
 
-        {/* Tools panel: media, taxonomy, settings, and version history. */}
-        <div className="min-w-0 self-start space-y-3 scrollbar-thin xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+        {/* Tools panel: media, taxonomy, settings, and version history. Fills remaining right space. */}
+        <div className="min-w-0 self-start space-y-3 scrollbar-thin 2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-y-auto">
           {/* 私密预览 */}
           <div className="grid gap-3">
             <SaveWorkCard updatedAt={workRow.updated_at} />

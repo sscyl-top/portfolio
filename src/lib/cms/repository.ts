@@ -234,57 +234,68 @@ export async function createServerCmsRepository() {
       return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
     },
     async getSiteSettings() {
-      const fullSelect = `*,
-          avatar_media:media_assets!site_settings_avatar_media_id_fkey(storage_key,mime_type,alt_text),
-          logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
-          share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
-          cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
-          cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text),
-          cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text),
-          hero_main_video_media:media_assets!site_settings_hero_main_video_media_id_fkey(storage_key,mime_type,alt_text),
-          hero_side1_video_media:media_assets!site_settings_hero_side1_video_media_id_fkey(storage_key,mime_type,alt_text),
-          hero_side2_video_media:media_assets!site_settings_hero_side2_video_media_id_fkey(storage_key,mime_type,alt_text),
-          hero_side3_video_media:media_assets!site_settings_hero_side3_video_media_id_fkey(storage_key,mime_type,alt_text)`;
+      // 先尝试自动迁移（幂等操作）
+      await runHeroVideosMigration().catch(() => {});
 
-      const tryQuery = async () => {
-        const { data, error } = await client
+      // 基础选择：不包含hero视频字段，确保列一定存在
+      const baseSelect = `*,
+          avatar_media:media_assets(storage_key,mime_type,alt_text),
+          logo_media:media_assets(storage_key,mime_type,alt_text),
+          share_media:media_assets(storage_key,mime_type,alt_text),
+          cta_card_media:media_assets(storage_key,mime_type,alt_text),
+          cta_figure_media:media_assets(storage_key,mime_type,alt_text),
+          cta_ticker_logo_media:media_assets(storage_key,mime_type,alt_text)`;
+
+      // 先查询基础字段（一定存在）
+      const { data: baseData, error: baseError } = await client
+        .from("site_settings")
+        .select(baseSelect)
+        .single();
+
+      if (baseError) {
+        console.error("[getSiteSettings] 基础查询失败:", baseError);
+        return getStaticPublicSiteSettings();
+      }
+
+      if (!baseData) return getStaticPublicSiteSettings();
+
+      // 单独安全查询hero视频字段，失败就返回null
+      let heroVideoMedia: {
+        hero_main_video_media?: CmsMediaRow | null;
+        hero_side1_video_media?: CmsMediaRow | null;
+        hero_side2_video_media?: CmsMediaRow | null;
+        hero_side3_video_media?: CmsMediaRow | null;
+      } = {};
+
+      try {
+        const { data: heroData, error: heroError } = await client
           .from("site_settings")
-          .select(fullSelect)
+          .select(`
+            hero_main_video_media_id,
+            hero_side1_video_media_id,
+            hero_side2_video_media_id,
+            hero_side3_video_media_id,
+            hero_main_video_media:media_assets(storage_key,mime_type,alt_text),
+            hero_side1_video_media:media_assets(storage_key,mime_type,alt_text),
+            hero_side2_video_media:media_assets(storage_key,mime_type,alt_text),
+            hero_side3_video_media:media_assets(storage_key,mime_type,alt_text)
+          `)
           .single();
-        return { data, error };
+
+        if (!heroError && heroData) {
+          heroVideoMedia = heroData as unknown as typeof heroVideoMedia;
+        }
+      } catch {
+        // hero视频列不存在，忽略
+      }
+
+      // 合并数据
+      const mergedRow: CmsSiteSettingsRow = {
+        ...(baseData as unknown as CmsSiteSettingsRow),
+        ...heroVideoMedia,
       };
 
-      let result = await tryQuery();
-
-      // 如果是列不存在错误，自动运行迁移然后重试
-      if (result.error && typeof result.error.message === "string" && result.error.message.includes("does not exist")) {
-        const migrated = await runHeroVideosMigration();
-        if (migrated) {
-          result = await tryQuery();
-        }
-      }
-
-      if (result.error) {
-        // 如果hero视频列还是不存在，降级查询（不包含hero视频字段）
-        if (typeof result.error.message === "string" && result.error.message.includes("does not exist")) {
-          const fallbackSelect = `*,
-            avatar_media:media_assets!site_settings_avatar_media_id_fkey(storage_key,mime_type,alt_text),
-            logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
-            share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
-            cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
-            cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text),
-            cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text)`;
-          const { data: fallbackData, error: fallbackError } = await client
-            .from("site_settings")
-            .select(fallbackSelect)
-            .single();
-          if (fallbackError) throw fallbackError;
-          return fallbackData ? toPublicSiteSettings(fallbackData as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
-        }
-        throw result.error;
-      }
-
-      return result.data ? toPublicSiteSettings(result.data as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
+      return toPublicSiteSettings(mergedRow);
     },
   });
 }

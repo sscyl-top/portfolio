@@ -11,7 +11,7 @@ const socialLinkSchema = z.object({
   url: z.string().trim().min(1),
 });
 
-const settingsSchema = z.object({
+const baseSettingsSchema = z.object({
   name: z.string().trim().min(1).max(80),
   nickname: z.string().trim().max(80),
   default_theme: z.enum(["dark", "light", "system"]),
@@ -24,11 +24,14 @@ const settingsSchema = z.object({
   cta_card_media_id: z.string().uuid().nullable(),
   cta_figure_media_id: z.string().uuid().nullable(),
   cta_ticker_logo_media_id: z.string().uuid().nullable(),
+  social_links: z.array(socialLinkSchema),
+});
+
+const heroVideoSchema = z.object({
   hero_main_video_media_id: z.string().uuid().nullable(),
   hero_side1_video_media_id: z.string().uuid().nullable(),
   hero_side2_video_media_id: z.string().uuid().nullable(),
   hero_side3_video_media_id: z.string().uuid().nullable(),
-  social_links: z.array(socialLinkSchema),
 });
 
 export async function saveSiteSettings(formData: FormData) {
@@ -38,7 +41,7 @@ export async function saveSiteSettings(formData: FormData) {
     .map((label, index) => ({ label, url: urls[index] ?? "" }))
     .filter((link) => link.label.trim() && link.url.trim());
 
-  const parsed = settingsSchema.safeParse({
+  const baseParsed = baseSettingsSchema.safeParse({
     name: formData.get("name"),
     nickname: formData.get("nickname") ?? "",
     default_theme: formData.get("default_theme"),
@@ -51,42 +54,46 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: formData.get("cta_card_media_id") || null,
     cta_figure_media_id: formData.get("cta_figure_media_id") || null,
     cta_ticker_logo_media_id: formData.get("cta_ticker_logo_media_id") || null,
+    social_links,
+  });
+
+  if (!baseParsed.success) return;
+
+  const { client } = await requireAdmin();
+
+  // 先尝试自动迁移（幂等操作）
+  await runHeroVideosMigration().catch(() => {});
+
+  // 第一步：先更新基础设置（列一定存在）
+  const { error: baseError } = await client.from("site_settings").upsert({
+    id: true,
+    ...baseParsed.data,
+  });
+
+  if (baseError) {
+    throw new Error(baseError.message);
+  }
+
+  // 第二步：尝试更新hero视频字段（列可能不存在，失败不影响基础设置保存）
+  const heroParsed = heroVideoSchema.safeParse({
     hero_main_video_media_id: formData.get("hero_main_video_media_id") || null,
     hero_side1_video_media_id: formData.get("hero_side1_video_media_id") || null,
     hero_side2_video_media_id: formData.get("hero_side2_video_media_id") || null,
     hero_side3_video_media_id: formData.get("hero_side3_video_media_id") || null,
-    social_links,
   });
 
-  if (!parsed.success) return;
+  if (heroParsed.success) {
+    try {
+      const { error: heroError } = await client.from("site_settings").update({
+        ...heroParsed.data,
+      }).eq("id", true);
 
-  const { client } = await requireAdmin();
-
-  // 先尝试运行迁移，确保hero视频列存在
-  await runHeroVideosMigration();
-
-  const { error } = await client.from("site_settings").upsert({
-    id: true,
-    ...parsed.data,
-  });
-
-  if (error) {
-    // 如果还是因为列不存在报错，就去掉hero视频字段再保存
-    if (typeof error.message === "string" && error.message.includes("does not exist")) {
-      const {
-        hero_main_video_media_id,
-        hero_side1_video_media_id,
-        hero_side2_video_media_id,
-        hero_side3_video_media_id,
-        ...restData
-      } = parsed.data;
-      const { error: fallbackError } = await client.from("site_settings").upsert({
-        id: true,
-        ...restData,
-      });
-      if (fallbackError) throw new Error(fallbackError.message);
-    } else {
-      throw new Error(error.message);
+      // hero更新失败不抛出错误，静默忽略
+      if (heroError) {
+        console.warn("[saveSiteSettings] Hero视频字段更新失败（列可能不存在）:", heroError.message);
+      }
+    } catch (err) {
+      console.warn("[saveSiteSettings] Hero视频字段更新异常:", err);
     }
   }
 

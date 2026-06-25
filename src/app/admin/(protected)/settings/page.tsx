@@ -42,31 +42,40 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sscyl.top";
 export default async function AdminSettingsPage() {
   const supabase = await createSupabaseServerClient();
 
-  const fullColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,social_links";
-  const fallbackColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
+  // 先尝试自动迁移（幂等操作）
+  await runHeroVideosMigration().catch(() => {});
 
-  let settingsResult = await supabase
+  // 第一步：查询基础列（一定存在）
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
+  const { data: baseData, error: baseError } = await supabase
     .from("site_settings")
-    .select(fullColumns)
+    .select(baseColumns)
     .single();
 
-  // 如果是列不存在错误，自动运行迁移然后重试
-  if (settingsResult.error && typeof settingsResult.error.message === "string" && settingsResult.error.message.includes("does not exist")) {
-    const migrated = await runHeroVideosMigration();
-    if (migrated) {
-      settingsResult = await supabase
-        .from("site_settings")
-        .select(fullColumns)
-        .single();
-    }
-  }
+  // 第二步：安全查询hero视频列，失败就用null
+  let heroColumns = {
+    hero_main_video_media_id: null as string | null,
+    hero_side1_video_media_id: null as string | null,
+    hero_side2_video_media_id: null as string | null,
+    hero_side3_video_media_id: null as string | null,
+  };
 
-  // 如果还是失败，降级查询（不包含hero视频字段）
-  if (settingsResult.error && typeof settingsResult.error.message === "string" && settingsResult.error.message.includes("does not exist")) {
-    settingsResult = await supabase
+  try {
+    const { data: heroData, error: heroError } = await supabase
       .from("site_settings")
-      .select(fallbackColumns)
+      .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
       .single();
+
+    if (!heroError && heroData) {
+      heroColumns = {
+        hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
+        hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
+        hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
+        hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+      };
+    }
+  } catch {
+    // hero视频列不存在，保持null
   }
 
   const { data: rawMedia } = await supabase
@@ -75,7 +84,6 @@ export default async function AdminSettingsPage() {
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  const { data, error } = settingsResult;
   const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {
     name: siteSettings.name,
@@ -99,7 +107,11 @@ export default async function AdminSettingsPage() {
       url: link.href,
     })),
   } satisfies SettingsRow;
-  const settings = (data as SettingsRow | null) ?? fallback;
+
+  // 合并基础数据和hero视频数据
+  const data = baseData ? { ...(baseData as object), ...heroColumns } as SettingsRow : null;
+  const error = baseError;
+  const settings = data ?? fallback;
   const socialLinks =
     settings.social_links.length > 0
       ? settings.social_links
