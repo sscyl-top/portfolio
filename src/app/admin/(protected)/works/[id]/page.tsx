@@ -167,15 +167,9 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* ══ 主布局：三列 — 左留白(少量) | 编辑区(1060px) | 辅助面板(320px) ══ */}
-      <div
-        className="items-start gap-6"
-        style={{ display: 'grid', gridTemplateColumns: '1fr minmax(0, 1060px) 320px' }}
-      >
-        {/* ═══ 左侧留白：用于将编辑区居中 ═══ */}
-        <div />
-
-        {/* ═══ 中间：统一编辑板块（标题 + 文案 + 拖拽上传编辑器，融为一体）═══ */}
+      {/* Work editor layout: main canvas up to 1420px, tools panel fills the right side. */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1420px)_minmax(420px,1fr)]">
+        {/* Main editing canvas: title, summary, and visual content blocks. */}
         <div className="min-w-0">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
             <form id="mainWorkForm" action={updateWork}>
@@ -233,8 +227,8 @@ export default async function AdminWorkEditorPage({
           </div>
         </div>
 
-        {/* ═══ 右侧：辅助面板（sticky固定，不随页面滚动） ═══ */}
-        <div className="sticky top-4 self-start max-h-[calc(100vh-2rem)] min-w-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin md:top-6 md:max-h-[calc(100vh-3rem)]">
+        {/* Tools panel: media, taxonomy, settings, and version history. */}
+        <div className="min-w-0 self-start space-y-4 pr-1 scrollbar-thin xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
           {/* 媒体选择 */}
@@ -568,4 +562,3 @@ function CheckField({
     </label>
   );
 }
-
