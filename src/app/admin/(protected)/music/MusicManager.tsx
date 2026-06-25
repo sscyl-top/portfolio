@@ -10,6 +10,7 @@ import {
   deleteMusicTrack,
   saveMusicSettings,
   updateTrackTitle,
+  updateCategory,
 } from "./actions";
 import type { MusicSettings } from "./types";
 
@@ -17,6 +18,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
@@ -73,7 +75,7 @@ export function MusicManager({
       </p>
       <h2 className="mt-3 text-3xl font-semibold">音乐播放器</h2>
       <p className="mt-3 text-sm text-white/48">
-        为四个音乐分类上传背景音乐，访客点击右下角悬浮球后即可播放。支持MP3、WAV、OGG格式，单文件最大30MB。
+        为四个音乐分类上传背景音乐，访客点击右下角悬浮球后即可播放。支持MP3、WAV、OGG格式，单文件最大30MB。双击分类名称可以编辑分类文案和emoji图标。
       </p>
 
       <audio ref={audioRef} />
@@ -325,11 +327,19 @@ function CategorySection({
     type: "ok" | "error";
     text: string;
   } | null>(null);
+  const [catMessage, setCatMessage] = useState<{
+    type: "ok" | "error";
+    text: string;
+  } | null>(null);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [titleValue, setTitleValue] = useState("");
+  const [isEditingCat, setIsEditingCat] = useState(false);
+  const [catLabel, setCatLabel] = useState(category.label);
+  const [catEmoji, setCatEmoji] = useState(category.emoji || "🎵");
+  const [catSaving, setCatSaving] = useState(false);
 
   const uploadSingle = useCallback(
     async (file: File, title: string) => {
@@ -453,17 +463,114 @@ function CategorySection({
     window.location.reload();
   };
 
+  const handleSaveCategory = async () => {
+    if (!catLabel.trim()) {
+      setCatMessage({ type: "error", text: "分类名称不能为空" });
+      setTimeout(() => setCatMessage(null), 2000);
+      return;
+    }
+    setCatSaving(true);
+    setCatMessage(null);
+    const formData = new FormData();
+    formData.append("categoryId", category.id);
+    formData.append("label", catLabel.trim());
+    formData.append("emoji", (catEmoji || "🎵").trim());
+    const result = await updateCategory(formData);
+    setCatSaving(false);
+    if ("error" in result && result.error) {
+      setCatMessage({ type: "error", text: result.error });
+      setTimeout(() => setCatMessage(null), 3000);
+    } else {
+      setCatMessage({ type: "ok", text: "分类已更新" });
+      setTimeout(() => {
+        setCatMessage(null);
+        setIsEditingCat(false);
+        window.location.reload();
+      }, 800);
+    }
+  };
+
   return (
     <section className="rounded-lg border border-white/10 bg-white/[0.025] p-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10">
-          <Music className="h-5 w-5 text-cyan" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10 text-lg">
+          {isEditingCat ? (
+            <input
+              type="text"
+              value={catEmoji}
+              onChange={(e) => setCatEmoji(e.target.value)}
+              maxLength={4}
+              className="h-8 w-8 rounded-md border border-white/20 bg-black/30 text-center text-base outline-none focus:border-cyan"
+            />
+          ) : (
+            <span>{category.emoji || "🎵"}</span>
+          )}
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white">{category.label}</h3>
-          <p className="text-xs text-white/38">{tracks.length} 首音乐</p>
-        </div>
+        {isEditingCat ? (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <input
+              type="text"
+              value={catLabel}
+              onChange={(e) => setCatLabel(e.target.value)}
+              className="h-9 min-w-0 flex-1 rounded-md border border-white/20 bg-black/30 px-3 text-sm text-white outline-none focus:border-cyan"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveCategory();
+                if (e.key === "Escape") {
+                  setCatLabel(category.label);
+                  setCatEmoji(category.emoji || "🎵");
+                  setIsEditingCat(false);
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSaveCategory}
+              disabled={catSaving}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cyan/10 text-cyan transition hover:bg-cyan/20 disabled:opacity-50"
+              title="保存"
+            >
+              <Save className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCatLabel(category.label);
+                setCatEmoji(category.emoji || "🎵");
+                setIsEditingCat(false);
+                setCatMessage(null);
+              }}
+              disabled={catSaving}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/40 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              title="取消"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <h3
+              className="cursor-text text-lg font-semibold text-white hover:text-cyan"
+              onDoubleClick={() => setIsEditingCat(true)}
+              title="双击编辑分类名称和图标"
+            >
+              {category.label}
+            </h3>
+            <p className="text-xs text-white/38">{tracks.length} 首音乐 · 双击可编辑名称和emoji</p>
+          </div>
+        )}
       </div>
+      {catMessage ? (
+        <p
+          className={`mt-2 rounded-md px-3 py-1 text-xs ${
+            catMessage.type === "ok"
+              ? "bg-green-300/10 text-green-200"
+              : "bg-red-300/10 text-red-200"
+          }`}
+        >
+          {catMessage.text}
+        </p>
+      ) : null}
 
       <form onSubmit={handleUpload} className="mt-4">
         <div className="flex flex-wrap items-center gap-2">

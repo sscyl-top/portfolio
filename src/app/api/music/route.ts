@@ -1,4 +1,5 @@
 import { DEFAULT_MUSIC_SETTINGS, type MusicSettings } from "@/app/admin/(protected)/music/types";
+import { runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -9,6 +10,7 @@ type CategoryRow = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
@@ -27,13 +29,14 @@ type MediaRow = {
 
 export async function GET() {
   try {
+    await runMusicSettingsMigration().catch(() => {});
     const supabase = await createSupabaseServerClient();
 
     const [{ data: categories }, { data: tracks }, { data: medias }] =
       await Promise.all([
         supabase
           .from("music_categories")
-          .select("id,key,label,sort_order")
+          .select("id,key,label,emoji,sort_order")
           .order("sort_order"),
         supabase
           .from("music_tracks")
@@ -44,7 +47,6 @@ export async function GET() {
           .is("deleted_at", null),
       ]);
 
-    // 单独查询settings，表不存在时优雅降级
     let settings: MusicSettings = DEFAULT_MUSIC_SETTINGS;
     try {
       const { data: s } = await supabase
@@ -76,6 +78,7 @@ export async function GET() {
         id: cat.id,
         key: cat.key,
         label: cat.label,
+        emoji: cat.emoji || "🎵",
         tracks: ((tracks ?? []) as TrackRow[])
           .filter((t) => t.category_id === cat.id)
           .map((t) => {

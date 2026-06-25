@@ -40,8 +40,27 @@ export async function runMusicSettingsMigration(): Promise<boolean> {
         INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label)
         VALUES (true, false, false, '[]'::jsonb, '正在播放')
         ON CONFLICT (id) DO NOTHING;
+
+        ALTER TABLE public.music_settings ENABLE ROW LEVEL SECURITY;
+
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'music_settings' AND policyname = 'music_settings_public_read') THEN
+            CREATE POLICY "music_settings_public_read" ON public.music_settings FOR SELECT USING (true);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'music_settings' AND policyname = 'music_settings_admin_write') THEN
+            CREATE POLICY "music_settings_admin_write" ON public.music_settings FOR ALL USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+          END IF;
+        END $$;
+
+        ALTER TABLE public.music_categories ADD COLUMN IF NOT EXISTS emoji text NOT NULL DEFAULT '🎵';
+
+        UPDATE public.music_categories SET emoji = '🌿' WHERE key = 'relax' AND emoji = '🎵';
+        UPDATE public.music_categories SET emoji = '🔥' WHERE key = 'energetic' AND emoji = '🎵';
+        UPDATE public.music_categories SET emoji = '🌊' WHERE key = 'summer' AND emoji = '🎵';
+        UPDATE public.music_categories SET emoji = '😎' WHERE key = 'badass' AND emoji = '🎵';
       `);
-      console.log("[DB Migration] Music settings table ready");
+      console.log("[DB Migration] Music settings table and emoji column ready");
       return true;
     } catch (err) {
       console.error("[DB Migration] Failed to run music settings migration:", err);

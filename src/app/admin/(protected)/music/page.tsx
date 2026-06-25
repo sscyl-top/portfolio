@@ -9,6 +9,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
@@ -32,7 +33,7 @@ async function fetchMusicData() {
 
     const [{ data: categories, error: catErr }, { data: tracks, error: trkErr }] =
       await Promise.all([
-        supabase.from("music_categories").select("*").order("sort_order"),
+        supabase.from("music_categories").select("id,key,label,emoji,sort_order").order("sort_order"),
         supabase
           .from("music_tracks")
           .select("id,category_id,title,sort_order,media_id")

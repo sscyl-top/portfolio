@@ -15,17 +15,11 @@ const DEFAULT_PLAYING_LABEL = "正在播放";
 const TIP_SHOW_MS = 3200;
 const TIP_HIDE_MS = 300;
 
-const categoryEmoji: Record<string, string> = {
-  relax: "🌿",
-  energetic: "🔥",
-  summer: "🌊",
-  badass: "😎",
-};
-
 type MusicCategory = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   tracks: { id: string; title: string; url: string }[];
 };
 
@@ -117,7 +111,6 @@ export function FloatingMusicBall() {
       .catch(() => setLoaded(true));
   }, []);
 
-  // 根据路径判断是否在后台，决定是否隐藏
   useEffect(() => {
     if (typeof window === "undefined") return;
     const isAdmin = window.location.pathname.startsWith("/admin");
@@ -248,7 +241,6 @@ export function FloatingMusicBall() {
   const selectCategory = useCallback((category: MusicCategory) => {
     if (category.tracks.length === 0) return;
 
-    // 点击正在播放的分类 = 停止音乐
     if (currentCatKeyRef.current === category.key && isPlayingRef.current) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -280,7 +272,6 @@ export function FloatingMusicBall() {
     setHoverActive(false);
   }, []);
 
-  // 隐藏或未加载完成或无音乐时不渲染
   if (hidden || !loaded || categories.length === 0) return null;
 
   const tipMessages = tipMessagesRef.current;
@@ -300,10 +291,8 @@ export function FloatingMusicBall() {
         className="flex items-end gap-3"
         style={{ padding: "40px 0 40px 40px", margin: "-40px 0 -40px -40px" }}
       >
-        {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球(底部) */}
         {showColumn ? (
           <div className="music-bubble-column shrink-0">
-            {/* Playing bar - 和风格选项同样的样式，在同一列 */}
             {showPlayingBar ? (
               <div className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
                 <Volume2 className="h-5 w-5 shrink-0 text-cyan" />
@@ -313,7 +302,6 @@ export function FloatingMusicBall() {
               </div>
             ) : null}
 
-            {/* Tip bubble - 和风格选项同样的样式，在同一列 */}
             {showTipBubble ? (
               <div key={tipKey} className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
                 <span className="whitespace-nowrap text-sm text-white/90">{tipMessages[tipIndex] ?? tipMessages[0]}</span>
@@ -328,7 +316,6 @@ export function FloatingMusicBall() {
               </div>
             ) : null}
 
-            {/* 4 个音乐风格选项 - 与弹窗在同一列 */}
             {hoverActive
               ? categories.map((cat, idx) => {
                   const isCurrentCat = currentCatKeyRef.current === cat.key;
@@ -342,7 +329,7 @@ export function FloatingMusicBall() {
                       className={`music-option-item music-option-anim ${isCurrentCat ? "music-option-active" : ""}`}
                       style={{ animationDelay: `${0.05 + idx * 0.07}s` }}
                     >
-                      <span className="text-lg">{categoryEmoji[cat.key] ?? "🎵"}</span>
+                      <span className="text-lg">{cat.emoji || "🎵"}</span>
                       <span className="truncate text-sm">{cat.label}</span>
                       {isCurrentCat && isPlaying && (
                         <span className="ml-1 flex items-center gap-0.5">
@@ -358,7 +345,6 @@ export function FloatingMusicBall() {
           </div>
         ) : null}
 
-        {/* Main ball - 纯展示，无播放控制按钮 */}
         <button
           onClick={(e) => {
             e.stopPropagation();
