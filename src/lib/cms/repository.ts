@@ -457,7 +457,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
           ? {
               width:  (rawLayout.width  as "full" | "contained" | "narrow" | "free") ?? undefined,
               align:  (rawLayout.align  as "left" | "center")          ?? undefined,
-              columns: (rawLayout.columns as 2 | 3 | 4)               ?? undefined,
+              columns: (rawLayout.columns as 1 | 2 | 3 | 4)           ?? undefined,
               free,
             }
           : undefined;

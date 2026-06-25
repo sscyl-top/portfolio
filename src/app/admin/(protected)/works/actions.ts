@@ -1426,7 +1426,19 @@ export async function updateBlockDirect(
   const enrichedPayload = { ...payload };
   delete enrichedPayload._block_type;
 
-  if (["media", "video", "pdf"].includes(blockType ?? "") && enrichedPayload.media_id) {
+  // 先获取当前块类型（如果_block_type未提供）
+  let effectiveBlockType = blockType;
+  if (!effectiveBlockType) {
+    const { data: currentBlock } = await client
+      .from("work_blocks")
+      .select("block_type")
+      .eq("id", blockId)
+      .eq("work_id", workId)
+      .single();
+    effectiveBlockType = (currentBlock as { block_type?: string })?.block_type;
+  }
+
+  if (["media", "video", "pdf"].includes(effectiveBlockType ?? "") && enrichedPayload.media_id) {
     const { data: asset } = await client
       .from("media_assets")
       .select("id,storage_key,mime_type,alt_text")
@@ -1440,6 +1452,26 @@ export async function updateBlockDirect(
         mime_type: asset.mime_type,
         alt_text: asset.alt_text,
       };
+    }
+  }
+
+  // 如果是gallery块，重新构建media_refs
+  if (effectiveBlockType === "gallery" && Array.isArray(enrichedPayload.media_ids)) {
+    const ids = enrichedPayload.media_ids as string[];
+    if (ids.length > 0) {
+      const { data: rows } = await client
+        .from("media_assets")
+        .select("id,storage_key,mime_type,alt_text")
+        .in("id", ids)
+        .is("deleted_at", null);
+      const idOrder = new Map(ids.map((id, idx) => [id, idx]));
+      enrichedPayload.media_refs = (rows ?? [])
+        .map((r: { id: string; storage_key: string; mime_type: string; alt_text: string }) => ({
+          id: r.id, storage_key: r.storage_key, mime_type: r.mime_type, alt_text: r.alt_text,
+        }))
+        .sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+    } else {
+      enrichedPayload.media_refs = [];
     }
   }
 
@@ -1460,17 +1492,55 @@ export async function updateBlockDirect(
 /**
  * 仅保存布局变更，不触发 revalidatePath — 用于后台布局按钮高频切换
  * （避免乐观更新被服务端 RSC 重新渲染覆盖，导致按钮来回跳动）
+ * 正确合并layout到现有payload中，保留media_ids/media_refs等其他字段
  */
 export async function updateBlockLayoutDirect(
   workId: string,
   blockId: string,
-  payload: Record<string, unknown>,
+  newPayload: Record<string, unknown>,
 ) {
   const { client } = await requireAdmin();
 
+  // 先获取当前块的payload
+  const { data: block } = await client
+    .from("work_blocks")
+    .select("payload,block_type")
+    .eq("id", blockId)
+    .eq("work_id", workId)
+    .single();
+
+  if (!block) throw new Error("Block not found");
+
+  const currentPayload = ((block as { payload?: Record<string, unknown> }).payload) || {};
+  // 合并新layout到现有payload中，保留其他字段
+  const mergedPayload: Record<string, unknown> = {
+    ...currentPayload,
+    ...newPayload,
+    layout: {
+      ...(currentPayload.layout as Record<string, unknown> | undefined ?? {}),
+      ...(newPayload.layout as Record<string, unknown> | undefined ?? {}),
+    },
+  };
+
+  // 如果是gallery块，确保media_refs正确（基于media_ids）
+  if ((block as { block_type: string }).block_type === "gallery" && mergedPayload.media_ids) {
+    const ids = mergedPayload.media_ids as string[];
+    const { data: rows } = await client
+      .from("media_assets")
+      .select("id,storage_key,mime_type,alt_text")
+      .in("id", ids)
+      .is("deleted_at", null);
+    const idOrder = new Map(ids.map((id, idx) => [id, idx]));
+    mergedPayload.media_refs = (rows ?? [])
+      .map((r: { id: string; storage_key: string; mime_type: string; alt_text: string }) => ({
+        id: r.id, storage_key: r.storage_key, mime_type: r.mime_type, alt_text: r.alt_text,
+      }))
+      .sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+  }
+
   const { error } = await client
     .from("work_blocks")
-    .update({ payload })
+    .update({ payload: mergedPayload })
     .eq("id", blockId)
     .eq("work_id", workId);
 

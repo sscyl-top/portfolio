@@ -391,10 +391,17 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
             });
 
             const mediaIds = results.map((r) => r.id);
+            const mediaRefs = results.map((r) => ({
+              id: r.id,
+              storage_key: r.storage_key,
+              mime_type: r.mime_type,
+              alt_text: "" as string,
+            }));
             const payload: Record<string, unknown> = {
               media_ids: mediaIds,
+              media_refs: mediaRefs,
               caption: "",
-              layout: { columns: 1 },
+              layout: { columns: 3 },
             };
             const created = await createBlockDirect(workId, workSlug, "gallery", payload, currentInsertAt);
 
@@ -751,47 +758,50 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     if (autoScrollActiveRef.current) return;
     autoScrollActiveRef.current = true;
 
+    const updateInsertIndicator = (y: number) => {
+      const el = document.elementFromPoint(window.innerWidth / 2, y);
+      if (!el) return;
+      const blockEl = el.closest("[data-block-index]") as HTMLElement | null;
+      if (blockEl) {
+        const idx = Number(blockEl.getAttribute("data-block-index"));
+        if (!Number.isNaN(idx)) {
+          const rect = blockEl.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          const insertAt = y < midY ? idx : idx + 1;
+          setDragOverIndex(insertAt);
+        }
+      } else {
+        const triggerEl = el.closest("[data-insert-index]") as HTMLElement | null;
+        if (triggerEl) {
+          const idx = Number(triggerEl.getAttribute("data-insert-index"));
+          if (!Number.isNaN(idx)) {
+            setDragOverIndex(idx);
+          }
+        }
+      }
+    };
+
     const scrollStep = () => {
       if (!autoScrollActiveRef.current) return;
       const y = autoScrollMouseYRef.current;
       const viewportH = window.innerHeight;
-      const edgeZone = 100;
-      const maxSpeed = 8;
+      const edgeZone = 180;
+      const maxSpeed = 14;
 
       let delta = 0;
       if (y < edgeZone) {
-        const factor = 1 - y / edgeZone;
-        delta = -maxSpeed * Math.pow(factor, 1.5);
+        const factor = Math.max(0, Math.min(1, 1 - y / edgeZone));
+        delta = -maxSpeed * Math.pow(factor, 1.3);
       } else if (y > viewportH - edgeZone) {
-        const factor = (y - (viewportH - edgeZone)) / edgeZone;
-        delta = maxSpeed * Math.pow(factor, 1.5);
+        const factor = Math.max(0, Math.min(1, (y - (viewportH - edgeZone)) / edgeZone));
+        delta = maxSpeed * Math.pow(factor, 1.3);
       }
 
       if (delta !== 0) {
         window.scrollBy({ top: delta, behavior: "auto" });
-
-        const el = document.elementFromPoint(window.innerWidth / 2, y);
-        if (el) {
-          const blockEl = el.closest("[data-block-index]") as HTMLElement | null;
-          if (blockEl) {
-            const idx = Number(blockEl.getAttribute("data-block-index"));
-            if (!Number.isNaN(idx)) {
-              const rect = blockEl.getBoundingClientRect();
-              const midY = rect.top + rect.height / 2;
-              const insertAt = y < midY ? idx : idx + 1;
-              setDragOverIndex(insertAt);
-            }
-          } else {
-            const triggerEl = el.closest("[data-insert-index]") as HTMLElement | null;
-            if (triggerEl) {
-              const idx = Number(triggerEl.getAttribute("data-insert-index"));
-              if (!Number.isNaN(idx)) {
-                setDragOverIndex(idx);
-              }
-            }
-          }
-        }
       }
+
+      updateInsertIndicator(y);
 
       autoScrollRafRef.current = requestAnimationFrame(scrollStep);
     };
@@ -807,7 +817,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     }
   }, []);
 
-  // 全局 dragover/dragend 用于自动滚动更新位置和停止
   useEffect(() => {
     if (!draggedBlockId) {
       stopAutoScroll();
@@ -821,11 +830,11 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       stopAutoScroll();
     };
 
-    document.addEventListener("dragover", handleGlobalDragOver);
-    document.addEventListener("dragend", handleGlobalDragEnd);
+    document.addEventListener("dragover", handleGlobalDragOver, true);
+    document.addEventListener("dragend", handleGlobalDragEnd, true);
     return () => {
-      document.removeEventListener("dragover", handleGlobalDragOver);
-      document.removeEventListener("dragend", handleGlobalDragEnd);
+      document.removeEventListener("dragover", handleGlobalDragOver, true);
+      document.removeEventListener("dragend", handleGlobalDragEnd, true);
       stopAutoScroll();
     };
   }, [draggedBlockId, stopAutoScroll]);
@@ -1692,6 +1701,7 @@ function BlockCard({
   const showInlineEditor = isEditing && (
     block.block_type === "text" ||
     block.block_type === "media" ||
+    block.block_type === "gallery" ||
     block.block_type === "video" ||
     block.block_type === "pdf" ||
     block.block_type === "before_after" ||

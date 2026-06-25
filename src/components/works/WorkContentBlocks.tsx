@@ -240,7 +240,7 @@ function MediaBlock({
               isFree
                 ? "absolute overflow-hidden rounded-sm"
                 : isGallery
-                  ? "relative cursor-zoom-in overflow-hidden md:min-h-[60vh]"
+                  ? "relative cursor-zoom-in overflow-hidden"
                   : "w-full"
             }
             style={
@@ -284,6 +284,28 @@ function MediaBlock({
                       ? `${block.focalPoint.x}% ${block.focalPoint.y}%`
                       : undefined
                   }
+                />
+              )
+            ) : isGallery ? (
+              media.mimeType?.startsWith("image/") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={media.url}
+                  alt={media.alt ?? ""}
+                  className="block w-full h-auto"
+                />
+              ) : media.mimeType?.startsWith("video/") ? (
+                <video
+                  src={media.url}
+                  controls
+                  preload="metadata"
+                  className="w-full h-auto"
+                />
+              ) : (
+                <WorkMediaFrame
+                  media={media}
+                  tone={tone as never}
+                  className="w-full"
                 />
               )
             ) : (
