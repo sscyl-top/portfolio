@@ -12,7 +12,7 @@ import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { StatusSelect } from "@/components/admin/StatusSelect";
 import { WorkMediaSelect } from "@/components/admin/WorkMediaSelect";
-import { ResizableTwoPanels } from "@/components/admin/ResizableTwoPanels";
+import { DetachedResizablePanels } from "@/components/admin/DetachedResizablePanels";
 
 import {
   clearPrivatePreviewLink,
@@ -170,109 +170,120 @@ export default async function AdminWorkEditorPage({
 
       {/* ══ 可拖拽分栏：中间编辑区(flex-1, 最大1420px与前台一致) + 右侧功能面板(固定宽度可拖拽) ══ */}
       <div className="mt-6 min-h-0 flex-1">
-        <ResizableTwoPanels
-          storageKey="admin-editor-panel-width"
-          fixedPanel="right"
-          defaultFixedWidth={340}
-          minFixedWidth={260}
-          maxFixedWidth={600}
-          minFlexWidth={500}
-          leftClassName="h-full"
-          rightClassName="h-full"
-          left={
-            <div className="h-full overflow-y-auto pr-3">
-              <div className="mx-auto max-w-[1420px] rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
-                <form id="mainWorkForm" action={updateWork}>
-                  <input type="hidden" name="id" value={workRow.id} />
-                  <input type="hidden" name="slug" value={workRow.slug} />
+        <DetachedResizablePanels
+          gap={18}
+          panels={[
+            {
+              id: "admin-work-editor-content",
+              storageKey: "admin-work-editor-content-width",
+              anchor: "left",
+              offset: 0,
+              defaultWidth: 1420,
+              minWidth: 760,
+              maxWidth: 1900,
+              resizeEdge: "right",
+              className: "h-full",
+              children: (
+                <div className="h-full overflow-y-auto pr-3">
+                  <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
+                    <form id="mainWorkForm" action={updateWork}>
+                      <input type="hidden" name="id" value={workRow.id} />
+                      <input type="hidden" name="slug" value={workRow.slug} />
 
-                  {/* 标题输入（大字体无边框） */}
-                  <div className="border-b border-white/[0.06] pb-5">
-                    <div className="flex items-end gap-4">
-                      <input
-                        id="work-title"
-                        name="title"
-                        defaultValue={workRow.title}
-                        required
-                        placeholder="输入作品名称"
-                        className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
-                      />
-                    </div>
+                      <div className="border-b border-white/[0.06] pb-5">
+                        <div className="flex items-end gap-4">
+                          <input
+                            id="work-title"
+                            name="title"
+                            defaultValue={workRow.title}
+                            required
+                            placeholder="输入作品名称"
+                            className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-5">
+                        <label className="block">
+                          <span className="sr-only">设计说明</span>
+                          <textarea
+                            name="summary"
+                            defaultValue={workRow.summary}
+                            rows={3}
+                            placeholder="可以直接输入文字，在这里介绍你的作品理念、设计思路或项目背景。"
+                            className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
+                          />
+                        </label>
+                      </div>
+                    </form>
+
+                    <VisualBlockEditor
+                      workId={workRow.id}
+                      workSlug={workRow.slug}
+                      initialBlocks={blockRows}
+                      mediaAssets={mediaRows}
+                      embedded
+                    />
                   </div>
-
-                  {/* 设计说明文案（紧接标题下方） */}
-                  <div className="pt-5">
-                    <label className="block">
-                      <span className="sr-only">设计说明</span>
-                      <textarea
-                        name="summary"
-                        defaultValue={workRow.summary}
-                        rows={3}
-                        placeholder="可以直接输入文字，在这里介绍你的作品理念、设计思路或项目背景…"
-                        className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
-                      />
-                    </label>
+                </div>
+              ),
+            },
+            {
+              id: "admin-work-editor-tools",
+              storageKey: "admin-work-editor-tools-width",
+              anchor: "right",
+              offset: 0,
+              defaultWidth: 420,
+              minWidth: 320,
+              maxWidth: 620,
+              resizeEdge: "left",
+              className: "h-full",
+              children: (
+                <div className="h-full space-y-3 overflow-y-auto pl-3">
+                  <div className="grid gap-3 xl:grid-cols-2">
+                    <SaveWorkCard updatedAt={workRow.updated_at} />
+                    <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
                   </div>
-                </form>
-
-                {/* 内容块编辑器 */}
-                <VisualBlockEditor
-                  workId={workRow.id}
-                  workSlug={workRow.slug}
-                  initialBlocks={blockRows}
-                  mediaAssets={mediaRows}
-                  embedded
-                />
-              </div>
-            </div>
-          }
-          right={
-            <div className="h-full space-y-3 overflow-y-auto pl-3">
-              {/* 私密预览 */}
-              <div className="grid gap-3">
-                <SaveWorkCard updatedAt={workRow.updated_at} />
-                <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-              </div>
-              {/* 媒体选择 */}
-              <MediaForm mediaAssets={mediaRows} work={workRow} />
-              {/* 分类与标签（折叠） */}
-              <CollapsibleSection
-                title="分类与标签"
-                defaultOpen
-                action={
-                  <span className="text-[10px] text-white/30">
-                    {selectedCategoryIds.size + selectedTagIds.size} 项已选
-                  </span>
-                }
-              >
-                <TaxonomyForm
-                  categories={categoryRows}
-                  selectedCategoryIds={selectedCategoryIds}
-                  selectedTagIds={selectedTagIds}
-                  tags={tagRows}
-                  work={workRow}
-                />
-              </CollapsibleSection>
-              {/* 更多设置（折叠） */}
-              <div className="grid gap-3">
-                <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
-                  <SettingsPanel work={workRow} />
-                </CollapsibleSection>
-                {/* 版本历史（折叠） */}
-                <VersionHistoryPanel
-                  workId={workRow.id}
-                  workSlug={workRow.slug}
-                  versions={versionRows}
-                />
-              </div>
-            </div>
-          }
+                  <MediaForm mediaAssets={mediaRows} work={workRow} />
+                  <CollapsibleSection
+                    title="分类与标签"
+                    defaultOpen
+                    action={
+                      <span className="text-[10px] text-white/30">
+                        {selectedCategoryIds.size + selectedTagIds.size} 项已选
+                      </span>
+                    }
+                  >
+                    <TaxonomyForm
+                      categories={categoryRows}
+                      selectedCategoryIds={selectedCategoryIds}
+                      selectedTagIds={selectedTagIds}
+                      tags={tagRows}
+                      work={workRow}
+                    />
+                  </CollapsibleSection>
+                  <div className="grid gap-3">
+                    <CollapsibleSection
+                      title="更多设置"
+                      description="Slug、年份、客户、状态、SEO 等"
+                    >
+                      <SettingsPanel work={workRow} />
+                    </CollapsibleSection>
+                    <VersionHistoryPanel
+                      workId={workRow.id}
+                      workSlug={workRow.slug}
+                      versions={versionRows}
+                    />
+                  </div>
+                </div>
+              ),
+            },
+          ]}
         />
       </div>
     </div>
   );
 }
-
 function SaveWorkCard({ updatedAt }: { updatedAt: string }) {
   const updatedDate = updatedAt ? new Date(updatedAt) : null;
   const updatedLabel = updatedDate

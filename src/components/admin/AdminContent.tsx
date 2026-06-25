@@ -16,5 +16,5 @@ export function AdminContent({
     return <div className={`w-full ${fillHeight ? "flex min-h-0 flex-1 flex-col" : ""}`}>{children}</div>;
   }
 
-  return <div className="mx-auto w-full max-w-[1420px]">{children}</div>;
+  return <div className="w-full">{children}</div>;
 }

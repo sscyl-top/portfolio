@@ -73,16 +73,16 @@ export function MusicManager({
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Music Player
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">音乐播放器</h2>
-      <p className="mt-3 text-sm text-white/48">
-        为四个音乐分类上传背景音乐，访客点击右下角悬浮球后即可播放。支持MP3、WAV、OGG格式，单文件最大30MB。
+      <h2 className="mt-2 text-2xl font-semibold">音乐播放器</h2>
+      <p className="mt-1.5 text-xs text-white/48">
+        为四个音乐分类上传背景音乐，访客点击右下角悬浮球后即可播放。支持MP3、WAV、OGG，单文件最大30MB。
       </p>
 
       <audio ref={audioRef} />
 
       <SettingsPanel initialSettings={settings} />
 
-      <div className="mt-8 space-y-6">
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
         {sortedCategories.map((category) => {
           const categoryTracks = tracks
             .filter((t) => t.category_id === category.id)
@@ -145,70 +145,92 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
   };
 
   return (
-    <section className="mt-8 rounded-lg border border-white/10 bg-white/[0.025] p-5">
+    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.025] p-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10">
-          <SettingsIcon className="h-5 w-5 text-cyan" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan/10">
+          <SettingsIcon className="h-4 w-4 text-cyan" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">悬浮球设置</h3>
+          <h3 className="text-base font-semibold text-white">悬浮球设置</h3>
           <p className="text-xs text-white/38">控制悬浮球的显示和弹窗文案</p>
         </div>
       </div>
 
-      <div className="mt-5 space-y-5">
-        {/* 显示开关 */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ToggleCard
-            label="前台显示"
-            description="在网站前台（访客视角）显示音乐悬浮球"
-            icon={hideFrontend ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            checked={!hideFrontend}
-            onChange={(v) => setHideFrontend(!v)}
-          />
-          <ToggleCard
-            label="后台显示"
-            description="在管理后台显示音乐悬浮球（编辑时可试听）"
-            icon={hideBackend ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            checked={!hideBackend}
-            onChange={(v) => setHideBackend(!v)}
-          />
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="space-y-3">
+          <div className="grid gap-2 grid-cols-2">
+            <ToggleCard
+              label="前台显示"
+              description="访客视角可见"
+              icon={hideFrontend ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              checked={!hideFrontend}
+              onChange={(v) => setHideFrontend(!v)}
+              compact
+            />
+            <ToggleCard
+              label="后台显示"
+              description="编辑时可试听"
+              icon={hideBackend ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              checked={!hideBackend}
+              onChange={(v) => setHideBackend(!v)}
+              compact
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-white/60">
+              播放状态标签
+            </label>
+            <input
+              type="text"
+              value={playingLabel}
+              onChange={(e) => setPlayingLabel(e.target.value)}
+              placeholder="正在播放"
+              className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            />
+          </div>
+
+          {message ? (
+            <p
+              className={`rounded-md px-3 py-1.5 text-xs ${
+                message.type === "ok"
+                  ? "bg-green-300/10 text-green-200"
+                  : "bg-red-300/10 text-red-200"
+              }`}
+            >
+              {message.text}
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isPending}
+            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
+          >
+            <Save className="h-3.5 w-3.5" />
+            {isPending ? "保存中..." : "保存设置"}
+          </button>
         </div>
 
-        {/* 播放状态文案 */}
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-white/70">
-            播放状态标签
-          </label>
-          <input
-            type="text"
-            value={playingLabel}
-            onChange={(e) => setPlayingLabel(e.target.value)}
-            placeholder="正在播放"
-            className="h-10 w-full max-w-md rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-          />
-          <p className="mt-1 text-xs text-white/30">音乐播放时显示在弹窗中的标签文字</p>
-        </div>
-
-        {/* 吸引文案 */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-medium text-white/70">
-              吸引文案（悬浮球提示气泡轮播显示）
+            <label className="text-xs font-medium text-white/60">
+              吸引文案（气泡轮播）
             </label>
             <button
               type="button"
               onClick={addTip}
-              className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
+              className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
-              添加文案
+              <PlusCircle className="h-3 w-3" />
+              添加
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {tipMessages.map((tip, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="w-6 shrink-0 text-center font-mono text-xs text-white/30">
+              <div key={idx} className="flex items-center gap-1.5">
+                <span className="w-5 shrink-0 text-center font-mono text-[10px] text-white/30">
                   {idx + 1}
                 </span>
                 <input
@@ -216,44 +238,20 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
                   value={tip}
                   onChange={(e) => updateTip(idx, e.target.value)}
                   placeholder="输入提示文案..."
-                  className="h-9 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+                  className="h-8 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
                 />
                 <button
                   type="button"
                   onClick={() => removeTip(idx)}
                   disabled={tipMessages.length <= 1}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/30 transition hover:bg-red-300/10 hover:text-red-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-white/30"
+                  className="flex h-8 w-7 shrink-0 items-center justify-center rounded-md text-white/30 transition hover:bg-red-300/10 hover:text-red-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-white/30"
                   title="删除此条文案"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
           </div>
-        </div>
-
-        {message ? (
-          <p
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              message.type === "ok"
-                ? "bg-green-300/10 text-green-200"
-                : "bg-red-300/10 text-red-200"
-            }`}
-          >
-            {message.text}
-          </p>
-        ) : null}
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isPending}
-            className="inline-flex h-10 items-center gap-1.5 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {isPending ? "保存中..." : "保存设置"}
-          </button>
         </div>
       </div>
     </section>
@@ -266,44 +264,46 @@ function ToggleCard({
   icon,
   checked,
   onChange,
+  compact = false,
 }: {
   label: string;
   description: string;
   icon: React.ReactNode;
   checked: boolean;
   onChange: (v: boolean) => void;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-3 rounded-lg border p-3.5 text-left transition ${
+      className={`flex items-center gap-2 rounded-lg border p-2.5 text-left transition ${
         checked
           ? "border-cyan/40 bg-cyan/10"
           : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
       }`}
     >
       <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+        className={`flex ${compact ? "h-7 w-7" : "h-9 w-9"} shrink-0 items-center justify-center rounded-full ${
           checked ? "bg-cyan/20 text-cyan" : "bg-white/5 text-white/40"
         }`}
       >
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${checked ? "text-white" : "text-white/70"}`}>
+        <p className={`${compact ? "text-xs" : "text-sm"} font-medium ${checked ? "text-white" : "text-white/70"}`}>
           {label}
         </p>
-        <p className="mt-0.5 text-xs text-white/38">{description}</p>
+        <p className={`${compact ? "text-[10px]" : "text-xs"} text-white/38`}>{description}</p>
       </div>
       <div
-        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+        className={`relative ${compact ? "h-5 w-9" : "h-6 w-11"} shrink-0 rounded-full transition ${
           checked ? "bg-cyan" : "bg-white/15"
         }`}
       >
         <div
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
-            checked ? "left-[22px]" : "left-0.5"
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+            checked ? "left-[18px]" : "left-0.5"
           }`}
         />
       </div>
@@ -503,19 +503,19 @@ function CategorySection({
   };
 
   return (
-    <section className="rounded-lg border border-white/10 bg-white/[0.025] p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10">
-          <Music className="h-5 w-5 text-cyan" />
+    <section className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan/10">
+          <Music className="h-4 w-4 text-cyan" />
         </div>
         {isEditingCat ? (
-          <div className="flex flex-1 flex-wrap items-center gap-2">
+          <div className="flex flex-1 flex-wrap items-center gap-1.5">
             <input
               type="text"
               value={catEmoji}
               onChange={(e) => setCatEmoji(e.target.value)}
               maxLength={8}
-              className="h-9 w-16 shrink-0 rounded-md border border-cyan/40 bg-black/30 px-2 text-center text-lg outline-none focus:border-cyan"
+              className="h-7 w-12 shrink-0 rounded-md border border-cyan/40 bg-black/30 px-1 text-center text-base outline-none focus:border-cyan"
               placeholder="🎵"
               title="输入emoji"
             />
@@ -524,7 +524,7 @@ function CategorySection({
               value={catLabel}
               onChange={(e) => setCatLabel(e.target.value)}
               maxLength={50}
-              className="h-9 min-w-0 flex-1 rounded-md border border-cyan/40 bg-black/30 px-3 text-sm text-white outline-none focus:border-cyan"
+              className="h-7 min-w-0 flex-1 rounded-md border border-cyan/40 bg-black/30 px-2 text-xs text-white outline-none focus:border-cyan"
               placeholder="分类名称"
               autoFocus
               onKeyDown={(e) => {
@@ -536,19 +536,19 @@ function CategorySection({
               type="button"
               onClick={handleSaveCategory}
               disabled={catSaving}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cyan text-black transition hover:bg-white disabled:opacity-50"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-cyan text-black transition hover:bg-white disabled:opacity-50"
               title="保存"
             >
-              <Check className="h-4 w-4" />
+              <Check className="h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               onClick={cancelEditCat}
               disabled={catSaving}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
               title="取消"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
@@ -556,27 +556,27 @@ function CategorySection({
             <button
               type="button"
               onDoubleClick={startEditCat}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-xl transition hover:bg-white/10"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-lg transition hover:bg-white/10"
               title="双击编辑emoji和名称"
             >
               {category.emoji || "🎵"}
             </button>
             <div>
               <h3
-                className="cursor-text text-lg font-semibold text-white transition hover:text-cyan"
+                className="cursor-text text-sm font-semibold text-white transition hover:text-cyan"
                 onDoubleClick={startEditCat}
                 title="双击编辑分类名称和emoji"
               >
                 {category.label}
               </h3>
-              <p className="text-xs text-white/38">{tracks.length} 首音乐 · 双击名称或emoji可编辑</p>
+              <p className="text-[10px] text-white/38">{tracks.length} 首 · 双击编辑</p>
             </div>
           </div>
         )}
       </div>
 
-      <form onSubmit={handleUpload} className="mt-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <form onSubmit={handleUpload} className="mt-3">
+        <div className="flex flex-wrap items-center gap-1.5">
           <input
             ref={fileInputRef}
             type="file"
@@ -595,34 +595,30 @@ function CategorySection({
             ref={titleInputRef}
             type="text"
             name="title"
-            placeholder="音乐标题（可选，默认使用文件名）"
+            placeholder="标题（可选）"
             disabled={uploading}
-            className="h-10 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan disabled:opacity-50"
+            className="h-8 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan disabled:opacity-50"
           />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md border border-cyan/35 bg-cyan/10 px-4 text-sm text-cyan transition hover:bg-cyan/20 disabled:opacity-50"
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-cyan/35 bg-cyan/10 px-2.5 text-xs text-cyan transition hover:bg-cyan/20 disabled:opacity-50"
           >
-            <Upload className="h-4 w-4" />
-            选择文件
+            <Upload className="h-3 w-3" />
+            选文件
           </button>
           <button
             type="submit"
             disabled={uploading}
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-cyan px-2.5 text-xs font-medium text-black transition hover:bg-white disabled:opacity-50"
           >
-            {uploading ? "上传中..." : "上传音乐"}
+            {uploading ? `${progress}%` : "上传"}
           </button>
         </div>
         {uploading ? (
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-white/48">
-              <span>正在上传...</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mt-2">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-cyan transition-all duration-200"
                 style={{ width: `${progress}%` }}
@@ -634,7 +630,7 @@ function CategorySection({
 
       {message ? (
         <p
-          className={`mt-3 rounded-md px-3 py-1.5 text-sm ${
+          className={`mt-2 rounded-md px-2.5 py-1 text-xs ${
             message.type === "ok"
               ? "bg-green-300/10 text-green-200"
               : "bg-red-300/10 text-red-200"
@@ -645,35 +641,35 @@ function CategorySection({
       ) : null}
 
       {tracks.length > 0 ? (
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-1">
           {tracks.map((track) => {
             const isPlaying = playingId === track.id;
             return (
               <div
                 key={track.id}
-                className="flex items-center gap-3 rounded-md border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                className="flex items-center gap-2 rounded-md border border-white/5 bg-white/[0.02] px-2 py-1.5"
               >
                 <button
                   type="button"
                   onClick={() =>
                     track.media && onPlay(track.id, track.media.storage_key)
                   }
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan/10 text-cyan transition hover:bg-cyan/20"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan/10 text-cyan transition hover:bg-cyan/20"
                 >
                   {isPlaying ? (
-                    <Pause className="h-4 w-4" />
+                    <Pause className="h-3 w-3" />
                   ) : (
-                    <Play className="h-4 w-4 pl-0.5" />
+                    <Play className="h-3 w-3 pl-0.5" />
                   )}
                 </button>
 
                 {editingTitle === track.id ? (
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-1">
                     <input
                       type="text"
                       value={titleValue}
                       onChange={(e) => setTitleValue(e.target.value)}
-                      className="h-8 min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-2 text-sm outline-none focus:border-cyan"
+                      className="h-7 min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-2 text-xs outline-none focus:border-cyan"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSaveTitle(track.id);
@@ -683,14 +679,14 @@ function CategorySection({
                     <button
                       type="button"
                       onClick={() => handleSaveTitle(track.id)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-cyan hover:bg-cyan/10"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-cyan hover:bg-cyan/10"
                     >
-                      <Save className="h-3.5 w-3.5" />
+                      <Save className="h-3 w-3" />
                     </button>
                   </div>
                 ) : (
                   <p
-                    className="min-w-0 flex-1 truncate text-sm text-white/80 cursor-text hover:text-white"
+                    className="min-w-0 flex-1 truncate text-xs text-white/80 cursor-text hover:text-white"
                     onDoubleClick={() => {
                       setEditingTitle(track.id);
                       setTitleValue(track.title);
@@ -700,25 +696,21 @@ function CategorySection({
                   </p>
                 )}
 
-                <span className="hidden shrink-0 font-mono text-[10px] text-white/30 sm:inline">
-                  {track.media?.original_name}
-                </span>
-
                 <button
                   type="button"
                   onClick={() => handleDelete(track.id)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-red-300/60 transition hover:bg-red-300/10 hover:text-red-300"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-red-300/50 transition hover:bg-red-300/10 hover:text-red-300"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="mt-4 grid place-items-center rounded-md border border-dashed border-white/10 py-8 text-sm text-white/30">
-          <Plus className="mb-2 h-6 w-6 opacity-50" />
-          暂无音乐，上传第一首吧
+        <div className="mt-3 grid place-items-center rounded-md border border-dashed border-white/10 py-5 text-xs text-white/30">
+          <Plus className="mb-1 h-4 w-4 opacity-50" />
+          暂无音乐
         </div>
       )}
     </section>

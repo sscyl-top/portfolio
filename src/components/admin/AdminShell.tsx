@@ -7,12 +7,14 @@ import { logoutAdmin } from "@/app/admin/actions";
 
 import { AdminContent } from "./AdminContent";
 import { AdminNav } from "./AdminNav";
-import { ResizableTwoPanels } from "./ResizableTwoPanels";
+import { DetachedResizablePanels } from "./DetachedResizablePanels";
 
 type AdminShellProps = {
   userEmail: string;
   children: React.ReactNode;
 };
+
+const ADMIN_CONTENT_OFFSET = 420;
 
 function SidebarContent({ userEmail }: { userEmail: string }) {
   return (
@@ -43,29 +45,50 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
   const isWorkEditorPage = /^\/admin\/works\/[^/]+$/.test(pathname);
 
+  const content = (
+    <section
+      className={`flex h-full min-w-0 flex-col md:pt-28 ${
+        isWorkEditorPage
+          ? "overflow-hidden px-3 py-6 md:px-6"
+          : "overflow-y-auto px-5 py-6 md:px-8"
+      }`}
+    >
+      <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
+    </section>
+  );
+
   return (
-    <main className="flex h-screen overflow-hidden bg-[#07090b] text-white">
-      <ResizableTwoPanels
-        storageKey="admin-sidebar-width"
-        fixedPanel="left"
-        defaultFixedWidth={240}
-        minFixedWidth={180}
-        maxFixedWidth={400}
-        minFlexWidth={400}
-        leftClassName="h-full"
-        rightClassName="h-full"
-        left={<SidebarContent userEmail={userEmail} />}
-        right={
-          <section
-            className={`flex h-full min-w-0 flex-1 flex-col md:pt-28 ${
-              isWorkEditorPage
-                ? "overflow-hidden px-3 md:px-6 py-6"
-                : "overflow-y-auto px-5 py-6 md:px-8"
-            }`}
-          >
-            <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
-          </section>
-        }
+    <main className="relative h-screen overflow-hidden bg-[#07090b] text-white">
+      <DetachedResizablePanels
+        gap={18}
+        panels={[
+          {
+            id: "admin-sidebar",
+            storageKey: "admin-sidebar-width",
+            anchor: "left",
+            offset: 0,
+            defaultWidth: 220,
+            minWidth: 172,
+            maxWidth: 420,
+            resizeEdge: "right",
+            className: "border-r border-white/8 bg-[#090c0f]",
+            children: <SidebarContent userEmail={userEmail} />,
+          },
+          {
+            id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
+            storageKey: isWorkEditorPage
+              ? "admin-editor-stage-width"
+              : "admin-primary-page-width",
+            anchor: "left",
+            offset: ADMIN_CONTENT_OFFSET,
+            defaultWidth: isWorkEditorPage ? 1800 : 1420,
+            minWidth: isWorkEditorPage ? 900 : 720,
+            maxWidth: isWorkEditorPage ? 2600 : 2200,
+            resizeEdge: isWorkEditorPage ? "none" : "right",
+            className: "h-full",
+            children: content,
+          },
+        ]}
       />
     </main>
   );
