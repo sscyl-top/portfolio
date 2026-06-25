@@ -23,7 +23,7 @@ const DEFAULT_CATEGORY_EMOJIS: Record<string, string> = {
   badass: "😎",
 };
 
-export function getCategoryEmojiKey(categoryKey: string): string {
+function getCategoryEmojiKey(categoryKey: string): string {
   return `music.category.${categoryKey}.emoji`;
 }
 
@@ -110,7 +110,6 @@ export async function getCategoryEmojis(categoryKeys: string[]): Promise<Record<
 
 export async function saveMusicSettings(formData: FormData) {
   try {
-    throw new Error("NEW_CODE_V3_DEPLOYED");
     const supabase = await createSupabaseServerClient();
     const user = await getAuthorizedAdmin(supabase);
     if (!user) return { error: "未授权" };

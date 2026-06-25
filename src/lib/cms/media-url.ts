@@ -1,5 +1,5 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
-import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/client";
+import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 export function buildPublicMediaUrl(storageKey: string) {
   if (isCosConfigured()) {
