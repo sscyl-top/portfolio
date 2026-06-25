@@ -5,6 +5,7 @@ import { UploadCloud, Loader2, X, Image as ImageIcon, Film } from "lucide-react"
 
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { usePreventFileDropOnPage } from "@/hooks/usePreventFileDropOnPage";
 
 type MediaAsset = {
   id: string;
@@ -33,6 +34,8 @@ export function WorkMediaSelect({
   accept = ACCEPTED_MEDIA_TYPES,
   hint,
 }: Props) {
+  usePreventFileDropOnPage();
+
   const [value, setValue] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
