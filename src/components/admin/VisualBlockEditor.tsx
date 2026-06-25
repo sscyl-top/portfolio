@@ -38,6 +38,7 @@ import {
 } from "@/app/admin/(protected)/works/actions";
 import { uploadMediaFiles, uploadMediaBlob } from "@/lib/cms/upload-media";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { pdfToImages } from "@/lib/cms/pdf-to-images";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 
 // ── 类型定义 ───────────────────────────────────────────────
@@ -289,6 +290,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [pdfParseStatus, setPdfParseStatus] = useState<string | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [showBlockMenu, setShowBlockMenu] = useState(false);
 
@@ -357,56 +359,109 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     async (files: File[], insertAt: number) => {
       if (files.length === 0) return;
       setUploading(true);
+      setUploadProgress({});
+      setPdfParseStatus(null);
       try {
-        const results = await uploadMediaFiles(files, (progress) => {
-          setUploadProgress(progress);
-        });
+        let totalInsertOffset = 0;
 
-        const newBlocks: VisualBlock[] = [];
-        for (let i = 0; i < results.length; i++) {
-          const result = results[i];
-          const blockType = getBlockTypeFromFile(files[i]);
+        for (let f = 0; f < files.length; f++) {
+          const file = files[f];
+          const currentInsertAt = insertAt + totalInsertOffset;
+
+          // PDF：解析为多页图片 → 创建gallery块
+          if (file.type === "application/pdf") {
+            setPdfParseStatus(`正在解析 PDF「${file.name}」…`);
+            const pages = await pdfToImages(file, 2.0, (cur, total) => {
+              setPdfParseStatus(`正在解析 PDF「${file.name}」第 ${cur}/${total} 页…`);
+            });
+            setPdfParseStatus(`正在上传 PDF「${file.name}」的 ${pages.length} 张页面图片…`);
+
+            const pageFiles = pages.map((p) =>
+              new File([p.blob], p.filename, { type: "image/jpeg" }),
+            );
+            const results = await uploadMediaFiles(pageFiles, (progress) => {
+              setUploadProgress(progress);
+            });
+
+            const mediaIds = results.map((r) => r.id);
+            const payload: Record<string, unknown> = {
+              media_ids: mediaIds,
+              caption: "",
+              layout: { columns: 1 },
+            };
+            const created = await createBlockDirect(workId, workSlug, "gallery", payload, currentInsertAt);
+
+            setBlocks((prev) => {
+              const merged = [...prev];
+              merged.forEach((b) => {
+                if (b.sort_order >= currentInsertAt) b.sort_order += 1;
+              });
+              merged.push({
+                id: created.id,
+                block_type: "gallery",
+                sort_order: currentInsertAt,
+                is_visible: true,
+                payload,
+              });
+              merged.sort((a, b) => a.sort_order - b.sort_order);
+              merged.forEach((b, i) => { b.sort_order = i; });
+              return merged;
+            });
+            totalInsertOffset += 1;
+            continue;
+          }
+
+          // 图片/视频：按原逻辑创建单媒体块
+          const blockType = getBlockTypeFromFile(file);
+          const results = await uploadMediaFiles([file], (progress) => {
+            setUploadProgress(progress);
+          });
+          if (results.length === 0) continue;
+          const result = results[0];
+
           const payload: Record<string, unknown> = {
             media_id: result.id,
             caption: "",
           };
+          const created = await createBlockDirect(workId, workSlug, blockType, payload, currentInsertAt);
 
-          const created = await createBlockDirect(
-            workId,
-            workSlug,
-            blockType,
-            payload,
-            insertAt + i,
-          );
-
-          newBlocks.push({
-            id: created.id,
-            block_type: blockType,
-            sort_order: insertAt + i,
-            is_visible: true,
-            payload,
+          setBlocks((prev) => {
+            const merged = [...prev];
+            merged.forEach((b) => {
+              if (b.sort_order >= currentInsertAt) b.sort_order += 1;
+            });
+            merged.push({
+              id: created.id,
+              block_type: blockType,
+              sort_order: currentInsertAt,
+              is_visible: true,
+              payload,
+            });
+            merged.sort((a, b) => a.sort_order - b.sort_order);
+            merged.forEach((b, i) => { b.sort_order = i; });
+            return merged;
           });
+          totalInsertOffset += 1;
         }
 
-        const merged = [...blocks];
-        merged.forEach((b) => {
-          if (b.sort_order >= insertAt) b.sort_order += results.length;
+        setBlocks((prev) => {
+          const merged = [...prev];
+          merged.sort((a, b) => a.sort_order - b.sort_order);
+          merged.forEach((b, i) => { b.sort_order = i; });
+          persistOrder(merged);
+          return merged;
         });
-        merged.push(...newBlocks);
-        merged.sort((a, b) => a.sort_order - b.sort_order);
-        merged.forEach((b, i) => { b.sort_order = i; });
-
-        setBlocks(merged);
-        persistOrder(merged);
         router.refresh();
       } catch (err) {
         console.error("Upload failed:", err);
+        alert(`上传失败：${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setUploading(false);
         setUploadProgress({});
+        setPdfParseStatus(null);
       }
     },
-    [workId, workSlug, router, persistOrder, blocks],
+    [workId, workSlug, router, persistOrder],
   );
 
   // ── 上传多张图片创建图库块 ───────────────────────────────
@@ -982,7 +1037,9 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       {/* 上传进度 */}
       {uploading ? (
         <div className="mb-4 rounded-md border border-cyan/20 bg-cyan/5 p-4">
-          <p className="mb-3 text-sm font-medium text-cyan">正在上传…</p>
+          <p className="mb-3 text-sm font-medium text-cyan">
+            {pdfParseStatus ?? "正在上传…"}
+          </p>
           <div className="space-y-2">
             {Object.entries(uploadProgress).map(([filename, pct]) => (
               <div key={filename}>
