@@ -159,6 +159,96 @@ function withLayout(
   };
 }
 
+// ── 后台预览 Lightbox（点击查看大图）─────────────────────────
+function AdminLightbox({
+  items,
+  initialIndex,
+  onClose,
+}: {
+  items: { url: string; alt?: string }[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const hasPrev = index > 0;
+  const hasNext = index < items.length - 1;
+
+  const go = useCallback((delta: number) => {
+    setIndex((i) => Math.max(0, Math.min(items.length - 1, i + delta)));
+  }, [items.length]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasPrev) go(-1);
+      if (e.key === "ArrowRight" && hasNext) go(1);
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, hasPrev, hasNext, go]);
+
+  const current = items[index];
+  if (!current?.url) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+        aria-label="关闭"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {hasPrev ? (
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="absolute left-3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white md:left-6"
+          aria-label="上一张"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+      ) : null}
+
+      <img
+        src={current.url}
+        alt={current.alt ?? `${index + 1}/${items.length}`}
+        className="max-h-[85vh] max-w-[90vw] object-contain"
+      />
+
+      {hasNext ? (
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="absolute right-3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white md:right-6"
+          aria-label="下一张"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      ) : null}
+
+      <span className="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs font-medium text-white/40">
+        {index + 1} / {items.length}
+      </span>
+    </div>
+  );
+}
+
 // ── 布局控制条组件 ─────────────────────────────────────────
 
 function LayoutBar({
@@ -1682,6 +1772,7 @@ function BlockCard({
   onAddImagesToGallery,
   onSelectBaFile,
   onCropImage,
+  onReorderGallery,
 }: {
   block: VisualBlock;
   index: number;
@@ -1705,6 +1796,7 @@ function BlockCard({
   onAddImagesToGallery: (blockId: string, files: File[]) => void;
   onSelectBaFile: (blockId: string, step: "before" | "after") => void;
   onCropImage: (blockId: string) => void;
+  onReorderGallery?: (fromIndex: number, toIndex: number) => void;
 }) {
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
@@ -1858,7 +1950,23 @@ function BlockCard({
             onCropImage={() => onCropImage(block.id)}
           />
         ) : (
-          <BlockPreview block={block} mediaAssets={mediaAssets} />
+          <BlockPreview
+            block={block}
+            mediaAssets={mediaAssets}
+            onReorderGallery={
+              block.block_type === "gallery"
+                ? (from: number, to: number) => {
+                    const mediaIds = [...((block.payload.media_ids as string[]) ?? [])];
+                    const refs = [...((block.payload.media_refs as { id: string; storage_key: string; mime_type: string; alt_text: string }[]) ?? [])];
+                    const [movedId] = mediaIds.splice(from, 1);
+                    const [movedRef] = refs.splice(from, 1);
+                    mediaIds.splice(to, 0, movedId);
+                    refs.splice(to, 0, movedRef);
+                    onUpdatePayload({ ...block.payload, media_ids: mediaIds, media_refs: refs });
+                  }
+                : undefined
+            }
+          />
         )}
       </div>
       </div>
@@ -2224,9 +2332,21 @@ function InlineGalleryEditor({
   const mediaIds = (payload.media_ids as string[]) ?? [];
   const refs = (payload.media_refs as { id: string; storage_key: string; mime_type: string; alt_text: string }[]) ?? [];
   const displayAssets = refs.length > 0 ? refs : mediaAssets.filter((a) => mediaIds.includes(a.id));
+  const layout = getLayout(payload);
 
   const [caption, setCaption] = useState(String(payload.caption ?? ""));
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState(-1);
+
+  const cols = layout.columns === 1 ? "grid-cols-1"
+    : layout.columns === 2 ? "grid-cols-2"
+    : layout.columns === 4 ? "grid-cols-2 md:grid-cols-4"
+    : "grid-cols-2 md:grid-cols-3";
+
+  const galleryItems = displayAssets.map((a) => ({
+    url: buildPublicMediaUrl(a.storage_key),
+    alt: "",
+  }));
 
   // 使用ref保存最新的payload引用，避免拖拽后caption自动保存覆盖排序结果
   const latestPayloadRef = useRef(payload);
@@ -2267,9 +2387,9 @@ function InlineGalleryEditor({
   return (
     <div className="space-y-3">
       <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
-        图库 · {displayAssets.length} 张图片（拖拽图片可排序，悬停显示删除按钮）
+        图库 · {displayAssets.length} 张图片（拖拽图片可排序，点击查看大图，悬停显示删除按钮）
       </p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 md:gap-3 ${cols}`}>
         {displayAssets.map((asset: { id?: string; storage_key: string }, i: number) => (
           <div
             key={asset.id ?? i}
@@ -2285,14 +2405,19 @@ function InlineGalleryEditor({
               reorder(from, i);
               setDragIndex(null);
             }}
-            className={`group relative aspect-square cursor-move overflow-hidden rounded-md border-2 ${
-              dragIndex === i ? "border-cyan opacity-50" : "border-transparent hover:border-cyan/40"
+            className={`group relative cursor-move overflow-hidden rounded-md ${
+              dragIndex === i ? "opacity-50 ring-2 ring-cyan" : ""
             }`}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={buildPublicMediaUrl(asset.storage_key)}
               alt=""
-              className="h-full w-full object-cover"
+              className="block w-full h-auto cursor-zoom-in"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIdx(i);
+              }}
             />
             <button
               type="button"
@@ -2305,11 +2430,15 @@ function InlineGalleryEditor({
             >
               <X className="h-3.5 w-3.5" />
             </button>
+            <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10 pointer-events-none" />
           </div>
         ))}
         {/* 添加更多图片按钮 */}
-        <label className="flex aspect-square cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-white/15 text-white/20 transition hover:border-cyan/30 hover:text-cyan/60">
-          <ImagePlus className="h-6 w-6" />
+        <label className="flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-white/15 text-white/20 transition hover:border-cyan/30 hover:text-cyan/60 min-h-[120px]">
+          <div className="flex flex-col items-center gap-1">
+            <ImagePlus className="h-6 w-6" />
+            <span className="text-[10px]">添加图片</span>
+          </div>
           <input
             type="file"
             multiple
@@ -2331,6 +2460,9 @@ function InlineGalleryEditor({
         rows={2}
         className="w-full resize-y rounded-md border border-white/10 bg-white/[0.02] p-2 text-sm text-white/80 outline-none placeholder:text-white/20 focus:border-cyan/40"
       />
+      {lightboxIdx >= 0 && galleryItems.length > 0 && (
+        <AdminLightbox items={galleryItems} initialIndex={lightboxIdx} onClose={() => setLightboxIdx(-1)} />
+      )}
     </div>
   );
 }
@@ -2757,11 +2889,15 @@ function InlineContentBlockEditor({
 function BlockPreview({
   block,
   mediaAssets,
+  onReorderGallery,
 }: {
   block: VisualBlock;
   mediaAssets: MediaAsset[];
+  onReorderGallery?: (fromIndex: number, toIndex: number) => void;
 }) {
   const payload = block.payload;
+  const [lightboxIdx, setLightboxIdx] = useState(-1);
+  const [dragImgIndex, setDragImgIndex] = useState<number | null>(null);
 
   if (block.block_type === "text") {
     return (
@@ -2792,15 +2928,25 @@ function BlockPreview({
           height: `${layout.free.h}%`,
         }
       : undefined;
+
+    const mediaItems = url ? [{ url, alt: String(payload.caption ?? "") }] : [];
+
     return (
-      <div className={freeStyle ? "relative h-64 w-full rounded-md border border-white/10" : undefined}>
+      <div className={freeStyle ? "relative h-[400px] w-full rounded-md" : undefined}>
         {url ? (
-          <img
-            src={url}
-            alt={String(payload.caption ?? "")}
-            className={freeStyle ? "rounded-md object-contain" : "max-h-64 rounded-md object-cover"}
-            style={freeStyle}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={String(payload.caption ?? "")}
+              className={freeStyle ? "w-full h-full rounded-md object-contain cursor-zoom-in" : "block w-full h-auto rounded-md cursor-zoom-in"}
+              style={freeStyle}
+              onClick={() => setLightboxIdx(0)}
+            />
+            {lightboxIdx >= 0 && (
+              <AdminLightbox items={mediaItems} initialIndex={0} onClose={() => setLightboxIdx(-1)} />
+            )}
+          </>
         ) : (
           <div className="flex h-32 items-center justify-center rounded-md bg-white/5 text-sm text-white/30">未选择媒体</div>
         )}
@@ -2811,14 +2957,64 @@ function BlockPreview({
 
   if (block.block_type === "gallery") {
     const mediaIds = (payload.media_ids as string[]) ?? [];
-    const refs = (payload.media_refs as { id: string; storage_key: string }[]) ?? [];
+    const refs = (payload.media_refs as { id: string; storage_key: string; mime_type?: string; alt_text?: string }[]) ?? [];
     const displayAssets = refs.length > 0 ? refs : mediaAssets.filter((a) => mediaIds.includes(a.id));
+    const layout = getLayout(payload);
+    const cols = layout.columns === 1 ? "grid-cols-1"
+      : layout.columns === 2 ? "grid-cols-2"
+      : layout.columns === 4 ? "grid-cols-2 md:grid-cols-4"
+      : "grid-cols-2 md:grid-cols-3";
+
+    const galleryItems = displayAssets.map((a) => ({
+      url: buildPublicMediaUrl(a.storage_key),
+      alt: "",
+    }));
+
+    const reorderImages = (from: number, to: number) => {
+      if (from === to || !onReorderGallery) return;
+      onReorderGallery(from, to);
+    };
+
     return (
-      <div className="grid grid-cols-3 gap-2">
-        {displayAssets.map((asset: { storage_key: string }, i: number) => (
-          <img key={i} src={buildPublicMediaUrl(asset.storage_key)} alt="" className="aspect-square rounded-md object-cover" />
-        ))}
-      </div>
+      <>
+        <div className={`grid gap-2 md:gap-3 ${cols}`}>
+          {displayAssets.map((asset: { id?: string; storage_key: string }, i: number) => (
+            <div
+              key={asset.id ?? i}
+              draggable={!!onReorderGallery}
+              onDragStart={() => setDragImgIndex(i)}
+              onDragOver={(e) => { e.preventDefault(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const from = dragImgIndex;
+                if (from === null) return;
+                reorderImages(from, i);
+                setDragImgIndex(null);
+              }}
+              onClick={() => setLightboxIdx(i)}
+              className={`group relative cursor-zoom-in overflow-hidden rounded-md ${onReorderGallery ? "cursor-move" : ""} ${
+                dragImgIndex === i ? "opacity-50 ring-2 ring-cyan" : ""
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={buildPublicMediaUrl(asset.storage_key)}
+                alt=""
+                className="block w-full h-auto"
+              />
+              {onReorderGallery ? (
+                <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <GripHorizontal className="h-6 w-6 text-white drop-shadow-lg" />
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {payload.caption ? <p className="mt-2 text-sm text-white/50">{String(payload.caption)}</p> : null}
+        {lightboxIdx >= 0 && galleryItems.length > 0 && (
+          <AdminLightbox items={galleryItems} initialIndex={lightboxIdx} onClose={() => setLightboxIdx(-1)} />
+        )}
+      </>
     );
   }
 
