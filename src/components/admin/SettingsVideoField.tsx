@@ -5,7 +5,6 @@ import { UploadCloud, Loader2, X, Film, Play } from "lucide-react";
 
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { usePreventFileDropOnPage } from "@/hooks/usePreventFileDropOnPage";
 
 type MediaAsset = {
   id: string;
@@ -40,8 +39,6 @@ export function SettingsVideoField({
   hint,
   aspectRatio = "video",
 }: Props) {
-  usePreventFileDropOnPage();
-
   const [value, setValue] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
