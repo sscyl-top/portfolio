@@ -923,10 +923,12 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
 
   const handleBlockDragOver = useCallback(
-    (e: React.DragEvent, index: number) => {
+    (e: React.DragEvent, index: number, blockId: string) => {
       if (!isBlockDrag(e) && !isFileDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
+      const draggedId = e.dataTransfer.getData("block-id");
+      if (draggedId === blockId) return;
       autoScrollMouseYRef.current = e.clientY;
       const rect = e.currentTarget.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
@@ -971,7 +973,13 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
 
   const handleBlockDrop = useCallback(
-    (e: React.DragEvent, index: number) => {
+    (e: React.DragEvent, index: number, blockId: string) => {
+      const draggedId = e.dataTransfer.getData("block-id");
+      if (draggedId === blockId) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       const rect = e.currentTarget.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertAt = e.clientY < midY ? index : index + 1;
@@ -1428,8 +1436,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                   e.stopPropagation();
                   setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id });
                 }}
-                onDragOver={(e) => handleBlockDragOver(e, index)}
-                onDrop={(e) => handleBlockDrop(e, index)}
+                onDragOver={(e) => handleBlockDragOver(e, index, block.id)}
+                onDrop={(e) => handleBlockDrop(e, index, block.id)}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
@@ -1735,7 +1743,7 @@ function BlockCard({
   );
 
   return (
-    <div className="relative" onContextMenu={onContextMenu}>
+    <div className={`relative ${isDraggingProp ? "pointer-events-none" : ""}`} onContextMenu={onContextMenu}>
       {/* 插入指示线 - 块之前 */}
       {isDropTargetBefore ? (
         <div className="absolute -top-1 left-0 right-0 z-10 flex items-center gap-2 px-2">
