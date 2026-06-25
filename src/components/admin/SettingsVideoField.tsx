@@ -268,7 +268,10 @@ export function SettingsVideoField({
         type="file"
         accept={ACCEPTED_VIDEO_TYPES}
         className="sr-only"
-        onChange={(e) => void handleUpload(e.target.files)}
+        onChange={(e) => {
+          void handleUpload(e.target.files);
+          e.target.value = "";
+        }}
       />
 
       {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}

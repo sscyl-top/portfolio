@@ -63,7 +63,21 @@ async function uploadSingleFile(
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
-        reject(new Error(`文件上传失败 (HTTP ${xhr.status})`));
+        let errorMsg = `文件上传失败 (HTTP ${xhr.status})`;
+        try {
+          const responseText = xhr.responseText;
+          if (responseText) {
+            const parsed = JSON.parse(responseText);
+            if (parsed.message || parsed.error) {
+              errorMsg = `文件上传失败: ${parsed.message || parsed.error}`;
+            } else if (responseText.length < 200) {
+              errorMsg = `文件上传失败 (HTTP ${xhr.status}): ${responseText}`;
+            }
+          }
+        } catch {
+          // 响应不是JSON，忽略
+        }
+        reject(new Error(errorMsg));
       }
     };
 
