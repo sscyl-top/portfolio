@@ -7,7 +7,7 @@ import { logoutAdmin } from "@/app/admin/actions";
 
 import { AdminContent } from "./AdminContent";
 import { AdminNav } from "./AdminNav";
-import { ResizableTwoPanels } from "./ResizableTwoPanels";
+import { ResizablePanels } from "./ResizablePanels";
 
 type AdminShellProps = {
   userEmail: string;
@@ -43,29 +43,54 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
   const isWorkEditorPage = /^\/admin\/works\/[^/]+$/.test(pathname);
 
+  const content = (
+    <section
+      className={`flex h-full min-w-0 flex-col md:pt-28 ${
+        isWorkEditorPage
+          ? "overflow-hidden px-3 py-6 md:px-6"
+          : "overflow-y-auto px-5 py-6 md:px-8"
+      }`}
+    >
+      <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
+    </section>
+  );
+
+  const contentPanel = isWorkEditorPage
+    ? {
+        id: "admin-work-editor-shell",
+        storageKey: "admin-work-editor-shell-width",
+        defaultWidth: 1800,
+        minWidth: 1100,
+        maxWidth: 2600,
+        className: "h-full",
+        children: content,
+      }
+    : {
+        id: "admin-primary-content",
+        storageKey: "admin-primary-content-width",
+        defaultWidth: 1420,
+        minWidth: 720,
+        maxWidth: 2200,
+        className: "h-full",
+        children: content,
+      };
+
   return (
     <main className="flex h-screen overflow-hidden bg-[#07090b] text-white">
-      <ResizableTwoPanels
-        storageKey="admin-sidebar-width"
-        fixedPanel="left"
-        defaultFixedWidth={240}
-        minFixedWidth={180}
-        maxFixedWidth={400}
-        minFlexWidth={400}
-        leftClassName="h-full"
-        rightClassName="h-full"
-        left={<SidebarContent userEmail={userEmail} />}
-        right={
-          <section
-            className={`flex h-full min-w-0 flex-1 flex-col md:pt-28 ${
-              isWorkEditorPage
-                ? "overflow-hidden px-3 md:px-6 py-6"
-                : "overflow-y-auto px-5 py-6 md:px-8"
-            }`}
-          >
-            <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
-          </section>
-        }
+      <ResizablePanels
+        panels={[
+          {
+            id: "admin-sidebar",
+            storageKey: "admin-sidebar-width",
+            defaultWidth: 240,
+            minWidth: 180,
+            maxWidth: 420,
+            className: "h-full",
+            children: <SidebarContent userEmail={userEmail} />,
+          },
+          contentPanel,
+        ]}
+        fillerClassName="h-full"
       />
     </main>
   );
