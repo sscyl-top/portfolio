@@ -45,7 +45,6 @@ export function SettingsVideoField({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedPreview, setUploadedPreview] = useState<{ id: string; url: string; original_name: string; mime_type: string } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const selected = assets.find((a) => a.id === value);
@@ -84,20 +83,16 @@ export function SettingsVideoField({
   }, []);
 
   const triggerFileSelect = useCallback(() => {
-    if (inputRef.current) {
-      inputRef.current.click();
-    } else {
-      const fallback = document.createElement("input");
-      fallback.type = "file";
-      fallback.accept = ACCEPTED_VIDEO_TYPES;
-      fallback.onchange = (e) => {
-        const target = e.target as HTMLInputElement;
-        if (target.files && target.files.length > 0) {
-          void handleUpload(target.files);
-        }
-      };
-      fallback.click();
-    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ACCEPTED_VIDEO_TYPES;
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        void handleUpload(target.files);
+      }
+    };
+    input.click();
   }, [handleUpload]);
 
   useEffect(() => {
@@ -180,20 +175,10 @@ export function SettingsVideoField({
             : "border-white/10 bg-white/[0.035]"
         }`}
       >
-        <input
-          id={`${name}-file-input`}
-          ref={inputRef}
-          type="file"
-          accept={ACCEPTED_VIDEO_TYPES}
-          className="sr-only"
-          onChange={(e) => {
-            void handleUpload(e.target.files);
-            e.target.value = "";
-          }}
-        />
         {previewUrl ? (
-          <label
-            htmlFor={`${name}-file-input`}
+          <button
+            type="button"
+            onClick={triggerFileSelect}
             className="block w-full cursor-pointer p-3 text-left transition hover:bg-white/[0.03]"
           >
             <div className="flex items-start gap-3">
@@ -223,10 +208,11 @@ export function SettingsVideoField({
                 </p>
               </div>
             </div>
-          </label>
+          </button>
         ) : (
-          <label
-            htmlFor={`${name}-file-input`}
+          <button
+            type="button"
+            onClick={triggerFileSelect}
             className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
           >
             {isUploading ? (
@@ -244,7 +230,7 @@ export function SettingsVideoField({
                 支持 MP4 / WEBM / OGG / MOV，最大 10GB
               </p>
             </div>
-          </label>
+          </button>
         )}
       </div>
 
@@ -266,13 +252,15 @@ export function SettingsVideoField({
             ))}
         </select>
 
-        <label
-          htmlFor={`${name}-file-input`}
-          className={`inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan ${isUploading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
+        <button
+          type="button"
+          onClick={triggerFileSelect}
+          disabled={isUploading}
+          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
         >
           {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
           上传
-        </label>
+        </button>
 
         {value ? (
           <button

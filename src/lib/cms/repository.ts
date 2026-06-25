@@ -15,7 +15,7 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { buildOptimizedMediaUrl } from "@/lib/cms/media-url";
+import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { runHeroVideosMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
@@ -314,12 +314,11 @@ export async function createServerCmsRepository() {
       }
 
       // 辅助函数：根据media_id获取URL
-      const { url: supabaseUrl } = getSupabasePublicConfig();
       const getUrlForId = (id: string | null | undefined): string | undefined => {
         if (!id) return undefined;
         const media = mediaMap.get(id);
         if (!media?.storage_key) return undefined;
-        return `${supabaseUrl}/storage/v1/object/public/portfolio-media/${encodeURI(media.storage_key)}`;
+        return buildPublicMediaUrl(media.storage_key);
       };
 
       // 构建返回结果
@@ -421,11 +420,10 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
 function toPublicMediaUrl(
   value: CmsMediaRow | Array<CmsMediaRow> | null | undefined,
 ): string | undefined {
-  const { url } = getSupabasePublicConfig();
   const media = Array.isArray(value) ? value[0] : value;
   if (!media?.storage_key) return undefined;
 
-  return `${url}/storage/v1/object/public/portfolio-media/${encodeURI(media.storage_key)}`;
+  return buildPublicMediaUrl(media.storage_key);
 }
 
 function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
