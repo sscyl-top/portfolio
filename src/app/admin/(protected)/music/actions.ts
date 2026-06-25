@@ -4,8 +4,91 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
+import { runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+
+import { DEFAULT_MUSIC_SETTINGS, DEFAULT_TIP_MESSAGES, type MusicSettings } from "./types";
+
+function normalizeMusicSettings(row: {
+  hide_frontend: boolean;
+  hide_backend: boolean;
+  tip_messages: string[] | unknown;
+  playing_label: string;
+} | null): MusicSettings {
+  if (!row) return DEFAULT_MUSIC_SETTINGS;
+  const tips = Array.isArray(row.tip_messages)
+    ? row.tip_messages.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+    : [];
+  return {
+    hide_frontend: !!row.hide_frontend,
+    hide_backend: !!row.hide_backend,
+    tip_messages: tips.length > 0 ? tips : DEFAULT_TIP_MESSAGES,
+    playing_label: (row.playing_label && row.playing_label.trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
+  };
+}
+
+export async function getMusicSettings(): Promise<MusicSettings> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("music_settings")
+      .select("hide_frontend,hide_backend,tip_messages,playing_label")
+      .eq("id", true)
+      .maybeSingle();
+
+    if (error || !data) {
+      return DEFAULT_MUSIC_SETTINGS;
+    }
+    return normalizeMusicSettings(data);
+  } catch {
+    return DEFAULT_MUSIC_SETTINGS;
+  }
+}
+
+export async function saveMusicSettings(formData: FormData) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) return { error: "未授权" };
+
+    await runMusicSettingsMigration().catch(() => {});
+
+    const hideFrontend = formData.get("hide_frontend") === "on";
+    const hideBackend = formData.get("hide_backend") === "on";
+    const playingLabel = String(formData.get("playing_label") ?? "").trim() || DEFAULT_MUSIC_SETTINGS.playing_label;
+
+    const tipMessages = formData.getAll("tip_message")
+      .map((v) => String(v).trim())
+      .filter((v) => v.length > 0);
+
+    if (tipMessages.length === 0) {
+      tipMessages.push(...DEFAULT_TIP_MESSAGES);
+    }
+
+    const service = createSupabaseServiceClient();
+    const { error } = await service.from("music_settings").upsert(
+      {
+        id: true,
+        hide_frontend: hideFrontend,
+        hide_backend: hideBackend,
+        tip_messages: tipMessages,
+        playing_label: playingLabel,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/music");
+    revalidatePath("/");
+    revalidatePath("/api/music");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
 
 const trackIdSchema = z.object({
   trackId: z.string().uuid(),

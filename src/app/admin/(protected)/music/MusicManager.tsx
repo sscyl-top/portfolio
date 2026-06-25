@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Music, Pause, Play, Plus, Save, Trash2, Upload } from "lucide-react";
+import { useCallback, useRef, useState, useTransition } from "react";
+import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
-import { addMusicTrack, deleteMusicTrack, updateTrackTitle } from "./actions";
+import {
+  addMusicTrack,
+  deleteMusicTrack,
+  saveMusicSettings,
+  updateTrackTitle,
+} from "./actions";
+import type { MusicSettings } from "./types";
 
 type Category = {
   id: string;
@@ -30,9 +36,11 @@ type Track = {
 export function MusicManager({
   categories,
   tracks,
+  settings,
 }: {
   categories: Category[];
   tracks: Track[];
+  settings: MusicSettings;
 }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -70,6 +78,8 @@ export function MusicManager({
 
       <audio ref={audioRef} />
 
+      <SettingsPanel initialSettings={settings} />
+
       <div className="mt-8 space-y-6">
         {sortedCategories.map((category) => {
           const categoryTracks = tracks
@@ -88,6 +98,214 @@ export function MusicManager({
         })}
       </div>
     </div>
+  );
+}
+
+function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) {
+  const [isPending, startTransition] = useTransition();
+  const [hideFrontend, setHideFrontend] = useState(initialSettings.hide_frontend);
+  const [hideBackend, setHideBackend] = useState(initialSettings.hide_backend);
+  const [playingLabel, setPlayingLabel] = useState(initialSettings.playing_label);
+  const [tipMessages, setTipMessages] = useState<string[]>(
+    initialSettings.tip_messages.length > 0 ? initialSettings.tip_messages : ["", "", "", ""],
+  );
+  const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+
+  const updateTip = (idx: number, val: string) => {
+    setTipMessages((prev) => prev.map((t, i) => (i === idx ? val : t)));
+  };
+
+  const addTip = () => {
+    setTipMessages((prev) => [...prev, ""]);
+  };
+
+  const removeTip = (idx: number) => {
+    setTipMessages((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSave = () => {
+    setMessage(null);
+    const formData = new FormData();
+    if (hideFrontend) formData.append("hide_frontend", "on");
+    if (hideBackend) formData.append("hide_backend", "on");
+    formData.append("playing_label", playingLabel);
+    tipMessages.forEach((t) => formData.append("tip_message", t));
+
+    startTransition(async () => {
+      const result = await saveMusicSettings(formData);
+      if ("error" in result && result.error) {
+        setMessage({ type: "error", text: result.error });
+      } else {
+        setMessage({ type: "ok", text: "设置已保存" });
+        setTimeout(() => setMessage(null), 2000);
+      }
+    });
+  };
+
+  return (
+    <section className="mt-8 rounded-lg border border-white/10 bg-white/[0.025] p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan/10">
+          <SettingsIcon className="h-5 w-5 text-cyan" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-white">悬浮球设置</h3>
+          <p className="text-xs text-white/38">控制悬浮球的显示和弹窗文案</p>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-5">
+        {/* 显示开关 */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ToggleCard
+            label="前台显示"
+            description="在网站前台（访客视角）显示音乐悬浮球"
+            icon={hideFrontend ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            checked={!hideFrontend}
+            onChange={(v) => setHideFrontend(!v)}
+          />
+          <ToggleCard
+            label="后台显示"
+            description="在管理后台显示音乐悬浮球（编辑时可试听）"
+            icon={hideBackend ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            checked={!hideBackend}
+            onChange={(v) => setHideBackend(!v)}
+          />
+        </div>
+
+        {/* 播放状态文案 */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-white/70">
+            播放状态标签
+          </label>
+          <input
+            type="text"
+            value={playingLabel}
+            onChange={(e) => setPlayingLabel(e.target.value)}
+            placeholder="正在播放"
+            className="h-10 w-full max-w-md rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          />
+          <p className="mt-1 text-xs text-white/30">音乐播放时显示在弹窗中的标签文字</p>
+        </div>
+
+        {/* 吸引文案 */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-white/70">
+              吸引文案（悬浮球提示气泡轮播显示）
+            </label>
+            <button
+              type="button"
+              onClick={addTip}
+              className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              添加文案
+            </button>
+          </div>
+          <div className="space-y-2">
+            {tipMessages.map((tip, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="w-6 shrink-0 text-center font-mono text-xs text-white/30">
+                  {idx + 1}
+                </span>
+                <input
+                  type="text"
+                  value={tip}
+                  onChange={(e) => updateTip(idx, e.target.value)}
+                  placeholder="输入提示文案..."
+                  className="h-9 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeTip(idx)}
+                  disabled={tipMessages.length <= 1}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/30 transition hover:bg-red-300/10 hover:text-red-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-white/30"
+                  title="删除此条文案"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {message ? (
+          <p
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              message.type === "ok"
+                ? "bg-green-300/10 text-green-200"
+                : "bg-red-300/10 text-red-200"
+            }`}
+          >
+            {message.text}
+          </p>
+        ) : null}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isPending}
+            className="inline-flex h-10 items-center gap-1.5 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {isPending ? "保存中..." : "保存设置"}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ToggleCard({
+  label,
+  description,
+  icon,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`flex items-center gap-3 rounded-lg border p-3.5 text-left transition ${
+        checked
+          ? "border-cyan/40 bg-cyan/10"
+          : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
+      }`}
+    >
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+          checked ? "bg-cyan/20 text-cyan" : "bg-white/5 text-white/40"
+        }`}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-medium ${checked ? "text-white" : "text-white/70"}`}>
+          {label}
+        </p>
+        <p className="mt-0.5 text-xs text-white/38">{description}</p>
+      </div>
+      <div
+        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+          checked ? "bg-cyan" : "bg-white/15"
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            checked ? "left-[22px]" : "left-0.5"
+          }`}
+        />
+      </div>
+    </button>
   );
 }
 

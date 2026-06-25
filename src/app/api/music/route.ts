@@ -1,3 +1,4 @@
+import { DEFAULT_MUSIC_SETTINGS, type MusicSettings } from "@/app/admin/(protected)/music/types";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -43,6 +44,30 @@ export async function GET() {
           .is("deleted_at", null),
       ]);
 
+    // 单独查询settings，表不存在时优雅降级
+    let settings: MusicSettings = DEFAULT_MUSIC_SETTINGS;
+    try {
+      const { data: s } = await supabase
+        .from("music_settings")
+        .select("hide_frontend,hide_backend,tip_messages,playing_label")
+        .eq("id", true)
+        .maybeSingle();
+
+      if (s) {
+        const tips = Array.isArray(s.tip_messages)
+          ? s.tip_messages.filter((t: unknown): t is string => typeof t === "string" && t.trim().length > 0)
+          : [];
+        settings = {
+          hide_frontend: !!s.hide_frontend,
+          hide_backend: !!s.hide_backend,
+          tip_messages: tips.length > 0 ? tips : DEFAULT_MUSIC_SETTINGS.tip_messages,
+          playing_label: (s.playing_label && String(s.playing_label).trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
+        };
+      }
+    } catch {
+      // 表不存在，使用默认设置
+    }
+
     const mediaMap = new Map<string, MediaRow>();
     (medias ?? []).forEach((m: MediaRow) => mediaMap.set(m.id, m));
 
@@ -69,8 +94,11 @@ export async function GET() {
       }),
     );
 
-    return NextResponse.json({ categories: categoriesWithTracks });
+    return NextResponse.json({ categories: categoriesWithTracks, settings });
   } catch {
-    return NextResponse.json({ categories: [] });
+    return NextResponse.json({
+      categories: [],
+      settings: DEFAULT_MUSIC_SETTINGS,
+    });
   }
 }

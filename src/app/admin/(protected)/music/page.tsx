@@ -1,4 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getMusicSettings } from "./actions";
+import type { MusicSettings } from "./types";
 import { MusicManager } from "./MusicManager";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +80,10 @@ async function fetchMusicData() {
 }
 
 export default async function AdminMusicPage() {
-  const { categories, tracks } = await fetchMusicData();
+  const [{ categories, tracks }, settings] = await Promise.all([
+    fetchMusicData(),
+    getMusicSettings(),
+  ]);
 
-  return <MusicManager categories={categories} tracks={tracks} />;
+  return <MusicManager categories={categories} tracks={tracks} settings={settings as MusicSettings} />;
 }

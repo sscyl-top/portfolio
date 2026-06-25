@@ -2,6 +2,7 @@ import { Pool } from "pg";
 
 let heroMigrationPromise: Promise<boolean> | null = null;
 let bucketMigrationPromise: Promise<boolean> | null = null;
+let musicSettingsMigrationPromise: Promise<boolean> | null = null;
 
 function getDbConnectionString(): string | null {
   return (
@@ -11,6 +12,47 @@ function getDbConnectionString(): string | null {
     process.env.PG_DATABASE_URL ??
     null
   );
+}
+
+export async function runMusicSettingsMigration(): Promise<boolean> {
+  if (musicSettingsMigrationPromise) return musicSettingsMigrationPromise;
+
+  musicSettingsMigrationPromise = (async () => {
+    const connectionString = getDbConnectionString();
+    if (!connectionString) {
+      console.warn("[DB Migration] No database connection string found for music settings");
+      return false;
+    }
+
+    const pool = new Pool({ connectionString });
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS public.music_settings (
+          id boolean PRIMARY KEY DEFAULT true,
+          hide_frontend boolean NOT NULL DEFAULT false,
+          hide_backend boolean NOT NULL DEFAULT false,
+          tip_messages jsonb NOT NULL DEFAULT '[]'::jsonb,
+          playing_label text NOT NULL DEFAULT '正在播放',
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now(),
+          CONSTRAINT music_settings_single_row CHECK (id = true)
+        );
+
+        INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label)
+        VALUES (true, false, false, '[]'::jsonb, '正在播放')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+      console.log("[DB Migration] Music settings table ready");
+      return true;
+    } catch (err) {
+      console.error("[DB Migration] Failed to run music settings migration:", err);
+      return false;
+    } finally {
+      await pool.end();
+    }
+  })();
+
+  return musicSettingsMigrationPromise;
 }
 
 export async function runHeroVideosMigration(): Promise<boolean> {

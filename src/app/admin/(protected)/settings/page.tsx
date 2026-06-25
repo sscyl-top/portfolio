@@ -7,6 +7,7 @@ import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { runHeroVideosMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
+import { SaveButton } from "@/components/admin/SaveButton";
 import { saveSiteSettings } from "./actions";
 
 type SettingsRow = {
@@ -340,10 +341,8 @@ export default async function AdminSettingsPage() {
           </div>
         </section>
 
-        <div className="flex justify-end">
-          <button className="min-h-10 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white">
-            保存设置
-          </button>
+        <div className="flex items-center justify-end gap-2">
+          <SaveButton>保存设置</SaveButton>
         </div>
       </form>
     </div>
