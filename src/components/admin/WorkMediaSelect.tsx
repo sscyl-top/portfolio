@@ -80,16 +80,30 @@ export function WorkMediaSelect({
     try {
       const results = await uploadMediaFiles([file], () => {});
       const result = results[0];
-      if (!result) return;
-      setValue(result.id);
-      if (autoSave) {
-        setTimeout(() => submitForm(), 100);
+      if (!result) {
+        setIsUploading(false);
+        return;
+      }
+      
+      const form = inputRef.current?.form;
+      if (form && autoSave) {
+        const hiddenInput = form.querySelector(`input[name="${name}"]`) as HTMLInputElement | null;
+        if (hiddenInput) {
+          hiddenInput.value = result.id;
+        }
+        form.requestSubmit();
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      } else {
+        setValue(result.id);
+        setIsUploading(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
       setIsUploading(false);
     }
-  }, [autoSave, submitForm]);
+  }, [autoSave, name]);
 
   useEffect(() => {
     const el = dropZoneRef.current;
