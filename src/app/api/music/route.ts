@@ -35,6 +35,7 @@ const DEFAULT_CATEGORY_EMOJIS: Record<string, string> = {
 const MUSIC_SETTING_KEYS = [
   "music.hide_frontend",
   "music.hide_backend",
+  "music.hide_mobile",
   "music.playing_label",
   "music.tip_messages",
 ];
@@ -81,6 +82,7 @@ export async function GET() {
     const settings: MusicSettings = {
       hide_frontend: textMap.get("music.hide_frontend") === "true",
       hide_backend: textMap.get("music.hide_backend") === "true",
+      hide_mobile: textMap.get("music.hide_mobile") === "true",
       playing_label: textMap.get("music.playing_label")?.trim() || DEFAULT_MUSIC_SETTINGS.playing_label,
       tip_messages: (() => {
         const raw = textMap.get("music.tip_messages");

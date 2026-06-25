@@ -12,6 +12,7 @@ import { DEFAULT_MUSIC_SETTINGS, DEFAULT_TIP_MESSAGES, type MusicSettings } from
 const MUSIC_SETTING_KEYS = [
   "music.hide_frontend",
   "music.hide_backend",
+  "music.hide_mobile",
   "music.playing_label",
   "music.tip_messages",
 ] as const;
@@ -78,6 +79,7 @@ export async function getMusicSettings(): Promise<MusicSettings> {
     return {
       hide_frontend: map.get("music.hide_frontend") === "true",
       hide_backend: map.get("music.hide_backend") === "true",
+      hide_mobile: map.get("music.hide_mobile") === "true",
       playing_label: map.get("music.playing_label")?.trim() || DEFAULT_MUSIC_SETTINGS.playing_label,
       tip_messages: (() => {
         const raw = map.get("music.tip_messages");
@@ -116,6 +118,7 @@ export async function saveMusicSettings(formData: FormData) {
 
     const hideFrontend = formData.get("hide_frontend") === "on";
     const hideBackend = formData.get("hide_backend") === "on";
+    const hideMobile = formData.get("hide_mobile") === "on";
     const playingLabel = String(formData.get("playing_label") ?? "").trim() || DEFAULT_MUSIC_SETTINGS.playing_label;
 
     const tipMessages = formData.getAll("tip_message")
@@ -131,6 +134,7 @@ export async function saveMusicSettings(formData: FormData) {
     await Promise.all([
       upsertMusicTextEntry(service, "music.hide_frontend", hideFrontend ? "true" : "false"),
       upsertMusicTextEntry(service, "music.hide_backend", hideBackend ? "true" : "false"),
+      upsertMusicTextEntry(service, "music.hide_mobile", hideMobile ? "true" : "false"),
       upsertMusicTextEntry(service, "music.playing_label", playingLabel),
       upsertMusicTextEntry(service, "music.tip_messages", JSON.stringify(tipMessages)),
     ]);

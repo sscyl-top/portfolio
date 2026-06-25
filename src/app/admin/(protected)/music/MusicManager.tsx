@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, useTransition } from "react";
-import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff, Check } from "lucide-react";
+import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff, Check, Smartphone } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
@@ -107,6 +107,7 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
   const [isPending, startTransition] = useTransition();
   const [hideFrontend, setHideFrontend] = useState(initialSettings.hide_frontend);
   const [hideBackend, setHideBackend] = useState(initialSettings.hide_backend);
+  const [hideMobile, setHideMobile] = useState(initialSettings.hide_mobile);
   const [playingLabel, setPlayingLabel] = useState(initialSettings.playing_label);
   const [tipMessages, setTipMessages] = useState<string[]>(
     initialSettings.tip_messages.length > 0 ? initialSettings.tip_messages : ["", "", "", ""],
@@ -130,6 +131,7 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
     const formData = new FormData();
     if (hideFrontend) formData.append("hide_frontend", "on");
     if (hideBackend) formData.append("hide_backend", "on");
+    if (hideMobile) formData.append("hide_mobile", "on");
     formData.append("playing_label", playingLabel);
     tipMessages.forEach((t) => formData.append("tip_message", t));
 
@@ -158,7 +160,7 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div className="space-y-3">
-          <div className="grid gap-2 grid-cols-2">
+          <div className="grid gap-2 grid-cols-3">
             <ToggleCard
               label="前台显示"
               description="访客视角可见"
@@ -173,6 +175,14 @@ function SettingsPanel({ initialSettings }: { initialSettings: MusicSettings }) 
               icon={hideBackend ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               checked={!hideBackend}
               onChange={(v) => setHideBackend(!v)}
+              compact
+            />
+            <ToggleCard
+              label="手机显示"
+              description="移动端可见"
+              icon={hideMobile ? <Smartphone className="h-3.5 w-3.5 opacity-40" /> : <Smartphone className="h-3.5 w-3.5" />}
+              checked={!hideMobile}
+              onChange={(v) => setHideMobile(!v)}
               compact
             />
           </div>

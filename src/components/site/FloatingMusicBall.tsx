@@ -26,6 +26,7 @@ type MusicCategory = {
 type MusicSettings = {
   hide_frontend: boolean;
   hide_backend: boolean;
+  hide_mobile: boolean;
   tip_messages: string[];
   playing_label: string;
 };
@@ -35,6 +36,7 @@ export function FloatingMusicBall() {
   const [settings, setSettings] = useState<MusicSettings>({
     hide_frontend: false,
     hide_backend: false,
+    hide_mobile: false,
     tip_messages: DEFAULT_TIP_MESSAGES,
     playing_label: DEFAULT_PLAYING_LABEL,
   });
@@ -48,6 +50,7 @@ export function FloatingMusicBall() {
   const [tipOn, setTipOn] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentCatKeyRef = useRef<string | null>(null);
@@ -100,6 +103,7 @@ export function FloatingMusicBall() {
           setSettings({
             hide_frontend: !!data.settings.hide_frontend,
             hide_backend: !!data.settings.hide_backend,
+            hide_mobile: !!data.settings.hide_mobile,
             tip_messages: Array.isArray(data.settings.tip_messages) && data.settings.tip_messages.length > 0
               ? data.settings.tip_messages
               : DEFAULT_TIP_MESSAGES,
@@ -111,18 +115,25 @@ export function FloatingMusicBall() {
       .catch(() => setLoaded(true));
   }, []);
 
-  // 根据路径判断是否在后台，决定是否隐藏
+  // 检测移动端
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // 根据路径和设置判断是否隐藏
   useEffect(() => {
     if (typeof window === "undefined") return;
     const isAdmin = window.location.pathname.startsWith("/admin");
-    if (isAdmin && settings.hide_backend) {
-      setHidden(true);
-    } else if (!isAdmin && settings.hide_frontend) {
-      setHidden(true);
-    } else {
-      setHidden(false);
-    }
-  }, [settings.hide_frontend, settings.hide_backend]);
+    let shouldHide = false;
+    if (isAdmin && settings.hide_backend) shouldHide = true;
+    else if (!isAdmin && settings.hide_frontend) shouldHide = true;
+    if (isMobile && settings.hide_mobile) shouldHide = true;
+    setHidden(shouldHide);
+  }, [settings.hide_frontend, settings.hide_backend, settings.hide_mobile, isMobile]);
 
   const clearTipTimer = useCallback(() => {
     if (tipTimerRef.current) {

@@ -8,6 +8,7 @@ export const DEFAULT_TIP_MESSAGES = [
 export type MusicSettings = {
   hide_frontend: boolean;
   hide_backend: boolean;
+  hide_mobile: boolean;
   tip_messages: string[];
   playing_label: string;
 };
@@ -15,6 +16,7 @@ export type MusicSettings = {
 export const DEFAULT_MUSIC_SETTINGS: MusicSettings = {
   hide_frontend: false,
   hide_backend: false,
+  hide_mobile: false,
   tip_messages: DEFAULT_TIP_MESSAGES,
   playing_label: "正在播放",
 };
