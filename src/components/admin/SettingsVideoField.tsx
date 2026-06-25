@@ -86,12 +86,16 @@ export function SettingsVideoField({
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ACCEPTED_VIDEO_TYPES;
+    input.style.position = "fixed";
+    input.style.top = "-9999px";
     input.onchange = (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files.length > 0) {
         void handleUpload(target.files);
       }
+      input.remove();
     };
+    document.body.appendChild(input);
     input.click();
   }, [handleUpload]);
 

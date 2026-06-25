@@ -9,7 +9,6 @@ import {
   type Work,
 } from "@/data/portfolio";
 import {
-  getSupabasePublicConfig,
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
@@ -629,8 +628,7 @@ function buildMediaUrl(storageKey: string, mimeType?: string): string {
   if (isImage) {
     return buildOptimizedMediaUrl(storageKey, { format: "webp" });
   }
-  const { url } = getSupabasePublicConfig();
-  return `${url}/storage/v1/object/public/portfolio-media/${encodeURI(storageKey)}`;
+  return buildPublicMediaUrl(storageKey);
 }
 
 function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
