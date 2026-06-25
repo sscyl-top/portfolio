@@ -27,6 +27,7 @@ import {
   Hash,
   ChevronDown,
   Plus,
+  X,
 } from "lucide-react";
 import {
   reorderWorkBlocks,
@@ -2015,10 +2016,18 @@ function InlineGalleryEditor({
     onUpdatePayload({ ...payload, media_ids: nextIds, media_refs: nextRefs });
   };
 
+  const removeImage = (index: number) => {
+    const nextIds = [...mediaIds];
+    const nextRefs = [...refs];
+    nextIds.splice(index, 1);
+    nextRefs.splice(index, 1);
+    onUpdatePayload({ ...payload, media_ids: nextIds, media_refs: nextRefs });
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
-        图库 · {displayAssets.length} 张图片（拖拽图片可排序）
+        图库 · {displayAssets.length} 张图片（拖拽图片可排序，悬停显示删除按钮）
       </p>
       <div className="grid grid-cols-3 gap-2">
         {displayAssets.map((asset: { id?: string; storage_key: string }, i: number) => (
@@ -2045,6 +2054,17 @@ function InlineGalleryEditor({
               alt=""
               className="h-full w-full object-cover"
             />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeImage(i);
+              }}
+              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/70 opacity-0 transition hover:bg-red-500/80 hover:text-white group-hover:opacity-100"
+              title="删除此图片"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         ))}
         {/* 添加更多图片按钮 */}
@@ -2555,12 +2575,9 @@ function BlockPreview({
     const displayAssets = refs.length > 0 ? refs : mediaAssets.filter((a) => mediaIds.includes(a.id));
     return (
       <div className="grid grid-cols-3 gap-2">
-        {displayAssets.slice(0, 6).map((asset: { storage_key: string }, i: number) => (
+        {displayAssets.map((asset: { storage_key: string }, i: number) => (
           <img key={i} src={buildPublicMediaUrl(asset.storage_key)} alt="" className="aspect-square rounded-md object-cover" />
         ))}
-        {mediaIds.length > 6 ? (
-          <div className="flex items-center justify-center rounded-md bg-white/5 text-xs text-white/30">+{mediaIds.length - 6}</div>
-        ) : null}
       </div>
     );
   }
