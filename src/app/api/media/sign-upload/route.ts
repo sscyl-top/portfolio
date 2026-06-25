@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
   }
 
-  // 自动修复bucket文件大小限制（幂等操作，设置为100MB）
+  // 自动修复bucket文件大小限制（幂等操作，设置为10GB）
   await runBucketSizeLimitMigration().catch(() => {});
 
   const service = createSupabaseServiceClient();
