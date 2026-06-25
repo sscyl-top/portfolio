@@ -180,10 +180,20 @@ export function SettingsVideoField({
             : "border-white/10 bg-white/[0.035]"
         }`}
       >
+        <input
+          id={`${name}-file-input`}
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_VIDEO_TYPES}
+          className="sr-only"
+          onChange={(e) => {
+            void handleUpload(e.target.files);
+            e.target.value = "";
+          }}
+        />
         {previewUrl ? (
-          <button
-            type="button"
-            onClick={triggerFileSelect}
+          <label
+            htmlFor={`${name}-file-input`}
             className="block w-full cursor-pointer p-3 text-left transition hover:bg-white/[0.03]"
           >
             <div className="flex items-start gap-3">
@@ -213,11 +223,10 @@ export function SettingsVideoField({
                 </p>
               </div>
             </div>
-          </button>
+          </label>
         ) : (
-          <button
-            type="button"
-            onClick={triggerFileSelect}
+          <label
+            htmlFor={`${name}-file-input`}
             className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
           >
             {isUploading ? (
@@ -235,7 +244,7 @@ export function SettingsVideoField({
                 支持 MP4 / WEBM / OGG / MOV，最大 10GB
               </p>
             </div>
-          </button>
+          </label>
         )}
       </div>
 
@@ -257,15 +266,13 @@ export function SettingsVideoField({
             ))}
         </select>
 
-        <button
-          type="button"
-          onClick={triggerFileSelect}
-          disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
+        <label
+          htmlFor={`${name}-file-input`}
+          className={`inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan ${isUploading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
         >
           {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
           上传
-        </button>
+        </label>
 
         {value ? (
           <button
@@ -277,17 +284,6 @@ export function SettingsVideoField({
           </button>
         ) : null}
       </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_VIDEO_TYPES}
-        style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
-        onChange={(e) => {
-          void handleUpload(e.target.files);
-          e.target.value = "";
-        }}
-      />
 
       {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
