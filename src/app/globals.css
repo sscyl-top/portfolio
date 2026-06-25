@@ -267,24 +267,9 @@ button {
   animation: cta-logo-cut-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-.ticker-viewport {
-  overflow: hidden;
-  width: 100%;
-}
-
 .ticker-track {
-  display: flex;
-  width: max-content;
-  animation: ticker 34s linear infinite;
+  animation: ticker 30s linear infinite;
   will-change: transform;
-}
-
-.ticker-group {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 3rem;
-  padding-right: 3rem;
-  white-space: nowrap;
 }
 
 .resume-contact-marquee-track {
@@ -293,6 +278,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ticker-track,
   .resume-contact-marquee-track {
     animation-play-state: paused;
   }

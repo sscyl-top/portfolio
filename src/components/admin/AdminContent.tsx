@@ -2,12 +2,18 @@
 
 import { usePathname } from "next/navigation";
 
-export function AdminContent({ children }: { children: React.ReactNode }) {
+export function AdminContent({
+  children,
+  fillHeight = false,
+}: {
+  children: React.ReactNode;
+  fillHeight?: boolean;
+}) {
   const pathname = usePathname();
   const isWorkEditorPage = /^\/admin\/works\/[^/]+$/.test(pathname);
 
-  if (isWorkEditorPage) {
-    return <div className="w-full">{children}</div>;
+  if (isWorkEditorPage || fillHeight) {
+    return <div className={`w-full ${fillHeight ? "flex min-h-0 flex-1 flex-col" : ""}`}>{children}</div>;
   }
 
   return <div className="mx-auto w-full max-w-[1420px]">{children}</div>;
