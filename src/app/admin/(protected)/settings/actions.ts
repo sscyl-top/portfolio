@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
+import { runHeroVideosMigration } from "@/lib/cms/migrations";
 
 const socialLinkSchema = z.object({
   label: z.string().trim().min(1),
@@ -60,12 +61,34 @@ export async function saveSiteSettings(formData: FormData) {
   if (!parsed.success) return;
 
   const { client } = await requireAdmin();
+
+  // 先尝试运行迁移，确保hero视频列存在
+  await runHeroVideosMigration();
+
   const { error } = await client.from("site_settings").upsert({
     id: true,
     ...parsed.data,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 如果还是因为列不存在报错，就去掉hero视频字段再保存
+    if (typeof error.message === "string" && error.message.includes("does not exist")) {
+      const {
+        hero_main_video_media_id,
+        hero_side1_video_media_id,
+        hero_side2_video_media_id,
+        hero_side3_video_media_id,
+        ...restData
+      } = parsed.data;
+      const { error: fallbackError } = await client.from("site_settings").upsert({
+        id: true,
+        ...restData,
+      });
+      if (fallbackError) throw new Error(fallbackError.message);
+    } else {
+      throw new Error(error.message);
+    }
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

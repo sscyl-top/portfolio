@@ -251,14 +251,16 @@ function AdminLightbox({
 
 // ── 布局控制条组件 ─────────────────────────────────────────
 
+type LayoutPatch = Partial<{ width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4; free: FreeLayout }>;
+
 function LayoutBar({
   blockType,
   layout,
   onChange,
 }: {
   blockType: string;
-  layout: { width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4 };
-  onChange: (patch: Partial<{ width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4 }>) => void;
+  layout: { width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4; free?: FreeLayout };
+  onChange: (patch: LayoutPatch) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-white/5 px-4 py-2">
@@ -400,6 +402,50 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     },
     [],
   );
+
+  // 专用：布局变更（基于prev状态函数式更新，彻底避免闭包导致的状态覆盖/跳动）
+  const pendingLayoutSaveRef = useRef<{ blockId: string; timer: ReturnType<typeof setTimeout>; latestPayload: Record<string, unknown> } | null>(null);
+
+  const handleLayoutChange = useCallback(
+    (blockId: string, patch: LayoutPatch) => {
+      if (pendingLayoutSaveRef.current?.blockId === blockId) {
+        clearTimeout(pendingLayoutSaveRef.current.timer);
+      } else {
+        pendingLayoutSaveRef.current = { blockId, timer: null as unknown as ReturnType<typeof setTimeout>, latestPayload: {} };
+      }
+
+      setBlocks((prev) => {
+        return prev.map((b) => {
+          if (b.id !== blockId) return b;
+          const newPayload = {
+            ...b.payload,
+            layout: { ...getLayout(b.payload), ...patch },
+          };
+          pendingLayoutSaveRef.current!.latestPayload = newPayload;
+          return { ...b, payload: newPayload };
+        });
+      });
+
+      pendingLayoutSaveRef.current.timer = setTimeout(() => {
+        const ref = pendingLayoutSaveRef.current;
+        if (ref && Object.keys(ref.latestPayload).length > 0) {
+          void updateBlockLayoutDirect(workId, blockId, ref.latestPayload);
+        }
+        pendingLayoutSaveRef.current = null;
+      }, 300);
+    },
+    [workId],
+  );
+
+  // 组件卸载时清理待保存的布局定时器
+  useEffect(() => {
+    return () => {
+      if (pendingLayoutSaveRef.current) {
+        clearTimeout(pendingLayoutSaveRef.current.timer);
+        pendingLayoutSaveRef.current = null;
+      }
+    };
+  }, []);
 
   // 多图排列方式询问
   const [imageLayoutChoice, setImageLayoutChoice] = useState<{
@@ -1531,6 +1577,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
+                onLayoutChange={(patch) => handleLayoutChange(block.id, patch)}
                 onSaveLayout={(newPayload) => saveLayoutToServer(block.id, newPayload)}
                 onSaveAndClose={() => setEditingBlockId(null)}
                 onReplaceMedia={(blockId) => {
@@ -1766,6 +1813,7 @@ function BlockCard({
   mediaAssets,
   onUpdatePayload,
   onOptimisticUpdate,
+  onLayoutChange,
   onSaveLayout,
   onSaveAndClose,
   onReplaceMedia,
@@ -1790,6 +1838,7 @@ function BlockCard({
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
   onOptimisticUpdate: (newPayload: Record<string, unknown>) => void;
+  onLayoutChange: (patch: LayoutPatch) => void;
   onSaveLayout: (newPayload: Record<string, unknown>) => void;
   onSaveAndClose: () => void;
   onReplaceMedia: (blockId: string) => void;
@@ -1801,23 +1850,6 @@ function BlockCard({
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
   const layout = useMemo(() => getLayout(block.payload), [block.payload]);
-
-  const layoutDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const debouncedUpdatePayload = useCallback(
-    (_blockId: string, newPayload: Record<string, unknown>) => {
-      if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
-      layoutDebounceRef.current = setTimeout(() => {
-        onSaveLayout(newPayload);
-      }, 600);
-    },
-    [onSaveLayout],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
-    };
-  }, []);
 
   const showInlineEditor = isEditing && (
     block.block_type === "text" ||
@@ -1919,11 +1951,7 @@ function BlockCard({
         <LayoutBar
           blockType={block.block_type}
           layout={layout}
-          onChange={(patch) => {
-            const newPayload = withLayout(block.payload, patch);
-            onOptimisticUpdate(newPayload);
-            debouncedUpdatePayload(block.id, newPayload);
-          }}
+          onChange={onLayoutChange}
         />
       ) : null}
       {isEditing && layout.width === "free" && (block.block_type === "media" || block.block_type === "video") ? (
@@ -1931,8 +1959,7 @@ function BlockCard({
           free={layout.free}
           onChange={(patch) => {
             const current = layout.free ?? { x: 0, y: 0, w: 50, h: 50 };
-            const newPayload = withLayout(block.payload, { free: { ...current, ...patch } });
-            onUpdatePayload(newPayload);
+            onLayoutChange({ free: { ...current, ...patch } });
           }}
         />
       ) : null}

@@ -16,6 +16,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl } from "@/lib/cms/media-url";
+import { runHeroVideosMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -233,9 +234,7 @@ export async function createServerCmsRepository() {
       return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
     },
     async getSiteSettings() {
-      const { data, error } = await client
-        .from("site_settings")
-        .select(`*,
+      const fullSelect = `*,
           avatar_media:media_assets!site_settings_avatar_media_id_fkey(storage_key,mime_type,alt_text),
           logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
           share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
@@ -245,12 +244,47 @@ export async function createServerCmsRepository() {
           hero_main_video_media:media_assets!site_settings_hero_main_video_media_id_fkey(storage_key,mime_type,alt_text),
           hero_side1_video_media:media_assets!site_settings_hero_side1_video_media_id_fkey(storage_key,mime_type,alt_text),
           hero_side2_video_media:media_assets!site_settings_hero_side2_video_media_id_fkey(storage_key,mime_type,alt_text),
-          hero_side3_video_media:media_assets!site_settings_hero_side3_video_media_id_fkey(storage_key,mime_type,alt_text)`)
-        .single();
+          hero_side3_video_media:media_assets!site_settings_hero_side3_video_media_id_fkey(storage_key,mime_type,alt_text)`;
 
-      if (error) throw error;
+      const tryQuery = async () => {
+        const { data, error } = await client
+          .from("site_settings")
+          .select(fullSelect)
+          .single();
+        return { data, error };
+      };
 
-      return data ? toPublicSiteSettings(data as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
+      let result = await tryQuery();
+
+      // 如果是列不存在错误，自动运行迁移然后重试
+      if (result.error && typeof result.error.message === "string" && result.error.message.includes("does not exist")) {
+        const migrated = await runHeroVideosMigration();
+        if (migrated) {
+          result = await tryQuery();
+        }
+      }
+
+      if (result.error) {
+        // 如果hero视频列还是不存在，降级查询（不包含hero视频字段）
+        if (typeof result.error.message === "string" && result.error.message.includes("does not exist")) {
+          const fallbackSelect = `*,
+            avatar_media:media_assets!site_settings_avatar_media_id_fkey(storage_key,mime_type,alt_text),
+            logo_media:media_assets!site_settings_logo_media_id_fkey(storage_key,mime_type,alt_text),
+            share_media:media_assets!site_settings_share_media_id_fkey(storage_key,mime_type,alt_text),
+            cta_card_media:media_assets!site_settings_cta_card_media_id_fkey(storage_key,mime_type,alt_text),
+            cta_figure_media:media_assets!site_settings_cta_figure_media_id_fkey(storage_key,mime_type,alt_text),
+            cta_ticker_logo_media:media_assets!site_settings_cta_ticker_logo_media_id_fkey(storage_key,mime_type,alt_text)`;
+          const { data: fallbackData, error: fallbackError } = await client
+            .from("site_settings")
+            .select(fallbackSelect)
+            .single();
+          if (fallbackError) throw fallbackError;
+          return fallbackData ? toPublicSiteSettings(fallbackData as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
+        }
+        throw result.error;
+      }
+
+      return result.data ? toPublicSiteSettings(result.data as CmsSiteSettingsRow) : getStaticPublicSiteSettings();
     },
   });
 }

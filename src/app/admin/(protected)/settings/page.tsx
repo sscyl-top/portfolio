@@ -4,6 +4,7 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { runHeroVideosMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { saveSiteSettings } from "./actions";
@@ -40,19 +41,41 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sscyl.top";
 
 export default async function AdminSettingsPage() {
   const supabase = await createSupabaseServerClient();
-  const [{ data, error }, { data: rawMedia }] = await Promise.all([
-    supabase
+
+  const fullColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,social_links";
+  const fallbackColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
+
+  let settingsResult = await supabase
+    .from("site_settings")
+    .select(fullColumns)
+    .single();
+
+  // 如果是列不存在错误，自动运行迁移然后重试
+  if (settingsResult.error && typeof settingsResult.error.message === "string" && settingsResult.error.message.includes("does not exist")) {
+    const migrated = await runHeroVideosMigration();
+    if (migrated) {
+      settingsResult = await supabase
+        .from("site_settings")
+        .select(fullColumns)
+        .single();
+    }
+  }
+
+  // 如果还是失败，降级查询（不包含hero视频字段）
+  if (settingsResult.error && typeof settingsResult.error.message === "string" && settingsResult.error.message.includes("does not exist")) {
+    settingsResult = await supabase
       .from("site_settings")
-      .select(
-        "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,social_links",
-      )
-      .single(),
-    supabase
-      .from("media_assets")
-      .select("id,storage_key,mime_type,original_name,alt_text")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-  ]);
+      .select(fallbackColumns)
+      .single();
+  }
+
+  const { data: rawMedia } = await supabase
+    .from("media_assets")
+    .select("id,storage_key,mime_type,original_name,alt_text")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const { data, error } = settingsResult;
   const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {
     name: siteSettings.name,
