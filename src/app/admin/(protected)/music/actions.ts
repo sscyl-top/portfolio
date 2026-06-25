@@ -4,64 +4,108 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
-import { getDbPool, runMusicSettingsMigration } from "@/lib/cms/migrations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { DEFAULT_MUSIC_SETTINGS, DEFAULT_TIP_MESSAGES, type MusicSettings } from "./types";
 
-function normalizeMusicSettings(row: {
-  hide_frontend: boolean;
-  hide_backend: boolean;
-  tip_messages: string[] | unknown;
-  playing_label: string;
-} | null): MusicSettings {
-  if (!row) return DEFAULT_MUSIC_SETTINGS;
-  const tips = Array.isArray(row.tip_messages)
-    ? row.tip_messages.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-    : [];
-  return {
-    hide_frontend: !!row.hide_frontend,
-    hide_backend: !!row.hide_backend,
-    tip_messages: tips.length > 0 ? tips : DEFAULT_TIP_MESSAGES,
-    playing_label: (row.playing_label && row.playing_label.trim()) || DEFAULT_MUSIC_SETTINGS.playing_label,
-  };
+const MUSIC_SETTING_KEYS = [
+  "music.hide_frontend",
+  "music.hide_backend",
+  "music.playing_label",
+  "music.tip_messages",
+] as const;
+
+const DEFAULT_CATEGORY_EMOJIS: Record<string, string> = {
+  relax: "🌿",
+  energetic: "🔥",
+  summer: "🌊",
+  badass: "😎",
+};
+
+export function getCategoryEmojiKey(categoryKey: string): string {
+  return `music.category.${categoryKey}.emoji`;
+}
+
+async function fetchMusicTextEntries(keys: string[]) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("text_content")
+    .select("key,content")
+    .in("key", keys)
+    .eq("is_active", true)
+    .is("deleted_at", null);
+  const map = new Map<string, string>();
+  (data ?? []).forEach((row: { key: string; content: string }) => {
+    map.set(row.key, row.content);
+  });
+  return map;
+}
+
+async function upsertMusicTextEntry(
+  service: ReturnType<typeof createSupabaseServiceClient>,
+  key: string,
+  content: string,
+) {
+  const existing = await service
+    .from("text_content")
+    .select("id")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (existing.data?.id) {
+    const { error } = await service
+      .from("text_content")
+      .update({ content, is_active: true, deleted_at: null, updated_at: new Date().toISOString() })
+      .eq("id", existing.data.id);
+    if (error) throw error;
+  } else {
+    const { error } = await service.from("text_content").insert({
+      key,
+      content,
+      page: "music",
+      section: "settings",
+      sort_order: 0,
+      is_active: true,
+    });
+    if (error) throw error;
+  }
 }
 
 export async function getMusicSettings(): Promise<MusicSettings> {
   try {
-    await runMusicSettingsMigration().catch(() => {});
-
-    const pool = getDbPool();
-    if (pool) {
-      try {
-        const result = await pool.query(
-          `SELECT hide_frontend, hide_backend, tip_messages, playing_label FROM public.music_settings WHERE id = true LIMIT 1`
-        );
-        if (result.rows.length > 0) {
-          return normalizeMusicSettings(result.rows[0]);
-        }
-      } catch (pgErr) {
-        console.warn("[getMusicSettings] pg query failed, falling back to Supabase:", pgErr);
-      } finally {
-        await pool.end();
-      }
-    }
-
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("music_settings")
-      .select("hide_frontend,hide_backend,tip_messages,playing_label")
-      .eq("id", true)
-      .maybeSingle();
-
-    if (error || !data) {
-      return DEFAULT_MUSIC_SETTINGS;
-    }
-    return normalizeMusicSettings(data);
+    const map = await fetchMusicTextEntries([...MUSIC_SETTING_KEYS]);
+    return {
+      hide_frontend: map.get("music.hide_frontend") === "true",
+      hide_backend: map.get("music.hide_backend") === "true",
+      playing_label: map.get("music.playing_label")?.trim() || DEFAULT_MUSIC_SETTINGS.playing_label,
+      tip_messages: (() => {
+        const raw = map.get("music.tip_messages");
+        if (!raw) return DEFAULT_TIP_MESSAGES;
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const tips = parsed.filter((t): t is string => typeof t === "string" && t.trim().length > 0);
+            return tips.length > 0 ? tips : DEFAULT_TIP_MESSAGES;
+          }
+        } catch {}
+        return DEFAULT_TIP_MESSAGES;
+      })(),
+    };
   } catch {
     return DEFAULT_MUSIC_SETTINGS;
   }
+}
+
+export async function getCategoryEmojis(categoryKeys: string[]): Promise<Record<string, string>> {
+  const emojiKeys = categoryKeys.map(getCategoryEmojiKey);
+  const map = await fetchMusicTextEntries(emojiKeys);
+  const result: Record<string, string> = {};
+  for (const key of categoryKeys) {
+    const val = map.get(getCategoryEmojiKey(key));
+    result[key] = val?.trim() || DEFAULT_CATEGORY_EMOJIS[key] || "🎵";
+  }
+  return result;
 }
 
 export async function saveMusicSettings(formData: FormData) {
@@ -69,8 +113,6 @@ export async function saveMusicSettings(formData: FormData) {
     const supabase = await createSupabaseServerClient();
     const user = await getAuthorizedAdmin(supabase);
     if (!user) return { error: "未授权" };
-
-    await runMusicSettingsMigration().catch(() => {});
 
     const hideFrontend = formData.get("hide_frontend") === "on";
     const hideBackend = formData.get("hide_backend") === "on";
@@ -84,44 +126,14 @@ export async function saveMusicSettings(formData: FormData) {
       tipMessages.push(...DEFAULT_TIP_MESSAGES);
     }
 
-    const pool = getDbPool();
-    let saved = false;
-    if (pool) {
-      try {
-        await pool.query(
-          `INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label, updated_at)
-           VALUES (true, $1, $2, $3::jsonb, $4, now())
-           ON CONFLICT (id) DO UPDATE SET
-             hide_frontend = EXCLUDED.hide_frontend,
-             hide_backend = EXCLUDED.hide_backend,
-             tip_messages = EXCLUDED.tip_messages,
-             playing_label = EXCLUDED.playing_label,
-             updated_at = now()`,
-          [hideFrontend, hideBackend, JSON.stringify(tipMessages), playingLabel]
-        );
-        saved = true;
-      } catch (pgErr) {
-        console.warn("[saveMusicSettings] pg upsert failed, falling back to Supabase:", pgErr);
-      } finally {
-        await pool.end();
-      }
-    }
+    const service = createSupabaseServiceClient();
 
-    if (!saved) {
-      const service = createSupabaseServiceClient();
-      const { error } = await service.from("music_settings").upsert(
-        {
-          id: true,
-          hide_frontend: hideFrontend,
-          hide_backend: hideBackend,
-          tip_messages: tipMessages,
-          playing_label: playingLabel,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" },
-      );
-      if (error) return { error: error.message };
-    }
+    await Promise.all([
+      upsertMusicTextEntry(service, "music.hide_frontend", hideFrontend ? "true" : "false"),
+      upsertMusicTextEntry(service, "music.hide_backend", hideBackend ? "true" : "false"),
+      upsertMusicTextEntry(service, "music.playing_label", playingLabel),
+      upsertMusicTextEntry(service, "music.tip_messages", JSON.stringify(tipMessages)),
+    ]);
 
     revalidatePath("/admin/music");
     revalidatePath("/");
@@ -258,10 +270,12 @@ export async function updateCategory(formData: FormData) {
 
     const parsed = z.object({
       categoryId: z.string().uuid(),
+      categoryKey: z.string().min(1),
       label: z.string().trim().min(1, "分类名称不能为空").max(50, "分类名称最多50个字符"),
       emoji: z.string().trim().max(8, "emoji最多8个字符").default("🎵"),
     }).safeParse({
       categoryId: formData.get("categoryId"),
+      categoryKey: formData.get("categoryKey") ?? "",
       label: formData.get("label") ?? "",
       emoji: formData.get("emoji") ?? "🎵",
     });
@@ -270,34 +284,18 @@ export async function updateCategory(formData: FormData) {
       return { error: parsed.error.issues[0]?.message ?? "参数无效" };
     }
 
-    const emoji = parsed.data.emoji.trim() || "🎵";
+    const emoji = parsed.data.emoji.trim() || DEFAULT_CATEGORY_EMOJIS[parsed.data.categoryKey] || "🎵";
 
-    await runMusicSettingsMigration().catch(() => {});
+    const service = createSupabaseServiceClient();
 
-    const pool = getDbPool();
-    let saved = false;
-    if (pool) {
-      try {
-        await pool.query(
-          `UPDATE public.music_categories SET label = $1, emoji = $2 WHERE id = $3`,
-          [parsed.data.label, emoji, parsed.data.categoryId]
-        );
-        saved = true;
-      } catch (pgErr) {
-        console.warn("[updateCategory] pg update failed, falling back to Supabase:", pgErr);
-      } finally {
-        await pool.end();
-      }
-    }
+    const { error: labelErr } = await service
+      .from("music_categories")
+      .update({ label: parsed.data.label })
+      .eq("id", parsed.data.categoryId);
 
-    if (!saved) {
-      const service = createSupabaseServiceClient();
-      const { error } = await service
-        .from("music_categories")
-        .update({ label: parsed.data.label, emoji })
-        .eq("id", parsed.data.categoryId);
-      if (error) return { error: error.message };
-    }
+    if (labelErr) return { error: labelErr.message };
+
+    await upsertMusicTextEntry(service, getCategoryEmojiKey(parsed.data.categoryKey), emoji);
 
     revalidatePath("/admin/music");
     revalidatePath("/api/music");

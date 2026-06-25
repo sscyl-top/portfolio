@@ -364,6 +364,7 @@ function CategorySection({
     try {
       const formData = new FormData();
       formData.append("categoryId", category.id);
+      formData.append("categoryKey", category.key);
       formData.append("label", label);
       formData.append("emoji", emoji);
       const result = await updateCategory(formData);
