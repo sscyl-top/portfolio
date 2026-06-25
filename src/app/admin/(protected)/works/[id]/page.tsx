@@ -167,8 +167,8 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: left breathing room, centered canvas, compact tools rail. */}
-      <div className="grid grid-cols-1 items-start gap-4 2xl:grid-cols-[clamp(220px,12vw,250px)_minmax(0,1030px)_minmax(440px,480px)]">
+      {/* Work editor layout: left breathing room, centered canvas, right-side tools rail. */}
+      <div className="grid grid-cols-1 items-start gap-4 2xl:grid-cols-[clamp(220px,12vw,250px)_minmax(0,1030px)_minmax(0,1fr)_minmax(440px,480px)]">
         <div className="hidden 2xl:block" aria-hidden="true" />
         {/* Main editing canvas: title, summary, and visual content blocks. */}
         <div className="min-w-0">
@@ -217,6 +217,8 @@ export default async function AdminWorkEditorPage({
 
           </div>
         </div>
+
+        <div className="hidden 2xl:block" aria-hidden="true" />
 
         {/* Tools panel: media, taxonomy, settings, and version history. */}
         <div className="min-w-0 self-start space-y-3 pr-1 scrollbar-thin 2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-y-auto">
