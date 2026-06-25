@@ -1604,7 +1604,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
       {/* embedded 模式：悬浮 ⊕ 添加按钮（右下角） */}
       {embedded ? (
-        <div className="pointer-events-none fixed bottom-8 right-8 z-40 flex flex-col items-end gap-2 xl:right-[448px]">
+        <div className="pointer-events-none fixed bottom-8 right-8 z-40 flex flex-col items-end gap-2 2xl:right-[448px]">
           {showBlockMenu ? (
             <div
               className="pointer-events-auto mb-1 w-48 overflow-hidden rounded-xl border border-white/15 bg-[#141424]/95 shadow-2xl backdrop-blur-md"

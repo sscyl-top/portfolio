@@ -167,8 +167,9 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: main canvas up to 1420px, tools panel fills the right side. */}
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1420px)_minmax(420px,1fr)]">
+      {/* Work editor layout: left breathing room, centered canvas, expanded tools panel. */}
+      <div className="grid grid-cols-1 items-start gap-6 2xl:grid-cols-[clamp(220px,14vw,300px)_minmax(0,1060px)_minmax(420px,1fr)]">
+        <div className="hidden 2xl:block" aria-hidden="true" />
         {/* Main editing canvas: title, summary, and visual content blocks. */}
         <div className="min-w-0">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
@@ -228,7 +229,7 @@ export default async function AdminWorkEditorPage({
         </div>
 
         {/* Tools panel: media, taxonomy, settings, and version history. */}
-        <div className="min-w-0 self-start space-y-4 pr-1 scrollbar-thin xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+        <div className="min-w-0 self-start space-y-4 pr-1 scrollbar-thin 2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-y-auto">
           {/* 私密预览 */}
           <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
           {/* 媒体选择 */}
