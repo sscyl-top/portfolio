@@ -83,17 +83,19 @@ export async function saveSiteSettings(formData: FormData) {
   });
 
   if (heroParsed.success) {
-    try {
-      const { error: heroError } = await client.from("site_settings").update({
-        ...heroParsed.data,
-      }).eq("id", true);
+    const { error: heroError } = await client.from("site_settings").update({
+      ...heroParsed.data,
+    }).eq("id", true);
 
-      // hero更新失败不抛出错误，静默忽略
-      if (heroError) {
-        console.warn("[saveSiteSettings] Hero视频字段更新失败（列可能不存在）:", heroError.message);
+    if (heroError) {
+      // 不再静默吞掉错误 — 如果 hero 列不存在，告知用户需执行迁移
+      const isColumnMissing = heroError.message.includes("column") && heroError.message.includes("does not exist");
+      if (isColumnMissing) {
+        throw new Error(
+          "Hero 视频列尚未创建。请在 Supabase SQL Editor 中执行 supabase/migrations/20260625030000_hero_videos.sql 迁移文件。",
+        );
       }
-    } catch (err) {
-      console.warn("[saveSiteSettings] Hero视频字段更新异常:", err);
+      throw new Error(`Hero 视频保存失败：${heroError.message}`);
     }
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Music, Pause, Volume2, X } from "lucide-react";
+import { Music, Volume2, X } from "lucide-react";
 
 type MusicCategory = {
   id: string;
@@ -32,7 +32,6 @@ export function FloatingMusicBall() {
   const [loaded, setLoaded] = useState(false);
   const [hoverActive, setHoverActive] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [currentTrackTitle, setCurrentTrackTitle] = useState<string>("");
   const [tipIndex, setTipIndex] = useState(0);
@@ -45,7 +44,6 @@ export function FloatingMusicBall() {
   const categoriesRef = useRef<MusicCategory[]>([]);
   const tipTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isPlayingRef = useRef(false);
-  const isPausedRef = useRef(false);
   const hoverActiveRef = useRef(false);
   const tipIndexRef = useRef(0);
   const dismissedRef = useRef(false);
@@ -61,10 +59,6 @@ export function FloatingMusicBall() {
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
-
-  useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
 
   useEffect(() => {
     hoverActiveRef.current = hoverActive;
@@ -185,20 +179,17 @@ export function FloatingMusicBall() {
       });
       audioRef.current.addEventListener("pause", () => {
         if (audioRef.current && !audioRef.current.ended && !audioRef.current.seeking) {
-          setIsPaused(true);
+          setIsPlaying(false);
         }
-        setIsPlaying(false);
       });
       audioRef.current.addEventListener("play", () => {
         setIsPlaying(true);
-        setIsPaused(false);
       });
     }
 
     audioRef.current.src = track.url;
     audioRef.current.play().then(() => {
       setIsPlaying(true);
-      setIsPaused(false);
       setCurrentCategory(categoryKey);
       setCurrentTrackTitle(track.title);
     });
@@ -207,39 +198,21 @@ export function FloatingMusicBall() {
   const selectCategory = useCallback((category: MusicCategory) => {
     if (category.tracks.length === 0) return;
 
-    if (currentCatKeyRef.current === category.key) {
-      if (isPausedRef.current && audioRef.current) {
-        audioRef.current.play();
-        return;
+    // 点击正在播放的分类 = 停止音乐
+    if (currentCatKeyRef.current === category.key && isPlayingRef.current) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
-      if (isPlayingRef.current) {
-        return;
-      }
+      setIsPlaying(false);
+      setCurrentCategory(null);
+      setCurrentTrackTitle("");
+      currentCatKeyRef.current = null;
+      return;
     }
 
     playTrackFromCategory(category.key);
   }, [playTrackFromCategory]);
-
-  const togglePlayPause = useCallback(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else if (isPaused) {
-      audioRef.current.play();
-    }
-  }, [isPlaying, isPaused]);
-
-  const stopMusic = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
-    setIsPaused(false);
-    setCurrentCategory(null);
-    setCurrentTrackTitle("");
-    currentCatKeyRef.current = null;
-  }, []);
 
   const dismissTip = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -259,8 +232,8 @@ export function FloatingMusicBall() {
 
   if (!loaded || categories.length === 0) return null;
 
-  const showTipBubble = !isPlaying && !isPaused && tipOn && !dismissed;
-  const showPlayingBar = isPlaying || isPaused;
+  const showTipBubble = !isPlaying && tipOn && !dismissed;
+  const showPlayingBar = isPlaying;
 
   const showAnyBubble = showTipBubble || showPlayingBar;
   const showColumn = showAnyBubble || hoverActive;
@@ -276,21 +249,20 @@ export function FloatingMusicBall() {
         {/* 竖直列容器：所有弹窗在同一列，column-reverse使DOM先出现的靠近球(底部) */}
         {showColumn ? (
           <div className="music-bubble-column shrink-0">
-            {/* Playing bar - DOM第一位，column-reverse下在最底部紧贴球 */}
+            {/* Playing bar - 和风格选项同样的样式，在同一列 */}
             {showPlayingBar ? (
-              <div className="music-bubble music-bubble-playing is-visible">
-                <Volume2 className="h-5 w-5 shrink-0 text-cyan" style={{ opacity: isPlaying ? 1 : 0.4 }} />
+              <div className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
+                <Volume2 className="h-5 w-5 shrink-0 text-cyan" />
                 <p className="min-w-0 truncate text-sm text-white/90">
                   {currentTrackTitle || "正在播放"}
-                  {isPaused && <span className="ml-1 text-white/40">(已暂停)</span>}
                 </p>
               </div>
             ) : null}
 
-            {/* Tip bubble - DOM第二位，在playing上方(未播放时紧贴球) */}
+            {/* Tip bubble - 和风格选项同样的样式，在同一列 */}
             {showTipBubble ? (
-              <div key={tipKey} className="music-bubble music-bubble-tip is-visible">
-                <p className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</p>
+              <div key={tipKey} className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
+                <span className="whitespace-nowrap text-sm text-white/90">{TIP_MESSAGES[tipIndex]}</span>
                 {!hoverActive && (
                   <button
                     onClick={dismissTip}
@@ -302,7 +274,7 @@ export function FloatingMusicBall() {
               </div>
             ) : null}
 
-            {/* Options (hover时显示) - 平铺为直接子元素，统一宽度 */}
+            {/* 4 个音乐风格选项 - 与弹窗在同一列 */}
             {hoverActive
               ? categories.map((cat, idx) => {
                   const isCurrentCat = currentCatKeyRef.current === cat.key;
@@ -325,9 +297,6 @@ export function FloatingMusicBall() {
                           <span className="inline-block h-3 w-0.5 bg-cyan animate-pulse" style={{ animationDelay: "0.3s" }} />
                         </span>
                       )}
-                      {isCurrentCat && isPaused && (
-                        <Pause className="ml-1 h-3 w-3 text-cyan/70" />
-                      )}
                     </button>
                   );
                 })
@@ -335,13 +304,10 @@ export function FloatingMusicBall() {
           </div>
         ) : null}
 
-        {/* Main ball */}
+        {/* Main ball - 纯展示，无播放控制按钮 */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (isPlaying || isPaused) {
-              togglePlayPause();
-            }
           }}
           className="music-ball shrink-0"
           aria-label="音乐播放器"
@@ -354,8 +320,6 @@ export function FloatingMusicBall() {
                 <span />
                 <span />
               </div>
-            ) : isPaused ? (
-              <Pause className="h-5 w-5 text-cyan" />
             ) : (
               <Music className="music-icon" />
             )}
