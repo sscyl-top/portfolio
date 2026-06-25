@@ -722,10 +722,13 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     };
   }, []);
 
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+
   const moveBlockToIndex = useCallback(
     (blockId: string, targetIndex: number) => {
       const sourceIndex = blocks.findIndex((b) => b.id === blockId);
       if (sourceIndex === -1) return;
+      if (sourceIndex === targetIndex) return;
 
       const reordered = [...blocks];
       const [moved] = reordered.splice(sourceIndex, 1);
@@ -739,9 +742,23 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [blocks, persistOrder],
   );
 
-  const onDragOver = useCallback(
+  const handleBlockDragOver = useCallback(
+    (e: React.DragEvent, index: number) => {
+      if (!isBlockDrag(e) && !isFileDrag(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const insertAt = e.clientY < midY ? index : index + 1;
+      setDragOverIndex(insertAt);
+    },
+    [isBlockDrag, isFileDrag],
+  );
+
+  const handleGapDragOver = useCallback(
     (e: React.DragEvent, index: number) => {
       e.preventDefault();
+      e.stopPropagation();
       if (isFileDrag(e) || isBlockDrag(e)) {
         setDragOverIndex(index);
       }
@@ -752,7 +769,9 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const onDropAt = useCallback(
     async (e: React.DragEvent, insertAt: number) => {
       e.preventDefault();
+      e.stopPropagation();
       setDragOverIndex(null);
+      setDraggedBlockId(null);
 
       if (isBlockDrag(e)) {
         const blockId = e.dataTransfer.getData("block-id");
@@ -768,6 +787,16 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       }
     },
     [handleFilesDrop, isBlockDrag, isFileDrag, moveBlockToIndex],
+  );
+
+  const handleBlockDrop = useCallback(
+    (e: React.DragEvent, index: number) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const insertAt = e.clientY < midY ? index : index + 1;
+      void onDropAt(e, insertAt);
+    },
+    [onDropAt],
   );
 
   // ── 文件输入变化（"上传文件"按钮 / 更换媒体）────────────
@@ -1191,7 +1220,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         <div className="space-y-0">
           <InsertTrigger
             index={0}
-            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(0); }}
+            onDragOver={(e) => handleGapDragOver(e, 0)}
             onDrop={(e) => onDropAt(e, 0)}
             isDragOver={dragOverIndex === 0}
           />
@@ -1202,17 +1231,15 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 block={block}
                 index={index}
                 isEditing={editingBlockId === block.id}
+                isDragging={draggedBlockId === block.id}
+                isDropTargetBefore={dragOverIndex === index}
+                isDropTargetAfter={dragOverIndex === index + 1}
                 onEdit={() => setEditingBlockId(editingBlockId === block.id ? null : block.id)}
                 onDelete={() => handleDeleteBlock(block.id)}
-                onDragOver={(e) => {
-                  // 块级拖拽排序仅通过 InsertTrigger 间隙完成，避免块卡片本身拦截
-                  if (isBlockDrag(e)) return;
-                  onDragOver(e, index);
-                }}
-                onDrop={(e) => {
-                  if (isBlockDrag(e)) return;
-                  void onDropAt(e, index);
-                }}
+                onDragStart={() => setDraggedBlockId(block.id)}
+                onDragEnd={() => { setDraggedBlockId(null); setDragOverIndex(null); }}
+                onDragOver={(e) => handleBlockDragOver(e, index)}
+                onDrop={(e) => handleBlockDrop(e, index)}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
@@ -1256,7 +1283,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
               />
               <InsertTrigger
                 index={index + 1}
-                onDragOver={(e) => { e.preventDefault(); setDragOverIndex(index + 1); }}
+                onDragOver={(e) => handleGapDragOver(e, index + 1)}
                 onDrop={(e) => onDropAt(e, index + 1)}
                 isDragOver={dragOverIndex === index + 1}
               />
@@ -1374,15 +1401,23 @@ function InsertTrigger({
 }) {
   return (
     <div
-      className={`group relative h-3 transition-all ${isDragOver ? "h-8" : "hover:h-8"}`}
+      className={`group relative transition-all ${isDragOver ? "h-10" : "h-4 hover:h-6"}`}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      {isDragOver ? (
-        <div className="flex h-full items-center justify-center">
-          <div className="h-1 flex-1 rounded-full bg-cyan/60 mx-8" />
+      <div className={`absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all ${
+        isDragOver ? "opacity-100" : "opacity-0 group-hover:opacity-40"
+      }`}>
+        <div className="flex items-center gap-2 px-4">
+          <div className={`h-0.5 flex-1 rounded-full transition-all ${isDragOver ? "bg-cyan h-1" : "bg-white/20"}`} />
+          {isDragOver ? (
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan/20">
+              <div className="h-2 w-2 rounded-full bg-cyan" />
+            </div>
+          ) : null}
+          <div className={`h-0.5 flex-1 rounded-full transition-all ${isDragOver ? "bg-cyan h-1" : "bg-white/20"}`} />
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -1393,8 +1428,13 @@ function BlockCard({
   block,
   index,
   isEditing,
+  isDragging: isDraggingProp,
+  isDropTargetBefore,
+  isDropTargetAfter,
   onEdit,
   onDelete,
+  onDragStart,
+  onDragEnd,
   onDragOver,
   onDrop,
   mediaAssets,
@@ -1410,8 +1450,13 @@ function BlockCard({
   block: VisualBlock;
   index: number;
   isEditing: boolean;
+  isDragging: boolean;
+  isDropTargetBefore: boolean;
+  isDropTargetAfter: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   mediaAssets: MediaAsset[];
@@ -1424,16 +1469,13 @@ function BlockCard({
   onSelectBaFile: (blockId: string, step: "before" | "after") => void;
   onCropImage: (blockId: string) => void;
 }) {
-  const [isDragging, setIsDragging] = useState(false);
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
-  // 稳定 layout 对象，避免 LayoutBar 因引用变化反复重渲染
   const layout = useMemo(() => getLayout(block.payload), [block.payload]);
 
-  // 布局切换专用防抖：600ms 内只触发一次保存，避免快速点击产生大量版本
   const layoutDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedUpdatePayload = useCallback(
-    (blockId: string, newPayload: Record<string, unknown>) => {
+    (_blockId: string, newPayload: Record<string, unknown>) => {
       if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
       layoutDebounceRef.current = setTimeout(() => {
         onSaveLayout(newPayload);
@@ -1442,14 +1484,12 @@ function BlockCard({
     [onSaveLayout],
   );
 
-  // 组件卸载时清除防抖定时器
   useEffect(() => {
     return () => {
       if (layoutDebounceRef.current) clearTimeout(layoutDebounceRef.current);
     };
   }, []);
 
-  // 判断编辑模式下显示什么
   const showInlineEditor = isEditing && (
     block.block_type === "text" ||
     block.block_type === "media" ||
@@ -1465,65 +1505,80 @@ function BlockCard({
   );
 
   return (
-    <div
-      data-block-index={index}
-      className={`group relative rounded-lg border transition ${
-        isDragging
-          ? "border-cyan/50 bg-cyan/5 opacity-50"
-          : isEditing
-            ? "border-cyan/30 bg-white/[0.04]"
-            : "border-white/10 bg-white/[0.02] hover:border-white/20"
-      }`}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData("block-id", block.id);
-        e.dataTransfer.effectAllowed = "move";
-        setIsDragging(true);
-      }}
-      onDragEnd={() => {
-        setIsDragging(false);
-      }}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-    >
-      {/* 操作栏 */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
-        <GripHorizontal className="h-4 w-4 cursor-grab text-white/20 transition hover:text-white/50" />
-        <span className={`flex items-center gap-1.5 text-xs font-medium ${blockTypeConfig?.color ?? "text-white/50"}`}>
-          {blockTypeConfig ? <blockTypeConfig.icon className="h-3.5 w-3.5" /> : null}
-          {blockTypeConfig?.label ?? block.block_type}
-        </span>
-        <span className="text-[10px] text-white/20 font-mono">#{index + 1}</span>
+    <div className="relative">
+      {/* 插入指示线 - 块之前 */}
+      {isDropTargetBefore ? (
+        <div className="absolute -top-1 left-0 right-0 z-10 flex items-center gap-2 px-2">
+          <div className="h-1 flex-1 rounded-full bg-cyan shadow-[0_0_12px_rgba(34,211,238,0.5)]" />
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan/20 shadow-[0_0_12px_rgba(34,211,238,0.3)]">
+            <div className="h-2 w-2 rounded-full bg-cyan" />
+          </div>
+          <div className="h-1 flex-1 rounded-full bg-cyan shadow-[0_0_12px_rgba(34,211,238,0.5)]" />
+        </div>
+      ) : null}
 
-        <div className="ml-auto flex items-center gap-1">
-          {isEditing ? (
+      <div
+        data-block-index={index}
+        className={`group relative rounded-lg border transition ${
+          isDraggingProp
+            ? "border-cyan/50 bg-cyan/5 opacity-40 scale-[0.98]"
+            : isEditing
+              ? "border-cyan/30 bg-white/[0.04]"
+              : "border-white/10 bg-white/[0.02] hover:border-white/20"
+        }`}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      >
+        {/* 操作栏 */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("block-id", block.id);
+              e.dataTransfer.effectAllowed = "move";
+              onDragStart();
+            }}
+            onDragEnd={onDragEnd}
+            className="flex cursor-grab items-center rounded p-0.5 text-white/20 transition hover:bg-white/10 hover:text-white/60 active:cursor-grabbing"
+            title="拖拽排序"
+          >
+            <GripHorizontal className="h-4 w-4" />
+          </div>
+          <span className={`flex items-center gap-1.5 text-xs font-medium ${blockTypeConfig?.color ?? "text-white/50"}`}>
+            {blockTypeConfig ? <blockTypeConfig.icon className="h-3.5 w-3.5" /> : null}
+            {blockTypeConfig?.label ?? block.block_type}
+          </span>
+          <span className="text-[10px] text-white/20 font-mono">#{index + 1}</span>
+
+          <div className="ml-auto flex items-center gap-1">
+            {isEditing ? (
+              <button
+                type="button"
+                onClick={onSaveAndClose}
+                className="rounded p-1 text-cyan/70 transition hover:bg-cyan/10 hover:text-cyan"
+                title="完成编辑"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={onSaveAndClose}
-              className="rounded p-1 text-cyan/70 transition hover:bg-cyan/10 hover:text-cyan"
-              title="完成编辑"
+              onClick={onEdit}
+              className="rounded p-1 text-white/25 transition hover:bg-white/10 hover:text-white/70"
+              title={isEditing ? "取消" : "编辑"}
             >
-              <Check className="h-3.5 w-3.5" />
+              <Pencil className="h-3.5 w-3.5" />
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={onEdit}
-            className="rounded p-1 text-white/25 transition hover:bg-white/10 hover:text-white/70"
-            title={isEditing ? "取消" : "编辑"}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="rounded p-1 text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
-            title="删除"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded p-1 text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
+              title="删除"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-      </div>
 
       {/* 布局控制条（仅编辑模式） */}
       {isEditing ? (
@@ -1564,6 +1619,18 @@ function BlockCard({
           <BlockPreview block={block} mediaAssets={mediaAssets} />
         )}
       </div>
+      </div>
+
+      {/* 插入指示线 - 块之后 */}
+      {isDropTargetAfter ? (
+        <div className="absolute -bottom-1 left-0 right-0 z-10 flex items-center gap-2 px-2">
+          <div className="h-1 flex-1 rounded-full bg-cyan shadow-[0_0_12px_rgba(34,211,238,0.5)]" />
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan/20 shadow-[0_0_12px_rgba(34,211,238,0.3)]">
+            <div className="h-2 w-2 rounded-full bg-cyan" />
+          </div>
+          <div className="h-1 flex-1 rounded-full bg-cyan shadow-[0_0_12px_rgba(34,211,238,0.5)]" />
+        </div>
+      ) : null}
     </div>
   );
 }
