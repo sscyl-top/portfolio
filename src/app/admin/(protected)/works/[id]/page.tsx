@@ -167,8 +167,8 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: left breathing room, centered canvas, expanded tools panel. */}
-      <div className="grid grid-cols-1 items-start gap-6 2xl:grid-cols-[clamp(220px,14vw,300px)_minmax(0,1060px)_minmax(420px,1fr)]">
+      {/* Work editor layout: left breathing room, centered canvas, compact tools rail. */}
+      <div className="grid grid-cols-1 items-start gap-4 2xl:grid-cols-[clamp(220px,12vw,250px)_minmax(0,1030px)_minmax(440px,480px)]">
         <div className="hidden 2xl:block" aria-hidden="true" />
         {/* Main editing canvas: title, summary, and visual content blocks. */}
         <div className="min-w-0">
@@ -215,28 +215,22 @@ export default async function AdminWorkEditorPage({
               embedded
             />
 
-            {/* 保存按钮 */}
-            <div className="mt-8 flex justify-end border-t border-white/[0.06] pt-6">
-              <button
-                type="submit"
-                form="mainWorkForm"
-                className="min-h-10 rounded-md bg-cyan px-6 text-sm font-medium text-black transition hover:bg-white"
-              >
-                保存作品
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Tools panel: media, taxonomy, settings, and version history. */}
-        <div className="min-w-0 self-start space-y-4 pr-1 scrollbar-thin 2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-y-auto">
+        <div className="min-w-0 self-start space-y-3 pr-1 scrollbar-thin 2xl:sticky 2xl:top-6 2xl:max-h-[calc(100vh-3rem)] 2xl:overflow-y-auto">
           {/* 私密预览 */}
-          <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
+          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-2">
+            <SaveWorkCard updatedAt={workRow.updated_at} />
+            <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
+          </div>
           {/* 媒体选择 */}
           <MediaForm mediaAssets={mediaRows} work={workRow} />
           {/* 分类与标签（折叠） */}
           <CollapsibleSection
             title="分类与标签"
+            defaultOpen
             action={
               <span className="text-[10px] text-white/30">
                 {selectedCategoryIds.size + selectedTagIds.size} 项已选
@@ -252,18 +246,47 @@ export default async function AdminWorkEditorPage({
             />
           </CollapsibleSection>
           {/* 更多设置（折叠） */}
-          <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
-            <SettingsPanel work={workRow} />
-          </CollapsibleSection>
-          {/* 版本历史（折叠） */}
-          <VersionHistoryPanel
-            workId={workRow.id}
-            workSlug={workRow.slug}
-            versions={versionRows}
-          />
+          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-2">
+            <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
+              <SettingsPanel work={workRow} />
+            </CollapsibleSection>
+            {/* 版本历史（折叠） */}
+            <VersionHistoryPanel
+              workId={workRow.id}
+              workSlug={workRow.slug}
+              versions={versionRows}
+            />
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function SaveWorkCard({ updatedAt }: { updatedAt: string }) {
+  const updatedDate = updatedAt ? new Date(updatedAt) : null;
+  const updatedLabel = updatedDate
+    ? `${updatedDate.getMonth() + 1}/${updatedDate.getDate()} ${String(updatedDate.getHours()).padStart(2, "0")}:${String(updatedDate.getMinutes()).padStart(2, "0")}`
+    : "-";
+
+  return (
+    <section className="rounded-md border border-cyan/20 bg-cyan/[0.055] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-white/88">保存作品</h3>
+          <p className="mt-1 truncate text-[10px] text-white/38">
+            最近更新 {updatedLabel}
+          </p>
+        </div>
+      </div>
+      <button
+        type="submit"
+        form="mainWorkForm"
+        className="mt-3 min-h-9 w-full rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white"
+      >
+        保存作品
+      </button>
+    </section>
   );
 }
 
@@ -278,7 +301,7 @@ function PrivatePreviewForm({
   const previewUrl = previewPath ? `${origin}${previewPath}` : null;
 
   return (
-    <section className="rounded-md border border-white/10 bg-white/[0.035] p-4">
+    <section className="rounded-md border border-white/10 bg-white/[0.035] p-3">
       <h3 className="text-sm font-semibold text-white/80">私密预览</h3>
 
       {previewUrl ? (
@@ -290,18 +313,18 @@ function PrivatePreviewForm({
         </div>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 grid gap-2">
         <form action={clearPrivatePreviewLink}>
           <input type="hidden" name="work_id" value={work.id} />
           <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-8 rounded-md border border-white/12 px-3 text-xs text-white/58 transition hover:border-white/30 hover:text-white">
+          <button className="min-h-8 w-full rounded-md border border-white/12 px-2.5 text-xs text-white/58 transition hover:border-white/30 hover:text-white">
             清除链接
           </button>
         </form>
         <form action={generatePrivatePreviewLink}>
           <input type="hidden" name="work_id" value={work.id} />
           <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
+          <button className="min-h-8 w-full rounded-md border border-cyan/35 px-2.5 text-xs text-cyan transition hover:bg-cyan/10">
             生成链接
           </button>
         </form>
@@ -322,13 +345,13 @@ function MediaForm({
   return (
     <form
       action={updateWorkMedia}
-      className="rounded-md border border-white/10 bg-white/[0.035] p-4"
+      className="rounded-md border border-white/10 bg-white/[0.035] p-3"
     >
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
       <h3 className="text-sm font-semibold text-white/80">作品媒体</h3>
 
-      <div className="mt-3 grid gap-3">
+      <div className="mt-3 grid gap-2.5">
         <WorkMediaSelect
           label="封面"
           name="cover_media_id"
