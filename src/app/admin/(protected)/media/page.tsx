@@ -1,5 +1,6 @@
-﻿import { Save, Search, Trash2, X } from "lucide-react";
+import { Save, Search, Trash2, X } from "lucide-react";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -22,9 +23,9 @@ type MediaAssetRow = {
 export default async function AdminMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string; sort?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; sort?: string; toast?: string; id?: string }>;
 }) {
-  const { search = "", type = "", sort = "newest" } = await searchParams;
+  const { search = "", type = "", sort = "newest", toast, id } = await searchParams;
 
   const supabase = await createSupabaseServerClient();
   let query = supabase
@@ -90,7 +91,7 @@ export default async function AdminMediaPage({
             {assets.length} / {total ?? 0} 个文件
             {(search || type) ? "（已筛选）" : ""}
           </p>
-          <MediaList assets={assets} search={search} type={type} />
+          <MediaList assets={assets} search={search} type={type} toast={toast} savedId={id} />
         </>
       )}
     </div>
@@ -152,10 +153,14 @@ function MediaList({
   assets,
   search,
   type,
+  toast,
+  savedId,
 }: {
   assets: MediaAssetRow[];
   search: string;
   type: string;
+  toast?: string;
+  savedId?: string;
 }) {
   if (assets.length === 0) {
     const hint =
@@ -170,13 +175,13 @@ function MediaList({
   return (
     <div className="mt-6 grid gap-3">
       {assets.map((asset) => (
-        <MediaRow key={asset.id} asset={asset} />
+        <MediaRow key={asset.id} asset={asset} saved={toast === "alt-saved" && savedId === asset.id} />
       ))}
     </div>
   );
 }
 
-function MediaRow({ asset }: { asset: MediaAssetRow }) {
+function MediaRow({ asset, saved }: { asset: MediaAssetRow; saved?: boolean }) {
   const isImage = asset.mime_type.startsWith("image/");
   const isVideo = asset.mime_type.startsWith("video/");
   const publicUrl = buildPublicMediaUrl(asset.storage_key);
@@ -215,13 +220,15 @@ function MediaRow({ asset }: { asset: MediaAssetRow }) {
             placeholder="替代文本（用于无障碍与 SEO）"
             className="min-h-9 w-full rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
           />
-          <button
-            type="submit"
-            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-cyan/30 px-3 text-xs text-cyan transition hover:bg-cyan/10"
+          <SaveButton
+            variant="cyan"
+            size="sm"
+            saved={saved}
+            className="min-h-9 shrink-0 border-cyan/30 px-3 text-xs text-cyan hover:bg-cyan/10"
           >
             <Save aria-hidden="true" className="h-3.5 w-3.5" />
             保存
-          </button>
+          </SaveButton>
         </form>
       </div>
 

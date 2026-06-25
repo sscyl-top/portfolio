@@ -53,17 +53,16 @@ export function SettingsVideoField({
   const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
   const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
 
+  const triggerFileSelect = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
   const handleUpload = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     const file = Array.isArray(files) ? files[0] : files[0];
 
     if (!file.type.startsWith("video/")) {
       setError("请选择视频格式文件（MP4/WEBM/OGG/MOV）");
-      return;
-    }
-
-    if (file.size > 100 * 1024 * 1024) {
-      setError("视频文件大小不能超过 100MB");
       return;
     }
 
@@ -169,14 +168,17 @@ export function SettingsVideoField({
         }`}
       >
         {previewUrl ? (
-          <div className="p-3">
+          <button
+            type="button"
+            onClick={triggerFileSelect}
+            className="block w-full cursor-pointer p-3 text-left transition hover:bg-white/[0.03]"
+          >
             <div className="flex items-start gap-3">
               <div
                 className={`relative shrink-0 w-40 ${ASPECT_CLASS[aspectRatio]} overflow-hidden rounded border border-white/20 bg-black/30`}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <video
                   ref={videoRef}
                   src={previewUrl}
@@ -194,16 +196,16 @@ export function SettingsVideoField({
                 <p className="truncate text-xs text-white/60">{previewName}</p>
                 <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
                 <p className="mt-2 text-[10px] text-white/25">
-                  鼠标悬停视频预览播放
+                  鼠标悬停预览播放 · 点击替换视频
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         ) : (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex w-full flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
+            onClick={triggerFileSelect}
+            className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
           >
             {isUploading ? (
               <Loader2 className="h-8 w-8 animate-spin text-cyan" />
@@ -217,7 +219,7 @@ export function SettingsVideoField({
                 {isUploading ? "上传中..." : "点击或拖拽视频到此处上传"}
               </p>
               <p className="mt-0.5 text-[10px] text-white/25">
-                支持 MP4 / WEBM / OGG / MOV，最大 100MB
+                支持 MP4 / WEBM / OGG / MOV，最大 10GB
               </p>
             </div>
           </button>
@@ -244,7 +246,7 @@ export function SettingsVideoField({
 
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={triggerFileSelect}
           disabled={isUploading}
           className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
         >

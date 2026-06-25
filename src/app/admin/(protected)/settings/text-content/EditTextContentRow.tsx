@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil, X } from "lucide-react";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { updateTextContent } from "./actions";
 import { DeleteTextContentButton } from "./DeleteTextContentButton";
 
@@ -18,9 +19,11 @@ type Props = {
     font_weight: string | null;
     color: string | null;
   };
+  toast?: string;
+  savedId?: string;
 };
 
-export function EditTextContentRow({ item }: Props) {
+export function EditTextContentRow({ item, toast, savedId }: Props) {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
@@ -50,7 +53,7 @@ export function EditTextContentRow({ item }: Props) {
       {isEditing && (
         <tr>
           <td colSpan={8} className="border-b border-white/5 bg-white/[0.02] p-4">
-            <EditForm item={item} onCancel={() => setIsEditing(false)} />
+            <EditForm item={item} onCancel={() => setIsEditing(false)} saved={toast === "saved" && savedId === item.id} />
           </td>
         </tr>
       )}
@@ -58,7 +61,7 @@ export function EditTextContentRow({ item }: Props) {
   );
 }
 
-function EditForm({ item, onCancel }: { item: Props["item"]; onCancel: () => void }) {
+function EditForm({ item, onCancel, saved }: { item: Props["item"]; onCancel: () => void; saved?: boolean }) {
   const fontSizes = [
     "",
     "text-xs",
@@ -134,12 +137,7 @@ function EditForm({ item, onCancel }: { item: Props["item"]; onCancel: () => voi
         />
       </div>
       <div className="flex items-center gap-2 md:col-span-2 lg:col-span-4">
-        <button
-          type="submit"
-          className="min-h-9 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white"
-        >
-          保存
-        </button>
+        <SaveButton saved={saved}>保存</SaveButton>
         <button
           type="button"
           onClick={onCancel}

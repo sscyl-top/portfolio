@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/admin-session";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 const createTextContentSchema = z.object({
@@ -54,6 +55,7 @@ export async function createTextContent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
+  redirect(`/admin/settings/text-content?toast=${encodeURIComponent("已添加")}`);
 }
 
 export async function updateTextContent(formData: FormData) {
@@ -85,6 +87,7 @@ export async function updateTextContent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
+  redirect(`/admin/settings/text-content?toast=saved&id=${encodeURIComponent(parsed.data.id)}`);
 }
 
 export async function deleteTextContent(id: string) {

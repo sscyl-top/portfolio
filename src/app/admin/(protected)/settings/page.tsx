@@ -40,7 +40,8 @@ type MediaAssetRow = {
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sscyl.top";
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ toast?: string }> }) {
+  const { toast } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   // 先尝试自动迁移（幂等操作）
@@ -342,7 +343,7 @@ export default async function AdminSettingsPage() {
         </section>
 
         <div className="flex items-center justify-end gap-2">
-          <SaveButton>保存设置</SaveButton>
+          <SaveButton saved={toast === "设置保存成功"}>保存设置</SaveButton>
         </div>
       </form>
     </div>

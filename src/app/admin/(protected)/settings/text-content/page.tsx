@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-session";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { createTextContent } from "./actions";
 import { EditTextContentRow } from "./EditTextContentRow";
 
@@ -18,8 +19,9 @@ type TextContentItem = {
   color: string | null;
 };
 
-export default async function TextContentPage() {
+export default async function TextContentPage({ searchParams }: { searchParams: Promise<{ toast?: string; id?: string }> }) {
   await requireAdmin();
+  const { toast, id } = await searchParams;
 
   let items: TextContentItem[] = [];
   let error: { message: string } | null = null;
@@ -113,7 +115,7 @@ export default async function TextContentPage() {
                   </thead>
                   <tbody>
                     {items.map((item) => (
-                      <EditTextContentRow key={item.id} item={item} />
+                      <EditTextContentRow key={item.id} item={item} toast={toast} savedId={id} />
                     ))}
                   </tbody>
                 </table>
@@ -209,12 +211,7 @@ function CreateForm() {
         className="min-h-9 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
       />
       <div className="md:col-span-2 lg:col-span-4">
-        <button
-          type="submit"
-          className="min-h-9 w-full rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white"
-        >
-          添加文字记录
-        </button>
+        <SaveButton className="w-full">添加文字记录</SaveButton>
       </div>
     </form>
   );

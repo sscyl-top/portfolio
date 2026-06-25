@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { savePageSettings } from "./actions";
 import { HomeSectionOrderEditor } from "./HomeSectionOrderEditor";
 
@@ -66,7 +67,8 @@ const labels = {
   resume: "简历页",
 };
 
-export default async function AdminPagesPage() {
+export default async function AdminPagesPage({ searchParams }: { searchParams: Promise<{ toast?: string; slug?: string }> }) {
+  const { toast, slug } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("pages")
@@ -110,9 +112,7 @@ export default async function AdminPagesPage() {
                     {labels[page.slug]}
                   </h3>
                 </div>
-                <button className="min-h-10 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-                  保存
-                </button>
+                <SaveButton saved={toast === "page-saved" && slug === page.slug}>保存</SaveButton>
               </div>
 
               <div className="mt-5 grid gap-4 md:grid-cols-3">
@@ -142,7 +142,7 @@ export default async function AdminPagesPage() {
                     调整首页 Hero 首屏与专业能力板块的显示顺序。
                   </p>
                 </div>
-                <HomeSectionOrderEditor initialOrder={getHomeSectionOrder(page.modules)} />
+                <HomeSectionOrderEditor initialOrder={getHomeSectionOrder(page.modules)} saved={toast === "板块排序已保存"} />
               </section>
             ) : null}
           </div>

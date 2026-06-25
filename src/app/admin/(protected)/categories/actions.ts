@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
@@ -48,6 +49,7 @@ export async function createCategory(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=${encodeURIComponent("分类已创建")}`);
 }
 
 export async function updateCategory(formData: FormData) {
@@ -68,6 +70,7 @@ export async function updateCategory(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=category-saved&id=${encodeURIComponent(id)}`);
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -83,6 +86,7 @@ export async function deleteCategory(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=${encodeURIComponent("分类已删除")}`);
 }
 
 export async function createTag(formData: FormData) {
@@ -100,6 +104,7 @@ export async function createTag(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=${encodeURIComponent("标签已创建")}`);
 }
 
 export async function updateTag(formData: FormData) {
@@ -118,6 +123,7 @@ export async function updateTag(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=tag-saved&id=${encodeURIComponent(id)}`);
 }
 
 export async function deleteTag(formData: FormData) {
@@ -133,6 +139,7 @@ export async function deleteTag(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidateTaxonomy();
+  redirect(`/admin/categories?toast=${encodeURIComponent("标签已删除")}`);
 }
 
 function revalidateTaxonomy() {

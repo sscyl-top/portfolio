@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
@@ -61,10 +62,8 @@ export async function saveSiteSettings(formData: FormData) {
 
   const { client } = await requireAdmin();
 
-  // 先尝试自动迁移（幂等操作）
   await runHeroVideosMigration().catch(() => {});
 
-  // 第一步：先更新基础设置（列一定存在）
   const { error: baseError } = await client.from("site_settings").upsert({
     id: true,
     ...baseParsed.data,
@@ -74,7 +73,6 @@ export async function saveSiteSettings(formData: FormData) {
     throw new Error(baseError.message);
   }
 
-  // 第二步：尝试更新hero视频字段（列可能不存在，失败不影响基础设置保存）
   const heroParsed = heroVideoSchema.safeParse({
     hero_main_video_media_id: formData.get("hero_main_video_media_id") || null,
     hero_side1_video_media_id: formData.get("hero_side1_video_media_id") || null,
@@ -88,7 +86,6 @@ export async function saveSiteSettings(formData: FormData) {
     }).eq("id", true);
 
     if (heroError) {
-      // 不再静默吞掉错误 — 如果 hero 列不存在，告知用户需执行迁移
       const isColumnMissing = heroError.message.includes("column") && heroError.message.includes("does not exist");
       if (isColumnMissing) {
         throw new Error(
@@ -101,4 +98,5 @@ export async function saveSiteSettings(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/settings");
+  redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}`);
 }

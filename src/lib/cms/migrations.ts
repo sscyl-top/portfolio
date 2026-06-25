@@ -1,7 +1,6 @@
 import { Pool } from "pg";
 
 let heroMigrationPromise: Promise<boolean> | null = null;
-let bucketMigrationPromise: Promise<boolean> | null = null;
 let musicSettingsMigrationPromise: Promise<boolean> | null = null;
 
 function getDbConnectionString(): string | null {
@@ -88,36 +87,52 @@ export async function runHeroVideosMigration(): Promise<boolean> {
 }
 
 /**
- * 修复portfolio-media bucket的文件大小限制（默认可能只有50MB，设置为100MB以支持视频上传）
+ * 修复portfolio-media bucket的文件大小限制
+ * 使用多种策略确保限制更新成功：
+ * 1. 通过SQL直接更新storage.buckets表
+ * 2. 通过Supabase Storage API更新bucket配置
  */
 export async function runBucketSizeLimitMigration(): Promise<boolean> {
-  if (bucketMigrationPromise) return bucketMigrationPromise;
+  let success = false;
+  const TEN_GB = 10 * 1024 * 1024 * 1024;
 
-  bucketMigrationPromise = (async () => {
-    const connectionString = getDbConnectionString();
-    if (!connectionString) {
-      console.warn("[DB Migration] No database connection string found for bucket migration");
-      return false;
-    }
-
+  const connectionString = getDbConnectionString();
+  if (connectionString) {
     const pool = new Pool({ connectionString });
     try {
-      // 设置文件大小限制为100MB（104857600字节）
       await pool.query(`
         UPDATE storage.buckets
-        SET file_size_limit = 104857600
+        SET file_size_limit = ${TEN_GB}
         WHERE id = 'portfolio-media'
-          AND (file_size_limit IS NULL OR file_size_limit < 104857600);
+          AND (file_size_limit IS NULL OR file_size_limit < ${TEN_GB});
       `);
-      console.log("[DB Migration] Bucket file size limit updated to 100MB");
-      return true;
+      console.log("[DB Migration] Bucket file size limit updated to 10GB via SQL");
+      success = true;
     } catch (err) {
-      console.error("[DB Migration] Failed to update bucket size limit:", err);
-      return false;
+      console.error("[DB Migration] SQL bucket size update failed:", err);
     } finally {
       await pool.end();
     }
-  })();
+  }
 
-  return bucketMigrationPromise;
+  if (!success) {
+    try {
+      const { createSupabaseServiceClient } = await import("@/lib/supabase/service");
+      const service = createSupabaseServiceClient();
+      const { error } = await service.storage.updateBucket("portfolio-media", {
+        public: true,
+        fileSizeLimit: TEN_GB,
+      });
+      if (error) {
+        console.error("[DB Migration] Storage API bucket update failed:", error);
+      } else {
+        console.log("[DB Migration] Bucket file size limit updated to 10GB via Storage API");
+        success = true;
+      }
+    } catch (err) {
+      console.error("[DB Migration] Storage API bucket update error:", err);
+    }
+  }
+
+  return success;
 }

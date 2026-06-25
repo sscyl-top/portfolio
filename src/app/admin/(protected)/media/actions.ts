@@ -1,7 +1,8 @@
-﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
@@ -140,6 +141,7 @@ export async function updateMediaAltText(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/media");
+  redirect(`/admin/media?toast=alt-saved&id=${encodeURIComponent(parsed.data.id)}`);
 }
 
 export async function deleteMediaAsset(formData: FormData) {

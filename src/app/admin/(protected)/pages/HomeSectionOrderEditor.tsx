@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { saveHomeSectionOrder } from "./actions";
 
 const SECTIONS = [
@@ -12,7 +13,7 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-export function HomeSectionOrderEditor({ initialOrder }: { initialOrder: SectionId[] }) {
+export function HomeSectionOrderEditor({ initialOrder, saved }: { initialOrder: SectionId[]; saved?: boolean }) {
   const [order, setOrder] = useState<SectionId[]>(() => {
     const valid = initialOrder.filter((id): id is SectionId =>
       SECTIONS.some((s) => s.id === id),
@@ -69,9 +70,7 @@ export function HomeSectionOrderEditor({ initialOrder }: { initialOrder: Section
         );
       })}
       <div className="mt-4 flex justify-end">
-        <button className="min-h-10 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white">
-          保存板块排序
-        </button>
+        <SaveButton saved={saved}>保存板块排序</SaveButton>
       </div>
     </form>
   );

@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MediaPicker } from "@/components/admin/MediaPicker";
+import { SaveButton } from "@/components/admin/SaveButton";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 
 import { getHeroVideoConfig, saveHeroVideos } from "./actions";
@@ -20,7 +21,8 @@ type VideoSlotConfig = {
   preview: "main" | "side-1" | "side-2" | "side-3";
 };
 
-export default async function AdminHeroPage() {
+export default async function AdminHeroPage({ searchParams }: { searchParams: Promise<{ toast?: string }> }) {
+  const { toast } = await searchParams;
   const [config, supabase] = await Promise.all([
     getHeroVideoConfig(),
     createSupabaseServerClient(),
@@ -136,10 +138,8 @@ export default async function AdminHeroPage() {
           );
         })}
 
-        <div className="flex justify-end">
-          <button className="min-h-10 rounded-md bg-cyan px-6 text-sm font-medium text-black transition hover:bg-white">
-            保存 Hero 配置
-          </button>
+        <div className="flex items-center justify-end gap-2">
+          <SaveButton saved={toast === "Hero配置保存成功"}>保存 Hero 配置</SaveButton>
         </div>
       </form>
     </div>

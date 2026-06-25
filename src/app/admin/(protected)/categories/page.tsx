@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Plus, Save, Trash2 } from "lucide-react";
 
+import { SaveButton } from "@/components/admin/SaveButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import {
@@ -25,7 +26,8 @@ type TagRow = {
   slug: string;
 };
 
-export default async function AdminCategoriesPage() {
+export default async function AdminCategoriesPage({ searchParams }: { searchParams: Promise<{ toast?: string; id?: string }> }) {
+  const { toast, id } = await searchParams;
   const supabase = await createSupabaseServerClient();
   const [
     { data: categories, error: categoryError },
@@ -72,15 +74,15 @@ export default async function AdminCategoriesPage() {
         </p>
       ) : (
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)]">
-          <CategoryPanel categories={(categories ?? []) as CategoryRow[]} />
-          <TagPanel tags={(tags ?? []) as TagRow[]} />
+          <CategoryPanel categories={(categories ?? []) as CategoryRow[]} toast={toast} savedId={id} />
+          <TagPanel tags={(tags ?? []) as TagRow[]} toast={toast} savedId={id} />
         </div>
       )}
     </div>
   );
 }
 
-function CategoryPanel({ categories }: { categories: CategoryRow[] }) {
+function CategoryPanel({ categories, toast, savedId }: { categories: CategoryRow[]; toast?: string; savedId?: string }) {
   return (
     <section>
       <div className="flex items-center justify-between gap-4">
@@ -123,10 +125,7 @@ function CategoryPanel({ categories }: { categories: CategoryRow[] }) {
           />
           可见
         </label>
-        <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          新增
-        </button>
+        <SaveButton><Plus aria-hidden="true" className="h-4 w-4" />新增</SaveButton>
       </form>
 
       <div className="mt-4 overflow-x-auto border-y border-white/10">
@@ -147,7 +146,7 @@ function CategoryPanel({ categories }: { categories: CategoryRow[] }) {
             </thead>
             <tbody className="divide-y divide-white/10">
               {categories.map((category) => (
-                <CategoryRowEditor key={category.id} category={category} />
+                <CategoryRowEditor key={category.id} category={category} toast={toast} savedId={savedId} />
               ))}
             </tbody>
           </table>
@@ -157,7 +156,7 @@ function CategoryPanel({ categories }: { categories: CategoryRow[] }) {
   );
 }
 
-function CategoryRowEditor({ category }: { category: CategoryRow }) {
+function CategoryRowEditor({ category, toast, savedId }: { category: CategoryRow; toast?: string; savedId?: string }) {
   return (
     <tr className="align-middle">
       <td className="py-3 pr-3">
@@ -211,13 +210,7 @@ function CategoryRowEditor({ category }: { category: CategoryRow }) {
       </td>
       <td className="py-3 pl-3">
         <div className="flex justify-end gap-2">
-          <button
-            form={`category-${category.id}`}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md border border-cyan/30 px-3 text-sm text-cyan transition hover:bg-cyan/10"
-          >
-            <Save aria-hidden="true" className="h-4 w-4" />
-            保存
-          </button>
+          <SaveButton form={`category-${category.id}`} variant="outline" saved={toast === "category-saved" && savedId === category.id}><Save aria-hidden="true" className="h-4 w-4" />保存</SaveButton>
           <form action={deleteCategory}>
             <input type="hidden" name="id" value={category.id} />
             <button className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-300/25 px-3 text-sm text-red-200 transition hover:bg-red-300/10">
@@ -231,7 +224,7 @@ function CategoryRowEditor({ category }: { category: CategoryRow }) {
   );
 }
 
-function TagPanel({ tags }: { tags: TagRow[] }) {
+function TagPanel({ tags, toast, savedId }: { tags: TagRow[]; toast?: string; savedId?: string }) {
   return (
     <section>
       <div className="flex items-center justify-between gap-4">
@@ -258,10 +251,7 @@ function TagPanel({ tags }: { tags: TagRow[] }) {
           placeholder="url-slug"
           className={`${fieldClassName} font-mono`}
         />
-        <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white">
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          新增
-        </button>
+        <SaveButton><Plus aria-hidden="true" className="h-4 w-4" />新增</SaveButton>
       </form>
 
       <div className="mt-4 grid gap-3">
@@ -270,14 +260,14 @@ function TagPanel({ tags }: { tags: TagRow[] }) {
             暂无标签。
           </p>
         ) : (
-          tags.map((tag) => <TagRowEditor key={tag.id} tag={tag} />)
+          tags.map((tag) => <TagRowEditor key={tag.id} tag={tag} toast={toast} savedId={savedId} />)
         )}
       </div>
     </section>
   );
 }
 
-function TagRowEditor({ tag }: { tag: TagRow }) {
+function TagRowEditor({ tag, toast, savedId }: { tag: TagRow; toast?: string; savedId?: string }) {
   return (
     <article className="rounded-md border border-white/10 bg-white/[0.035] p-3">
       <form
@@ -300,10 +290,7 @@ function TagRowEditor({ tag }: { tag: TagRow }) {
           defaultValue={tag.slug}
           className={`${fieldClassName} font-mono`}
         />
-        <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-cyan/30 px-3 text-sm text-cyan transition hover:bg-cyan/10">
-          <Save aria-hidden="true" className="h-4 w-4" />
-          保存
-        </button>
+        <SaveButton variant="outline" saved={toast === "tag-saved" && savedId === tag.id}><Save aria-hidden="true" className="h-4 w-4" />保存</SaveButton>
       </form>
       <form action={deleteTag} className="mt-2 flex justify-end">
         <input type="hidden" name="id" value={tag.id} />

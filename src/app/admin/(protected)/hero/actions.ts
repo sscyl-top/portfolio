@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
@@ -25,10 +26,6 @@ type PageModule = {
 const HERO_MODULE_ID = "hero-videos";
 const HERO_MODULE_TYPE = "hero_videos";
 
-/**
- * Save hero video configuration into the pages.modules jsonb field
- * for the 'home' page row. No database migration required.
- */
 export async function saveHeroVideos(formData: FormData) {
   const toUuid = (value: FormDataEntryValue | null): string | null => {
     const str = String(value ?? "").trim();
@@ -49,7 +46,6 @@ export async function saveHeroVideos(formData: FormData) {
 
   const { client } = await requireAdmin();
 
-  // Read existing home page row (if any) to preserve other modules
   const { data: existing } = await client
     .from("pages")
     .select("slug,title,modules,seo_title,seo_description")
@@ -84,12 +80,9 @@ export async function saveHeroVideos(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/hero");
+  redirect(`/admin/hero?toast=${encodeURIComponent("Hero配置保存成功")}`);
 }
 
-/**
- * Read hero video configuration from the pages table.
- * Returns null if no configuration exists yet.
- */
 export async function getHeroVideoConfig(): Promise<HeroVideoSettings | null> {
   try {
     const { createSupabaseServerClient } = await import("@/lib/supabase/server");

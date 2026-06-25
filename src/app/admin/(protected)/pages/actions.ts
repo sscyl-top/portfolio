@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
@@ -52,6 +53,7 @@ export async function savePageSettings(formData: FormData) {
   revalidatePath("/works");
   revalidatePath("/resume");
   revalidatePath("/admin/pages");
+  redirect(`/admin/pages?toast=page-saved&slug=${encodeURIComponent(parsed.data.slug)}`);
 }
 
 /**
@@ -100,4 +102,5 @@ export async function saveHomeSectionOrder(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/pages");
+  redirect(`/admin/pages?toast=${encodeURIComponent("板块排序已保存")}`);
 }
