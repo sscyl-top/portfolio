@@ -406,6 +406,23 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     blockId: string;
   } | null>(null);
 
+  // ── 可拖拽悬浮球位置 ──
+  const [fabPos, setFabPos] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("fab-position");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed.x === "number" && typeof parsed.y === "number") return parsed;
+        } catch { /* ignore */ }
+      }
+    }
+    return { x: 0, y: 0 };
+  });
+  const [fabDragging, setFabDragging] = useState(false);
+  const fabDragOffsetRef = useRef({ x: 0, y: 0 });
+  const fabHasMovedRef = useRef(false);
+
   // 乐观更新：立即替换本地 payload，不等待服务器响应
   // 使用函数式 setState 基于 prev 状态更新，避免因事件时序导致的覆盖
   const handleOptimisticUpdate = useCallback(
@@ -466,6 +483,52 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       }
     };
   }, []);
+
+  // ── FAB 悬浮球拖拽事件 ──
+  const fabInitializedRef = useRef(false);
+  useEffect(() => {
+    if (!fabInitializedRef.current) {
+      fabInitializedRef.current = true;
+      const saved = localStorage.getItem("fab-position");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+            setFabPos({ x: parsed.x, y: parsed.y });
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+      // 默认位置：右下角
+      setFabPos({ x: window.innerWidth - 56, y: window.innerHeight - 56 });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!fabDragging) return;
+      e.preventDefault();
+      fabHasMovedRef.current = true;
+      const btnSize = 48;
+      const newX = Math.max(8, Math.min(window.innerWidth - btnSize - 8, e.clientX - fabDragOffsetRef.current.x));
+      const newY = Math.max(8, Math.min(window.innerHeight - btnSize - 8, e.clientY - fabDragOffsetRef.current.y));
+      setFabPos({ x: newX, y: newY });
+    };
+    const handleMouseUp = () => {
+      if (fabDragging) {
+        setFabDragging(false);
+        if (fabHasMovedRef.current) {
+          localStorage.setItem("fab-position", JSON.stringify(fabPos));
+        }
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [fabDragging, fabPos]);
 
   // 多图排列方式询问
   const [imageLayoutChoice, setImageLayoutChoice] = useState<{

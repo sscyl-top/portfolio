@@ -420,6 +420,7 @@ function HeroTicker({
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const templateRef = useRef<HTMLDivElement>(null);
 
   // 构建带分隔符的 items 数组（在每个元素之间插入 "·"）
   const itemsWithDots: string[] = [];
@@ -437,8 +438,8 @@ function HeroTicker({
     if (prefersReducedMotion) return;
 
     const track = trackRef.current;
-    const viewport = viewportRef.current;
-    if (!track || !viewport) return;
+    const template = templateRef.current;
+    if (!track || !template) return;
 
     const pixelsPerSecond = 50;
     let rafId: number | null = null;
@@ -450,18 +451,19 @@ function HeroTicker({
       const dt = (time - lastTime) / 1000;
       lastTime = time;
 
-      const singleWidth = track.scrollWidth / 2;
-      if (singleWidth > 1) {
+      const itemWidth = template.offsetWidth;
+      if (itemWidth > 1) {
         x -= pixelsPerSecond * dt;
-        // 模运算实现无缝循环：x 在 [-singleWidth, 0) 之间
-        x = ((x % singleWidth) + singleWidth) % singleWidth - singleWidth;
+        // 模运算：x 在 [-itemWidth, 0) 之间
+        // 当 x 移动到 -itemWidth 时，第2份内容刚好到达第1份的起始位置，视觉上无缝衔接
+        x = ((x % itemWidth) + itemWidth) % itemWidth - itemWidth;
         track.style.transform = `translate3d(${x}px, 0, 0)`;
       }
 
       rafId = requestAnimationFrame(tick);
     };
 
-    // 等待一帧确保布局完成
+    // 延迟一帧启动，确保 DOM 布局完成、字体加载后宽度准确
     rafId = requestAnimationFrame(tick);
 
     return () => {
@@ -469,19 +471,22 @@ function HeroTicker({
     };
   }, []);
 
+  // 固定渲染 10 份相同内容，确保在任何超宽屏（含4K）上都不会出现空白断裂
+  const CLONE_COUNT = 10;
+
   return (
     <div className="absolute inset-x-0 top-16 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
       <div ref={viewportRef} className="w-full overflow-hidden">
-        <div
-          ref={trackRef}
-          className="flex w-max items-center font-mono text-xs text-white/40"
-        >
-          {/* 复制两份完全相同的内容，用于无缝循环 */}
-          {[0, 1].map((group) => (
-            <div key={group} className="flex shrink-0 items-center gap-8 whitespace-nowrap pr-8">
-              {itemsWithDots.map((item, index) => (
+        <div ref={trackRef} className="flex w-max items-center">
+          {Array.from({ length: CLONE_COUNT }, (_, i) => (
+            <div
+              key={i}
+              ref={i === 0 ? templateRef : undefined}
+              className="flex shrink-0 items-center gap-8 whitespace-nowrap pr-8 font-mono text-xs text-white/40"
+            >
+              {itemsWithDots.map((item, j) => (
                 <span
-                  key={`${group}-${index}`}
+                  key={j}
                   className={item === "·" ? "text-copper" : ""}
                 >
                   {item}
