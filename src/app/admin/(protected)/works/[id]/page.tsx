@@ -12,6 +12,7 @@ import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { StatusSelect } from "@/components/admin/StatusSelect";
 import { WorkMediaSelect } from "@/components/admin/WorkMediaSelect";
+import { ResizableTwoPanels } from "@/components/admin/ResizableTwoPanels";
 
 import {
   clearPrivatePreviewLink,
@@ -146,11 +147,11 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full min-h-0 flex-col">
       {toast ? <ToastHandler message={toast} /> : null}
 
       {/* ══ 顶部工具栏：返回 + 删除 ══ */}
-      <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-white/8 pb-4">
         <Link
           href="/admin/works"
           className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
@@ -167,96 +168,105 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* Work editor layout: main canvas fills available width, tools panel fixed at 340px on the right. */}
-      <div className="grid w-full grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        {/* Main editing canvas: title, summary, and visual content blocks. Fills remaining space. */}
-        <div className="min-w-0">
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
-            <form id="mainWorkForm" action={updateWork}>
-              <input type="hidden" name="id" value={workRow.id} />
-              <input type="hidden" name="slug" value={workRow.slug} />
+      {/* ══ 可拖拽分栏：中间编辑区(默认1420px，与前台一致) + 右侧功能面板 ══ */}
+      <div className="mt-6 min-h-0 flex-1">
+        <ResizableTwoPanels
+          storageKey="admin-editor-width"
+          defaultLeftWidth={1420}
+          minLeftWidth={600}
+          maxLeftWidth={3000}
+          minRightWidth={280}
+          leftClassName="h-full"
+          rightClassName="h-full"
+          left={
+            <div className="h-full overflow-y-auto pr-3">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
+                <form id="mainWorkForm" action={updateWork}>
+                  <input type="hidden" name="id" value={workRow.id} />
+                  <input type="hidden" name="slug" value={workRow.slug} />
 
-              {/* 标题输入（大字体无边框） */}
-              <div className="border-b border-white/[0.06] pb-5">
-                <div className="flex items-end gap-4">
-                  <input
-                    id="work-title"
-                    name="title"
-                    defaultValue={workRow.title}
-                    required
-                    placeholder="输入作品名称"
-                    className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
-                  />
-                </div>
+                  {/* 标题输入（大字体无边框） */}
+                  <div className="border-b border-white/[0.06] pb-5">
+                    <div className="flex items-end gap-4">
+                      <input
+                        id="work-title"
+                        name="title"
+                        defaultValue={workRow.title}
+                        required
+                        placeholder="输入作品名称"
+                        className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 设计说明文案（紧接标题下方） */}
+                  <div className="pt-5">
+                    <label className="block">
+                      <span className="sr-only">设计说明</span>
+                      <textarea
+                        name="summary"
+                        defaultValue={workRow.summary}
+                        rows={3}
+                        placeholder="可以直接输入文字，在这里介绍你的作品理念、设计思路或项目背景…"
+                        className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                </form>
+
+                {/* 内容块编辑器 */}
+                <VisualBlockEditor
+                  workId={workRow.id}
+                  workSlug={workRow.slug}
+                  initialBlocks={blockRows}
+                  mediaAssets={mediaRows}
+                  embedded
+                />
               </div>
-
-              {/* 设计说明文案（紧接标题下方） */}
-              <div className="pt-5">
-                <label className="block">
-                  <span className="sr-only">设计说明</span>
-                  <textarea
-                    name="summary"
-                    defaultValue={workRow.summary}
-                    rows={3}
-                    placeholder="可以直接输入文字，在这里介绍你的作品理念、设计思路或项目背景…"
-                    className="w-full resize-y border-0 bg-transparent px-0 text-sm leading-relaxed text-white/65 outline-none placeholder:text-white/20 focus:outline-none"
-                  />
-                </label>
+            </div>
+          }
+          right={
+            <div className="h-full space-y-3 overflow-y-auto pl-3">
+              {/* 私密预览 */}
+              <div className="grid gap-3">
+                <SaveWorkCard updatedAt={workRow.updated_at} />
+                <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
               </div>
-            </form>
-
-            {/* 内容块编辑器 — 与标题/文案融为一体，操作按钮通过悬浮⊕提供 */}
-            <VisualBlockEditor
-              workId={workRow.id}
-              workSlug={workRow.slug}
-              initialBlocks={blockRows}
-              mediaAssets={mediaRows}
-              embedded
-            />
-
-          </div>
-        </div>
-
-        {/* Tools panel: media, taxonomy, settings, and version history. Fixed 340px width on the right. */}
-        <div className="min-w-0 self-start space-y-3 scrollbar-thin xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
-          {/* 私密预览 */}
-          <div className="grid gap-3">
-            <SaveWorkCard updatedAt={workRow.updated_at} />
-            <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-          </div>
-          {/* 媒体选择 */}
-          <MediaForm mediaAssets={mediaRows} work={workRow} />
-          {/* 分类与标签（折叠） */}
-          <CollapsibleSection
-            title="分类与标签"
-            defaultOpen
-            action={
-              <span className="text-[10px] text-white/30">
-                {selectedCategoryIds.size + selectedTagIds.size} 项已选
-              </span>
-            }
-          >
-            <TaxonomyForm
-              categories={categoryRows}
-              selectedCategoryIds={selectedCategoryIds}
-              selectedTagIds={selectedTagIds}
-              tags={tagRows}
-              work={workRow}
-            />
-          </CollapsibleSection>
-          {/* 更多设置（折叠） */}
-          <div className="grid gap-3">
-            <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
-              <SettingsPanel work={workRow} />
-            </CollapsibleSection>
-            {/* 版本历史（折叠） */}
-            <VersionHistoryPanel
-              workId={workRow.id}
-              workSlug={workRow.slug}
-              versions={versionRows}
-            />
-          </div>
-        </div>
+              {/* 媒体选择 */}
+              <MediaForm mediaAssets={mediaRows} work={workRow} />
+              {/* 分类与标签（折叠） */}
+              <CollapsibleSection
+                title="分类与标签"
+                defaultOpen
+                action={
+                  <span className="text-[10px] text-white/30">
+                    {selectedCategoryIds.size + selectedTagIds.size} 项已选
+                  </span>
+                }
+              >
+                <TaxonomyForm
+                  categories={categoryRows}
+                  selectedCategoryIds={selectedCategoryIds}
+                  selectedTagIds={selectedTagIds}
+                  tags={tagRows}
+                  work={workRow}
+                />
+              </CollapsibleSection>
+              {/* 更多设置（折叠） */}
+              <div className="grid gap-3">
+                <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
+                  <SettingsPanel work={workRow} />
+                </CollapsibleSection>
+                {/* 版本历史（折叠） */}
+                <VersionHistoryPanel
+                  workId={workRow.id}
+                  workSlug={workRow.slug}
+                  versions={versionRows}
+                />
+              </div>
+            </div>
+          }
+        />
       </div>
     </div>
   );

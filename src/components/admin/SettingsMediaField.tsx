@@ -134,7 +134,7 @@ export function SettingsMediaField({
   }, [handleUpload]);
 
   return (
-    <label className="grid gap-2 text-sm">
+    <div className="grid gap-2 text-sm">
       <span className="text-white/58">{label}</span>
 
       <div
@@ -256,6 +256,6 @@ export function SettingsMediaField({
 
       {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
-    </label>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 
-let migrationPromise: Promise<boolean> | null = null;
+let heroMigrationPromise: Promise<boolean> | null = null;
+let bucketMigrationPromise: Promise<boolean> | null = null;
 
 function getDbConnectionString(): string | null {
   return (
@@ -13,12 +14,12 @@ function getDbConnectionString(): string | null {
 }
 
 export async function runHeroVideosMigration(): Promise<boolean> {
-  if (migrationPromise) return migrationPromise;
+  if (heroMigrationPromise) return heroMigrationPromise;
 
-  migrationPromise = (async () => {
+  heroMigrationPromise = (async () => {
     const connectionString = getDbConnectionString();
     if (!connectionString) {
-      console.warn("[DB Migration] No database connection string found in env vars (DATABASE_URL/POSTGRES_URL/SUPABASE_DB_URL)");
+      console.warn("[DB Migration] No database connection string found in env vars");
       return false;
     }
 
@@ -41,5 +42,40 @@ export async function runHeroVideosMigration(): Promise<boolean> {
     }
   })();
 
-  return migrationPromise;
+  return heroMigrationPromise;
+}
+
+/**
+ * 修复portfolio-media bucket的文件大小限制（默认可能只有50MB，设置为100MB以支持视频上传）
+ */
+export async function runBucketSizeLimitMigration(): Promise<boolean> {
+  if (bucketMigrationPromise) return bucketMigrationPromise;
+
+  bucketMigrationPromise = (async () => {
+    const connectionString = getDbConnectionString();
+    if (!connectionString) {
+      console.warn("[DB Migration] No database connection string found for bucket migration");
+      return false;
+    }
+
+    const pool = new Pool({ connectionString });
+    try {
+      // 设置文件大小限制为100MB（104857600字节）
+      await pool.query(`
+        UPDATE storage.buckets
+        SET file_size_limit = 104857600
+        WHERE id = 'portfolio-media'
+          AND (file_size_limit IS NULL OR file_size_limit < 104857600);
+      `);
+      console.log("[DB Migration] Bucket file size limit updated to 100MB");
+      return true;
+    } catch (err) {
+      console.error("[DB Migration] Failed to update bucket size limit:", err);
+      return false;
+    } finally {
+      await pool.end();
+    }
+  })();
+
+  return bucketMigrationPromise;
 }

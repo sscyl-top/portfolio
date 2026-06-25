@@ -230,7 +230,7 @@ export default async function AdminSettingsPage() {
         <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
           <h3 className="text-sm font-medium text-white/70">首页第一屏 Hero 视频</h3>
           <p className="mt-1 text-xs text-white/40">
-            首页第一屏4个卡片的背景视频。支持直接拖拽上传或从媒体库选择，MP4/WEBM/OGG/MOV 格式，最大 80MB。不上传则显示渐变占位色。
+            首页第一屏4个卡片的背景视频。支持直接拖拽上传或从媒体库选择，MP4/WEBM/OGG/MOV 格式，最大 100MB。不上传则显示渐变占位色。
           </p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <SettingsVideoField

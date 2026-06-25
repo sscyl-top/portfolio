@@ -4,6 +4,7 @@ import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildStorageKey } from "@/lib/cms/admin-model";
+import { runBucketSizeLimitMigration } from "@/lib/cms/migrations";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,9 @@ export async function POST(request: Request) {
   if (!user) {
     return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
   }
+
+  // 自动修复bucket文件大小限制（幂等操作，设置为100MB）
+  await runBucketSizeLimitMigration().catch(() => {});
 
   const service = createSupabaseServiceClient();
 

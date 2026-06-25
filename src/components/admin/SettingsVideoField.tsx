@@ -62,8 +62,8 @@ export function SettingsVideoField({
       return;
     }
 
-    if (file.size > 80 * 1024 * 1024) {
-      setError("视频文件大小不能超过 80MB");
+    if (file.size > 100 * 1024 * 1024) {
+      setError("视频文件大小不能超过 100MB");
       return;
     }
 
@@ -156,7 +156,7 @@ export function SettingsVideoField({
   };
 
   return (
-    <label className="grid gap-2 text-sm">
+    <div className="grid gap-2 text-sm">
       <span className="text-white/58">{label}</span>
 
       <div
@@ -217,7 +217,7 @@ export function SettingsVideoField({
                 {isUploading ? "上传中..." : "点击或拖拽视频到此处上传"}
               </p>
               <p className="mt-0.5 text-[10px] text-white/25">
-                支持 MP4 / WEBM / OGG / MOV，最大 80MB
+                支持 MP4 / WEBM / OGG / MOV，最大 100MB
               </p>
             </div>
           </button>
@@ -276,6 +276,6 @@ export function SettingsVideoField({
 
       {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
-    </label>
+    </div>
   );
 }
