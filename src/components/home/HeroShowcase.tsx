@@ -418,6 +418,9 @@ function HeroTicker({
       ? textOverrides.tickerItems
       : resume.highlights;
 
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
   // 构建带分隔符的 items 数组（在每个元素之间插入 "·"）
   const itemsWithDots: string[] = [];
   tickerItems.forEach((item, i) => {
@@ -427,21 +430,66 @@ function HeroTicker({
     }
   });
 
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReducedMotion) return;
+
+    const track = trackRef.current;
+    const viewport = viewportRef.current;
+    if (!track || !viewport) return;
+
+    const pixelsPerSecond = 50;
+    let rafId: number | null = null;
+    let lastTime: number | null = null;
+    let x = 0;
+
+    const tick = (time: number) => {
+      if (lastTime === null) lastTime = time;
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+
+      const singleWidth = track.scrollWidth / 2;
+      if (singleWidth > 1) {
+        x -= pixelsPerSecond * dt;
+        // 模运算实现无缝循环：x 在 [-singleWidth, 0) 之间
+        x = ((x % singleWidth) + singleWidth) % singleWidth - singleWidth;
+        track.style.transform = `translate3d(${x}px, 0, 0)`;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    // 等待一帧确保布局完成
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   return (
     <div className="absolute inset-x-0 top-16 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
-      <div className="ticker-track flex w-max min-w-[200%] items-center font-mono text-xs text-white/40">
-        {[0, 1].map((group) => (
-          <div key={group} className="ticker-group flex shrink-0 items-center gap-8 whitespace-nowrap pr-8">
-            {itemsWithDots.map((item, index) => (
-              <span
-                key={`${group}-${index}`}
-                className={item === "·" ? "text-copper" : ""}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        ))}
+      <div ref={viewportRef} className="w-full overflow-hidden">
+        <div
+          ref={trackRef}
+          className="flex w-max items-center font-mono text-xs text-white/40"
+        >
+          {/* 复制两份完全相同的内容，用于无缝循环 */}
+          {[0, 1].map((group) => (
+            <div key={group} className="flex shrink-0 items-center gap-8 whitespace-nowrap pr-8">
+              {itemsWithDots.map((item, index) => (
+                <span
+                  key={`${group}-${index}`}
+                  className={item === "·" ? "text-copper" : ""}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
