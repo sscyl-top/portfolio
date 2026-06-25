@@ -5,30 +5,20 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { runBucketSizeLimitMigration } from "@/lib/cms/migrations";
+import { isCosConfigured, createCosSignedUploadUrl } from "@/lib/cos/client";
 
 export const runtime = "nodejs";
 
-/**
- * 生成 Supabase Storage 签名上传 URL
- * 浏览器拿到 URL 后直接 PUT 文件到 Supabase，不经过 Vercel
- * 彻底绕过 Vercel 4.5MB 请求体限制
- */
 export async function POST(request: Request) {
-  // 认证
   const supabase = await createSupabaseServerClient();
   const user = await getAuthorizedAdmin(supabase);
   if (!user) {
     return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
   }
 
-  // 自动修复bucket文件大小限制（幂等操作，设置为10GB）
-  await runBucketSizeLimitMigration().catch(() => {});
-
-  const service = createSupabaseServiceClient();
-
   try {
     const body = await request.json();
-    const { filename, fileSize } = body;
+    const { filename, fileSize, contentType } = body;
 
     if (!filename || typeof filename !== "string") {
       return Response.json({ error: "缺少文件名" }, { status: 400 });
@@ -38,7 +28,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "缺少文件大小" }, { status: 400 });
     }
 
-    // 10GB 单文件上限
     const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024;
     if (fileSize > MAX_FILE_SIZE) {
       return Response.json(
@@ -50,7 +39,22 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const storageKey = buildStorageKey(filename, id);
 
-    // 用 service_role 生成签名上传 URL
+    if (isCosConfigured()) {
+      const result = await createCosSignedUploadUrl(
+        storageKey,
+        contentType || "application/octet-stream",
+      );
+
+      return Response.json({
+        signedUrl: result.signedUrl,
+        id: result.id,
+        storageKey: result.storageKey,
+      });
+    }
+
+    await runBucketSizeLimitMigration().catch(() => {});
+
+    const service = createSupabaseServiceClient();
     const { data, error } = await service.storage
       .from("portfolio-media")
       .createSignedUploadUrl(storageKey);

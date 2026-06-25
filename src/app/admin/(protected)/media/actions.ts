@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-session";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
+import { isCosConfigured, uploadCosObject, deleteCosObject } from "@/lib/cos/client";
 import { execFile } from "node:child_process";
 import { writeFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -68,14 +69,19 @@ export async function uploadMediaAsset(formData: FormData) {
   const storageKey = buildStorageKey(file.name, id);
   const mimeType = file.type || "application/octet-stream";
 
-  const { error: uploadError } = await client.storage
-    .from("portfolio-media")
-    .upload(storageKey, file, {
-      contentType: mimeType,
-      upsert: false,
-    });
+  if (isCosConfigured()) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await uploadCosObject(storageKey, buffer, mimeType);
+  } else {
+    const { error: uploadError } = await client.storage
+      .from("portfolio-media")
+      .upload(storageKey, file, {
+        contentType: mimeType,
+        upsert: false,
+      });
 
-  if (uploadError) throw new Error(uploadError.message);
+    if (uploadError) throw new Error(uploadError.message);
+  }
 
   // Read the first 2 KiB for image dimension detection. Sharp is not
   // required; PNG/JPEG/GIF/WebP headers are parsed in pure JS.
@@ -116,8 +122,11 @@ export async function uploadMediaAsset(formData: FormData) {
   });
 
   if (dbError) {
-    // DB 插入失败时回滚 Storage 中的文件，避免孤儿文件
-    await client.storage.from("portfolio-media").remove([storageKey]);
+    if (isCosConfigured()) {
+      await deleteCosObject(storageKey).catch(() => {});
+    } else {
+      await client.storage.from("portfolio-media").remove([storageKey]).catch(() => {});
+    }
     throw new Error(dbError.message);
   }
 

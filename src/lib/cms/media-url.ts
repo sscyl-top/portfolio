@@ -1,14 +1,12 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/client";
 
-/**
- * Builds the public read URL for an object in the portfolio-media bucket.
- * The bucket is public (see the CMS foundation migration), so no signed URL
- * is required. The URL is deterministic from the Supabase project URL and the
- * storage key, which keeps it usable in server components without a client.
- */
 export function buildPublicMediaUrl(storageKey: string) {
-  const { url } = getSupabasePublicConfig();
+  if (isCosConfigured()) {
+    return buildCosPublicUrl(storageKey);
+  }
 
+  const { url } = getSupabasePublicConfig();
   return `${url}/storage/v1/object/public/portfolio-media/${storageKey}`;
 }
 
@@ -18,16 +16,16 @@ export type OptimizedMediaOptions = {
   format?: "webp" | "png" | "jpg";
 };
 
-/**
- * Builds a public read URL with Supabase Storage image transformation
- * parameters. Only meaningful for image objects; non-image keys still
- * receive the same URL shape and the storage layer ignores the parameters.
- */
 export function buildOptimizedMediaUrl(
   storageKey: string,
   options: OptimizedMediaOptions = {},
 ) {
   const url = buildPublicMediaUrl(storageKey);
+
+  if (isCosConfigured()) {
+    return url;
+  }
+
   const params = new URLSearchParams();
 
   if (options.width && Number.isFinite(options.width)) {
