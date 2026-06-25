@@ -47,10 +47,11 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
     <main className="flex h-screen overflow-hidden bg-[#07090b] text-white">
       <ResizableTwoPanels
         storageKey="admin-sidebar-width"
-        defaultLeftWidth={240}
-        minLeftWidth={180}
-        maxLeftWidth={400}
-        minRightWidth={400}
+        fixedPanel="left"
+        defaultFixedWidth={240}
+        minFixedWidth={180}
+        maxFixedWidth={400}
+        minFlexWidth={400}
         leftClassName="h-full"
         rightClassName="h-full"
         left={<SidebarContent userEmail={userEmail} />}

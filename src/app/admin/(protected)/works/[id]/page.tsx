@@ -168,19 +168,20 @@ export default async function AdminWorkEditorPage({
         </form>
       </div>
 
-      {/* ══ 可拖拽分栏：中间编辑区(默认1420px，与前台一致) + 右侧功能面板 ══ */}
+      {/* ══ 可拖拽分栏：中间编辑区(flex-1, 最大1420px与前台一致) + 右侧功能面板(固定宽度可拖拽) ══ */}
       <div className="mt-6 min-h-0 flex-1">
         <ResizableTwoPanels
-          storageKey="admin-editor-width"
-          defaultLeftWidth={1420}
-          minLeftWidth={600}
-          maxLeftWidth={3000}
-          minRightWidth={280}
+          storageKey="admin-editor-panel-width"
+          fixedPanel="right"
+          defaultFixedWidth={340}
+          minFixedWidth={260}
+          maxFixedWidth={600}
+          minFlexWidth={500}
           leftClassName="h-full"
           rightClassName="h-full"
           left={
             <div className="h-full overflow-y-auto pr-3">
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
+              <div className="mx-auto max-w-[1420px] rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
                 <form id="mainWorkForm" action={updateWork}>
                   <input type="hidden" name="id" value={workRow.id} />
                   <input type="hidden" name="slug" value={workRow.slug} />
