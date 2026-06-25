@@ -9,6 +9,7 @@ type Category = {
   id: string;
   key: string;
   label: string;
+  emoji: string;
   sort_order: number;
 };
 
