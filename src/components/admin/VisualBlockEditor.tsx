@@ -338,7 +338,7 @@ function LayoutBar({
 }
 
 // ── 自由定位编辑器 ─────────────────────────────────────────
-
+// 使用本地 state 缓冲输入，避免每次按键都触发父组件重渲染导致值跳动
 function FreePositionPanel({
   free,
   onChange,
@@ -346,11 +346,18 @@ function FreePositionPanel({
   free?: FreeLayout;
   onChange: (patch: Partial<FreeLayout>) => void;
 }) {
-  const values = {
-    x: free?.x ?? 0,
-    y: free?.y ?? 0,
-    w: free?.w ?? 50,
-    h: free?.h ?? 50,
+  const defaults = { x: 0, y: 0, w: 50, h: 50 };
+  const [localValues, setLocalValues] = useState<FreeLayout>({ ...defaults, ...free });
+
+  // 当外部 free 值变化且与本地值不同时同步（但如果用户正在输入则不打断）
+  useEffect(() => {
+    setLocalValues({ ...defaults, ...free });
+  }, [free?.x, free?.y, free?.w, free?.h]);
+
+  const commit = (key: keyof FreeLayout, rawValue: string) => {
+    const num = Math.max(0, Math.min(100, Number(rawValue) || 0));
+    setLocalValues((prev) => ({ ...prev, [key]: num }));
+    onChange({ [key]: num });
   };
 
   return (
@@ -363,8 +370,14 @@ function FreePositionPanel({
             type="number"
             min={0}
             max={100}
-            value={values[key]}
-            onChange={(e) => onChange({ [key]: Number(e.target.value) })}
+            value={localValues[key]}
+            onChange={(e) => setLocalValues((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+            onBlur={(e) => commit(key, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+            }}
             className="h-7 w-16 rounded-md border border-white/10 bg-black/20 px-2 text-xs text-white/80 outline-none focus:border-cyan"
           />
         </label>
@@ -393,7 +406,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     blockId: string;
   } | null>(null);
 
-  // 乐观更新：仅更新本地 state，不触发 router.refresh()，用于布局等高频操作
+  // 乐观更新：立即替换本地 payload，不等待服务器响应
+  // 使用函数式 setState 基于 prev 状态更新，避免因事件时序导致的覆盖
   const handleOptimisticUpdate = useCallback(
     (blockId: string, newPayload: Record<string, unknown>) => {
       setBlocks((prev) =>
@@ -417,9 +431,15 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       setBlocks((prev) => {
         return prev.map((b) => {
           if (b.id !== blockId) return b;
+          const currentLayout = getLayout(b.payload);
+          let mergedLayout: Record<string, unknown> = { ...currentLayout, ...patch };
+          // 切换到"自由"宽度时，自动初始化 free 字段（如果尚未设置）
+          if (patch.width === "free" && !mergedLayout.free) {
+            mergedLayout.free = { x: 0, y: 0, w: 50, h: 50 };
+          }
           const newPayload = {
             ...b.payload,
-            layout: { ...getLayout(b.payload), ...patch },
+            layout: mergedLayout,
           };
           pendingLayoutSaveRef.current!.latestPayload = newPayload;
           return { ...b, payload: newPayload };
@@ -1264,22 +1284,24 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [workId, workSlug, router],
   );
 
-  // ── 更新块 payload ───────────────────────────────────────
-
+  // ── 更新块 payload（乐观更新） ─────────────────────────────
+  // 立即更新本地 state，后台异步保存到服务器。
+  // 服务器返回后不再覆盖本地 state（用户可能在等待期间已做了其他更改），
+  // 从而彻底消除"保存回来覆盖新布局导致按钮来回跳动"的问题。
   const handleUpdateBlock = useCallback(
-    async (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
-      try {
-        const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
-        await updateBlockDirect(workId, workSlug, blockId, payloadToSend);
-        setBlocks((prev) =>
-          prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
-        );
-        router.refresh();
-      } catch (err) {
+    (blockId: string, newPayload: Record<string, unknown>, blockType?: string) => {
+      // 立即乐观更新
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
+      );
+
+      // 后台保存（不 await，不阻塞 UI，不覆盖本地）
+      const payloadToSend = blockType ? { ...newPayload, _block_type: blockType } : newPayload;
+      updateBlockDirect(workId, workSlug, blockId, payloadToSend).catch((err) => {
         console.error("Update block failed:", err);
-      }
+      });
     },
-    [workId, workSlug, router],
+    [workId, workSlug],
   );
 
   // 布局保存（轻量版）：仅更新后端，不触发 revalidatePath/router.refresh()
@@ -1958,6 +1980,7 @@ function BlockCard({
         <FreePositionPanel
           free={layout.free}
           onChange={(patch) => {
+            // 直接将 patch 传给 onLayoutChange，由父组件的函数式 setState 基于最新 prev 状态合并
             const current = layout.free ?? { x: 0, y: 0, w: 50, h: 50 };
             onLayoutChange({ free: { ...current, ...patch } });
           }}
@@ -2105,13 +2128,18 @@ function InlineTextEditor({
 }) {
   const [heading, setHeading] = useState(String(payload.heading ?? ""));
   const [body, setBody] = useState(String(payload.body ?? ""));
+  const payloadRef = useRef(payload);
+
+  useEffect(() => {
+    payloadRef.current = payload;
+  }, [payload]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onUpdatePayload({ ...payload, heading, body });
+      onUpdatePayload({ ...payloadRef.current, heading, body });
     }, 800);
     return () => clearTimeout(timer);
-  }, [heading, body]);
+  }, [heading, body, onUpdatePayload]);
 
   return (
     <div className="space-y-3">
@@ -2514,13 +2542,18 @@ function InlineBeforeAfterEditor({
   const afterAsset = mediaAssets.find((a) => a.id === afterId);
 
   const [caption, setCaption] = useState(String(payload.caption ?? ""));
+  const payloadRef = useRef(payload);
+
+  useEffect(() => {
+    payloadRef.current = payload;
+  }, [payload]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onUpdatePayload({ ...payload, caption });
+      onUpdatePayload({ ...payloadRef.current, caption });
     }, 600);
     return () => clearTimeout(timer);
-  }, [caption]);
+  }, [caption, onUpdatePayload]);
 
   return (
     <div className="space-y-3">
