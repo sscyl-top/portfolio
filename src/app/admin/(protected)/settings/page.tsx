@@ -60,22 +60,18 @@ export default async function AdminSettingsPage() {
     hero_side3_video_media_id: null as string | null,
   };
 
-  try {
-    const { data: heroData, error: heroError } = await supabase
-      .from("site_settings")
-      .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
-      .single();
+  const { data: heroData, error: heroError } = await supabase
+    .from("site_settings")
+    .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
+    .single();
 
-    if (!heroError && heroData) {
-      heroColumns = {
-        hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
-        hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
-        hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
-        hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
-      };
-    }
-  } catch {
-    // hero视频列不存在，保持null
+  if (!heroError && heroData) {
+    heroColumns = {
+      hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
+      hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
+      hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
+      hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+    };
   }
 
   const { data: rawMedia } = await supabase

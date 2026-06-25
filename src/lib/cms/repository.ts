@@ -237,19 +237,11 @@ export async function createServerCmsRepository() {
       // 先尝试自动迁移（幂等操作）
       await runHeroVideosMigration().catch(() => {});
 
-      // 基础选择：不包含hero视频字段，确保列一定存在
-      const baseSelect = `*,
-          avatar_media:media_assets(storage_key,mime_type,alt_text),
-          logo_media:media_assets(storage_key,mime_type,alt_text),
-          share_media:media_assets(storage_key,mime_type,alt_text),
-          cta_card_media:media_assets(storage_key,mime_type,alt_text),
-          cta_figure_media:media_assets(storage_key,mime_type,alt_text),
-          cta_ticker_logo_media:media_assets(storage_key,mime_type,alt_text)`;
-
-      // 先查询基础字段（一定存在）
-      const { data: baseData, error: baseError } = await client
+      // 第一步：查询所有media_id字段（先查基础字段，再安全查询hero视频字段）
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+      const { data: baseIds, error: baseError } = await client
         .from("site_settings")
-        .select(baseSelect)
+        .select(baseIdColumns)
         .single();
 
       if (baseError) {
@@ -257,45 +249,106 @@ export async function createServerCmsRepository() {
         return getStaticPublicSiteSettings();
       }
 
-      if (!baseData) return getStaticPublicSiteSettings();
+      if (!baseIds) return getStaticPublicSiteSettings();
 
-      // 单独安全查询hero视频字段，失败就返回null
-      let heroVideoMedia: {
-        hero_main_video_media?: CmsMediaRow | null;
-        hero_side1_video_media?: CmsMediaRow | null;
-        hero_side2_video_media?: CmsMediaRow | null;
-        hero_side3_video_media?: CmsMediaRow | null;
-      } = {};
-
-      try {
-        const { data: heroData, error: heroError } = await client
-          .from("site_settings")
-          .select(`
-            hero_main_video_media_id,
-            hero_side1_video_media_id,
-            hero_side2_video_media_id,
-            hero_side3_video_media_id,
-            hero_main_video_media:media_assets(storage_key,mime_type,alt_text),
-            hero_side1_video_media:media_assets(storage_key,mime_type,alt_text),
-            hero_side2_video_media:media_assets(storage_key,mime_type,alt_text),
-            hero_side3_video_media:media_assets(storage_key,mime_type,alt_text)
-          `)
-          .single();
-
-        if (!heroError && heroData) {
-          heroVideoMedia = heroData as unknown as typeof heroVideoMedia;
-        }
-      } catch {
-        // hero视频列不存在，忽略
-      }
-
-      // 合并数据
-      const mergedRow: CmsSiteSettingsRow = {
-        ...(baseData as unknown as CmsSiteSettingsRow),
-        ...heroVideoMedia,
+      // 安全查询hero视频id列（可能不存在）
+      let heroIds = {
+        hero_main_video_media_id: null as string | null,
+        hero_side1_video_media_id: null as string | null,
+        hero_side2_video_media_id: null as string | null,
+        hero_side3_video_media_id: null as string | null,
       };
 
-      return toPublicSiteSettings(mergedRow);
+      const { data: heroData, error: heroError } = await client
+        .from("site_settings")
+        .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
+        .single();
+
+      if (!heroError && heroData) {
+        heroIds = {
+          hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
+          hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
+          hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
+          hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+        };
+      }
+
+      // 合并所有id
+      const allIds = {
+        ...(baseIds as Record<string, unknown>),
+        ...heroIds,
+      } as Record<string, string | null>;
+
+      // 收集所有需要查询的media_id
+      const mediaIdFields = [
+        "logo_media_id",
+        "avatar_media_id",
+        "share_media_id",
+        "cta_card_media_id",
+        "cta_figure_media_id",
+        "cta_ticker_logo_media_id",
+        "hero_main_video_media_id",
+        "hero_side1_video_media_id",
+        "hero_side2_video_media_id",
+        "hero_side3_video_media_id",
+      ] as const;
+
+      const mediaIdsToFetch = mediaIdFields
+        .map((field) => allIds[field])
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+      // 批量查询所有media资源
+      const mediaMap = new Map<string, { storage_key: string }>();
+      if (mediaIdsToFetch.length > 0) {
+        const { data: mediaList } = await client
+          .from("media_assets")
+          .select("id,storage_key")
+          .is("deleted_at", null)
+          .in("id", mediaIdsToFetch);
+
+        if (mediaList) {
+          for (const m of mediaList) {
+            mediaMap.set(m.id, { storage_key: m.storage_key });
+          }
+        }
+      }
+
+      // 辅助函数：根据media_id获取URL
+      const { url: supabaseUrl } = getSupabasePublicConfig();
+      const getUrlForId = (id: string | null | undefined): string | undefined => {
+        if (!id) return undefined;
+        const media = mediaMap.get(id);
+        if (!media?.storage_key) return undefined;
+        return `${supabaseUrl}/storage/v1/object/public/portfolio-media/${encodeURI(media.storage_key)}`;
+      };
+
+      // 构建返回结果
+      const settings = getStaticSiteSettings();
+      return {
+        avatarMediaUrl: getUrlForId(allIds.avatar_media_id ?? null),
+        ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
+        ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
+        ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        description: (allIds.seo_description as string) || settings.description,
+        heroMainVideoUrl: getUrlForId(heroIds.hero_main_video_media_id),
+        heroSide1VideoUrl: getUrlForId(heroIds.hero_side1_video_media_id),
+        heroSide2VideoUrl: getUrlForId(heroIds.hero_side2_video_media_id),
+        heroSide3VideoUrl: getUrlForId(heroIds.hero_side3_video_media_id),
+        logoMediaUrl: getUrlForId(allIds.logo_media_id ?? null),
+        name: (allIds.name as string) || settings.name,
+        navigation: settings.navigation,
+        nickname: (allIds.nickname as string) || settings.logo,
+        seoDescription: (allIds.seo_description as string) || settings.description,
+        seoTitle: (allIds.seo_title as string) || settings.name,
+        shareMediaUrl: getUrlForId(allIds.share_media_id ?? null),
+        socialLinks: Array.isArray(allIds.social_links) && allIds.social_links.length > 0
+          ? (allIds.social_links as Array<{ label: string; url: string }>).map((link) => ({
+              href: link.url,
+              label: normalizeUtf8(link.label),
+            }))
+          : settings.socialLinks,
+        title: settings.title,
+      };
     },
   });
 }
