@@ -7,7 +7,6 @@ import { listWorkVersions } from "@/lib/cms/versions";
 import type { WorkVersionListItem } from "@/lib/cms/versions";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
-import { Toast } from "@/components/admin/Toast";
 import { ToastHandler } from "@/components/admin/ToastHandler";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { StatusSelect } from "@/components/admin/StatusSelect";
@@ -147,11 +146,11 @@ export default async function AdminWorkEditorPage({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col pb-24">
       {toast ? <ToastHandler message={toast} /> : null}
 
-      {/* ══ 顶部工具栏：返回 + 删除 ══ */}
-      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-white/8 pb-4">
+      {/* ══ 顶部工具栏：返回 ══ */}
+      <div className="flex shrink-0 items-center gap-4 border-b border-white/8 pb-4">
         <Link
           href="/admin/works"
           className="inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white"
@@ -159,13 +158,6 @@ export default async function AdminWorkEditorPage({
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           返回作品列表
         </Link>
-        <form action={deleteWork}>
-          <input type="hidden" name="id" value={workRow.id} />
-          <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/20 px-3 text-xs text-red-300 transition hover:bg-red-300/10">
-            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-            删除作品
-          </button>
-        </form>
       </div>
 
       {/* ══ 可拖拽分栏：中间编辑区(flex-1, 最大1420px与前台一致) + 右侧功能面板(固定宽度可拖拽) ══ */}
@@ -228,17 +220,19 @@ export default async function AdminWorkEditorPage({
           }
           right={
             <div className="h-full space-y-3 overflow-y-auto pl-3">
-              {/* 私密预览 */}
-              <div className="grid gap-3">
-                <SaveWorkCard updatedAt={workRow.updated_at} />
-                <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
-              </div>
-              {/* 媒体选择 */}
+              {/* 媒体选择：封面 + 悬停预览图两列布局 */}
               <MediaForm mediaAssets={mediaRows} work={workRow} />
-              {/* 分类与标签（折叠） */}
+              {/* 更多设置（默认展开） */}
+              <CollapsibleSection
+                title="更多设置"
+                description="Slug、年份、客户、状态、SEO 等"
+                defaultOpen
+              >
+                <SettingsPanel work={workRow} />
+              </CollapsibleSection>
+              {/* 分类与标签 */}
               <CollapsibleSection
                 title="分类与标签"
-                defaultOpen
                 action={
                   <span className="text-[10px] text-white/30">
                     {selectedCategoryIds.size + selectedTagIds.size} 项已选
@@ -253,94 +247,96 @@ export default async function AdminWorkEditorPage({
                   work={workRow}
                 />
               </CollapsibleSection>
-              {/* 更多设置（折叠） */}
-              <div className="grid gap-3">
-                <CollapsibleSection title="更多设置" description="Slug、年份、客户、状态、SEO 等">
-                  <SettingsPanel work={workRow} />
-                </CollapsibleSection>
-                {/* 版本历史（折叠） */}
-                <VersionHistoryPanel
-                  workId={workRow.id}
-                  workSlug={workRow.slug}
-                  versions={versionRows}
-                />
-              </div>
+              {/* 版本历史 */}
+              <VersionHistoryPanel
+                workId={workRow.id}
+                workSlug={workRow.slug}
+                versions={versionRows}
+              />
             </div>
           }
         />
+      </div>
+
+      {/* ══ 底部固定操作栏：左保存 / 中删除 / 右私密预览 ══ */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/8 bg-[#0d0d14]/95 px-4 py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1420px] items-stretch gap-4">
+          {/* 左：保存作品 */}
+          <div className="flex flex-1 flex-col justify-center rounded-lg border border-cyan/20 bg-cyan/[0.05] p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white/88">保存作品</h3>
+                <p className="text-[10px] text-white/38">
+                  最近更新 {formatUpdatedAt(workRow.updated_at)}
+                </p>
+              </div>
+              <button
+                type="submit"
+                form="mainWorkForm"
+                className="rounded-md bg-cyan px-5 py-2 text-sm font-medium text-black transition hover:bg-white"
+              >
+                保存作品
+              </button>
+            </div>
+          </div>
+
+          {/* 中：删除作品 */}
+          <div className="flex flex-1 flex-col justify-center rounded-lg border border-red-300/15 bg-red-300/[0.03] p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-red-200/80">删除作品</h3>
+                <p className="text-[10px] text-white/30">
+                  此操作不可撤销
+                </p>
+              </div>
+              <form action={deleteWork}>
+                <input type="hidden" name="id" value={workRow.id} />
+                <button className="inline-flex items-center gap-1.5 rounded-md border border-red-300/20 px-4 py-2 text-xs text-red-300 transition hover:bg-red-300/10">
+                  <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                  删除
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* 右：私密预览 */}
+          <div className="flex flex-1 flex-col justify-center rounded-lg border border-white/10 bg-white/[0.03] p-3">
+            <h3 className="text-sm font-semibold text-white/80">私密预览</h3>
+            {privatePreview ? (
+              <div className="mt-1 rounded border border-cyan/25 bg-cyan/10 px-2 py-1">
+                <p className="text-[10px] text-cyan">链接已生成</p>
+                <code className="block truncate text-[9px] text-white/60">
+                  {(process.env.NEXT_PUBLIC_SITE_URL ?? "") + privatePreview}
+                </code>
+              </div>
+            ) : null}
+            <div className="mt-2 flex gap-2">
+              <form action={clearPrivatePreviewLink}>
+                <input type="hidden" name="work_id" value={workRow.id} />
+                <input type="hidden" name="work_slug" value={workRow.slug} />
+                <button className="rounded-md border border-white/12 px-3 py-1.5 text-xs text-white/58 transition hover:border-white/30 hover:text-white">
+                  清除链接
+                </button>
+              </form>
+              <form action={generatePrivatePreviewLink}>
+                <input type="hidden" name="work_id" value={workRow.id} />
+                <input type="hidden" name="work_slug" value={workRow.slug} />
+                <button className="rounded-md border border-cyan/35 px-3 py-1.5 text-xs text-cyan transition hover:bg-cyan/10">
+                  生成链接
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function SaveWorkCard({ updatedAt }: { updatedAt: string }) {
-  const updatedDate = updatedAt ? new Date(updatedAt) : null;
-  const updatedLabel = updatedDate
-    ? `${updatedDate.getMonth() + 1}/${updatedDate.getDate()} ${String(updatedDate.getHours()).padStart(2, "0")}:${String(updatedDate.getMinutes()).padStart(2, "0")}`
-    : "-";
-
-  return (
-    <section className="rounded-md border border-cyan/20 bg-cyan/[0.055] p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-white/88">保存作品</h3>
-          <p className="mt-1 truncate text-[10px] text-white/38">
-            最近更新 {updatedLabel}
-          </p>
-        </div>
-      </div>
-      <button
-        type="submit"
-        form="mainWorkForm"
-        className="mt-3 min-h-9 w-full rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white"
-      >
-        保存作品
-      </button>
-    </section>
-  );
-}
-
-function PrivatePreviewForm({
-  previewPath,
-  work,
-}: {
-  previewPath?: string;
-  work: WorkEditorRow;
-}) {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const previewUrl = previewPath ? `${origin}${previewPath}` : null;
-
-  return (
-    <section className="rounded-md border border-white/10 bg-white/[0.035] p-3">
-      <h3 className="text-sm font-semibold text-white/80">私密预览</h3>
-
-      {previewUrl ? (
-        <div className="mt-2 rounded-md border border-cyan/25 bg-cyan/10 p-2.5">
-          <p className="text-xs text-cyan">私密链接（仅显示一次）</p>
-          <code className="mt-1 block break-all rounded-md bg-black/30 p-2 text-[10px] text-white/72">
-            {previewUrl}
-          </code>
-        </div>
-      ) : null}
-
-      <div className="mt-3 grid gap-2">
-        <form action={clearPrivatePreviewLink}>
-          <input type="hidden" name="work_id" value={work.id} />
-          <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-8 w-full rounded-md border border-white/12 px-2.5 text-xs text-white/58 transition hover:border-white/30 hover:text-white">
-            清除链接
-          </button>
-        </form>
-        <form action={generatePrivatePreviewLink}>
-          <input type="hidden" name="work_id" value={work.id} />
-          <input type="hidden" name="work_slug" value={work.slug} />
-          <button className="min-h-8 w-full rounded-md border border-cyan/35 px-2.5 text-xs text-cyan transition hover:bg-cyan/10">
-            生成链接
-          </button>
-        </form>
-      </div>
-    </section>
-  );
+function formatUpdatedAt(updatedAt: string): string {
+  if (!updatedAt) return "-";
+  const d = new Date(updatedAt);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function MediaForm({
@@ -361,36 +357,40 @@ function MediaForm({
       <input type="hidden" name="work_slug" value={work.slug} />
       <h3 className="text-sm font-semibold text-white/80">作品媒体</h3>
 
-      <div className="mt-3 grid gap-2.5">
-        <WorkMediaSelect
-          label="封面"
-          name="cover_media_id"
-          assets={mediaAssets}
-          defaultValue={work.cover_media_id ?? ""}
-          autoSave
-        />
-        {isComposite && (
-          <div className="grid gap-1">
-            <WorkMediaSelect
-              label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
-              name="hover_media_id"
-              assets={mediaAssets}
-              defaultValue={work.hover_media_id ?? ""}
-              hint={work.is_composite ? "复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）" : undefined}
-              autoSave
-            />
-          </div>
-        )}
-        {!isComposite && (
+      {isComposite ? (
+        <div className="mt-3 grid grid-cols-2 gap-2.5">
+          <WorkMediaSelect
+            label="封面"
+            name="cover_media_id"
+            assets={mediaAssets}
+            defaultValue={work.cover_media_id ?? ""}
+            autoSave
+          />
+          <WorkMediaSelect
+            label="悬停预览图"
+            name="hover_media_id"
+            assets={mediaAssets}
+            defaultValue={work.hover_media_id ?? ""}
+            hint="hover时显示，支持PNG/JPG/GIF"
+            autoSave
+          />
+        </div>
+      ) : (
+        <div className="mt-3 grid gap-2.5">
+          <WorkMediaSelect
+            label="封面"
+            name="cover_media_id"
+            assets={mediaAssets}
+            defaultValue={work.cover_media_id ?? ""}
+            autoSave
+          />
           <input type="hidden" name="hover_media_id" value="" />
-        )}
-        <input type="hidden" name="share_media_id" value="" />
-      </div>
+        </div>
+      )}
+      <input type="hidden" name="share_media_id" value="" />
     </form>
   );
 }
-
-/* ═══════ 蓝框组件：辅助面板（紧凑版） ═══════ */
 
 /** 更多设置面板：Slug/年份/客户/状态/Palette/SEO 等 */
 function SettingsPanel({ work }: { work: WorkEditorRow }) {
@@ -562,12 +562,6 @@ function TaxonomyForm({
       </div>
     </form>
   );
-}
-
-function toDatetimeLocalValue(isoString: string): string {
-  const date = new Date(isoString);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function CheckField({

@@ -1734,9 +1734,12 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         />
       ) : null}
 
-      {/* embedded 模式：悬浮 ⊕ 添加按钮（右下角） */}
+      {/* embedded 模式：可拖拽悬浮 ⊕ 添加按钮 */}
       {embedded ? (
-        <div className="pointer-events-none fixed bottom-8 right-8 z-40 flex flex-col items-end gap-2 2xl:right-[448px]">
+        <div
+          className="pointer-events-none fixed z-40 flex flex-col items-end gap-2"
+          style={{ left: fabPos.x, top: fabPos.y }}
+        >
           {showBlockMenu ? (
             <div
               className="pointer-events-auto mb-1 w-48 overflow-hidden rounded-xl border border-white/15 bg-[#141424]/95 shadow-2xl backdrop-blur-md"
@@ -1791,13 +1794,27 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           ) : null}
           <button
             type="button"
-            onClick={() => setShowBlockMenu((v) => !v)}
-            className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition ${
+            onMouseDown={(e) => {
+              fabHasMovedRef.current = false;
+              fabDragOffsetRef.current = { x: e.clientX - fabPos.x, y: e.clientY - fabPos.y };
+              setFabDragging(true);
+            }}
+            onClick={(e) => {
+              if (fabHasMovedRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              setShowBlockMenu((v) => !v);
+            }}
+            className={`pointer-events-auto flex h-12 w-12 cursor-grab items-center justify-center rounded-full shadow-lg transition active:cursor-grabbing ${
               showBlockMenu
                 ? "rotate-45 bg-white text-black"
-                : "bg-cyan text-black hover:bg-white hover:scale-105"
+                : fabDragging
+                  ? "scale-110 bg-white text-black shadow-cyan/30"
+                  : "bg-cyan text-black hover:bg-white hover:scale-105"
             }`}
-            title="添加内容"
+            title="添加内容（可拖拽移动位置）"
           >
             <Plus className="h-5 w-5" strokeWidth={2.5} />
           </button>
