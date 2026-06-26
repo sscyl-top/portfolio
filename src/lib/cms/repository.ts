@@ -46,6 +46,178 @@ export type PublicSiteSettings = {
   title: string;
 };
 
+function createSupabaseBackedRepository(client: ReturnType<typeof createSupabaseServiceClient>) {
+  return createCmsRepository({
+    async listPublishedWorks() {
+      const { data, error } = await client
+        .from("works")
+        .select(publicWorkSelect)
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: false });
+
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+    },
+    async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
+      const { data, error } = await client
+        .from("categories")
+        .select("name,sort_order")
+        .eq("is_visible", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+    async listFeaturedWorks(): Promise<Work[]> {
+      const { data, error } = await client
+        .from("works")
+        .select(publicWorkSelect)
+        .eq("status", "published")
+        .eq("is_representative", true)
+        .is("deleted_at", null)
+        .order("representative_order", { ascending: false, nullsFirst: false })
+        .order("sort_order", { ascending: false });
+
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+    },
+    async listCompositeWorks(): Promise<Work[]> {
+      const { data, error } = await client
+        .from("works")
+        .select(publicWorkSelect)
+        .eq("status", "published")
+        .eq("is_composite", true)
+        .is("deleted_at", null)
+        .order("composite_order", { ascending: false, nullsFirst: false })
+        .order("sort_order", { ascending: false });
+
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+    },
+    async getSiteSettings() {
+      await runHeroVideosMigration().catch(() => {});
+
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+      const { data: baseIds, error: baseError } = await client
+        .from("site_settings")
+        .select(baseIdColumns)
+        .single();
+
+      if (baseError) {
+        console.error("[getSiteSettings] 基础查询失败:", baseError);
+        return getStaticPublicSiteSettings();
+      }
+
+      if (!baseIds) return getStaticPublicSiteSettings();
+
+      let heroIds = {
+        hero_main_video_media_id: null as string | null,
+        hero_side1_video_media_id: null as string | null,
+        hero_side2_video_media_id: null as string | null,
+        hero_side3_video_media_id: null as string | null,
+      };
+
+      const { data: heroData, error: heroError } = await client
+        .from("site_settings")
+        .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
+        .single();
+
+      if (!heroError && heroData) {
+        heroIds = {
+          hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
+          hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
+          hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
+          hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+        };
+      }
+
+      const allIds = {
+        ...(baseIds as Record<string, unknown>),
+        ...heroIds,
+      } as Record<string, string | null>;
+
+      const mediaIdFields = [
+        "logo_media_id",
+        "avatar_media_id",
+        "share_media_id",
+        "cta_card_media_id",
+        "cta_figure_media_id",
+        "cta_ticker_logo_media_id",
+        "hero_main_video_media_id",
+        "hero_side1_video_media_id",
+        "hero_side2_video_media_id",
+        "hero_side3_video_media_id",
+      ] as const;
+
+      const mediaIdsToFetch = mediaIdFields
+        .map((field) => allIds[field])
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+      const mediaMap = new Map<string, { storage_key: string }>();
+      if (mediaIdsToFetch.length > 0) {
+        const { data: mediaList } = await client
+          .from("media_assets")
+          .select("id,storage_key")
+          .is("deleted_at", null)
+          .in("id", mediaIdsToFetch);
+
+        if (mediaList) {
+          for (const m of mediaList) {
+            mediaMap.set(m.id, { storage_key: m.storage_key });
+          }
+        }
+      }
+
+      const getUrlForId = (id: string | null | undefined): string | undefined => {
+        if (!id) return undefined;
+        const media = mediaMap.get(id);
+        if (!media?.storage_key) return undefined;
+        return buildPublicMediaUrl(media.storage_key);
+      };
+
+      const settings = getStaticSiteSettings();
+      return {
+        avatarMediaUrl: getUrlForId(allIds.avatar_media_id ?? null),
+        ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
+        ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
+        ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        description: (allIds.seo_description as string) || settings.description,
+        heroMainVideoUrl: getUrlForId(heroIds.hero_main_video_media_id),
+        heroSide1VideoUrl: getUrlForId(heroIds.hero_side1_video_media_id),
+        heroSide2VideoUrl: getUrlForId(heroIds.hero_side2_video_media_id),
+        heroSide3VideoUrl: getUrlForId(heroIds.hero_side3_video_media_id),
+        logoMediaUrl: getUrlForId(allIds.logo_media_id ?? null),
+        name: (allIds.name as string) || settings.name,
+        navigation: settings.navigation,
+        nickname: (allIds.nickname as string) || settings.logo,
+        seoDescription: (allIds.seo_description as string) || settings.description,
+        seoTitle: (allIds.seo_title as string) || settings.name,
+        shareMediaUrl: getUrlForId(allIds.share_media_id ?? null),
+        socialLinks: Array.isArray(allIds.social_links) && allIds.social_links.length > 0
+          ? (allIds.social_links as Array<{ label: string; url: string }>).map((link) => ({
+              href: link.url,
+              label: normalizeUtf8(link.label),
+            }))
+          : settings.socialLinks,
+        title: settings.title,
+      };
+    },
+  });
+}
+
+export function createPublicCmsRepository() {
+  if (!isSupabaseConfigured()) {
+    return createCmsRepository(null);
+  }
+  return createSupabaseBackedRepository(createSupabaseServiceClient());
+}
+
 type CmsWorkRow = {
   slug: string;
   title: string;

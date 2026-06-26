@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Text } from "@/components/cms/Text";
 import { getPublishedWorks } from "@/data/portfolio";
 import {
-  createServerCmsRepository,
+  createPublicCmsRepository,
   getPrivatePreviewWorkBySlug,
 } from "@/lib/cms/repository";
 import { WorkReactions } from "@/components/works/WorkReactions";
@@ -35,7 +35,7 @@ export async function generateMetadata({
   const fromKey = Array.isArray(from) ? from[0] : from;
   const pageTitle = FROM_TITLES[fromKey ?? ""] ?? "sscyl.top-全部作品";
 
-  const repository = await createServerCmsRepository();
+  const repository = createPublicCmsRepository();
   const work = await repository.getWorkBySlug(slug);
 
   if (!work) return { title: pageTitle };
@@ -70,7 +70,7 @@ export default async function WorkDetailPage({
   const { slug } = await params;
   const { preview } = await searchParams;
   const previewToken = Array.isArray(preview) ? preview[0] : preview;
-  const repository = await createServerCmsRepository();
+  const repository = createPublicCmsRepository();
   const work = previewToken
     ? await getPrivatePreviewWorkBySlug(slug, previewToken)
     : await repository.getWorkBySlug(slug);

@@ -21,10 +21,23 @@ export function buildOptimizedMediaUrl(
   storageKey: string,
   options: OptimizedMediaOptions = {},
 ) {
-  const url = buildPublicMediaUrl(storageKey);
+  const baseUrl = buildPublicMediaUrl(storageKey);
 
   if (isCosConfigured()) {
-    return url;
+    const parts: string[] = [];
+    if (options.width || options.height) {
+      const w = options.width ? String(Math.round(options.width)) : "";
+      const h = options.height ? `x${Math.round(options.height)}` : "";
+      parts.push(`thumbnail/${w}${h}`);
+    }
+    if (options.format) {
+      parts.push(`format/${options.format}`);
+    }
+    const quality = options.quality ?? 82;
+    parts.push(`quality/${quality}`);
+    if (parts.length === 0) return baseUrl;
+    const separator = baseUrl.includes("?") ? "|" : "?";
+    return `${baseUrl}${separator}imageMogr2/${parts.join("/")}`;
   }
 
   const params = new URLSearchParams();
@@ -39,9 +52,9 @@ export function buildOptimizedMediaUrl(
     params.set("format", options.format);
   }
   if (options.quality && Number.isFinite(options.quality)) {
-    params.set("quality", String(Math.round(options.quality)));
+    params.set("quality", String(options.quality));
   }
 
   const query = params.toString();
-  return query ? `${url}?${query}` : url;
+  return query ? `${baseUrl}?${query}` : baseUrl;
 }

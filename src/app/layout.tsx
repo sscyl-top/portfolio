@@ -18,12 +18,12 @@ import { VisualEditorHint } from "@/components/cms/VisualEditorHint";
 import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { GlobalDragDropPrevention } from "@/components/GlobalDragDropPrevention";
-import { createServerCmsRepository } from "@/lib/cms/repository";
+import { createPublicCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const repository = await createServerCmsRepository();
+  const repository = createPublicCmsRepository();
   const settings = await repository.getSiteSettings();
 
   const imageUrl =
@@ -81,7 +81,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const repository = await createServerCmsRepository();
+  const repository = createPublicCmsRepository();
   const [settings, navTexts] = await Promise.all([
     repository.getSiteSettings(),
     getTextContentsByKeys(NAV_TEXT_KEYS),
