@@ -1,12 +1,13 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 export function buildPublicMediaUrl(storageKey: string) {
+  if (isCosConfigured()) {
+    return buildCosPublicUrl(storageKey);
+  }
+
   const { url } = getSupabasePublicConfig();
-  const encodedKey = storageKey
-    .split("/")
-    .map((part) => encodeURIComponent(part))
-    .join("/");
-  return `${url}/storage/v1/object/public/portfolio-media/${encodedKey}`;
+  return `${url}/storage/v1/object/public/portfolio-media/${storageKey}`;
 }
 
 export type OptimizedMediaOptions = {
@@ -18,7 +19,42 @@ export type OptimizedMediaOptions = {
 
 export function buildOptimizedMediaUrl(
   storageKey: string,
-  _options: OptimizedMediaOptions = {},
+  options: OptimizedMediaOptions = {},
 ) {
-  return buildPublicMediaUrl(storageKey);
+  const baseUrl = buildPublicMediaUrl(storageKey);
+
+  if (isCosConfigured()) {
+    const parts: string[] = [];
+    if (options.width || options.height) {
+      const w = options.width ? String(Math.round(options.width)) : "";
+      const h = options.height ? `x${Math.round(options.height)}` : "";
+      parts.push(`thumbnail/${w}${h}`);
+    }
+    if (options.format) {
+      parts.push(`format/${options.format}`);
+    }
+    const quality = options.quality ?? 90;
+    parts.push(`quality/${quality}`);
+    if (parts.length === 0) return baseUrl;
+    const separator = baseUrl.includes("?") ? "|" : "?";
+    return `${baseUrl}${separator}imageMogr2/${parts.join("/")}`;
+  }
+
+  const params = new URLSearchParams();
+
+  if (options.width && Number.isFinite(options.width)) {
+    params.set("width", String(Math.round(options.width)));
+  }
+  if (options.height && Number.isFinite(options.height)) {
+    params.set("height", String(Math.round(options.height)));
+  }
+  if (options.format) {
+    params.set("format", options.format);
+  }
+  if (options.quality && Number.isFinite(options.quality)) {
+    params.set("quality", String(options.quality));
+  }
+
+  const query = params.toString();
+  return query ? `${baseUrl}?${query}` : baseUrl;
 }

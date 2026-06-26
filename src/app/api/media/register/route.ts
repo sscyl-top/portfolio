@@ -4,8 +4,51 @@ import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
+import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 export const runtime = "nodejs";
+
+async function downloadFileHead(service: ReturnType<typeof createSupabaseServiceClient>, storageKey: string): Promise<Uint8Array | null> {
+  try {
+    const { data } = await service.storage.from("portfolio-media").download(storageKey);
+    if (data) {
+      return new Uint8Array(await data.arrayBuffer()).slice(0, 4096);
+    }
+  } catch {
+    // fall through
+  }
+  if (isCosConfigured()) {
+    try {
+      const cosUrl = buildCosPublicUrl(storageKey);
+      const res = await fetch(cosUrl);
+      if (res.ok) {
+        const reader = res.body?.getReader();
+        if (reader) {
+          const chunks: Uint8Array[] = [];
+          let total = 0;
+          while (total < 4096) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            total += value.length;
+          }
+          const combined = new Uint8Array(Math.min(total, 4096));
+          let offset = 0;
+          for (const chunk of chunks) {
+            const need = Math.min(chunk.length, combined.length - offset);
+            combined.set(chunk.slice(0, need), offset);
+            offset += need;
+            if (offset >= combined.length) break;
+          }
+          return combined;
+        }
+      }
+    } catch {
+      // best-effort
+    }
+  }
+  return null;
+}
 
 export async function POST(request: Request) {
   // Step 1: Authenticate
@@ -33,12 +76,8 @@ export async function POST(request: Request) {
     let height: number | null = null;
     if (mime_type?.startsWith("image/")) {
       try {
-        const { data: fileData } = await service.storage
-          .from("portfolio-media")
-          .download(storage_key);
-        
-        if (fileData) {
-          const head = new Uint8Array(await fileData.arrayBuffer()).slice(0, 2048);
+        const head = await downloadFileHead(service, storage_key);
+        if (head) {
           const dims = detectImageDimensions(mime_type, Buffer.from(head));
           if (dims) {
             width = dims.width;
