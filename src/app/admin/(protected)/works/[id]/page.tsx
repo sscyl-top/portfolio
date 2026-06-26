@@ -372,25 +372,35 @@ function MediaForm({
       <input type="hidden" name="work_slug" value={work.slug} />
       <h3 className="text-sm font-semibold text-white/80">作品媒体</h3>
 
-      <div className="mt-3 grid gap-2.5">
-        <WorkMediaSelect
-          label="封面"
-          name="cover_media_id"
-          assets={mediaAssets}
-          defaultValue={work.cover_media_id ?? ""}
-          autoSave
-        />
-        {isComposite && (
-          <div className="grid gap-1">
+      <div className="mt-3">
+        {isComposite ? (
+          <div className="grid grid-cols-2 gap-2">
             <WorkMediaSelect
-              label={work.is_composite ? "悬停预览图（复合设计卡片hover时显示，支持PNG/JPG/GIF）" : "悬停预览图"}
+              label="封面"
+              name="cover_media_id"
+              assets={mediaAssets}
+              defaultValue={work.cover_media_id ?? ""}
+              compact
+              autoSave
+            />
+            <WorkMediaSelect
+              label="悬停预览图"
               name="hover_media_id"
               assets={mediaAssets}
               defaultValue={work.hover_media_id ?? ""}
-              hint={work.is_composite ? "复合设计作品必填：默认显示封面图，鼠标悬停卡片时切换到此图（支持GIF动图）" : undefined}
+              compact
+              hint="hover时显示，支持GIF"
               autoSave
             />
           </div>
+        ) : (
+          <WorkMediaSelect
+            label="封面"
+            name="cover_media_id"
+            assets={mediaAssets}
+            defaultValue={work.cover_media_id ?? ""}
+            autoSave
+          />
         )}
         {!isComposite && (
           <input type="hidden" name="hover_media_id" value="" />
