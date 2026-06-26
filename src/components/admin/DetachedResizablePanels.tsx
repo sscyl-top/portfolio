@@ -113,7 +113,7 @@ export function DetachedResizablePanels({
 
     const next = { ...widths };
     for (const panel of panels) {
-      next[panel.id] = clampPanelWidth(
+      next[panel.id] = clampRestoredPanelWidth(
         panel,
         next[panel.id] ?? panel.defaultWidth,
         panels,
@@ -271,6 +271,34 @@ function ResizeHandle({
       />
     </button>
   );
+}
+
+function clampRestoredPanelWidth(
+  panel: DetachedPanelConfig,
+  requestedWidth: number,
+  panels: DetachedPanelConfig[],
+  widths: Record<string, number>,
+  containerWidth: number,
+  gap: number,
+) {
+  let maxWidth = panel.maxWidth;
+
+  if (containerWidth > 0) {
+    if (panel.anchor === "left") {
+      maxWidth = Math.min(maxWidth, containerWidth - panel.offset - gap);
+    } else {
+      const panelEnd = containerWidth - panel.offset;
+      const nearestLeft = panels
+        .filter((item) => item.id !== panel.id && item.anchor === "left")
+        .map((item) => getPanelRect(item, widths[item.id] ?? item.defaultWidth, containerWidth))
+        .filter((rect) => rect.end <= panelEnd)
+        .sort((a, b) => b.end - a.end)[0];
+      const boundary = nearestLeft ? nearestLeft.end + gap : gap;
+      maxWidth = Math.min(maxWidth, panelEnd - boundary);
+    }
+  }
+
+  return Math.round(clamp(requestedWidth, panel.minWidth, Math.max(panel.minWidth, maxWidth)));
 }
 
 function clampPanelWidth(

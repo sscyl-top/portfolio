@@ -14,7 +14,7 @@ type AdminShellProps = {
   children: React.ReactNode;
 };
 
-const ADMIN_CONTENT_OFFSET = 420;
+const ADMIN_CONTENT_OFFSET = 430;
 
 function SidebarContent({ userEmail }: { userEmail: string }) {
   return (
@@ -64,12 +64,12 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
         panels={[
           {
             id: "admin-sidebar",
-            storageKey: "admin-sidebar-width",
+            storageKey: "admin-sidebar-width-v2",
             anchor: "left",
             offset: 0,
             defaultWidth: 220,
             minWidth: 172,
-            maxWidth: 420,
+            maxWidth: 400,
             resizeEdge: "right",
             className: "border-r border-white/8 bg-[#090c0f]",
             children: <SidebarContent userEmail={userEmail} />,
@@ -77,8 +77,8 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
           {
             id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
             storageKey: isWorkEditorPage
-              ? "admin-editor-stage-width"
-              : "admin-primary-page-width",
+              ? "admin-editor-stage-width-v2"
+              : "admin-primary-page-width-v2",
             anchor: "left",
             offset: ADMIN_CONTENT_OFFSET,
             defaultWidth: isWorkEditorPage ? 1800 : 1420,

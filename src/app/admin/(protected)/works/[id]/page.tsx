@@ -175,12 +175,12 @@ export default async function AdminWorkEditorPage({
           panels={[
             {
               id: "admin-work-editor-content",
-              storageKey: "admin-work-editor-content-width",
+              storageKey: "admin-work-editor-content-width-v2",
               anchor: "left",
               offset: 0,
-              defaultWidth: 1420,
+              defaultWidth: 1100,
               minWidth: 760,
-              maxWidth: 1900,
+              maxWidth: 1420,
               resizeEdge: "right",
               className: "h-full",
               children: (
@@ -230,7 +230,7 @@ export default async function AdminWorkEditorPage({
             },
             {
               id: "admin-work-editor-tools",
-              storageKey: "admin-work-editor-tools-width",
+              storageKey: "admin-work-editor-tools-width-v2",
               anchor: "right",
               offset: 0,
               defaultWidth: 420,
