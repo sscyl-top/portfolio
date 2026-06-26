@@ -42,6 +42,8 @@ import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { pdfToImages } from "@/lib/cms/pdf-to-images";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
+import { WorkContentBlocks } from "@/components/works/WorkContentBlocks";
+import type { ContentBlock, WorkMedia } from "@/data/portfolio";
 
 // ── 类型定义 ───────────────────────────────────────────────
 
@@ -2142,19 +2144,6 @@ function BlockCard({
             <BlockPreview
               block={block}
               mediaAssets={mediaAssets}
-              onReorderGallery={
-                block.block_type === "gallery"
-                  ? (from: number, to: number) => {
-                      const mediaIds = [...((block.payload.media_ids as string[]) ?? [])];
-                      const refs = [...((block.payload.media_refs as { id: string; storage_key: string; mime_type: string; alt_text: string }[]) ?? [])];
-                      const [movedId] = mediaIds.splice(from, 1);
-                      const [movedRef] = refs.splice(from, 1);
-                      mediaIds.splice(to, 0, movedId);
-                      refs.splice(to, 0, movedRef);
-                      onUpdatePayload({ ...block.payload, media_ids: mediaIds, media_refs: refs });
-                    }
-                  : undefined
-              }
             />
           )}
         </div>
@@ -3083,353 +3072,190 @@ function InlineContentBlockEditor({
   return null;
 }
 
-// ── 块内容预览 ─────────────────────────────────────────────
+// ── 后台 VisualBlock → 前台 ContentBlock 转换函数 ─────────────
+
+function visualBlockToContentBlock(
+  block: VisualBlock,
+  mediaAssets: MediaAsset[],
+): ContentBlock | null {
+  const payload = block.payload;
+  const layout = getLayout(payload);
+  const blockLayout = {
+    width: layout.width,
+    align: layout.align,
+    columns: layout.columns,
+    free: layout.free,
+  };
+
+  function resolveMedia(mediaId: string): WorkMedia | null {
+    const asset = mediaAssets.find((a) => a.id === mediaId);
+    if (!asset) return null;
+    return {
+      id: asset.id,
+      url: buildPublicMediaUrl(asset.storage_key),
+      mimeType: asset.mime_type,
+      alt: asset.alt_text ?? "",
+      storage_key: asset.storage_key,
+    };
+  }
+
+  function resolveMediaList(ids: string[], refs?: { id?: string; storage_key: string; mime_type?: string; alt_text?: string }[]): WorkMedia[] {
+    if (refs && refs.length > 0) {
+      return refs.map((r) => ({
+        id: r.id,
+        url: buildPublicMediaUrl(r.storage_key),
+        mimeType: r.mime_type ?? "",
+        alt: r.alt_text ?? "",
+        storage_key: r.storage_key,
+      }));
+    }
+    return ids
+      .map((id) => resolveMedia(id))
+      .filter((m): m is WorkMedia => m !== null);
+  }
+
+  switch (block.block_type) {
+    case "text":
+      return {
+        type: "text",
+        heading: String(payload.heading ?? ""),
+        body: String(payload.body ?? ""),
+        layout: blockLayout,
+      };
+
+    case "media": {
+      const mediaId = String(payload.media_id ?? "");
+      const items = resolveMediaList([mediaId]);
+      const focalPoint = payload.focal_point as { x: number; y: number } | undefined;
+      return {
+        type: "media",
+        caption: payload.caption ? String(payload.caption) : undefined,
+        items,
+        layout: blockLayout,
+        focalPoint,
+      };
+    }
+
+    case "gallery": {
+      const mediaIds = (payload.media_ids as string[]) ?? [];
+      const refs = (payload.media_refs as { id?: string; storage_key: string; mime_type?: string; alt_text?: string }[]) ?? [];
+      return {
+        type: "gallery",
+        caption: payload.caption ? String(payload.caption) : undefined,
+        items: resolveMediaList(mediaIds, refs),
+        layout: blockLayout,
+      };
+    }
+
+    case "video": {
+      const mediaId = String(payload.media_id ?? "");
+      return {
+        type: "video",
+        caption: payload.caption ? String(payload.caption) : undefined,
+        items: resolveMediaList([mediaId]),
+        layout: blockLayout,
+      };
+    }
+
+    case "pdf": {
+      const mediaId = String(payload.media_id ?? "");
+      return {
+        type: "pdf",
+        caption: payload.caption ? String(payload.caption) : undefined,
+        items: resolveMediaList([mediaId]),
+        layout: blockLayout,
+      };
+    }
+
+    case "before_after": {
+      const beforeId = String(payload.before_media_id ?? "");
+      const afterId = String(payload.after_media_id ?? "");
+      return {
+        type: "beforeAfter",
+        heading: String(payload.heading ?? ""),
+        beforeLabel: String(payload.before_label ?? "Before"),
+        afterLabel: String(payload.after_label ?? "After"),
+        note: String(payload.note ?? ""),
+        beforeMedia: resolveMedia(beforeId) ?? undefined,
+        afterMedia: resolveMedia(afterId) ?? undefined,
+        layout: blockLayout,
+      };
+    }
+
+    case "code":
+      return {
+        type: "code",
+        heading: String(payload.heading ?? ""),
+        language: String(payload.language ?? "javascript") as ContentBlock extends { type: "code" } ? any : any,
+        code: String(payload.code ?? ""),
+        caption: payload.caption ? String(payload.caption) : undefined,
+        layout: blockLayout,
+      };
+
+    case "quote":
+      return {
+        type: "quote",
+        heading: String(payload.heading ?? ""),
+        text: String(payload.text ?? ""),
+        author: String(payload.author ?? ""),
+        role: payload.role ? String(payload.role) : undefined,
+        layout: blockLayout,
+      };
+
+    case "embed":
+      return {
+        type: "embed",
+        heading: String(payload.heading ?? ""),
+        url: String(payload.url ?? ""),
+        embedType: String(payload.embedType ?? "youtube") as ContentBlock extends { type: "embed" } ? any : any,
+        caption: payload.caption ? String(payload.caption) : undefined,
+        layout: blockLayout,
+      };
+
+    case "divider":
+      return {
+        type: "divider",
+        heading: String(payload.heading ?? ""),
+        style: String(payload.style ?? "solid") as "solid" | "dashed" | "dotted",
+        layout: blockLayout,
+      };
+
+    case "callout":
+      return {
+        type: "callout",
+        heading: String(payload.heading ?? ""),
+        text: String(payload.text ?? ""),
+        icon: String(payload.icon ?? "info") as ContentBlock extends { type: "callout" } ? any : any,
+        tone: String(payload.tone ?? "cyan") as ContentBlock extends { type: "callout" } ? any : any,
+        layout: blockLayout,
+      };
+
+    case "stats":
+      return {
+        type: "stats",
+        heading: String(payload.heading ?? ""),
+        items: (payload.items as Array<{ value: string; label: string }>) ?? [],
+        layout: blockLayout,
+      };
+
+    default:
+      return null;
+  }
+}
+
+// ── 块内容预览（直接复用前台 WorkContentBlocks 组件，确保前后台完全一致）─────────
 
 function BlockPreview({
   block,
   mediaAssets,
-  onReorderGallery,
 }: {
   block: VisualBlock;
   mediaAssets: MediaAsset[];
-  onReorderGallery?: (fromIndex: number, toIndex: number) => void;
 }) {
-  const payload = block.payload;
-  const [lightboxIdx, setLightboxIdx] = useState(-1);
-  const [dragImgIndex, setDragImgIndex] = useState<number | null>(null);
-  const layout = getLayout(payload);
+  const contentBlock = visualBlockToContentBlock(block, mediaAssets);
+  if (!contentBlock) return null;
 
-  const alignClass =
-    layout.align === "center" ? "text-center" : layout.align === "right" ? "text-right" : "text-left";
-
-  if (block.block_type === "text") {
-    return (
-      <section className={`py-10 md:py-14 ${alignClass}`}>
-        {payload.heading ? (
-          <h2 className="text-2xl font-semibold text-white md:text-3xl">{String(payload.heading)}</h2>
-        ) : null}
-        {payload.body ? (
-          <p className="mt-5 whitespace-pre-wrap text-base leading-8 text-white/62 md:text-lg md:leading-9">
-            {String(payload.body)}
-          </p>
-        ) : null}
-      </section>
-    );
-  }
-
-  if (block.block_type === "media") {
-    const mediaId = String(payload.media_id ?? "");
-    const asset = mediaAssets.find((a) => a.id === mediaId);
-    const url = asset ? buildPublicMediaUrl(asset.storage_key) : null;
-    const isFree = layout.width === "free";
-    const free = layout.free;
-    const focalPoint = payload.focal_point as { x: number; y: number } | undefined;
-
-    const mediaItems = url ? [{ url, alt: String(payload.caption ?? "") }] : [];
-
-    return (
-      <section className="py-2">
-        {payload.caption && !isFree ? (
-          <p className="mb-4 text-sm font-medium text-white/50">{String(payload.caption)}</p>
-        ) : null}
-        <div className={isFree ? "relative h-[400px] md:h-[600px]" : "w-full"}>
-          {url ? (
-            isFree && free ? (
-              <div
-                className="absolute overflow-hidden rounded-sm"
-                style={{
-                  left: `${free.x}%`,
-                  top: `${free.y}%`,
-                  width: `${free.w}%`,
-                  height: `${free.h}%`,
-                }}
-              >
-                <img
-                  src={url}
-                  alt={String(payload.caption ?? "")}
-                  className="h-full w-full object-cover cursor-zoom-in"
-                  onClick={() => setLightboxIdx(0)}
-                />
-              </div>
-            ) : asset?.mime_type?.startsWith("video/") ? (
-              <video src={url} controls preload="metadata" className="w-full h-auto" />
-            ) : (
-              <img
-                src={url}
-                alt={String(payload.caption ?? "")}
-                className="block w-full h-auto cursor-zoom-in"
-                style={focalPoint ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` } : undefined}
-                onClick={() => setLightboxIdx(0)}
-              />
-            )
-          ) : (
-            <div className="flex h-32 items-center justify-center text-sm text-white/30">未选择媒体</div>
-          )}
-        </div>
-        {isFree && payload.caption ? <p className="mt-2 text-sm text-white/50">{String(payload.caption)}</p> : null}
-        {lightboxIdx >= 0 && (
-          <AdminLightbox items={mediaItems} initialIndex={0} onClose={() => setLightboxIdx(-1)} />
-        )}
-      </section>
-    );
-  }
-
-  if (block.block_type === "gallery") {
-    const mediaIds = (payload.media_ids as string[]) ?? [];
-    const refs = (payload.media_refs as { id: string; storage_key: string; mime_type?: string; alt_text?: string }[]) ?? [];
-    const displayAssets = refs.length > 0 ? refs : mediaAssets.filter((a) => mediaIds.includes(a.id));
-    const cols = layout.columns === 1 ? "grid-cols-1"
-      : layout.columns === 2 ? "grid-cols-2"
-      : layout.columns === 4 ? "grid-cols-2 md:grid-cols-4"
-      : "grid-cols-2 md:grid-cols-3";
-
-    const galleryItems = displayAssets.map((a) => ({
-      url: buildPublicMediaUrl(a.storage_key),
-      alt: "",
-    }));
-
-    const reorderImages = (from: number, to: number) => {
-      if (from === to || !onReorderGallery) return;
-      onReorderGallery(from, to);
-    };
-
-    return (
-      <section className="py-2">
-        {payload.caption ? (
-          <p className="mb-4 text-sm font-medium text-white/50">{String(payload.caption)}</p>
-        ) : null}
-        <div className={`grid gap-2 md:gap-3 ${cols}`}>
-          {displayAssets.map((asset: { id?: string; storage_key: string; mime_type?: string }, i: number) => (
-            <div
-              key={asset.id ?? i}
-              draggable={!!onReorderGallery}
-              onDragStart={() => setDragImgIndex(i)}
-              onDragOver={(e) => { e.preventDefault(); }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const from = dragImgIndex;
-                if (from === null) return;
-                reorderImages(from, i);
-                setDragImgIndex(null);
-              }}
-              onClick={() => setLightboxIdx(i)}
-              className={`group relative cursor-zoom-in overflow-hidden ${onReorderGallery ? "cursor-move" : ""} ${
-                dragImgIndex === i ? "opacity-50 ring-2 ring-cyan" : ""
-              }`}
-            >
-              {asset.mime_type?.startsWith("video/") ? (
-                <video
-                  src={buildPublicMediaUrl(asset.storage_key)}
-                  controls
-                  preload="metadata"
-                  className="w-full h-auto"
-                />
-              ) : (
-                <img
-                  src={buildPublicMediaUrl(asset.storage_key)}
-                  alt=""
-                  className="block w-full h-auto"
-                />
-              )}
-              {onReorderGallery ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/20 group-hover:opacity-100">
-                  <GripHorizontal className="h-6 w-6 text-white drop-shadow-lg" />
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        {lightboxIdx >= 0 && galleryItems.length > 0 && (
-          <AdminLightbox items={galleryItems} initialIndex={lightboxIdx} onClose={() => setLightboxIdx(-1)} />
-        )}
-      </section>
-    );
-  }
-
-  if (block.block_type === "video") {
-    const mediaId = String(payload.media_id ?? "");
-    const asset = mediaAssets.find((a) => a.id === mediaId);
-    const url = asset ? buildPublicMediaUrl(asset.storage_key) : null;
-    return (
-      <section className="py-2">
-        {payload.caption ? (
-          <p className="mb-4 text-sm font-medium text-white/50">{String(payload.caption)}</p>
-        ) : null}
-        <div className="relative w-full overflow-hidden bg-black">
-          {url ? (
-            <video src={url} controls preload="metadata" className="w-full h-auto block" />
-          ) : (
-            <div className="flex h-48 items-center justify-center text-sm text-white/30">未选择视频</div>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.block_type === "pdf") {
-    const mediaId = String(payload.media_id ?? "");
-    const asset = mediaAssets.find((a) => a.id === mediaId);
-    return (
-      <section className="py-8">
-        {payload.caption ? (
-          <p className="mb-4 text-sm font-medium text-white/50">{String(payload.caption)}</p>
-        ) : null}
-        {asset?.storage_key ? (
-          <PdfBlockRenderer storageKey={asset.storage_key} caption={String(payload.caption ?? "")} />
-        ) : (
-          <div className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-            <FileText className="h-6 w-6 text-orange-400/70" />
-            未选择 PDF
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  if (block.block_type === "before_after") {
-    const beforeId = String(payload.before_media_id ?? "");
-    const afterId = String(payload.after_media_id ?? "");
-    const beforeAsset = mediaAssets.find((a) => a.id === beforeId);
-    const afterAsset = mediaAssets.find((a) => a.id === afterId);
-    const beforeLabel = String(payload.before_label ?? "Before");
-    const afterLabel = String(payload.after_label ?? "After");
-    return (
-      <section className="py-8">
-        {payload.heading ? <h2 className="mb-6 text-2xl font-semibold text-white">{String(payload.heading)}</h2> : null}
-        {payload.note ? <p className="mb-6 text-white/58">{String(payload.note)}</p> : null}
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            { asset: beforeAsset, label: beforeLabel },
-            { asset: afterAsset, label: afterLabel },
-          ].map((item, i) => (
-            <div key={i} className="space-y-2">
-              <span className="font-mono text-xs text-white/40">{item.label}</span>
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-white/[0.03]">
-                {item.asset ? (
-                  <img
-                    src={buildPublicMediaUrl(item.asset.storage_key)}
-                    alt={item.label}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-white/20">未选择</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (block.block_type === "code") {
-    return (
-      <section className="py-4">
-        {payload.heading ? (
-          <h2 className="mb-4 text-2xl font-semibold text-white md:text-3xl">{String(payload.heading)}</h2>
-        ) : null}
-        <div className="relative overflow-hidden rounded-md border border-white/10 bg-black/40">
-          <span className="absolute right-2 top-1 font-mono text-[10px] uppercase text-white/40">
-            {String(payload.language ?? "")}
-          </span>
-          <pre className="overflow-x-auto p-3 pr-16 font-mono text-xs text-green-300/90">
-            <code>{String(payload.code ?? "")}</code>
-          </pre>
-        </div>
-        {payload.caption ? (
-          <p className="mt-3 text-sm text-white/50">{String(payload.caption)}</p>
-        ) : null}
-      </section>
-    );
-  }
-
-  if (block.block_type === "quote") {
-    return (
-      <section className="py-8">
-        {payload.heading ? (
-          <h2 className="mb-4 text-2xl font-semibold text-white md:text-3xl">{String(payload.heading)}</h2>
-        ) : null}
-        <blockquote className="border-l-2 border-copper pl-4">
-          <p className="text-base leading-relaxed text-white/70 md:text-lg">
-            {String(payload.text ?? "")}
-          </p>
-          <footer className="mt-2 text-sm">
-            <span className="font-medium text-copper">{String(payload.author ?? "")}</span>
-            {payload.role ? (
-              <span className="text-white/45"> · {String(payload.role)}</span>
-            ) : null}
-          </footer>
-        </blockquote>
-      </section>
-    );
-  }
-
-  if (block.block_type === "embed") {
-    return (
-      <section className="py-4">
-        {payload.heading ? (
-          <h2 className="mb-4 text-2xl font-semibold text-white md:text-3xl">{String(payload.heading)}</h2>
-        ) : null}
-        <div className="flex items-center gap-2 rounded-md bg-white/5 p-3">
-          <Frame className="h-5 w-5 text-cyan/60" />
-          <span className="truncate text-sm text-white/60">
-            {String(payload.embedType ?? "")}: {String(payload.url ?? "")}
-          </span>
-        </div>
-      </section>
-    );
-  }
-
-  if (block.block_type === "divider") {
-    const style = String(payload.style ?? "solid");
-    const borderClass =
-      style === "dashed" ? "border-dashed" : style === "dotted" ? "border-dotted" : "border-solid";
-    return <hr className={`border-t border-white/15 ${borderClass}`} />;
-  }
-
-  if (block.block_type === "callout") {
-    const tone = String(payload.tone ?? "cyan");
-    const toneClass =
-      tone === "amber"
-        ? "border-amber-400/30 bg-amber-400/5"
-        : tone === "green"
-          ? "border-green-400/30 bg-green-400/5"
-          : tone === "red"
-            ? "border-red-400/30 bg-red-400/5"
-            : "border-cyan/30 bg-cyan/5";
-    return (
-      <section className="py-4">
-        <div className={`rounded-md border p-4 ${toneClass}`}>
-          {payload.heading ? (
-            <p className="font-semibold text-white/90">{String(payload.heading)}</p>
-          ) : null}
-          <p className="mt-1 text-sm text-white/60">{String(payload.text ?? "")}</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (block.block_type === "stats") {
-    const items = (payload.items as Array<{ value: string; label: string }>) ?? [];
-    return (
-      <section className="py-8">
-        {payload.heading ? (
-          <h2 className="mb-6 text-2xl font-semibold text-white md:text-3xl">{String(payload.heading)}</h2>
-        ) : null}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className="rounded-md border border-white/10 bg-white/[0.035] p-3 text-center"
-            >
-              <p className="text-2xl font-semibold text-copper">{item.value}</p>
-              <p className="mt-1 text-xs text-white/50">{item.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  return null;
+  return (
+    <WorkContentBlocks blocks={[contentBlock]} coverTone="cyan" />
+  );
 }
