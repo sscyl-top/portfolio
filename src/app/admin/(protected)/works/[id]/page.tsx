@@ -246,8 +246,14 @@ export default async function AdminWorkEditorPage({
                   </div>
                   <MediaForm mediaAssets={mediaRows} work={workRow} />
                   <CollapsibleSection
-                    title="分类与标签"
+                    title="更多设置"
+                    description="Slug、年份、客户、状态、SEO 等"
                     defaultOpen
+                  >
+                    <SettingsPanel work={workRow} />
+                  </CollapsibleSection>
+                  <CollapsibleSection
+                    title="分类与标签"
                     action={
                       <span className="text-[10px] text-white/30">
                         {selectedCategoryIds.size + selectedTagIds.size} 项已选
@@ -262,19 +268,11 @@ export default async function AdminWorkEditorPage({
                       work={workRow}
                     />
                   </CollapsibleSection>
-                  <div className="grid gap-3">
-                    <CollapsibleSection
-                      title="更多设置"
-                      description="Slug、年份、客户、状态、SEO 等"
-                    >
-                      <SettingsPanel work={workRow} />
-                    </CollapsibleSection>
-                    <VersionHistoryPanel
-                      workId={workRow.id}
-                      workSlug={workRow.slug}
-                      versions={versionRows}
-                    />
-                  </div>
+                  <VersionHistoryPanel
+                    workId={workRow.id}
+                    workSlug={workRow.slug}
+                    versions={versionRows}
+                  />
                 </div>
               ),
             },
