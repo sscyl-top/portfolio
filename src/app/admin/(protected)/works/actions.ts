@@ -275,7 +275,10 @@ export async function updateWorkTaxonomy(formData: FormData) {
 
   await autoArchiveAfterChange(client, work_id, user.id, "更新作品分类与标签");
 
-  redirect(`/admin/works/${work_id}?toast=${encodeURIComponent("分类与标签保存成功")}`);
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${work_slug}`);
 }
 
 export async function autoSaveWork(formData: FormData) {
@@ -422,7 +425,11 @@ export async function updateWork(formData: FormData) {
 
   await autoArchiveAfterChange(client, workId, user.id, "更新作品元数据");
 
-  redirect(`/admin/works/${workId}?toast=${encodeURIComponent("作品保存成功")}`);
+  const workSlug = (currentWork as { slug: string }).slug;
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${workId}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${workSlug}`);
 }
 
 export async function deleteWork(formData: FormData) {

@@ -13,6 +13,7 @@ import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { StatusSelect } from "@/components/admin/StatusSelect";
 import { WorkMediaSelect } from "@/components/admin/WorkMediaSelect";
 import { DetachedResizablePanels } from "@/components/admin/DetachedResizablePanels";
+import { AutoSaveForm } from "@/components/admin/AutoSaveForm";
 
 import {
   clearPrivatePreviewLink,
@@ -404,7 +405,7 @@ function MediaForm({
 /** 更多设置面板：Slug/年份/客户/状态/Palette/SEO 等 */
 function SettingsPanel({ work }: { work: WorkEditorRow }) {
   return (
-    <form action={updateWork} className="grid gap-4">
+    <AutoSaveForm action={updateWork} className="grid gap-4">
       <input type="hidden" name="id" value={work.id} />
       <input type="hidden" name="slug" value={work.slug} />
 
@@ -428,13 +429,7 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
       </div>
 
       <Field label="SEO 描述" name="seo_description" defaultValue={work.seo_description} compact />
-
-      <div className="flex justify-end pt-1">
-        <button className="min-h-8 rounded-md bg-cyan px-4 text-xs font-medium text-black transition hover:bg-white">
-          保存设置
-        </button>
-      </div>
-    </form>
+    </AutoSaveForm>
   );
 }
 
@@ -516,7 +511,7 @@ function TaxonomyForm({
   work: WorkEditorRow;
 }) {
   return (
-    <form action={updateWorkTaxonomy} className="grid gap-4">
+    <AutoSaveForm action={updateWorkTaxonomy} className="grid gap-4">
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
 
@@ -563,13 +558,7 @@ function TaxonomyForm({
           </div>
         </fieldset>
       </div>
-
-      <div className="flex justify-end">
-        <button className="min-h-8 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10">
-          保存
-        </button>
-      </div>
-    </form>
+    </AutoSaveForm>
   );
 }
 
