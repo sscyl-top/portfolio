@@ -713,6 +713,33 @@ button {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.admin-subtle-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 215, 205, 0.32) transparent;
+}
+
+.admin-subtle-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 0;
+}
+
+.admin-subtle-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-subtle-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 215, 205, 0.22);
+  border-radius: 999px;
+}
+
+.admin-subtle-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 215, 205, 0.42);
+}
+
+.admin-subtle-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .meteor {
     animation: none !important;

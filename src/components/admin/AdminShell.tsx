@@ -77,13 +77,13 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
           {
             id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
             storageKey: isWorkEditorPage
-              ? "admin-editor-stage-width-v3"
+              ? "admin-editor-stage-width-v4"
               : "admin-primary-page-width-v2",
             anchor: "left",
             offset: ADMIN_CONTENT_OFFSET,
-            defaultWidth: isWorkEditorPage ? 1600 : 1420,
+            defaultWidth: isWorkEditorPage ? 4000 : 1420,
             minWidth: isWorkEditorPage ? 900 : 720,
-            maxWidth: isWorkEditorPage ? 2600 : 2200,
+            maxWidth: isWorkEditorPage ? 4000 : 2200,
             resizeEdge: isWorkEditorPage ? "none" : "right",
             className: "h-full",
             children: content,

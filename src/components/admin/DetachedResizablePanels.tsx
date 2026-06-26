@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GripVertical } from "lucide-react";
 
 type PanelAnchor = "left" | "right";
 type ResizeEdge = "left" | "right" | "none";
@@ -252,21 +251,16 @@ function ResizeHandle({
       aria-label="Resize panel width"
       title="Resize panel width"
       onPointerDown={onPointerDown}
-      className={`group absolute bottom-0 top-0 z-30 flex w-2 cursor-col-resize items-center justify-center border-white/10 outline-none transition-colors focus-visible:bg-cyan/25 focus-visible:ring-2 focus-visible:ring-cyan ${
-        edge === "left" ? "-left-1 border-l" : "-right-1 border-r"
-      } ${
-        isDragging
-          ? "border-cyan/50 bg-cyan/30"
-          : "bg-transparent hover:border-cyan/40 hover:bg-cyan/20"
+      className={`group absolute bottom-0 top-0 z-30 flex w-4 cursor-col-resize items-center justify-center bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-cyan/70 ${
+        edge === "left" ? "-left-2" : "-right-2"
       }`}
     >
-      <span className="absolute inset-y-0 -left-2 -right-2" />
-      <GripVertical
+      <span
         aria-hidden="true"
-        className={`pointer-events-none h-5 w-5 text-white/20 transition-opacity ${
+        className={`pointer-events-none h-full w-px rounded-full transition ${
           isDragging
-            ? "text-cyan/80 opacity-100"
-            : "opacity-0 group-hover:text-cyan/60 group-hover:opacity-100"
+            ? "bg-cyan/75 shadow-[0_0_14px_rgba(139,215,205,0.55)]"
+            : "bg-white/12 group-hover:bg-cyan/55"
         }`}
       />
     </button>

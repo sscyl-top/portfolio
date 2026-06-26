@@ -184,7 +184,7 @@ export default async function AdminWorkEditorPage({
               resizeEdge: "right",
               className: "h-full",
               children: (
-                <div className="h-full overflow-y-auto pr-3">
+                <div className="admin-subtle-scrollbar h-full overflow-x-hidden overflow-y-auto pr-2">
                   <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
                     <form id="mainWorkForm" action={updateWork}>
                       <input type="hidden" name="id" value={workRow.id} />
@@ -239,7 +239,7 @@ export default async function AdminWorkEditorPage({
               resizeEdge: "left",
               className: "h-full",
               children: (
-                <div className="h-full space-y-3 overflow-y-auto pl-3">
+                <div className="admin-subtle-scrollbar h-full space-y-3 overflow-x-hidden overflow-y-auto pl-3 pr-1">
                   <div className="grid gap-3 xl:grid-cols-2">
                     <SaveWorkCard updatedAt={workRow.updated_at} />
                     <PrivatePreviewForm previewPath={privatePreview} work={workRow} />

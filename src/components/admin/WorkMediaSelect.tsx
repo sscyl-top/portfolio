@@ -165,7 +165,7 @@ export function WorkMediaSelect({
   };
 
   return (
-    <div className="grid gap-2 text-sm">
+    <div className="grid min-w-0 gap-2 text-sm">
       <span className="text-white/58">{label}</span>
 
       <div
@@ -178,28 +178,28 @@ export function WorkMediaSelect({
         }`}
       >
         {previewUrl && selected ? (
-          <div className="p-3">
+          <div className="p-2.5">
             <div className="flex items-start gap-3">
               {isVideo ? (
                 <video
                   src={previewUrl}
                   muted
                   playsInline
-                  className="h-20 w-28 flex-shrink-0 rounded object-cover border border-white/10"
+                  className="h-14 w-20 flex-shrink-0 rounded object-cover border border-white/10"
                 />
               ) : isGif ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewUrl}
                   alt={selected.alt_text || selected.original_name || label}
-                  className="h-20 w-28 flex-shrink-0 rounded object-cover border border-white/10"
+                  className="h-14 w-20 flex-shrink-0 rounded object-cover border border-white/10"
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewUrl}
                   alt={selected.alt_text || selected.original_name || label}
-                  className="h-20 w-28 flex-shrink-0 rounded object-cover border border-white/10"
+                  className="h-14 w-20 flex-shrink-0 rounded object-cover border border-white/10"
                 />
               )}
               <div className="flex-1 min-w-0">
@@ -235,11 +235,11 @@ export function WorkMediaSelect({
 
       <input type="hidden" name={name} value={value} />
 
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1.5">
         <select
           value={value}
           onChange={(e) => handleValueChange(e.target.value)}
-          className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+          className="min-h-8 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2 text-xs outline-none focus:border-cyan"
         >
           <option value="">从媒体库选择已上传的文件</option>
           {assets.map((asset) => (
@@ -253,7 +253,7 @@ export function WorkMediaSelect({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/10 bg-black/20 px-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
         >
           {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
           上传
@@ -263,7 +263,7 @@ export function WorkMediaSelect({
           <button
             type="button"
             onClick={() => handleValueChange("")}
-            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-white/10 bg-black/20 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
           >
             <X className="h-3.5 w-3.5" />
           </button>
