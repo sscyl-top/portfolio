@@ -49,3 +49,6 @@ next-env.d.ts
 tmp/
 .vercel
 视频/
+*.png
+*.jpg
+*.jpeg
