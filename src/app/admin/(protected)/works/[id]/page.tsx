@@ -534,12 +534,12 @@ function TaxonomyForm({
       <input type="hidden" name="work_id" value={work.id} />
       <input type="hidden" name="work_slug" value={work.slug} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <fieldset>
           <legend className="text-xs font-medium text-white/60 uppercase tracking-wider">分类</legend>
-          <div className="mt-2 grid gap-1.5">
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
             {categories.length === 0 ? (
-              <p className="py-4 text-xs text-white/35">
+              <p className="py-4 text-xs text-white/35 col-span-3">
                 暂无分类
               </p>
             ) : (
@@ -550,6 +550,7 @@ function TaxonomyForm({
                   name="category_ids"
                   value={category.id}
                   defaultChecked={selectedCategoryIds.has(category.id)}
+                  compact
                 />
               ))
             )}
@@ -558,9 +559,9 @@ function TaxonomyForm({
 
         <fieldset>
           <legend className="text-xs font-medium text-white/60 uppercase tracking-wider">标签</legend>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
             {tags.length === 0 ? (
-              <p className="py-4 text-xs text-white/35">
+              <p className="py-4 text-xs text-white/35 col-span-4">
                 暂无标签
               </p>
             ) : (
@@ -571,6 +572,7 @@ function TaxonomyForm({
                   name="tag_ids"
                   value={tag.id}
                   defaultChecked={selectedTagIds.has(tag.id)}
+                  compact
                 />
               ))
             )}
@@ -601,15 +603,15 @@ function CheckField({
   compact?: boolean;
 }) {
   return (
-    <label className={`flex items-center gap-2 self-end rounded border border-white/10 bg-black/20 px-2 ${compact ? "min-h-7 text-xs text-white/60" : "min-h-10 gap-3 px-3 text-sm text-white/68"}`}>
+    <label className={`flex items-center gap-1.5 self-end rounded border border-white/10 bg-black/20 ${compact ? "min-h-7 px-1.5 text-xs text-white/60" : "min-h-10 gap-3 px-3 text-sm text-white/68"}`}>
       <input
         name={name}
         type="checkbox"
         value={value}
         defaultChecked={defaultChecked}
-        className={`accent-cyan ${compact ? "h-3 w-3" : "h-4 w-4"}`}
+        className={`accent-cyan flex-shrink-0 ${compact ? "h-3 w-3" : "h-4 w-4"}`}
       />
-      {label}
+      <span className="truncate">{label}</span>
     </label>
   );
 }
