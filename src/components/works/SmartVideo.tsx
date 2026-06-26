@@ -9,6 +9,7 @@ type MotionEntry = {
   kind: "video" | "gif";
   videoEl?: HTMLVideoElement;
   isUserControlled: boolean;
+  isSystemPaused: boolean;
 };
 
 let nextId = 1;
@@ -70,49 +71,54 @@ function updatePlayback() {
 
   for (const entry of halfHiddenVideos) {
     if (activeMotionId === entry.id || !shouldActivate) {
-      doPauseVideo(entry);
+      systemPauseVideo(entry);
     }
   }
 
   if (shouldActivate && activeMotionId !== shouldActivate.id) {
     const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
     if (prev && prev.kind === "video" && !prev.isUserControlled) {
-      doPauseVideo(prev);
+      systemPauseVideo(prev);
     }
     activeMotionId = shouldActivate.id;
     if (shouldActivate.kind === "video" && shouldActivate.videoEl) {
-      doPlayVideo(shouldActivate);
+      systemPlayVideo(shouldActivate);
+    }
+  } else if (shouldActivate && shouldActivate.kind === "video" && shouldActivate.videoEl) {
+    if (shouldActivate.videoEl.paused && !shouldActivate.isUserControlled) {
+      systemPlayVideo(shouldActivate);
     }
   }
 
   if (!shouldActivate) {
     const active = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
     if (active && active.kind === "video" && !active.isUserControlled && active.ratio < 0.5) {
-      doPauseVideo(active);
+      systemPauseVideo(active);
       activeMotionId = null;
     }
   }
 }
 
-function doPlayVideo(entry: MotionEntry) {
+function systemPlayVideo(entry: MotionEntry) {
   const el = entry.videoEl;
   if (!el || !el.paused) return;
   el.muted = false;
+  entry.isSystemPaused = false;
   const p = el.play();
   if (p && typeof p.catch === "function") {
     p.catch(() => {
-      el.muted = true;
-      el.play().catch(() => {});
+      entry.isUserControlled = true;
     });
   }
 }
 
-function doPauseVideo(entry: MotionEntry) {
+function systemPauseVideo(entry: MotionEntry) {
   const el = entry.videoEl;
   if (!el || el.paused) {
     if (entry.id === activeMotionId) activeMotionId = null;
     return;
   }
+  entry.isSystemPaused = true;
   el.pause();
   if (entry.id === activeMotionId) activeMotionId = null;
 }
@@ -128,6 +134,7 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
     kind,
     videoEl,
     isUserControlled: false,
+    isSystemPaused: false,
   };
   motionRegistry.set(id, entry);
 
@@ -135,16 +142,16 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
 
   if (kind === "video" && videoEl) {
     const onPause = () => {
-      if (entry.isUserControlled) return;
+      if (entry.isSystemPaused || entry.isUserControlled) return;
       if (videoEl.seeking || videoEl.ended) return;
       entry.isUserControlled = true;
     };
     const onPlay = () => {
-      if (!entry.isUserControlled) return;
-      if (activeMotionId !== id) {
+      entry.isSystemPaused = false;
+      if (entry.isUserControlled && activeMotionId !== id) {
         const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
         if (prev && prev.kind === "video" && !prev.isUserControlled) {
-          doPauseVideo(prev);
+          systemPauseVideo(prev);
         }
         activeMotionId = id;
       }
@@ -157,15 +164,24 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
     const onClick = () => {
       entry.isUserControlled = true;
     };
+    const onEnded = () => {
+      videoEl.currentTime = 0;
+      const p = videoEl.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {});
+      }
+    };
     videoEl.addEventListener("pause", onPause);
     videoEl.addEventListener("play", onPlay);
     videoEl.addEventListener("volumechange", onVolume);
     videoEl.addEventListener("click", onClick);
+    videoEl.addEventListener("ended", onEnded);
     cleanupFns.push(() => {
       videoEl.removeEventListener("pause", onPause);
       videoEl.removeEventListener("play", onPlay);
       videoEl.removeEventListener("volumechange", onVolume);
       videoEl.removeEventListener("click", onClick);
+      videoEl.removeEventListener("ended", onEnded);
     });
   }
 
@@ -181,7 +197,7 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
   };
 }
 
-type SmartVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "ref"> & {
+type SmartVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "ref" | "loop"> & {
   containerClassName?: string;
   showContainer?: boolean;
 };
@@ -205,6 +221,7 @@ export function SmartVideo({
     <video
       ref={videoRef}
       src={src}
+      loop
       playsInline
       preload="metadata"
       className={className}
