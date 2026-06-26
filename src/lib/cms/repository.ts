@@ -58,7 +58,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -84,7 +84,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -98,7 +98,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listCompositeWorks");
     },
     async getSiteSettings() {
       await runHeroVideosMigration().catch(() => {});
@@ -271,7 +271,8 @@ export function createCmsRepository(source: CmsReadSource | null) {
       if (source) {
         try {
           return await source.listPublishedWorks();
-        } catch {
+        } catch (error) {
+          console.error("[listPublishedWorks] 查询失败，回退到静态数据:", error);
           return getPublishedWorks();
         }
       }
@@ -362,7 +363,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -388,7 +389,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -402,7 +403,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return ((data ?? []) as unknown as CmsWorkRow[]).map(toPublicWork);
+      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listCompositeWorks");
     },
     async getSiteSettings() {
       // 先尝试自动迁移（幂等操作）
@@ -655,6 +656,18 @@ function toPublicWork(row: CmsWorkRow): Work {
     shareMedia: toPublicMedia(row.share_media),
     blocks: toPublicBlocks(row.work_blocks ?? []),
   };
+}
+
+function safeMapWorks(rows: CmsWorkRow[], context: string): Work[] {
+  const works: Work[] = [];
+  for (const row of rows) {
+    try {
+      works.push(toPublicWork(row));
+    } catch (err) {
+      console.error(`[safeMapWorks] 作品转换失败 (${context}), slug=${row.slug}, title=${row.title}:`, err);
+    }
+  }
+  return works;
 }
 
 function getJoinedName(

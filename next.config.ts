@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     // 图片缓存最小 TTL（秒），减少重复图片处理开销
     minimumCacheTTL: 60,
+    qualities: [75, 85, 90],
     remotePatterns: [
       {
         hostname: "127.0.0.1",
