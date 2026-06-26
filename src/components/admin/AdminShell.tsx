@@ -19,7 +19,7 @@ const ADMIN_CONTENT_OFFSET = 420;
 
 function SidebarContent({ userEmail }: { userEmail: string }) {
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-4 md:p-5">
+    <div className="admin-scroll-area flex h-full flex-col overflow-y-auto p-4 md:p-5">
       <div className="mb-5 flex items-center justify-between gap-4 md:block">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">
@@ -51,7 +51,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
       className={`flex h-full min-w-0 flex-col md:pt-28 ${
         isWorkEditorPage
           ? "overflow-hidden px-3 py-6 md:px-6"
-          : "overflow-y-auto px-5 py-6 md:px-8"
+          : "admin-scroll-area overflow-y-auto px-5 py-6 md:px-8"
       }`}
     >
       <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
@@ -62,7 +62,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
     <main className="relative h-screen overflow-hidden bg-[#07090b] text-white">
       <ErrorBoundary>
         <DetachedResizablePanels
-          gap={18}
+          gap={42}
           panels={[
             {
               id: "admin-sidebar",
@@ -79,13 +79,13 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             {
               id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
               storageKey: isWorkEditorPage
-                ? "admin-editor-stage-width"
+                ? "admin-editor-stage-width-v5"
                 : "admin-primary-page-width",
               anchor: "left",
               offset: ADMIN_CONTENT_OFFSET,
-              defaultWidth: isWorkEditorPage ? 1800 : 1420,
-              minWidth: isWorkEditorPage ? 900 : 720,
-              maxWidth: isWorkEditorPage ? 2600 : 2200,
+              defaultWidth: isWorkEditorPage ? 4000 : 1420,
+              minWidth: isWorkEditorPage ? 720 : 720,
+              maxWidth: isWorkEditorPage ? 4000 : 2200,
               resizeEdge: isWorkEditorPage ? "none" : "right",
               className: "h-full",
               children: content,

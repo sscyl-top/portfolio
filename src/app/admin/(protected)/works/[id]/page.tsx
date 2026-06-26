@@ -175,7 +175,7 @@ export default async function AdminWorkEditorPage({
           panels={[
             {
               id: "admin-work-editor-content",
-              storageKey: "admin-work-editor-content-width-v3",
+              storageKey: "admin-work-editor-content-width-v4",
               anchor: "left",
               offset: 0,
               defaultWidth: 1420,
@@ -184,7 +184,7 @@ export default async function AdminWorkEditorPage({
               resizeEdge: "right",
               className: "h-full",
               children: (
-                <div className="h-full overflow-y-auto pr-3">
+                <div className="admin-scroll-area h-full overflow-x-hidden overflow-y-auto pr-5">
                   <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.015] p-6 md:p-8">
                     <form id="mainWorkForm" action={updateWork}>
                       <input type="hidden" name="id" value={workRow.id} />
@@ -230,7 +230,7 @@ export default async function AdminWorkEditorPage({
             },
             {
               id: "admin-work-editor-tools",
-              storageKey: "admin-work-editor-tools-width-v3",
+              storageKey: "admin-work-editor-tools-width-v4",
               anchor: "right",
               offset: 0,
               defaultWidth: 420,
@@ -239,7 +239,7 @@ export default async function AdminWorkEditorPage({
               resizeEdge: "left",
               className: "h-full",
               children: (
-                <div className="h-full space-y-3 overflow-y-auto pl-3">
+                <div className="admin-scroll-area h-full space-y-3 overflow-x-hidden overflow-y-auto pl-5 pr-3">
                   <div className="grid gap-3 xl:grid-cols-2">
                     <SaveWorkCard updatedAt={workRow.updated_at} />
                     <PrivatePreviewForm previewPath={privatePreview} work={workRow} />
