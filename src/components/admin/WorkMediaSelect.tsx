@@ -168,7 +168,7 @@ export function WorkMediaSelect({
 
   return (
     <div className="grid min-w-0 gap-1.5 text-sm">
-      <span className={`text-white/58 ${compact ? "text-[11px]" : ""}`}>{label}</span>
+      <span className={`min-h-[16px] leading-snug text-white/58 ${compact ? "text-[11px]" : ""}`}>{label}</span>
 
       <div
         ref={dropZoneRef}

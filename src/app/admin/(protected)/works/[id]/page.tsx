@@ -393,12 +393,11 @@ function MediaForm({
               autoSave
             />
             <WorkMediaSelect
-              label="悬停预览图"
+              label="悬停预览图 (hover时显示，支持GIF)"
               name="hover_media_id"
               assets={mediaAssets}
               defaultValue={work.hover_media_id ?? ""}
               compact
-              hint="hover时显示，支持GIF"
               autoSave
             />
           </div>
