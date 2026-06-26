@@ -97,10 +97,13 @@ function updatePlayback() {
 function doPlayVideo(entry: MotionEntry) {
   const el = entry.videoEl;
   if (!el || !el.paused) return;
-  el.muted = true;
+  el.muted = false;
   const p = el.play();
   if (p && typeof p.catch === "function") {
-    p.catch(() => {});
+    p.catch(() => {
+      el.muted = true;
+      el.play().catch(() => {});
+    });
   }
 }
 
@@ -202,7 +205,6 @@ export function SmartVideo({
     <video
       ref={videoRef}
       src={src}
-      muted
       playsInline
       preload="metadata"
       className={className}
