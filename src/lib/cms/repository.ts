@@ -820,15 +820,10 @@ function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
   const media = Array.isArray(value) ? value[0] : value;
   if (!media?.storage_key) return undefined;
 
-  const encodedKey = media.storage_key
-    .split("/")
-    .map((part) => encodeURIComponent(part))
-    .join("/");
-
   return {
     alt: media.alt_text,
     mimeType: media.mime_type,
-    url: buildMediaUrl(encodedKey, media.mime_type),
+    url: buildMediaUrl(media.storage_key, media.mime_type),
   };
 }
 
