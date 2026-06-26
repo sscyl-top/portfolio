@@ -226,6 +226,11 @@ export async function updateWorkMedia(formData: FormData) {
 
   await autoArchiveAfterChange(client, work_id, user.id, "更新作品媒体");
 
+  revalidatePath("/admin/works");
+  revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${work_slug}`);
+
   redirect(`/admin/works/${work_id}?toast=${encodeURIComponent("媒体保存成功")}`);
 }
 
@@ -271,6 +276,50 @@ export async function updateWorkTaxonomy(formData: FormData) {
   await autoArchiveAfterChange(client, work_id, user.id, "更新作品分类与标签");
 
   redirect(`/admin/works/${work_id}?toast=${encodeURIComponent("分类与标签保存成功")}`);
+}
+
+export async function autoSaveWork(formData: FormData) {
+  const id = formData.get("id");
+  const idParsed = z.string().uuid().safeParse(id);
+  if (!idParsed.success) return { success: false, error: "无效ID" };
+  const workId = idParsed.data;
+
+  try {
+    const { client, user } = await requireAdmin();
+
+    const { data: currentWork } = await client
+      .from("works")
+      .select("*")
+      .eq("id", workId)
+      .is("deleted_at", null)
+      .single();
+
+    if (!currentWork) return { success: false, error: "作品不存在" };
+
+    const updates: Record<string, unknown> = {};
+
+    const title = formData.get("title");
+    if (title !== null && typeof title === "string") updates.title = title.trim().slice(0, 200);
+
+    const summary = formData.get("summary");
+    if (summary !== null) updates.summary = String(summary).trim().slice(0, 1000);
+
+    if (Object.keys(updates).length === 0) return { success: true };
+
+    const { error } = await client
+      .from("works")
+      .update(updates)
+      .eq("id", workId);
+
+    if (error) return { success: false, error: error.message };
+
+    await autoArchiveAfterChange(client, workId, user.id, "自动保存");
+
+    revalidatePath(`/admin/works/${workId}`);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "保存失败" };
+  }
 }
 
 export async function updateWork(formData: FormData) {

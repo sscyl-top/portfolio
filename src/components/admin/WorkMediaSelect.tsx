@@ -85,6 +85,9 @@ export function WorkMediaSelect({
         return;
       }
       
+      setValue(result.id);
+      setIsUploading(false);
+
       const form = inputRef.current?.form;
       if (form && autoSave) {
         const hiddenInput = form.querySelector(`input[name="${name}"]`) as HTMLInputElement | null;
@@ -95,9 +98,6 @@ export function WorkMediaSelect({
         setTimeout(() => {
           window.location.reload();
         }, 800);
-      } else {
-        setValue(result.id);
-        setIsUploading(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
