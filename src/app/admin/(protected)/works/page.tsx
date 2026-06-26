@@ -4,7 +4,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
-import { DraggableAddFab } from "@/components/admin/DraggableAddFab";
 import {
   publishScheduledWorks,
   assignToRepresentativeSlot,
@@ -173,12 +172,19 @@ export default async function AdminWorksPage({
         <>
           <div className="mt-6 flex items-center justify-between">
             <div />
-            <form id="works-add-form" action={createEmptyWork} className="hidden">
+            <form action={createEmptyWork}>
               <input type="hidden" name="section" value={section === "composite" ? "composite" : "all"} />
+              <button
+                type="submit"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {section === "composite" ? "上传复合设计" : "上传新作品"}
+              </button>
             </form>
           </div>
-
-          <DraggableAddFab formId="works-add-form" label={section === "composite" ? "上传复合设计" : "上传新作品"} />
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <FilterBar currentStatus={status} query={query} section={section} />

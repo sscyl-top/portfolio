@@ -406,6 +406,104 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     blockId: string;
   } | null>(null);
 
+  // ── 悬浮添加按钮拖拽 ──────────────────────────────────
+  const FAB_SIZE = 48;
+  const FAB_MARGIN = 24;
+  const FAB_STORAGE_KEY = "admin_block_editor_fab_pos";
+  const fabBtnRef = useRef<HTMLButtonElement | null>(null);
+  const fabDragRef = useRef<{ startX: number; startY: number; originLeft: number; originTop: number; moved: boolean } | null>(null);
+  const fabSuppressClickRef = useRef(false);
+  const [fabPos, setFabPos] = useState<{ left: number; top: number } | null>(null);
+
+  const clampFabPos = useCallback((left: number, top: number) => {
+    const maxLeft = window.innerWidth - FAB_SIZE - FAB_MARGIN;
+    const maxTop = window.innerHeight - FAB_SIZE - FAB_MARGIN;
+    return {
+      left: Math.max(FAB_MARGIN, Math.min(maxLeft, left)),
+      top: Math.max(FAB_MARGIN + 60, Math.min(maxTop, top)),
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!embedded) return;
+    let initial: { left: number; top: number };
+    try {
+      const raw = window.localStorage.getItem(FAB_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.left === "number" && typeof parsed.top === "number") {
+          initial = clampFabPos(parsed.left, parsed.top);
+          setFabPos(initial);
+          return;
+        }
+      }
+    } catch {}
+    const isLarge = window.innerWidth >= 1536;
+    const rightOffset = isLarge ? 448 : 32;
+    initial = {
+      left: window.innerWidth - FAB_SIZE - rightOffset,
+      top: window.innerHeight - FAB_SIZE - 32,
+    };
+    setFabPos(initial);
+  }, [embedded, clampFabPos]);
+
+  useEffect(() => {
+    if (!embedded || !fabPos) return;
+    const onResize = () => setFabPos((p) => (p ? clampFabPos(p.left, p.top) : p));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [embedded, fabPos, clampFabPos]);
+
+  const handleFabPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!fabPos) return;
+    const btn = fabBtnRef.current;
+    if (!btn) return;
+    btn.setPointerCapture(e.pointerId);
+    fabSuppressClickRef.current = false;
+    fabDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      originLeft: fabPos.left,
+      originTop: fabPos.top,
+      moved: false,
+    };
+  }, [fabPos]);
+
+  const handleFabPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = fabDragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) drag.moved = true;
+    setFabPos(clampFabPos(drag.originLeft + dx, drag.originTop + dy));
+  }, [clampFabPos]);
+
+  const handleFabPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    const btn = fabBtnRef.current;
+    const drag = fabDragRef.current;
+    if (btn && btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+    if (drag) {
+      if (drag.moved) {
+        fabSuppressClickRef.current = true;
+        setFabPos((p) => {
+          if (p) {
+            try { window.localStorage.setItem(FAB_STORAGE_KEY, JSON.stringify(p)); } catch {}
+          }
+          return p;
+        });
+      }
+      fabDragRef.current = null;
+    }
+  }, []);
+
+  const handleFabClick = useCallback(() => {
+    if (fabSuppressClickRef.current) {
+      fabSuppressClickRef.current = false;
+      return;
+    }
+    setShowBlockMenu((v) => !v);
+  }, []);
+
   // 乐观更新：立即替换本地 payload，不等待服务器响应
   // 使用函数式 setState 基于 prev 状态更新，避免因事件时序导致的覆盖
   const handleOptimisticUpdate = useCallback(
@@ -1671,9 +1769,12 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         />
       ) : null}
 
-      {/* embedded 模式：悬浮 ⊕ 添加按钮（右下角） */}
-      {embedded ? (
-        <div className="pointer-events-none fixed bottom-8 right-8 z-40 flex flex-col items-end gap-2 2xl:right-[448px]">
+      {/* embedded 模式：可拖拽悬浮 ⊕ 添加按钮 */}
+      {embedded && fabPos ? (
+        <div
+          className="pointer-events-none fixed z-40 flex flex-col items-end gap-2"
+          style={{ left: fabPos.left, top: fabPos.top }}
+        >
           {showBlockMenu ? (
             <div
               className="pointer-events-auto mb-1 w-48 overflow-hidden rounded-xl border border-white/15 bg-[#141424]/95 shadow-2xl backdrop-blur-md"
@@ -1727,14 +1828,19 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
             </div>
           ) : null}
           <button
+            ref={fabBtnRef}
             type="button"
-            onClick={() => setShowBlockMenu((v) => !v)}
-            className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition ${
+            onPointerDown={handleFabPointerDown}
+            onPointerMove={handleFabPointerMove}
+            onPointerUp={handleFabPointerUp}
+            onPointerCancel={handleFabPointerUp}
+            onClick={handleFabClick}
+            title="添加内容（按住拖动位置）"
+            className={`pointer-events-auto flex h-12 w-12 cursor-grab items-center justify-center rounded-full shadow-lg transition-[transform,background-color,box-shadow] select-none touch-none active:cursor-grabbing ${
               showBlockMenu
                 ? "rotate-45 bg-white text-black"
-                : "bg-cyan text-black hover:bg-white hover:scale-105"
+                : "bg-cyan text-black hover:scale-105 hover:bg-white hover:shadow-[0_8px_28px_rgba(139,215,205,0.4)] active:scale-95"
             }`}
-            title="添加内容"
           >
             <Plus className="h-5 w-5" strokeWidth={2.5} />
           </button>
