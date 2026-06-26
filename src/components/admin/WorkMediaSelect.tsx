@@ -177,40 +177,38 @@ export function WorkMediaSelect({
           isDragging
             ? "border-cyan bg-cyan/10 z-[60]"
             : "border-white/10 bg-white/[0.035]"
-        }`}
+        } ${compact ? "h-[132px]" : "h-[180px]"}`}
       >
         {previewUrl && selected ? (
-          <div className={compact ? "p-2" : "p-3"}>
-            <div className="flex justify-center">
-              {isVideo ? (
-                <video
-                  src={previewUrl}
-                  muted
-                  playsInline
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px]" : "h-28 w-full max-w-[220px]"}`}
-                />
-              ) : isGif ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={previewUrl}
-                  alt={selected.alt_text || selected.original_name || label}
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px] object-contain bg-black/20" : "h-28 w-full max-w-[220px] object-contain bg-black/20"}`}
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={previewUrl}
-                  alt={selected.alt_text || selected.original_name || label}
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px] object-contain bg-black/20" : "h-28 w-full max-w-[220px] object-contain bg-black/20"}`}
-                />
-              )}
-            </div>
+          <div className={`flex h-full w-full items-center justify-center ${compact ? "p-2" : "p-3"}`}>
+            {isVideo ? (
+              <video
+                src={previewUrl}
+                muted
+                playsInline
+                className={`max-h-full max-w-full rounded border border-white/10 object-contain ${compact ? "max-h-[116px]" : "max-h-[156px]"}`}
+              />
+            ) : isGif ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt={selected.alt_text || selected.original_name || label}
+                className={`max-h-full max-w-full rounded border border-white/10 object-contain bg-black/20 ${compact ? "max-h-[116px]" : "max-h-[156px]"}`}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt={selected.alt_text || selected.original_name || label}
+                className={`max-h-full max-w-full rounded border border-white/10 object-contain bg-black/20 ${compact ? "max-h-[116px]" : "max-h-[156px]"}`}
+              />
+            )}
           </div>
         ) : (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className={`flex w-full flex-col items-center justify-center gap-1 transition hover:bg-white/[0.06] ${compact ? "p-2" : "p-4"}`}
+            className={`flex h-full w-full flex-col items-center justify-center gap-1 transition hover:bg-white/[0.06] ${compact ? "p-2" : "p-4"}`}
           >
             {isUploading ? (
               <Loader2 className={`animate-spin text-cyan ${compact ? "h-4 w-4" : "h-6 w-6"}`} />
@@ -237,11 +235,9 @@ export function WorkMediaSelect({
 
       <input type="hidden" name={name} value={value} />
 
-      {selected && (
-        <p className={`truncate px-0.5 text-white/50 ${compact ? "text-[10px]" : "text-[11px]"}`} title={selected.original_name}>
-          {selected.original_name.length > 25 ? selected.original_name.slice(0, 22) + "..." : selected.original_name}
-        </p>
-      )}
+      <p className={`flex h-5 items-center truncate px-0.5 text-white/50 ${compact ? "text-[10px]" : "text-[11px]"}`} title={selected?.original_name}>
+        {selected ? (selected.original_name.length > 25 ? selected.original_name.slice(0, 22) + "..." : selected.original_name) : ""}
+      </p>
 
       <div className="flex min-w-0 items-center gap-1">
         <select
@@ -269,16 +265,15 @@ export function WorkMediaSelect({
           {compact ? "" : "上传"}
         </button>
 
-        {value ? (
-          <button
-            type="button"
-            onClick={() => handleValueChange("")}
-            title="移除"
-            className={`grid shrink-0 place-items-center rounded-md border border-white/10 bg-black/20 text-white/40 transition hover:border-red-300/30 hover:text-red-300 ${compact ? "h-7 w-7" : "h-8 w-8"}`}
-          >
-            <X className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => value && handleValueChange("")}
+          title={value ? "移除" : "未选择文件"}
+          disabled={!value}
+          className={`grid shrink-0 place-items-center rounded-md border border-white/10 bg-black/20 transition ${value ? "text-white/40 hover:border-red-300/30 hover:text-red-300" : "text-white/15 cursor-not-allowed"} ${compact ? "h-7 w-7" : "h-8 w-8"}`}
+        >
+          <X className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+        </button>
       </div>
 
       <input
