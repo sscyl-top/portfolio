@@ -343,12 +343,12 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black md:min-h-[80vh]">
+      <div className="relative w-full overflow-hidden bg-black">
         <video
           src={block.items[0].url}
           controls
           preload="metadata"
-          className="w-full"
+          className="w-full h-auto block"
         />
       </div>
     </section>
