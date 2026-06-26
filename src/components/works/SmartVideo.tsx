@@ -259,7 +259,7 @@ export function SmartVideo({
 
   if (showContainer) {
     return (
-      <div className={`relative w-full overflow-hidden bg-black ${containerClassName ?? ""}`}>
+      <div className={`relative w-full overflow-hidden bg-[#181a1e] ${containerClassName ?? ""}`}>
         {videoElement}
         {showBigButton && (
           <button

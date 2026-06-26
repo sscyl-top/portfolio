@@ -84,7 +84,7 @@ export default async function WorkDetailPage({
   const relatedWorks = await repository.getRelatedWorks(work.slug);
 
   return (
-    <main className="min-h-screen bg-[#050505] pb-24 pt-28 md:pt-32">
+    <main className="min-h-screen bg-[#181a1e] pb-24 pt-28 md:pt-32">
       {/* 头部信息：标题 + 文字介绍，宽度与导航栏/内容块对齐 */}
       <header className="mx-auto max-w-[1420px] px-3 md:px-8">
         <Link
