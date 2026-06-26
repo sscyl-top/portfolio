@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
-type VideoEntry = {
+type MotionEntry = {
   id: number;
-  el: HTMLVideoElement;
+  el: HTMLElement;
   ratio: number;
+  kind: "video" | "gif";
+  videoEl?: HTMLVideoElement;
   isUserControlled: boolean;
 };
 
 let nextId = 1;
-const videoRegistry = new Map<number, VideoEntry>();
-let activeVideoId: number | null = null;
+const motionRegistry = new Map<number, MotionEntry>();
+let activeMotionId: number | null = null;
 let observer: IntersectionObserver | null = null;
 
-function getObserver(): IntersectionObserver {
+function ensureObserver(): IntersectionObserver {
   if (observer) return observer;
 
   observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        const el = entry.target as HTMLVideoElement;
-        const videoEl = el as HTMLVideoElement & { __smartVideoId?: number };
-        const id = videoEl.__smartVideoId;
+        const el = entry.target as HTMLElement;
+        const id = (el as HTMLElement & { __motionId?: number }).__motionId;
         if (id === undefined) continue;
-        const reg = videoRegistry.get(id);
+        const reg = motionRegistry.get(id);
         if (!reg) continue;
         reg.ratio = entry.intersectionRatio;
       }
@@ -50,66 +51,131 @@ function scheduleUpdate() {
 }
 
 function updatePlayback() {
-  const fullyVisible: VideoEntry[] = [];
-  const halfHidden: VideoEntry[] = [];
+  const fullyVisible: MotionEntry[] = [];
+  const halfHiddenVideos: MotionEntry[] = [];
 
-  for (const entry of videoRegistry.values()) {
-    if (entry.isUserControlled) continue;
+  for (const entry of motionRegistry.values()) {
+    if (entry.kind === "video" && entry.isUserControlled) continue;
     if (entry.ratio >= 0.95) {
       fullyVisible.push(entry);
-    } else if (entry.ratio < 0.5) {
-      halfHidden.push(entry);
+    } else if (entry.kind === "video" && entry.ratio < 0.5) {
+      halfHiddenVideos.push(entry);
     }
   }
 
-  let shouldPlay: VideoEntry | null = null;
+  let shouldActivate: MotionEntry | null = null;
   if (fullyVisible.length > 0) {
-    shouldPlay = fullyVisible[fullyVisible.length - 1];
+    shouldActivate = fullyVisible[fullyVisible.length - 1];
   }
 
-  for (const entry of halfHidden) {
-    if (entry.id !== activeVideoId || !shouldPlay) {
-      pauseVideo(entry);
+  for (const entry of halfHiddenVideos) {
+    if (activeMotionId === entry.id || !shouldActivate) {
+      doPauseVideo(entry);
     }
   }
 
-  if (shouldPlay) {
-    if (activeVideoId !== shouldPlay.id) {
-      const prev = activeVideoId !== null ? videoRegistry.get(activeVideoId) : null;
-      if (prev && !prev.isUserControlled) {
-        pauseVideo(prev);
+  if (shouldActivate && activeMotionId !== shouldActivate.id) {
+    const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
+    if (prev && prev.kind === "video" && !prev.isUserControlled) {
+      doPauseVideo(prev);
+    }
+    activeMotionId = shouldActivate.id;
+    if (shouldActivate.kind === "video" && shouldActivate.videoEl) {
+      doPlayVideo(shouldActivate);
+    }
+  }
+
+  if (!shouldActivate) {
+    const active = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
+    if (active && active.kind === "video" && !active.isUserControlled && active.ratio < 0.5) {
+      doPauseVideo(active);
+      activeMotionId = null;
+    }
+  }
+}
+
+function doPlayVideo(entry: MotionEntry) {
+  const el = entry.videoEl;
+  if (!el || !el.paused) return;
+  el.muted = true;
+  const p = el.play();
+  if (p && typeof p.catch === "function") {
+    p.catch(() => {});
+  }
+}
+
+function doPauseVideo(entry: MotionEntry) {
+  const el = entry.videoEl;
+  if (!el || el.paused) {
+    if (entry.id === activeMotionId) activeMotionId = null;
+    return;
+  }
+  el.pause();
+  if (entry.id === activeMotionId) activeMotionId = null;
+}
+
+function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVideoElement): () => void {
+  const id = nextId++;
+  (el as HTMLElement & { __motionId?: number }).__motionId = id;
+
+  const entry: MotionEntry = {
+    id,
+    el,
+    ratio: 0,
+    kind,
+    videoEl,
+    isUserControlled: false,
+  };
+  motionRegistry.set(id, entry);
+
+  const cleanupFns: (() => void)[] = [];
+
+  if (kind === "video" && videoEl) {
+    const onPause = () => {
+      if (entry.isUserControlled) return;
+      if (videoEl.seeking || videoEl.ended) return;
+      entry.isUserControlled = true;
+    };
+    const onPlay = () => {
+      if (!entry.isUserControlled) return;
+      if (activeMotionId !== id) {
+        const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
+        if (prev && prev.kind === "video" && !prev.isUserControlled) {
+          doPauseVideo(prev);
+        }
+        activeMotionId = id;
       }
-      activeVideoId = shouldPlay.id;
-      playVideo(shouldPlay);
-    }
-  } else {
-    const active = activeVideoId !== null ? videoRegistry.get(activeVideoId) : null;
-    if (active && !active.isUserControlled && active.ratio < 0.5) {
-      pauseVideo(active);
-      activeVideoId = null;
-    }
+    };
+    const onVolume = () => {
+      if (!videoEl.muted && videoEl.volume > 0) {
+        entry.isUserControlled = true;
+      }
+    };
+    const onClick = () => {
+      entry.isUserControlled = true;
+    };
+    videoEl.addEventListener("pause", onPause);
+    videoEl.addEventListener("play", onPlay);
+    videoEl.addEventListener("volumechange", onVolume);
+    videoEl.addEventListener("click", onClick);
+    cleanupFns.push(() => {
+      videoEl.removeEventListener("pause", onPause);
+      videoEl.removeEventListener("play", onPlay);
+      videoEl.removeEventListener("volumechange", onVolume);
+      videoEl.removeEventListener("click", onClick);
+    });
   }
-}
 
-function playVideo(entry: VideoEntry) {
-  const el = entry.el;
-  if (el.paused) {
-    el.muted = true;
-    const p = el.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {});
-    }
-  }
-}
+  ensureObserver().observe(el);
+  scheduleUpdate();
 
-function pauseVideo(entry: VideoEntry) {
-  const el = entry.el;
-  if (!el.paused) {
-    el.pause();
-  }
-  if (entry.id === activeVideoId) {
-    activeVideoId = null;
-  }
+  return () => {
+    ensureObserver().unobserve(el);
+    motionRegistry.delete(id);
+    for (const fn of cleanupFns) fn();
+    if (activeMotionId === id) activeMotionId = null;
+    scheduleUpdate();
+  };
 }
 
 type SmartVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "ref"> & {
@@ -125,69 +191,12 @@ export function SmartVideo({
   ...rest
 }: SmartVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const entryRef = useRef<VideoEntry | null>(null);
-
-  const handleUserInteraction = useCallback(() => {
-    const entry = entryRef.current;
-    if (!entry) return;
-    entry.isUserControlled = true;
-  }, []);
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-
-    const id = nextId++;
-    (el as HTMLVideoElement & { __smartVideoId?: number }).__smartVideoId = id;
-
-    const entry: VideoEntry = {
-      id,
-      el,
-      ratio: 0,
-      isUserControlled: false,
-    };
-    entryRef.current = entry;
-    videoRegistry.set(id, entry);
-
-    el.addEventListener("pause", () => {
-      if (!entry.isUserControlled) {
-        if (el.seeking || el.ended) return;
-        entry.isUserControlled = true;
-      }
-    });
-
-    el.addEventListener("play", () => {
-      if (entry.isUserControlled && activeVideoId !== id) {
-        const prev = activeVideoId !== null ? videoRegistry.get(activeVideoId) : null;
-        if (prev && !prev.isUserControlled) {
-          pauseVideo(prev);
-        }
-        activeVideoId = id;
-      }
-    });
-
-    el.addEventListener("volumechange", () => {
-      if (!el.muted && el.volume > 0) {
-        entry.isUserControlled = true;
-      }
-    });
-
-    el.addEventListener("click", handleUserInteraction);
-
-    getObserver().observe(el);
-
-    scheduleUpdate();
-
-    return () => {
-      getObserver().unobserve(el);
-      videoRegistry.delete(id);
-      if (activeVideoId === id) {
-        activeVideoId = null;
-      }
-      el.removeEventListener("click", handleUserInteraction);
-      scheduleUpdate();
-    };
-  }, [handleUserInteraction]);
+    return registerMotion(el, "video", el);
+  }, []);
 
   const videoElement = (
     <video
@@ -210,4 +219,25 @@ export function SmartVideo({
   }
 
   return videoElement;
+}
+
+type SmartGifBoundaryProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+export function SmartGifBoundary({ children, className }: SmartGifBoundaryProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    return registerMotion(el, "gif");
+  }, []);
+
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
 }

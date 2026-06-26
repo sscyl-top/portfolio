@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ContentBlock, BlockLayout } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
-import { SmartVideo } from "./SmartVideo";
+import { SmartVideo, SmartGifBoundary } from "./SmartVideo";
 import { PdfBlockRenderer } from "./PdfBlockRenderer";
 import { CodeBlock } from "./blocks/CodeBlock";
 import { QuoteBlock } from "./blocks/QuoteBlock";
@@ -257,7 +257,21 @@ function MediaBlock({
             onClick={isGallery ? () => setLightboxIdx(i) : undefined}
           >
             {isSingle ? (
-              media.mimeType?.startsWith("image/") ? (
+              media.mimeType === "image/gif" ? (
+                <SmartGifBoundary className="w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={media.url}
+                    alt={media.alt ?? ""}
+                    className="block w-full h-auto"
+                    style={
+                      block.type === "media" && block.focalPoint
+                        ? { objectPosition: `${block.focalPoint.x}% ${block.focalPoint.y}%` }
+                        : undefined
+                    }
+                  />
+                </SmartGifBoundary>
+              ) : media.mimeType?.startsWith("image/") ? (
                 <img
                   src={media.url}
                   alt={media.alt ?? ""}
@@ -288,7 +302,16 @@ function MediaBlock({
                 />
               )
             ) : isGallery ? (
-              media.mimeType?.startsWith("image/") ? (
+              media.mimeType === "image/gif" ? (
+                <SmartGifBoundary className="w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={media.url}
+                    alt={media.alt ?? ""}
+                    className="block w-full h-auto"
+                  />
+                </SmartGifBoundary>
+              ) : media.mimeType?.startsWith("image/") ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={media.url}
