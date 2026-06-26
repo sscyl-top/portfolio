@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 type MotionEntry = {
   id: number;
@@ -10,6 +10,7 @@ type MotionEntry = {
   videoEl?: HTMLVideoElement;
   isUserControlled: boolean;
   isSystemPaused: boolean;
+  onPlayStateChange?: (playing: boolean) => void;
 };
 
 let nextId = 1;
@@ -53,14 +54,14 @@ function scheduleUpdate() {
 
 function updatePlayback() {
   const fullyVisible: MotionEntry[] = [];
-  const halfHiddenVideos: MotionEntry[] = [];
 
   for (const entry of motionRegistry.values()) {
+    if (entry.kind === "video" && !entry.isUserControlled && entry.ratio < 0.5) {
+      systemPauseVideo(entry);
+    }
     if (entry.kind === "video" && entry.isUserControlled) continue;
     if (entry.ratio >= 0.95) {
       fullyVisible.push(entry);
-    } else if (entry.kind === "video" && entry.ratio < 0.5) {
-      halfHiddenVideos.push(entry);
     }
   }
 
@@ -69,32 +70,28 @@ function updatePlayback() {
     shouldActivate = fullyVisible[fullyVisible.length - 1];
   }
 
-  for (const entry of halfHiddenVideos) {
-    if (activeMotionId === entry.id || !shouldActivate) {
-      systemPauseVideo(entry);
+  if (shouldActivate) {
+    if (activeMotionId !== shouldActivate.id) {
+      const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
+      if (prev && prev.kind === "video" && !prev.isUserControlled) {
+        systemPauseVideo(prev);
+      }
+      activeMotionId = shouldActivate.id;
+      if (shouldActivate.kind === "video" && shouldActivate.videoEl) {
+        systemPlayVideo(shouldActivate);
+      }
+    } else if (shouldActivate.kind === "video" && shouldActivate.videoEl) {
+      if (shouldActivate.videoEl.paused && !shouldActivate.isUserControlled) {
+        systemPlayVideo(shouldActivate);
+      }
     }
-  }
-
-  if (shouldActivate && activeMotionId !== shouldActivate.id) {
-    const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
-    if (prev && prev.kind === "video" && !prev.isUserControlled) {
-      systemPauseVideo(prev);
-    }
-    activeMotionId = shouldActivate.id;
-    if (shouldActivate.kind === "video" && shouldActivate.videoEl) {
-      systemPlayVideo(shouldActivate);
-    }
-  } else if (shouldActivate && shouldActivate.kind === "video" && shouldActivate.videoEl) {
-    if (shouldActivate.videoEl.paused && !shouldActivate.isUserControlled) {
-      systemPlayVideo(shouldActivate);
-    }
-  }
-
-  if (!shouldActivate) {
+  } else {
     const active = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
-    if (active && active.kind === "video" && !active.isUserControlled && active.ratio < 0.5) {
-      systemPauseVideo(active);
-      activeMotionId = null;
+    if (active && active.kind === "video" && !active.isUserControlled) {
+      if (active.ratio < 0.5) {
+        systemPauseVideo(active);
+        activeMotionId = null;
+      }
     }
   }
 }
@@ -123,7 +120,12 @@ function systemPauseVideo(entry: MotionEntry) {
   if (entry.id === activeMotionId) activeMotionId = null;
 }
 
-function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVideoElement): () => void {
+function registerMotion(
+  el: HTMLElement,
+  kind: "video" | "gif",
+  videoEl?: HTMLVideoElement,
+  onPlayStateChange?: (playing: boolean) => void,
+): () => void {
   const id = nextId++;
   (el as HTMLElement & { __motionId?: number }).__motionId = id;
 
@@ -135,6 +137,7 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
     videoEl,
     isUserControlled: false,
     isSystemPaused: false,
+    onPlayStateChange,
   };
   motionRegistry.set(id, entry);
 
@@ -142,11 +145,13 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
 
   if (kind === "video" && videoEl) {
     const onPause = () => {
+      entry.onPlayStateChange?.(false);
       if (entry.isSystemPaused || entry.isUserControlled) return;
       if (videoEl.seeking || videoEl.ended) return;
       entry.isUserControlled = true;
     };
     const onPlay = () => {
+      entry.onPlayStateChange?.(true);
       entry.isSystemPaused = false;
       if (entry.isUserControlled && activeMotionId !== id) {
         const prev = activeMotionId !== null ? motionRegistry.get(activeMotionId) : null;
@@ -161,7 +166,7 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
         entry.isUserControlled = true;
       }
     };
-    const onClick = () => {
+    const onNativeClick = () => {
       entry.isUserControlled = true;
     };
     const onEnded = () => {
@@ -174,13 +179,13 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
     videoEl.addEventListener("pause", onPause);
     videoEl.addEventListener("play", onPlay);
     videoEl.addEventListener("volumechange", onVolume);
-    videoEl.addEventListener("click", onClick);
+    videoEl.addEventListener("click", onNativeClick);
     videoEl.addEventListener("ended", onEnded);
     cleanupFns.push(() => {
       videoEl.removeEventListener("pause", onPause);
       videoEl.removeEventListener("play", onPlay);
       videoEl.removeEventListener("volumechange", onVolume);
-      videoEl.removeEventListener("click", onClick);
+      videoEl.removeEventListener("click", onNativeClick);
       videoEl.removeEventListener("ended", onEnded);
     });
   }
@@ -200,6 +205,7 @@ function registerMotion(el: HTMLElement, kind: "video" | "gif", videoEl?: HTMLVi
 type SmartVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "ref" | "loop"> & {
   containerClassName?: string;
   showContainer?: boolean;
+  controls?: boolean;
 };
 
 export function SmartVideo({
@@ -207,15 +213,36 @@ export function SmartVideo({
   showContainer = true,
   className,
   src,
+  controls = true,
   ...rest
 }: SmartVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const togglePlay = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const id = (el as HTMLVideoElement & { __motionId?: number }).__motionId;
+    const entry = id !== undefined ? motionRegistry.get(id) : null;
+    if (entry) entry.isUserControlled = true;
+    if (el.paused) {
+      el.muted = false;
+      const p = el.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {});
+      }
+    } else {
+      el.pause();
+    }
+  }, []);
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    return registerMotion(el, "video", el);
+    return registerMotion(el, "video", el, setIsPlaying);
   }, []);
+
+  const showBigButton = !isPlaying;
 
   const videoElement = (
     <video
@@ -224,6 +251,7 @@ export function SmartVideo({
       loop
       playsInline
       preload="metadata"
+      controls={controls}
       className={className}
       {...rest}
     />
@@ -233,11 +261,55 @@ export function SmartVideo({
     return (
       <div className={`relative w-full overflow-hidden bg-black ${containerClassName ?? ""}`}>
         {videoElement}
+        {showBigButton && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              togglePlay();
+            }}
+            className="absolute inset-0 z-10 flex items-center justify-center"
+            aria-label="播放"
+          >
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-black/45 backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:bg-black/60 md:h-24 md:w-24">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="ml-1 h-10 w-10 text-white md:h-12 md:w-12"
+              >
+                <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z" />
+              </svg>
+            </span>
+          </button>
+        )}
       </div>
     );
   }
 
-  return videoElement;
+  return (
+    <div className="relative">
+      {videoElement}
+      {showBigButton && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            togglePlay();
+          }}
+          className="absolute inset-0 z-10 flex items-center justify-center"
+          aria-label="播放"
+        >
+          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-black/45 backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:bg-black/60 md:h-24 md:w-24">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="ml-1 h-10 w-10 text-white md:h-12 md:w-12">
+              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z" />
+            </svg>
+          </span>
+        </button>
+      )}
+    </div>
+  );
 }
 
 type SmartGifBoundaryProps = {
