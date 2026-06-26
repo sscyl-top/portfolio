@@ -87,7 +87,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
               className="mt-1 h-5 w-5 flex-none text-white/45 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
             />
           </div>
-          <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/62">{work.summary}</p>
+          <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/62">{work.subtitle}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {work.tags.slice(0, 1).map((tag) => (
               <span
@@ -311,7 +311,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                         <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/10 bg-black/50 p-2.5 backdrop-blur-md">
                           <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-copper">{work.category}</p>
                           <h2 className="mt-1 text-sm font-semibold leading-snug text-white">{work.title}</h2>
-                          <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-white/58">{work.summary}</p>
+                          <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-white/58">{work.subtitle}</p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {work.tags.slice(0, 1).map((tag) => (
                               <span key={tag} className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-[9px] text-white/50">{tag}</span>

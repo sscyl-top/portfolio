@@ -155,7 +155,7 @@ export function WorksExplorer({
                         {work?.title ?? "Project placeholder"}
                       </h3>
                       <p className="mt-2 line-clamp-1 max-w-xl text-sm leading-6 text-white/64 transition-colors duration-300 group-hover:text-white/75 md:mt-3 md:text-lg md:leading-7">
-                        {work?.summary ?? "Reserved visual slot for upcoming work."}
+                        {work?.subtitle ?? "Reserved visual slot for upcoming work."}
                       </p>
                     </div>
                     <ArrowUpRight

@@ -221,6 +221,7 @@ export function createPublicCmsRepository() {
 type CmsWorkRow = {
   slug: string;
   title: string;
+  subtitle: string;
   summary: string;
   year: string;
   status: Work["status"];
@@ -249,7 +250,7 @@ type CmsWorkRow = {
 };
 
 const publicWorkSelect = `
-  slug,title,summary,year,status,palette,is_representative,
+  slug,title,subtitle,summary,year,status,palette,is_representative,
   representative_order,is_composite,composite_order,sort_order,
   cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
   hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
@@ -638,6 +639,7 @@ function toPublicWork(row: CmsWorkRow): Work {
 
   return {
     title: normalizeUtf8(row.title),
+    subtitle: normalizeUtf8(row.subtitle ?? ""),
     slug: row.slug,
     summary: normalizeUtf8(row.summary ?? ""),
     category,

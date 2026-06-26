@@ -122,6 +122,7 @@ export type ContentBlock =
 
 export type Work = {
   title: string;
+  subtitle: string;
   slug: string;
   summary: string;
   category: string;
@@ -321,6 +322,7 @@ export const resume = {
 export const works: Work[] = [
   {
     title: "RJ Tech Brand System",
+    subtitle: "",
     slug: "rj-tech-brand-system",
     summary: "沙地摩托品牌识别、电商视觉与商业传播系统。",
     category: "品牌全案",
@@ -348,6 +350,7 @@ export const works: Work[] = [
   },
   {
     title: "TECLOMAN Energy Visuals",
+    subtitle: "",
     slug: "tecloman-energy-visuals",
     summary: "新能源品牌传播、产品图形与展会视觉。",
     category: "品牌全案",
@@ -375,6 +378,7 @@ export const works: Work[] = [
   },
   {
     title: "Hotelite Hospitality Identity",
+    subtitle: "",
     slug: "hotelite-hospitality-identity",
     summary: "酒店与生活方式品牌识别、应用系统与氛围图形。",
     category: "视觉设计",
@@ -402,6 +406,7 @@ export const works: Work[] = [
   },
   {
     title: "Kukaski Interface Design",
+    subtitle: "",
     slug: "kukaski-interface-design",
     summary: "官网首页、移动端活动页与产品视觉组件库。",
     category: "视觉设计",
@@ -423,6 +428,7 @@ export const works: Work[] = [
   },
   {
     title: "AIGC Concept Lab",
+    subtitle: "",
     slug: "aigc-concept-lab",
     summary: "AI 概念生成、视觉探索与商业提案工作流。",
     category: "概念设计",
@@ -451,6 +457,7 @@ export const works: Work[] = [
   },
   {
     title: "Packaging Engineering",
+    subtitle: "",
     slug: "packaging-engineering",
     summary: "产品包装工程、物料规范与全球渠道标准。",
     category: "包装设计",
@@ -472,6 +479,7 @@ export const works: Work[] = [
   },
   {
     title: "ClubBuy Campaign System",
+    subtitle: "",
     slug: "clubbuy-campaign-system",
     summary: "电商促销活动主视觉、页面节奏与物料模板。",
     category: "电商设计",
@@ -499,6 +507,7 @@ export const works: Work[] = [
   },
   {
     title: "JetFly Retail Launch",
+    subtitle: "",
     slug: "jetfly-retail-launch",
     summary: "线下展会、门店物料、销售工具与渠道传播整合。",
     category: "工作案例",
@@ -519,6 +528,7 @@ export const works: Work[] = [
   },
   {
     title: "Visual Ops Playbook",
+    subtitle: "",
     slug: "visual-ops-playbook",
     summary: "设计团队协作规范、素材管理与多版本交付流程。",
     category: "工作案例",
@@ -539,6 +549,7 @@ export const works: Work[] = [
   },
   {
     title: "Helmet Composite Design",
+    subtitle: "",
     slug: "helmet-composite-design",
     summary: "赛车头盔复合设计、图案系统与展示排版。",
     category: "复合设计",
@@ -565,6 +576,7 @@ export const works: Work[] = [
   },
   {
     title: "Lando Helmet Series",
+    subtitle: "",
     slug: "lando-helmet-series",
     summary: "竞速主题头盔配色、号码元素与动态视觉延展。",
     category: "复合设计",
@@ -585,6 +597,7 @@ export const works: Work[] = [
   },
   {
     title: "Racing Pattern Study",
+    subtitle: "",
     slug: "racing-pattern-study",
     summary: "运动装备纹样、贴花系统与多角度落地验证。",
     category: "复合设计",
@@ -605,6 +618,7 @@ export const works: Work[] = [
   },
   {
     title: "Private Client Preview",
+    subtitle: "",
     slug: "private-client-preview",
     summary: "用于后续私密链接功能验证的非公开作品。",
     category: "品牌全案",

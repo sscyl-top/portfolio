@@ -203,6 +203,15 @@ export default async function AdminWorkEditorPage({
                             className="flex-1 border-0 bg-transparent pb-1 text-3xl font-light text-white outline-none placeholder:text-white/22 focus:outline-none md:text-4xl"
                           />
                         </div>
+                        <div className="mt-1">
+                          <input
+                            id="work-subtitle"
+                            name="subtitle"
+                            defaultValue={workRow.subtitle}
+                            placeholder="副标题（卡片下方显示，如：从0到1构建科技品牌视觉体系）"
+                            className="w-full border-0 bg-transparent pb-0 text-base text-white/55 outline-none placeholder:text-white/20 focus:outline-none md:text-lg"
+                          />
+                        </div>
                       </div>
 
                       <div className="pt-5">
@@ -421,7 +430,6 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
       <input type="hidden" name="slug" value={work.slug} />
 
       <div className="grid gap-3 md:grid-cols-2">
-        <Field label="副标题" name="subtitle" defaultValue={work.subtitle} compact />
         <Field label="年份" name="year" defaultValue={work.year} compact />
         <Field label="客户" name="client" defaultValue={work.client} compact />
         <Field label="排序" name="sort_order" type="number" defaultValue={String(work.sort_order)} compact />
