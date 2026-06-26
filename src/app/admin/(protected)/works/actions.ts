@@ -425,6 +425,16 @@ export async function updateWork(formData: FormData) {
 
   await autoArchiveAfterChange(client, workId, user.id, "更新作品元数据");
 
+  // 点击「保存作品」按钮时自动归档历史版本（mainWorkForm 带 archive_on_save=1 标记）
+  // 使用 source="manual" 不受5分钟节流，每次点击都归档；SettingsPanel 自动保存不带此标记，不会归档
+  if (formData.get("archive_on_save") === "1") {
+    try {
+      await archiveWorkVersion(client, workId, user.id, undefined, "manual");
+    } catch (err) {
+      console.error("[updateWork] archive failed:", err);
+    }
+  }
+
   const workSlug = (currentWork as { slug: string }).slug;
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${workId}`);

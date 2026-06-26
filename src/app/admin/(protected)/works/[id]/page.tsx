@@ -190,6 +190,7 @@ export default async function AdminWorkEditorPage({
                     <form id="mainWorkForm" action={updateWork}>
                       <input type="hidden" name="id" value={workRow.id} />
                       <input type="hidden" name="slug" value={workRow.slug} />
+                      <input type="hidden" name="archive_on_save" value="1" />
 
                       <div className="border-b border-white/[0.06] pb-5">
                         <div className="flex items-end gap-4">

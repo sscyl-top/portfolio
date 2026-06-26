@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   History,
-  Save,
   RotateCcw,
   ChevronDown,
   ChevronRight,
@@ -17,7 +16,6 @@ import {
 
 import type { WorkVersionListItem } from "@/lib/cms/versions";
 import {
-  archiveWorkVersionAction,
   rollbackWorkVersionAction,
   restoreForwardWorkVersionAction,
   deleteWorkVersionsAction,
@@ -31,7 +29,6 @@ type Props = {
 
 export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [label, setLabel] = useState("");
   const [expandedNumber, setExpandedNumber] = useState<number | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<{
     versionNumber: number;
@@ -74,14 +71,6 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
       await deleteWorkVersionsAction(formData);
       setSelectedVersions(new Set());
       setConfirmDelete(false);
-      router.refresh();
-    });
-  };
-
-  const handleSave = (formData: FormData) => {
-    startTransition(async () => {
-      await archiveWorkVersionAction(formData);
-      setLabel("");
       router.refresh();
     });
   };
@@ -133,7 +122,7 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
           )}
           {isOpen && (
             <p className="mt-0.5 text-xs text-white/45">
-              每次保存作品都会自动归档。可手动保存里程碑版本，回滚或前进到任意历史版本。
+              每次点击「保存作品」都会自动归档一个版本。可回滚或前进到任意历史版本。
             </p>
           )}
         </div>
@@ -142,35 +131,10 @@ export function VersionHistoryPanel({ workId, workSlug, versions }: Props) {
       {/* 可折叠内容 */}
       {isOpen && (
         <div className="border-t border-white/5 p-5 space-y-4">
-          {/* 保存版本表单 */}
-          <form action={handleSave} className="flex flex-wrap items-end gap-3 border-b border-white/5 pb-4">
-            <input type="hidden" name="work_id" value={workId} />
-            <input type="hidden" name="work_slug" value={workSlug} />
-            <label className="grid flex-1 gap-1 text-sm">
-              <span className="text-white/50">版本备注（可选）</span>
-              <input
-                name="label"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="例如：初稿、客户确认版、终稿"
-                maxLength={80}
-                className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white disabled:opacity-40"
-            >
-              <Save className="h-4 w-4" />
-              保存当前版本
-            </button>
-          </form>
-
           {/* 版本列表 */}
           {versions.length === 0 ? (
             <div className="grid min-h-32 place-items-center text-sm text-white/30">
-              暂无历史版本。保存作品后将自动生成第一个版本。
+              暂无历史版本。点击「保存作品」后将自动生成第一个版本。
             </div>
           ) : (
             <VersionList
