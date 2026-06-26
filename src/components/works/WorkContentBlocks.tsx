@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ContentBlock, BlockLayout } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
+import { SmartVideo } from "./SmartVideo";
 import { PdfBlockRenderer } from "./PdfBlockRenderer";
 import { CodeBlock } from "./blocks/CodeBlock";
 import { QuoteBlock } from "./blocks/QuoteBlock";
@@ -268,11 +269,11 @@ function MediaBlock({
                   }
                 />
               ) : media.mimeType?.startsWith("video/") ? (
-                <video
+                <SmartVideo
                   src={media.url}
                   controls
-                  preload="metadata"
-                  className="w-full h-auto"
+                  className="w-full h-auto block"
+                  showContainer={false}
                 />
               ) : (
                 <WorkMediaFrame
@@ -295,11 +296,11 @@ function MediaBlock({
                   className="block w-full h-auto"
                 />
               ) : media.mimeType?.startsWith("video/") ? (
-                <video
+                <SmartVideo
                   src={media.url}
                   controls
-                  preload="metadata"
-                  className="w-full h-auto"
+                  className="w-full h-auto block"
+                  showContainer={false}
                 />
               ) : (
                 <WorkMediaFrame
@@ -343,14 +344,11 @@ function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
-      <div className="relative w-full overflow-hidden bg-black">
-        <video
-          src={block.items[0].url}
-          controls
-          preload="metadata"
-          className="w-full h-auto block"
-        />
-      </div>
+      <SmartVideo
+        src={block.items[0].url}
+        controls
+        className="w-full h-auto block"
+      />
     </section>
   );
 }
