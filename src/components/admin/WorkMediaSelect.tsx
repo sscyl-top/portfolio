@@ -180,34 +180,30 @@ export function WorkMediaSelect({
         }`}
       >
         {previewUrl && selected ? (
-          <div className={compact ? "p-1.5" : "p-2.5"}>
-            <div className="flex items-start gap-2">
+          <div className={compact ? "p-2" : "p-3"}>
+            <div className="flex justify-center">
               {isVideo ? (
                 <video
                   src={previewUrl}
                   muted
                   playsInline
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-12 w-16" : "h-14 w-20"}`}
+                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px]" : "h-28 w-full max-w-[220px]"}`}
                 />
               ) : isGif ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewUrl}
                   alt={selected.alt_text || selected.original_name || label}
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-12 w-16" : "h-14 w-20"}`}
+                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px] object-contain bg-black/20" : "h-28 w-full max-w-[220px] object-contain bg-black/20"}`}
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewUrl}
                   alt={selected.alt_text || selected.original_name || label}
-                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-12 w-16" : "h-14 w-20"}`}
+                  className={`flex-shrink-0 rounded object-cover border border-white/10 ${compact ? "h-24 w-full max-w-[180px] object-contain bg-black/20" : "h-28 w-full max-w-[220px] object-contain bg-black/20"}`}
                 />
               )}
-              <div className="flex-1 min-w-0">
-                <p className={`truncate text-white/60 ${compact ? "text-[11px]" : "text-xs"}`}>{selected.original_name}</p>
-                <p className={`text-white/30 ${compact ? "text-[9px] mt-0" : "text-[10px] mt-0.5"}`}>{selected.mime_type}</p>
-              </div>
             </div>
           </div>
         ) : (
@@ -241,16 +237,23 @@ export function WorkMediaSelect({
 
       <input type="hidden" name={name} value={value} />
 
+      {selected && (
+        <p className={`truncate px-0.5 text-white/50 ${compact ? "text-[10px]" : "text-[11px]"}`} title={selected.original_name}>
+          {selected.original_name.length > 25 ? selected.original_name.slice(0, 22) + "..." : selected.original_name}
+        </p>
+      )}
+
       <div className="flex min-w-0 items-center gap-1">
         <select
           value={value}
           onChange={(e) => handleValueChange(e.target.value)}
-          className={`min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-1.5 outline-none focus:border-cyan ${compact ? "h-7 text-[10px]" : "min-h-8 px-2 text-xs"}`}
+          className={`min-w-0 flex-1 truncate rounded-md border border-white/10 bg-black/20 px-1.5 outline-none focus:border-cyan ${compact ? "h-7 text-[10px]" : "min-h-8 px-2 text-xs"}`}
+          style={{ textOverflow: "ellipsis" }}
         >
           <option value="">从媒体库选择</option>
           {assets.map((asset) => (
-            <option key={asset.id} value={asset.id}>
-              {asset.original_name}
+            <option key={asset.id} value={asset.id} title={asset.original_name}>
+              {asset.original_name.length > 30 ? asset.original_name.slice(0, 27) + "..." : asset.original_name}
             </option>
           ))}
         </select>
@@ -259,9 +262,10 @@ export function WorkMediaSelect({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          className={`inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-black/20 text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40 ${compact ? "h-7 px-1.5 text-[10px]" : "h-8 px-2 text-xs"}`}
+          title="上传新文件"
+          className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/20 text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40 ${compact ? "h-7 w-7" : "h-8 px-2 text-xs"}`}
         >
-          {isUploading ? <Loader2 className="animate-spin h-3 w-3" /> : <UploadCloud className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />}
+          {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />}
           {compact ? "" : "上传"}
         </button>
 
@@ -269,6 +273,7 @@ export function WorkMediaSelect({
           <button
             type="button"
             onClick={() => handleValueChange("")}
+            title="移除"
             className={`grid shrink-0 place-items-center rounded-md border border-white/10 bg-black/20 text-white/40 transition hover:border-red-300/30 hover:text-red-300 ${compact ? "h-7 w-7" : "h-8 w-8"}`}
           >
             <X className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
