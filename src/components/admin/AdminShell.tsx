@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { logoutAdmin } from "@/app/admin/actions";
 
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { AdminContent } from "./AdminContent";
 import { AdminNav } from "./AdminNav";
 import { DetachedResizablePanels } from "./DetachedResizablePanels";
@@ -59,37 +60,39 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
 
   return (
     <main className="relative h-screen overflow-hidden bg-[#07090b] text-white">
-      <DetachedResizablePanels
-        gap={18}
-        panels={[
-          {
-            id: "admin-sidebar",
-            storageKey: "admin-sidebar-width",
-            anchor: "left",
-            offset: 0,
-            defaultWidth: 220,
-            minWidth: 172,
-            maxWidth: 420,
-            resizeEdge: "right",
-            className: "border-r border-white/8 bg-[#090c0f]",
-            children: <SidebarContent userEmail={userEmail} />,
-          },
-          {
-            id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
-            storageKey: isWorkEditorPage
-              ? "admin-editor-stage-width"
-              : "admin-primary-page-width",
-            anchor: "left",
-            offset: ADMIN_CONTENT_OFFSET,
-            defaultWidth: isWorkEditorPage ? 1800 : 1420,
-            minWidth: isWorkEditorPage ? 900 : 720,
-            maxWidth: isWorkEditorPage ? 2600 : 2200,
-            resizeEdge: isWorkEditorPage ? "none" : "right",
-            className: "h-full",
-            children: content,
-          },
-        ]}
-      />
+      <ErrorBoundary>
+        <DetachedResizablePanels
+          gap={18}
+          panels={[
+            {
+              id: "admin-sidebar",
+              storageKey: "admin-sidebar-width",
+              anchor: "left",
+              offset: 0,
+              defaultWidth: 220,
+              minWidth: 172,
+              maxWidth: 420,
+              resizeEdge: "right",
+              className: "border-r border-white/8 bg-[#090c0f]",
+              children: <SidebarContent userEmail={userEmail} />,
+            },
+            {
+              id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
+              storageKey: isWorkEditorPage
+                ? "admin-editor-stage-width"
+                : "admin-primary-page-width",
+              anchor: "left",
+              offset: ADMIN_CONTENT_OFFSET,
+              defaultWidth: isWorkEditorPage ? 1800 : 1420,
+              minWidth: isWorkEditorPage ? 900 : 720,
+              maxWidth: isWorkEditorPage ? 2600 : 2200,
+              resizeEdge: isWorkEditorPage ? "none" : "right",
+              className: "h-full",
+              children: content,
+            },
+          ]}
+        />
+      </ErrorBoundary>
     </main>
   );
 }

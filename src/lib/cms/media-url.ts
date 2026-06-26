@@ -14,6 +14,7 @@ export type OptimizedMediaOptions = {
   width?: number;
   height?: number;
   format?: "webp" | "png" | "jpg";
+  quality?: number;
 };
 
 export function buildOptimizedMediaUrl(
@@ -36,6 +37,9 @@ export function buildOptimizedMediaUrl(
   }
   if (options.format) {
     params.set("format", options.format);
+  }
+  if (options.quality && Number.isFinite(options.quality)) {
+    params.set("quality", String(Math.round(options.quality)));
   }
 
   const query = params.toString();

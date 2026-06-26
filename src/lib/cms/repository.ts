@@ -626,7 +626,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
 function buildMediaUrl(storageKey: string, mimeType?: string): string {
   const isImage = (mimeType ?? "").startsWith("image/");
   if (isImage) {
-    return buildOptimizedMediaUrl(storageKey, { format: "webp" });
+    return buildOptimizedMediaUrl(storageKey, { format: "webp", quality: 90 });
   }
   return buildPublicMediaUrl(storageKey);
 }

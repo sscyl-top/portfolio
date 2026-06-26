@@ -27,6 +27,7 @@ import {
   batchUpdateWorkStatus,
   reorderWorksAction,
 } from "@/app/admin/(protected)/works/actions";
+import { useConfirm } from "./ui/ConfirmDialog";
 
 type WorkStatus = "draft" | "published" | "private";
 
@@ -48,6 +49,7 @@ export function WorkBatchManager({ works }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [orderedWorks, setOrderedWorks] = useState(works);
+  const { confirm, dialog } = useConfirm();
 
   // 同步外部 works 变化
   const worksKey = works.map((w) => w.id).join(",");
@@ -95,9 +97,20 @@ export function WorkBatchManager({ works }: Props) {
     };
   };
 
-  const deleteSubmit = (formData: FormData) => {
-    if (!confirm(`确定删除选中的 ${selectedArray.length} 个作品？`)) return;
-    withReset(batchDeleteWorks)(formData);
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      title: "删除作品",
+      message: `确定删除选中的 ${selectedArray.length} 个作品？此操作不可撤销。`,
+      confirmText: "删除",
+      danger: true,
+    });
+    if (!confirmed) return;
+    const formData = new FormData();
+    selectedArray.forEach((id) => formData.append("work_ids", id));
+    startTransition(async () => {
+      await batchDeleteWorks(formData);
+      setSelected(new Set());
+    });
   };
 
   // ── dnd-kit 拖拽排序 ──────────────────────────────────────────
@@ -209,18 +222,15 @@ export function WorkBatchManager({ works }: Props) {
             </button>
           </form>
 
-          <form action={deleteSubmit} className="contents">
-            {selectedArray.map((id) => (
-              <input key={`d-${id}`} type="hidden" name="work_ids" value={id} />
-            ))}
-            <button
-              disabled={!hasSelection || isPending}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-red-300/20 px-3 text-sm text-red-200 transition hover:bg-red-300/10 disabled:opacity-40"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              删除
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={!hasSelection || isPending}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-red-300/20 px-3 text-sm text-red-200 transition hover:bg-red-300/10 disabled:opacity-40"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            删除
+          </button>
         </div>
       </div>
 
@@ -269,6 +279,7 @@ export function WorkBatchManager({ works }: Props) {
           </div>
         </SortableContext>
       </DndContext>
+      {dialog}
     </div>
   );
 }
