@@ -3187,10 +3187,20 @@ function BlockPreview({
   if (block.block_type === "video") {
     const mediaId = String(payload.media_id ?? "");
     const asset = mediaAssets.find((a) => a.id === mediaId);
+    const url = asset ? buildPublicMediaUrl(asset.storage_key) : null;
     return (
-      <div className="flex items-center gap-3 rounded-md bg-white/5 p-3">
-        <Video className="h-8 w-8 text-red-400/60" />
-        <span className="text-sm text-white/60">{asset?.original_name ?? "未选择视频"}</span>
+      <div className="w-full">
+        {url ? (
+          <video
+            src={url}
+            controls
+            preload="metadata"
+            className="w-full h-auto rounded-md"
+          />
+        ) : (
+          <div className="flex h-32 items-center justify-center rounded-md bg-white/5 text-sm text-white/30">未选择视频</div>
+        )}
+        {payload.caption ? <p className="mt-2 text-sm text-white/50">{String(payload.caption)}</p> : null}
       </div>
     );
   }
