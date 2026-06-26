@@ -9,7 +9,9 @@ import {
   parseTextContentArray,
 } from "@/lib/cms/text-content";
 import type { CapabilityTextOverrides } from "@/components/home/CapabilityBands";
-import { createPublicCmsRepository } from "@/lib/cms/repository";
+import { createServerCmsRepository } from "@/lib/cms/repository";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "sscyl.top-首页",
@@ -87,7 +89,7 @@ async function getHomeData() {
     const readiness = getBackendReadiness();
     if (!readiness.supabase) throw new Error("Supabase not configured");
 
-    const repo = createPublicCmsRepository();
+    const repo = await createServerCmsRepository();
     const supabase = await createSupabaseServerClient();
 
     const [resumeResult, siteSettings, texts] = await Promise.all([

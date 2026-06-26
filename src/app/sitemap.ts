@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createPublicCmsRepository } from "@/lib/cms/repository";
+import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getBackendReadiness } from "@/lib/supabase/config";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sscyl.top";
@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const readiness = getBackendReadiness();
     if (readiness.cms) {
-      const repository = createPublicCmsRepository();
+      const repository = await createServerCmsRepository();
       const works = await repository.listPublishedWorks();
       for (const work of works) {
         entries.push({

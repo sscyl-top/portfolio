@@ -4,8 +4,10 @@ import { RepresentativeWorks } from "@/components/works/RepresentativeWorks";
 import { SectionTitleObserver } from "@/components/works/SectionTitleObserver";
 import { WorksExplorer } from "@/components/works/WorksExplorer";
 import { WorksPageShell } from "@/components/works/WorksPageShell";
-import { createPublicCmsRepository } from "@/lib/cms/repository";
+import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "sscyl.top-代表作",
@@ -31,7 +33,7 @@ export default async function WorksPage() {
   let siteSettings: any = { ctaCardMediaUrl: null, ctaFigureMediaUrl: null, ctaTickerLogoMediaUrl: null };
 
   try {
-    const repository = createPublicCmsRepository();
+    const repository = await createServerCmsRepository();
     [works, featuredWorks, compositeWorks, visibleCategories, texts, siteSettings] =
       await Promise.all([
         repository.listPublishedWorks(),

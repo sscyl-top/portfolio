@@ -6,12 +6,14 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Text } from "@/components/cms/Text";
 import { getPublishedWorks } from "@/data/portfolio";
 import {
-  createPublicCmsRepository,
+  createServerCmsRepository,
   getPrivatePreviewWorkBySlug,
 } from "@/lib/cms/repository";
 import { WorkReactions } from "@/components/works/WorkReactions";
 import { WorkContentBlocks } from "@/components/works/WorkContentBlocks";
 import type { ContentBlock, WorkMedia } from "@/data/portfolio";
+
+export const dynamic = 'force-dynamic';
 
 export function generateStaticParams() {
   return getPublishedWorks().map((work) => ({ slug: work.slug }));
@@ -35,7 +37,7 @@ export async function generateMetadata({
   const fromKey = Array.isArray(from) ? from[0] : from;
   const pageTitle = FROM_TITLES[fromKey ?? ""] ?? "sscyl.top-全部作品";
 
-  const repository = createPublicCmsRepository();
+  const repository = await createServerCmsRepository();
   const work = await repository.getWorkBySlug(slug);
 
   if (!work) return { title: pageTitle };
@@ -70,7 +72,7 @@ export default async function WorkDetailPage({
   const { slug } = await params;
   const { preview } = await searchParams;
   const previewToken = Array.isArray(preview) ? preview[0] : preview;
-  const repository = createPublicCmsRepository();
+  const repository = await createServerCmsRepository();
   const work = previewToken
     ? await getPrivatePreviewWorkBySlug(slug, previewToken)
     : await repository.getWorkBySlug(slug);
