@@ -350,7 +350,7 @@ export async function createServerCmsRepository() {
     return createCmsRepository(null);
   }
 
-  const client = await createSupabaseServerClient();
+  const client = createSupabaseServiceClient();
 
   return createCmsRepository({
     async listPublishedWorks() {
