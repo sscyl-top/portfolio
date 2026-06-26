@@ -2017,7 +2017,7 @@ function BlockCard({
             ? "rounded-lg border border-cyan/50 bg-cyan/5 opacity-40 scale-[0.98]"
             : isEditing
               ? "rounded-lg border border-cyan/30 bg-white/[0.04]"
-              : "border border-transparent hover:border-white/10"
+              : ""
         }`}
         onDragOver={onDragOver}
         onDrop={onDrop}

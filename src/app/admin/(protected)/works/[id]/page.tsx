@@ -227,7 +227,9 @@ export default async function AdminWorkEditorPage({
                         </label>
                       </div>
                     </form>
+                  </div>
 
+                  <div className="-mx-0 mt-2 bg-[#181a1e] pt-4">
                     <VisualBlockEditor
                       workId={workRow.id}
                       workSlug={workRow.slug}
