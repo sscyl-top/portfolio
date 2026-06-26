@@ -3255,9 +3255,9 @@ function BlockPreview({
         {payload.caption ? (
           <p className="mb-4 text-sm font-medium text-white/50">{String(payload.caption)}</p>
         ) : null}
-        <div className="relative w-full overflow-hidden bg-black md:min-h-[60vh]">
+        <div className="relative w-full overflow-hidden bg-black">
           {url ? (
-            <video src={url} controls preload="metadata" className="w-full" />
+            <video src={url} controls preload="metadata" className="w-full h-auto block" />
           ) : (
             <div className="flex h-48 items-center justify-center text-sm text-white/30">未选择视频</div>
           )}
