@@ -88,6 +88,7 @@ export async function runHeroVideosMigration(): Promise<boolean> {
           ADD COLUMN IF NOT EXISTS hero_side1_video_media_id uuid REFERENCES public.media_assets(id),
           ADD COLUMN IF NOT EXISTS hero_side2_video_media_id uuid REFERENCES public.media_assets(id),
           ADD COLUMN IF NOT EXISTS hero_side3_video_media_id uuid REFERENCES public.media_assets(id);
+        NOTIFY pgrst, 'reload schema';
       `);
       console.log("[DB Migration] Hero video columns added successfully");
       return true;
