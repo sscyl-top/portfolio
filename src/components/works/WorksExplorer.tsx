@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { openWorkDetailInNewTab } from "@/lib/open-work-detail";
 
 import { categories, type Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
@@ -176,6 +177,12 @@ export function WorksExplorer({
                   href={`/works/${item.work.slug}?from=works`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    if (openWorkDetailInNewTab(`/works/${item.work.slug}?from=works`)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="group block"
                 >
                   {card}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { CSSProperties } from "react";
 import { memo, useEffect, useRef, useState } from "react";
+import { openWorkDetailInNewTab } from "@/lib/open-work-detail";
 
 import type { Work } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
@@ -68,6 +69,12 @@ const RepresentativeCard = memo(function RepresentativeCard({
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        if (openWorkDetailInNewTab(`/works/${work.slug}?from=featured`)) {
+          e.preventDefault();
+        }
+      }}
       className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-white/[0.07] p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-white/35 hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
       style={cardStyle}
     >
@@ -301,7 +308,13 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                   href={`/works/${work.slug}?from=featured`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => { if (hasDragged.current) e.preventDefault(); }}
+                  onClick={(e) => {
+                    if (hasDragged.current) { e.preventDefault(); return; }
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    if (openWorkDetailInNewTab(`/works/${work.slug}?from=featured`)) {
+                      e.preventDefault();
+                    }
+                  }}
                   style={style}
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
                 >
