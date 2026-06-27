@@ -395,9 +395,20 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [blocks, setBlocks] = useState<VisualBlock[]>(
     () => [...initialBlocks].sort((a, b) => a.sort_order - b.sort_order),
   );
+  const blocksRef = useRef<VisualBlock[]>(blocks);
+  blocksRef.current = blocks;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const blockDragRef = useRef<{
+    blockId: string;
+    startX: number;
+    startY: number;
+    started: boolean;
+    handleEl: HTMLElement;
+  } | null>(null);
+  const blockContainerRef = useRef<HTMLDivElement | null>(null);
+  const dragOverIndexRef = useRef<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [pdfParseStatus, setPdfParseStatus] = useState<string | null>(null);
@@ -1007,12 +1018,16 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   // 拖拽自动滚动：当鼠标接近滚动容器顶部/底部时自动滚动
   const autoScrollRafRef = useRef<number | null>(null);
   const autoScrollMouseYRef = useRef(0);
+  const autoScrollMouseXRef = useRef(0);
   const autoScrollActiveRef = useRef(false);
   const autoScrollContainerRef = useRef<HTMLElement | null>(null);
 
   const findScrollContainer = (startEl: HTMLElement | null): HTMLElement => {
     let el: HTMLElement | null = startEl;
     while (el) {
+      if (el.classList.contains("admin-scroll-area")) {
+        return el;
+      }
       const style = window.getComputedStyle(el);
       const overflowY = style.overflowY;
       if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight + 1) {
@@ -1023,7 +1038,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     return document.scrollingElement as HTMLElement || document.documentElement;
   };
 
-  const startAutoScroll = useCallback((clientY: number, targetEl: HTMLElement | null) => {
+  const startAutoScroll = useCallback((clientX: number, clientY: number, targetEl: HTMLElement | null) => {
+    autoScrollMouseXRef.current = clientX;
     autoScrollMouseYRef.current = clientY;
     if (autoScrollActiveRef.current) return;
     autoScrollActiveRef.current = true;
@@ -1031,8 +1047,11 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
     const container = autoScrollContainerRef.current;
 
-    const updateInsertIndicator = (y: number) => {
-      const el = document.elementFromPoint(window.innerWidth / 2, y);
+    const updateInsertIndicator = () => {
+      const x = autoScrollMouseXRef.current;
+      const y = autoScrollMouseYRef.current;
+      let el: Element | null = null;
+      try { el = document.elementFromPoint(x, y); } catch { return; }
       if (!el) return;
       const blockEl = el.closest("[data-block-index]") as HTMLElement | null;
       if (blockEl) {
@@ -1078,7 +1097,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         container.scrollTop += delta;
       }
 
-      updateInsertIndicator(y);
+      updateInsertIndicator();
 
       autoScrollRafRef.current = requestAnimationFrame(scrollStep);
     };
@@ -1095,27 +1114,113 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     }
   }, []);
 
+  const handleBlockPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>, blockId: string) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    blockDragRef.current = {
+      blockId,
+      startX: e.clientX,
+      startY: e.clientY,
+      started: false,
+      handleEl: e.currentTarget,
+    };
+  }, []);
+
+  const cancelBlockDrag = useCallback(() => {
+    blockDragRef.current = null;
+    setDraggedBlockId(null);
+    setDragOverIndex(null);
+    stopAutoScroll();
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, [stopAutoScroll]);
+
   useEffect(() => {
-    if (!draggedBlockId) {
-      stopAutoScroll();
-      return;
-    }
-
-    const handleGlobalDragOver = (e: DragEvent) => {
+    const handleGlobalPointerMove = (e: PointerEvent) => {
+      const drag = blockDragRef.current;
+      if (!drag) return;
+      autoScrollMouseXRef.current = e.clientX;
       autoScrollMouseYRef.current = e.clientY;
+      if (!drag.started) {
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+          drag.started = true;
+          document.body.style.cursor = "grabbing";
+          document.body.style.userSelect = "none";
+          setDraggedBlockId(drag.blockId);
+          startAutoScroll(e.clientX, e.clientY, drag.handleEl);
+        }
+      }
     };
-    const handleGlobalDragEnd = () => {
+    const handleGlobalPointerUp = (e: PointerEvent) => {
+      const drag = blockDragRef.current;
+      if (!drag) return;
+      if (e.button !== 0) {
+        blockDragRef.current = null;
+        if (drag.started) {
+          stopAutoScroll();
+        }
+        setDraggedBlockId(null);
+        setDragOverIndex(null);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        return;
+      }
+      const wasStarted = drag.started;
+      const draggedId = drag.blockId;
+      blockDragRef.current = null;
+      setDraggedBlockId(null);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      if (wasStarted) {
+        stopAutoScroll();
+        const overIdx = dragOverIndexRef.current;
+        setDragOverIndex(null);
+        if (overIdx !== null) {
+          const currentBlocks = blocksRef.current;
+          const sourceIndex = currentBlocks.findIndex((b) => b.id === draggedId);
+          if (sourceIndex !== -1) {
+            let targetIndex = overIdx;
+            if (sourceIndex < targetIndex) targetIndex -= 1;
+            if (targetIndex !== sourceIndex && targetIndex >= 0 && targetIndex <= currentBlocks.length) {
+              setBlocks((prev) => {
+                const reordered = [...prev];
+                const [moved] = reordered.splice(sourceIndex, 1);
+                reordered.splice(Math.max(0, Math.min(targetIndex, reordered.length)), 0, moved);
+                reordered.forEach((b, i) => { b.sort_order = i; });
+                persistOrder(reordered);
+                return reordered;
+              });
+            }
+          }
+        }
+      } else {
+        setDragOverIndex(null);
+        stopAutoScroll();
+      }
+    };
+    const handleGlobalPointerCancel = () => {
+      blockDragRef.current = null;
+      setDraggedBlockId(null);
+      setDragOverIndex(null);
       stopAutoScroll();
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
-
-    document.addEventListener("dragover", handleGlobalDragOver, true);
-    document.addEventListener("dragend", handleGlobalDragEnd, true);
+    window.addEventListener("pointermove", handleGlobalPointerMove, true);
+    window.addEventListener("pointerup", handleGlobalPointerUp, true);
+    window.addEventListener("pointercancel", handleGlobalPointerCancel, true);
     return () => {
-      document.removeEventListener("dragover", handleGlobalDragOver, true);
-      document.removeEventListener("dragend", handleGlobalDragEnd, true);
-      stopAutoScroll();
+      window.removeEventListener("pointermove", handleGlobalPointerMove, true);
+      window.removeEventListener("pointerup", handleGlobalPointerUp, true);
+      window.removeEventListener("pointercancel", handleGlobalPointerCancel, true);
     };
-  }, [draggedBlockId, stopAutoScroll]);
+  }, [startAutoScroll, stopAutoScroll, persistOrder]);
+
+  useEffect(() => {
+    dragOverIndexRef.current = dragOverIndex;
+  }, [dragOverIndex]);
 
   // 右键菜单：点击其他地方关闭
   useEffect(() => {
@@ -1179,31 +1284,27 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     [blocks, persistOrder],
   );
 
-  const handleBlockDragOver = useCallback(
-    (e: React.DragEvent, index: number, blockId: string) => {
-      if (!isBlockDrag(e) && !isFileDrag(e)) return;
+  const handleFileDragOverBlock = useCallback(
+    (e: React.DragEvent, index: number, _blockId: string) => {
+      if (!isFileDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
-      const draggedId = e.dataTransfer.getData("block-id");
-      if (draggedId === blockId) return;
-      autoScrollMouseYRef.current = e.clientY;
       const rect = e.currentTarget.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertAt = e.clientY < midY ? index : index + 1;
       setDragOverIndex(insertAt);
     },
-    [isBlockDrag, isFileDrag],
+    [isFileDrag],
   );
 
   const handleGapDragOver = useCallback(
     (e: React.DragEvent, index: number) => {
+      if (!isFileDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
-      if (isFileDrag(e) || isBlockDrag(e)) {
-        setDragOverIndex(index);
-      }
+      setDragOverIndex(index);
     },
-    [isFileDrag, isBlockDrag],
+    [isFileDrag],
   );
 
   const onDropAt = useCallback(
@@ -1213,36 +1314,26 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       setDragOverIndex(null);
       setDraggedBlockId(null);
 
-      if (isBlockDrag(e)) {
-        const blockId = e.dataTransfer.getData("block-id");
-        if (!blockId) return;
-        moveBlockToIndex(blockId, insertAt);
-        return;
-      }
-
       if (isFileDrag(e)) {
         const files = Array.from(e.dataTransfer.files);
         if (files.length === 0) return;
         await handleFilesDrop(files, insertAt);
       }
     },
-    [handleFilesDrop, isBlockDrag, isFileDrag, moveBlockToIndex],
+    [handleFilesDrop, isFileDrag],
   );
 
-  const handleBlockDrop = useCallback(
+  const handleFileDropBlock = useCallback(
     (e: React.DragEvent, index: number, blockId: string) => {
-      const draggedId = e.dataTransfer.getData("block-id");
-      if (draggedId === blockId) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
+      if (!isFileDrag(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
       const rect = e.currentTarget.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertAt = e.clientY < midY ? index : index + 1;
       void onDropAt(e, insertAt);
     },
-    [onDropAt],
+    [isFileDrag, onDropAt],
   );
 
   // ── 文件输入变化（"上传文件"按钮 / 更换媒体）────────────
@@ -1596,7 +1687,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 ? "border-2 border-dashed border-cyan/50 bg-cyan/[0.04]"
                 : ""
             }`}
-            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(0); }}
+            onDragOver={(e) => { if (isFileDrag(e)) { e.preventDefault(); setDragOverIndex(0); } }}
             onDrop={(e) => onDropAt(e, 0)}
           >
             <button
@@ -1684,19 +1775,14 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 isDropTargetAfter={dragOverIndex === index + 1}
                 onEdit={() => setEditingBlockId(editingBlockId === block.id ? null : block.id)}
                 onDelete={() => handleDeleteBlock(block.id)}
-                onDragStart={(e) => {
-                  if (e.button !== 0) return;
-                  setDraggedBlockId(block.id);
-                  startAutoScroll(e.clientY, e.currentTarget as HTMLElement);
-                }}
-                onDragEnd={() => { setDraggedBlockId(null); setDragOverIndex(null); stopAutoScroll(); }}
+                onDragPointerDown={(e) => handleBlockPointerDown(e, block.id)}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id });
                 }}
-                onDragOver={(e) => handleBlockDragOver(e, index, block.id)}
-                onDrop={(e) => handleBlockDrop(e, index, block.id)}
+                onFileDragOver={(e) => handleFileDragOverBlock(e, index, block.id)}
+                onFileDrop={(e) => handleFileDropBlock(e, index, block.id)}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
                 onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
@@ -1936,11 +2022,10 @@ function BlockCard({
   isDropTargetAfter,
   onEdit,
   onDelete,
-  onDragStart,
-  onDragEnd,
+  onDragPointerDown,
   onContextMenu,
-  onDragOver,
-  onDrop,
+  onFileDragOver,
+  onFileDrop,
   mediaAssets,
   onUpdatePayload,
   onOptimisticUpdate,
@@ -1961,11 +2046,10 @@ function BlockCard({
   isDropTargetAfter: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
+  onDragPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
   onContextMenu: (e: React.MouseEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
+  onFileDragOver: (e: React.DragEvent) => void;
+  onFileDrop: (e: React.DragEvent) => void;
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
   onOptimisticUpdate: (newPayload: Record<string, unknown>) => void;
@@ -2019,28 +2103,18 @@ function BlockCard({
               ? "rounded-lg border border-cyan/30 bg-white/[0.04]"
               : ""
         }`}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
+        onDragOver={isDraggingProp ? undefined : onFileDragOver}
+        onDrop={isDraggingProp ? undefined : onFileDrop}
       >
         {/* 操作栏：编辑模式固定显示；预览模式hover浮动显示 */}
         {isEditing ? (
           <div className="flex items-center gap-2 rounded-t-lg border-b border-white/5 bg-white/[0.02] px-4 py-2">
             <div
-              draggable
-              onDragStart={(e) => {
-                if (e.button !== 0) {
-                  e.preventDefault();
-                  return;
-                }
-                e.dataTransfer.setData("block-id", block.id);
-                e.dataTransfer.effectAllowed = "move";
-                onDragStart(e);
-              }}
-              onDragEnd={onDragEnd}
-              className="flex cursor-grab items-center rounded p-0.5 text-white/20 transition hover:bg-white/10 hover:text-white/60 active:cursor-grabbing"
+              onPointerDown={onDragPointerDown}
+              className="flex cursor-grab items-center rounded p-1 text-white/20 transition hover:bg-white/10 hover:text-white/60 active:cursor-grabbing select-none touch-none"
               title="拖拽排序（右键可移到最前/最后）"
             >
-              <GripHorizontal className="h-4 w-4" />
+              <GripHorizontal className="pointer-events-none h-4 w-4" />
             </div>
             <span className={`flex items-center gap-1.5 text-xs font-medium ${blockTypeConfig?.color ?? "text-white/50"}`}>
               {blockTypeConfig ? <blockTypeConfig.icon className="h-3.5 w-3.5" /> : null}
@@ -2078,18 +2152,11 @@ function BlockCard({
         ) : (
           <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-1 opacity-0 backdrop-blur-sm transition-opacity group-hover/block:opacity-100">
             <div
-              draggable
-              onDragStart={(e) => {
-                if (e.button !== 0) { e.preventDefault(); return; }
-                e.dataTransfer.setData("block-id", block.id);
-                e.dataTransfer.effectAllowed = "move";
-                onDragStart(e);
-              }}
-              onDragEnd={onDragEnd}
-              className="flex cursor-grab items-center rounded p-0.5 text-white/40 transition hover:bg-white/10 hover:text-white active:cursor-grabbing"
+              onPointerDown={onDragPointerDown}
+              className="flex cursor-grab items-center rounded p-1 text-white/40 transition hover:bg-white/10 hover:text-white active:cursor-grabbing select-none touch-none"
               title="拖拽排序"
             >
-              <GripHorizontal className="h-3.5 w-3.5" />
+              <GripHorizontal className="pointer-events-none h-4 w-4" />
             </div>
             <button
               type="button"
