@@ -1,11 +1,10 @@
 import QRCode from "qrcode";
 
 import { siteSettings } from "@/data/portfolio";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runTickerLogosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -25,7 +24,7 @@ type SettingsRow = {
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
-  cta_ticker_logo_media_ids: string | null;
+  cta_ticker_logo_media_ids: string;
   cta_card_scale: number;
   cta_card_offset_x: number;
   cta_card_offset_y: number;
@@ -54,22 +53,22 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   const serviceSupabase = createSupabaseServiceClient();
 
   await runHeroVideosMigration().catch(() => {});
-  await runTickerLogosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
 
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
-  const CTA_TRANSFORM_KEYS = [
+  const SETTINGS_TEXT_KEYS = [
     "cta_card_scale",
     "cta_card_offset_x",
     "cta_card_offset_y",
     "cta_figure_scale",
     "cta_figure_offset_x",
     "cta_figure_offset_y",
+    "cta_ticker_logo_media_ids",
   ] as const;
 
   const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
-  
+
   let data: SettingsRow | null = null;
 
   try {
@@ -109,39 +108,27 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_figure_offset_x: 0,
         cta_figure_offset_y: 0,
       };
+      let tickerLogoIdsRaw = "";
+
       {
         const { data: textData, error: textErr } = await serviceSupabase
           .from("text_content")
           .select("key,content")
-          .in("key", CTA_TRANSFORM_KEYS as unknown as string[])
+          .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
           .eq("page", "site_settings")
           .eq("is_active", true)
           .is("deleted_at", null);
         if (!textErr && textData) {
           for (const item of textData) {
-            const num = Number(item.content);
-            if (!isNaN(num)) {
-              (ctaTransform as Record<string, number>)[item.key] = num;
+            if (item.key === "cta_ticker_logo_media_ids") {
+              tickerLogoIdsRaw = item.content ?? "";
+            } else {
+              const num = Number(item.content);
+              if (!isNaN(num)) {
+                (ctaTransform as Record<string, number>)[item.key] = num;
+              }
             }
           }
-        }
-      }
-
-      let tickerLogoIdsRaw: string | null = null;
-      for (let attempt = 0; attempt < 4; attempt++) {
-        const { data: tickerData, error: tickerErr } = await serviceSupabase
-          .from("site_settings")
-          .select("cta_ticker_logo_media_ids")
-          .single();
-        if (!tickerErr && tickerData) {
-          tickerLogoIdsRaw = tickerData.cta_ticker_logo_media_ids ?? null;
-          break;
-        }
-        if (tickerErr) {
-          console.warn(`[Admin Settings] ticker logo query attempt ${attempt + 1} failed:`, tickerErr.message);
-        }
-        if (attempt < 3) {
-          await new Promise(r => setTimeout(r, 2000));
         }
       }
 
@@ -158,7 +145,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_card_media_id: baseData.cta_card_media_id ?? null,
         cta_figure_media_id: baseData.cta_figure_media_id ?? null,
         cta_ticker_logo_media_id: baseData.cta_ticker_logo_media_id ?? null,
-        cta_ticker_logo_media_ids: tickerLogoIdsRaw ?? "",
+        cta_ticker_logo_media_ids: tickerLogoIdsRaw,
         ...ctaTransform,
         ...heroIds,
         social_links: baseData.social_links ?? [],
@@ -328,7 +315,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
               name="cta_ticker_logo_media_ids"
               assets={mediaAssets}
               defaultValue={settings.cta_ticker_logo_media_ids ?? ""}
-              hint="终场横向滚动条幅中重复出现的多个 logo/图案，建议 PNG 透明底。可上传多个，自动横向滚动循环显示"
+              hint="终场横向滚动条幅中重复出现的多个 logo/图案，建议 PNG 透明底。支持点击或拖拽上传多个图片，自动横向滚动循环显示"
             />
           </div>
         </div>

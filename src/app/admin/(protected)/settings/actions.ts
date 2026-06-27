@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runTickerLogosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -19,6 +19,46 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 function isSchemaCacheError(msg: string): boolean {
   const lower = msg.toLowerCase();
   return lower.includes("schema") || lower.includes("column") || lower.includes("does not exist");
+}
+
+async function saveTextContent(
+  serviceClient: ReturnType<typeof createSupabaseServiceClient>,
+  key: string,
+  content: string,
+) {
+  try {
+    const { data: existing, error: findErr } = await serviceClient
+      .from("text_content")
+      .select("id")
+      .eq("key", key)
+      .eq("page", "site_settings")
+      .limit(1)
+      .maybeSingle();
+
+    if (findErr) {
+      console.warn(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
+      return;
+    }
+
+    if (existing) {
+      const { error: updErr } = await serviceClient
+        .from("text_content")
+        .update({ content, is_active: true, deleted_at: null })
+        .eq("id", existing.id);
+      if (updErr) console.warn(`[Settings] Failed to update text_content ${key}:`, updErr.message);
+    } else {
+      const { error: insErr } = await serviceClient.from("text_content").insert({
+        key,
+        content,
+        page: "site_settings",
+        sort_order: 0,
+        is_active: true,
+      });
+      if (insErr) console.warn(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
+    }
+  } catch (e) {
+    console.warn(`[Settings] Exception saving text_content ${key}:`, e);
+  }
 }
 
 export async function saveSiteSettings(formData: FormData) {
@@ -58,7 +98,6 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),
     cta_figure_media_id: uuidOrNull(formData.get("cta_figure_media_id")),
     cta_ticker_logo_media_id: uuidOrNull(formData.get("cta_ticker_logo_media_id")),
-    cta_ticker_logo_media_ids: ctaTickerLogoMediaIds,
     hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
     hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
     hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
@@ -76,15 +115,14 @@ export async function saveSiteSettings(formData: FormData) {
   };
 
   await runHeroVideosMigration().catch(() => {});
-  await runTickerLogosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
 
-  await wait(3000);
+  await wait(1500);
 
   const serviceClient = createSupabaseServiceClient();
 
   let saveError: string | null = null;
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
     if (!error) {
       console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
@@ -93,8 +131,8 @@ export async function saveSiteSettings(formData: FormData) {
     }
     saveError = error.message;
     console.warn(`[Settings] site_settings save attempt ${attempt + 1} failed:`, error.message);
-    if (isSchemaCacheError(error.message) && attempt < 5) {
-      await wait(3000);
+    if (isSchemaCacheError(error.message) && attempt < 3) {
+      await wait(2000);
       continue;
     }
     break;
@@ -106,40 +144,10 @@ export async function saveSiteSettings(formData: FormData) {
   }
 
   for (const [key, value] of Object.entries(ctaTransformValues)) {
-    try {
-      const { data: existing, error: findErr } = await serviceClient
-        .from("text_content")
-        .select("id")
-        .eq("key", key)
-        .eq("page", "site_settings")
-        .limit(1)
-        .maybeSingle();
-
-      if (findErr) {
-        console.warn(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
-        continue;
-      }
-
-      if (existing) {
-        const { error: updErr } = await serviceClient
-          .from("text_content")
-          .update({ content: String(value), is_active: true, deleted_at: null })
-          .eq("id", existing.id);
-        if (updErr) console.warn(`[Settings] Failed to update text_content ${key}:`, updErr.message);
-      } else {
-        const { error: insErr } = await serviceClient.from("text_content").insert({
-          key,
-          content: String(value),
-          page: "site_settings",
-          sort_order: 0,
-          is_active: true,
-        });
-        if (insErr) console.warn(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
-      }
-    } catch (e) {
-      console.warn(`[Settings] Exception saving CTA transform ${key}:`, e);
-    }
+    await saveTextContent(serviceClient, key, String(value));
   }
+
+  await saveTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds);
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

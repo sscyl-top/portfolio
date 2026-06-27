@@ -15,7 +15,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -53,13 +53,14 @@ export type PublicSiteSettings = {
   title: string;
 };
 
-const CTA_TRANSFORM_KEYS = [
+const SETTINGS_TEXT_KEYS = [
   "cta_card_scale",
   "cta_card_offset_x",
   "cta_card_offset_y",
   "cta_figure_scale",
   "cta_figure_offset_x",
   "cta_figure_offset_y",
+  "cta_ticker_logo_media_ids",
 ] as const;
 
 const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
@@ -73,7 +74,6 @@ const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
   await runHeroVideosMigration().catch(() => {});
-  await runTickerLogosMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -117,15 +117,14 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     // columns may not exist
   }
 
-  type CtaTransformType = {
+  const ctaTransform: {
     cta_card_scale: number;
     cta_card_offset_x: number;
     cta_card_offset_y: number;
     cta_figure_scale: number;
     cta_figure_offset_x: number;
     cta_figure_offset_y: number;
-  };
-  const ctaTransform: CtaTransformType = {
+  } = {
     cta_card_scale: 1.0,
     cta_card_offset_x: 0,
     cta_card_offset_y: 0,
@@ -133,18 +132,23 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_figure_offset_x: 0,
     cta_figure_offset_y: 0,
   };
+  let tickerLogoIdsRaw = "";
   try {
     const { data: textData, error: textError } = await client
       .from("text_content")
       .select("key,content")
-      .in("key", CTA_TRANSFORM_KEYS as unknown as string[])
+      .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
       .eq("is_active", true)
       .is("deleted_at", null);
     if (!textError && textData) {
       for (const item of textData) {
-        const num = Number(item.content);
-        if (!isNaN(num) && item.key in ctaTransform) {
-          (ctaTransform as Record<string, number>)[item.key] = num;
+        if (item.key === "cta_ticker_logo_media_ids") {
+          tickerLogoIdsRaw = item.content ?? "";
+        } else {
+          const num = Number(item.content);
+          if (!isNaN(num) && item.key in ctaTransform) {
+            (ctaTransform as Record<string, number>)[item.key] = num;
+          }
         }
       }
     }
@@ -152,26 +156,12 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     // text_content query failed, use defaults
   }
 
-  let tickerLogoIdsRaw: string | null = null;
-  try {
-    const { data, error } = await client
-      .from("site_settings")
-      .select("cta_ticker_logo_media_ids")
-      .single();
-    if (!error && data) {
-      tickerLogoIdsRaw = data.cta_ticker_logo_media_ids ?? null;
-    }
-  } catch {
-    // column may not exist
-  }
-
   const allIds = {
     ...baseData,
     ...heroIds,
-    cta_ticker_logo_media_ids: tickerLogoIdsRaw ?? "",
   } as Record<string, unknown>;
 
-  return { allIds, ctaTransform, tickerLogoIdsRaw: tickerLogoIdsRaw ?? "" };
+  return { allIds, ctaTransform, tickerLogoIdsRaw };
 }
 
 function buildSiteSettingsFromRow(
