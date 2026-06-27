@@ -87,10 +87,23 @@ export async function saveSiteSettings(formData: FormData) {
   }
   console.log("[Settings] base settings saved successfully");
 
-  try {
-    await serviceClient.from("site_settings").upsert(tickerLogosData, { onConflict: "id" });
-  } catch (e) {
-    console.warn("[Settings] ticker logos save failed (column may not exist):", e);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { error: tickerError } = await serviceClient
+      .from("site_settings")
+      .upsert(tickerLogosData, { onConflict: "id" });
+    if (!tickerError) {
+      console.log("[Settings] ticker logos saved successfully");
+      break;
+    }
+    console.warn(`[Settings] ticker logos save attempt ${attempt + 1} failed:`, tickerError.message);
+    if (
+      (tickerError.message.includes("schema") || tickerError.message.includes("column")) &&
+      attempt < 3
+    ) {
+      await wait(3000);
+      continue;
+    }
+    break;
   }
 
   for (const [key, value] of Object.entries(ctaTransformValues)) {
