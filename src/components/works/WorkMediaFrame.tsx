@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 import type { Work } from "@/data/portfolio";
@@ -13,6 +12,7 @@ type WorkMediaFrameProps = {
   tone: Work["coverTone"];
   objectPosition?: string;
   style?: React.CSSProperties;
+  priority?: boolean;
 };
 
 export function WorkMediaFrame({
@@ -22,24 +22,9 @@ export function WorkMediaFrame({
   tone,
   objectPosition,
   style,
+  priority = false,
 }: WorkMediaFrameProps) {
-  const [loaded, setLoaded] = useState(false);
   const showImage = media && media.mimeType.startsWith("image/");
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
-
-  const handleLoad = () => {
-    rafRef.current = requestAnimationFrame(() => {
-      setLoaded(true);
-    });
-  };
 
   return (
     <>
@@ -47,19 +32,17 @@ export function WorkMediaFrame({
       {showImage ? (
         <Image
           alt={media.alt}
-          className={`object-cover ${className} ${hover ? "transition duration-700 group-hover:scale-105" : ""}`}
+          className={`object-cover ${className} ${hover ? "transition-transform duration-700 group-hover:scale-105" : ""}`}
           fill
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           quality={90}
           sizes="(max-width: 768px) 100vw, 50vw"
           src={media.url}
           style={{
             objectPosition,
             ...style,
-            opacity: loaded ? 1 : 0,
-            transition: "opacity 700ms ease-out, transform 700ms ease-out",
           }}
-          onLoad={handleLoad}
+          priority={priority}
         />
       ) : null}
     </>
