@@ -93,20 +93,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_figure_offset_y: 0,
   };
 
-  const { data: ctaTransformData } = await supabase
-    .from("site_settings")
-    .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
-    .single();
+  try {
+    const { data: ctaTransformData, error: ctaTransformError } = await supabase
+      .from("site_settings")
+      .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+      .single();
 
-  if (ctaTransformData) {
-    ctaTransformColumns = {
-      cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1),
-      cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
-      cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
-      cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1),
-      cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
-      cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
-    };
+    if (!ctaTransformError && ctaTransformData) {
+      ctaTransformColumns = {
+        cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1),
+        cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+        cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+        cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1),
+        cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+        cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
+      };
+    }
+  } catch {
+    // columns may not exist yet; use defaults
   }
 
   const { data: rawMedia } = await supabase

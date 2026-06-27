@@ -153,20 +153,24 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         cta_figure_offset_y: 0,
       };
 
-      const { data: ctaTransformData } = await client
-        .from("site_settings")
-        .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
-        .single();
+      try {
+        const { data: ctaTransformData, error: ctaTransformError } = await client
+          .from("site_settings")
+          .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+          .single();
 
-      if (ctaTransformData) {
-        ctaTransform = {
-          cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
-          cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
-          cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
-          cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
-          cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
-          cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
-        };
+        if (!ctaTransformError && ctaTransformData) {
+          ctaTransform = {
+            cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
+            cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+            cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+            cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
+            cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+            cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
+          };
+        }
+      } catch {
+        // columns may not exist yet; use defaults
       }
 
       const allIds = {
@@ -494,20 +498,24 @@ export async function createServerCmsRepository() {
         cta_figure_offset_y: 0,
       };
 
-      const { data: ctaTransformData } = await client
-        .from("site_settings")
-        .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
-        .single();
+      try {
+        const { data: ctaTransformData, error: ctaTransformError } = await client
+          .from("site_settings")
+          .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+          .single();
 
-      if (ctaTransformData) {
-        ctaTransform = {
-          cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
-          cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
-          cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
-          cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
-          cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
-          cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
-        };
+        if (!ctaTransformError && ctaTransformData) {
+          ctaTransform = {
+            cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
+            cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+            cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+            cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
+            cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+            cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
+          };
+        }
+      } catch {
+        // columns may not exist yet; use defaults
       }
 
       // 合并所有id
