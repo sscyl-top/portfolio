@@ -7,10 +7,11 @@ import { useEffect, useRef, useState } from "react";
  * 全局页面加载动画。
  *
  * 触发时机：
- * 1. 首次打开网页 / 每次刷新 — SSR 即渲染全屏黑色 loader，hydrate 后跑 0→100% 动画再淡出
+ * 1. 首次打开网页 / 每次刷新（非作品详情页）— SSR 即渲染全屏黑色 loader，hydrate 后跑 0→100% 动画再淡出
  * 2. SPA 导航到 首页(/) / 全部作品(/works) / 简历(/resume) 时，仅当导航超过阈值（卡顿）才显示
  *
  * 不触发：
+ * - 首次打开作品详情页（/works/[slug]）：由 WorkStarLoader 负责，避免两个加载动画叠加
  * - SPA 导航到作品详情页（/works/[slug]）等非主页面
  * - 快速完成的 SPA 导航（无卡顿）
  */
@@ -25,10 +26,17 @@ function isMainPage(pathname: string): boolean {
   return false;
 }
 
+// 作品详情页 /works/[slug]：首次打开时由 WorkStarLoader 负责加载动画
+function isWorkDetailPage(pathname: string): boolean {
+  if (pathname === "/works") return false;
+  if (pathname.startsWith("/works/")) return true;
+  return false;
+}
+
 export function GlobalPageLoader() {
   const pathname = usePathname();
-  // SSR + 首次 hydrate 时 active=true，渲染全屏黑色 loader 覆盖页面内容
-  const [active, setActive] = useState(true);
+  // SSR + 首次 hydrate 时：主页面显示全屏 loader；作品详情页由 WorkStarLoader 负责，不重复显示
+  const [active, setActive] = useState(() => !isWorkDetailPage(pathname));
   const [progress, setProgress] = useState(0);
   const [hidden, setHidden] = useState(false);
   const isFirstMount = useRef(true);
@@ -63,7 +71,12 @@ export function GlobalPageLoader() {
   };
 
   // 首次挂载：跑加载动画（覆盖首次进入 / 刷新的情况）
+  // 作品详情页首次加载由 WorkStarLoader 负责，跳过全局 loader
   useEffect(() => {
+    if (isWorkDetailPage(pathname)) {
+      isFirstMount.current = false;
+      return;
+    }
     startAnimation();
     isFirstMount.current = false;
 
