@@ -154,14 +154,14 @@ export function CompositeDesignWall({
                     e.preventDefault();
                   }
                 }}
-                className="group block overflow-hidden rounded-lg border border-white/10 bg-white/[0.035] p-2 transition duration-500 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.07]"
+                className="group block overflow-hidden rounded-lg border border-white/10 bg-white/[0.035] p-1.5 transition duration-500 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.07] md:p-2"
                 style={{
                   transform: `translateY(${yOffset}px)`,
                   transition:
                     "transform 420ms cubic-bezier(.2,.8,.2,1), border-color 300ms ease, background-color 300ms ease",
                 }}
               >
-                <article className="relative h-[200px] overflow-hidden rounded-md md:h-[300px]">
+                <article className="relative h-[188px] overflow-hidden rounded-md md:h-[300px]">
                   {work.coverMedia ? (
                     work.coverMedia.mimeType === "image/gif" ? (
                       <img
@@ -207,23 +207,23 @@ export function CompositeDesignWall({
                     />
                   )}
                   <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.08),transparent_34%,rgba(0,0,0,0.82))]" />
-                  <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-white/48">
+                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-white/48 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>
-                  <div className="absolute bottom-3 left-3 right-3 rounded-md border border-white/10 bg-black/34 p-3 backdrop-blur-md">
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/10 bg-black/32 p-2 backdrop-blur-md md:bottom-3 md:left-3 md:right-3 md:p-3">
+                    <div className="flex items-start justify-between gap-2 md:gap-3">
                       <div>
-                        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+                        <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-copper md:text-[10px] md:tracking-[0.16em]">
                           {work.tags[0] ?? "Composite"}
                         </p>
-                        <h3 className="mt-1.5 line-clamp-2 text-lg font-semibold leading-tight text-white">
+                        <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-white md:mt-1.5 md:text-lg md:leading-tight">
                           {work.title}
                         </h3>
                       </div>
                       <ArrowUpRight
                         aria-hidden="true"
-                        className="mt-1 h-4 w-4 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white md:mt-1 md:h-4 md:w-4"
                       />
                     </div>
                   </div>
