@@ -1,9 +1,9 @@
 import { Pool } from "pg";
 
-let heroMigrationPromise: Promise<boolean> | null = null;
-let ctaTransformMigrationPromise: Promise<boolean> | null = null;
-let tickerLogosMigrationPromise: Promise<boolean> | null = null;
-let musicSettingsMigrationPromise: Promise<boolean> | null = null;
+let heroMigrationDone = false;
+let ctaTransformMigrationDone = false;
+let tickerLogosMigrationDone = false;
+let musicSettingsMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -31,146 +31,134 @@ export function getDbPool(): Pool | null {
 }
 
 export async function runMusicSettingsMigration(): Promise<boolean> {
-  if (musicSettingsMigrationPromise) return musicSettingsMigrationPromise;
+  if (musicSettingsMigrationDone) return true;
 
-  musicSettingsMigrationPromise = (async () => {
-    const pool = createPool();
-    if (!pool) {
-      console.warn("[DB Migration] No database connection string found for music settings");
-      return false;
-    }
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for music settings");
+    return false;
+  }
 
-    try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS public.music_settings (
-          id boolean PRIMARY KEY DEFAULT true,
-          hide_frontend boolean NOT NULL DEFAULT false,
-          hide_backend boolean NOT NULL DEFAULT false,
-          tip_messages jsonb NOT NULL DEFAULT '[]'::jsonb,
-          playing_label text NOT NULL DEFAULT '正在播放',
-          created_at timestamptz NOT NULL DEFAULT now(),
-          updated_at timestamptz NOT NULL DEFAULT now(),
-          CONSTRAINT music_settings_single_row CHECK (id = true)
-        );
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.music_settings (
+        id boolean PRIMARY KEY DEFAULT true,
+        hide_frontend boolean NOT NULL DEFAULT false,
+        hide_backend boolean NOT NULL DEFAULT false,
+        tip_messages jsonb NOT NULL DEFAULT '[]'::jsonb,
+        playing_label text NOT NULL DEFAULT '正在播放',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT music_settings_single_row CHECK (id = true)
+      );
 
-        INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label)
-        VALUES (true, false, false, '[]'::jsonb, '正在播放')
-        ON CONFLICT (id) DO NOTHING;
+      INSERT INTO public.music_settings (id, hide_frontend, hide_backend, tip_messages, playing_label)
+      VALUES (true, false, false, '[]'::jsonb, '正在播放')
+      ON CONFLICT (id) DO NOTHING;
 
-        ALTER TABLE public.music_categories ADD COLUMN IF NOT EXISTS emoji text NOT NULL DEFAULT '🎵';
-        UPDATE public.music_categories SET emoji = '🌿' WHERE key = 'relax' AND emoji = '🎵';
-        UPDATE public.music_categories SET emoji = '🔥' WHERE key = 'energetic' AND emoji = '🎵';
-        UPDATE public.music_categories SET emoji = '🌊' WHERE key = 'summer' AND emoji = '🎵';
-        UPDATE public.music_categories SET emoji = '😎' WHERE key = 'badass' AND emoji = '🎵';
+      ALTER TABLE public.music_categories ADD COLUMN IF NOT EXISTS emoji text NOT NULL DEFAULT '🎵';
+      UPDATE public.music_categories SET emoji = '🌿' WHERE key = 'relax' AND emoji = '🎵';
+      UPDATE public.music_categories SET emoji = '🔥' WHERE key = 'energetic' AND emoji = '🎵';
+      UPDATE public.music_categories SET emoji = '🌊' WHERE key = 'summer' AND emoji = '🎵';
+      UPDATE public.music_categories SET emoji = '😎' WHERE key = 'badass' AND emoji = '🎵';
 
-        NOTIFY pgrst, 'reload schema';
-      `);
-      console.log("[DB Migration] Music settings table ready, categories emoji column ready, schema reloaded");
-      return true;
-    } catch (err) {
-      console.error("[DB Migration] Failed to run music settings migration:", err);
-      return false;
-    } finally {
-      await pool.end().catch(() => {});
-    }
-  })();
-
-  return musicSettingsMigrationPromise;
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] Music settings table ready, categories emoji column ready, schema reloaded");
+    musicSettingsMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run music settings migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
 
 export async function runHeroVideosMigration(): Promise<boolean> {
-  if (heroMigrationPromise) return heroMigrationPromise;
+  if (heroMigrationDone) return true;
 
-  heroMigrationPromise = (async () => {
-    const pool = createPool();
-    if (!pool) {
-      console.warn("[DB Migration] No database connection string found in env vars");
-      return false;
-    }
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found in env vars");
+    return false;
+  }
 
-    try {
-      await pool.query(`
-        ALTER TABLE public.site_settings
-          ADD COLUMN IF NOT EXISTS hero_main_video_media_id uuid REFERENCES public.media_assets(id),
-          ADD COLUMN IF NOT EXISTS hero_side1_video_media_id uuid REFERENCES public.media_assets(id),
-          ADD COLUMN IF NOT EXISTS hero_side2_video_media_id uuid REFERENCES public.media_assets(id),
-          ADD COLUMN IF NOT EXISTS hero_side3_video_media_id uuid REFERENCES public.media_assets(id);
-        NOTIFY pgrst, 'reload schema';
-      `);
-      console.log("[DB Migration] Hero video columns added successfully");
-      return true;
-    } catch (err) {
-      console.error("[DB Migration] Failed to run hero videos migration:", err);
-      return false;
-    } finally {
-      await pool.end().catch(() => {});
-    }
-  })();
-
-  return heroMigrationPromise;
+  try {
+    await pool.query(`
+      ALTER TABLE public.site_settings
+        ADD COLUMN IF NOT EXISTS hero_main_video_media_id uuid REFERENCES public.media_assets(id),
+        ADD COLUMN IF NOT EXISTS hero_side1_video_media_id uuid REFERENCES public.media_assets(id),
+        ADD COLUMN IF NOT EXISTS hero_side2_video_media_id uuid REFERENCES public.media_assets(id),
+        ADD COLUMN IF NOT EXISTS hero_side3_video_media_id uuid REFERENCES public.media_assets(id);
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] Hero video columns added successfully");
+    heroMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run hero videos migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
 
 export async function runCtaTransformMigration(): Promise<boolean> {
-  if (ctaTransformMigrationPromise) return ctaTransformMigrationPromise;
+  if (ctaTransformMigrationDone) return true;
 
-  ctaTransformMigrationPromise = (async () => {
-    const pool = createPool();
-    if (!pool) {
-      console.warn("[DB Migration] No database connection string found for CTA transform settings");
-      return false;
-    }
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for CTA transform settings");
+    return false;
+  }
 
-    try {
-      await pool.query(`
-        ALTER TABLE public.site_settings
-          ADD COLUMN IF NOT EXISTS cta_card_scale numeric NOT NULL DEFAULT 1.0,
-          ADD COLUMN IF NOT EXISTS cta_card_offset_x numeric NOT NULL DEFAULT 0,
-          ADD COLUMN IF NOT EXISTS cta_card_offset_y numeric NOT NULL DEFAULT 0,
-          ADD COLUMN IF NOT EXISTS cta_figure_scale numeric NOT NULL DEFAULT 1.0,
-          ADD COLUMN IF NOT EXISTS cta_figure_offset_x numeric NOT NULL DEFAULT 0,
-          ADD COLUMN IF NOT EXISTS cta_figure_offset_y numeric NOT NULL DEFAULT 0;
-        NOTIFY pgrst, 'reload schema';
-      `);
-      console.log("[DB Migration] CTA transform columns added successfully");
-      return true;
-    } catch (err) {
-      console.error("[DB Migration] Failed to run CTA transform migration:", err);
-      return false;
-    } finally {
-      await pool.end().catch(() => {});
-    }
-  })();
-
-  return ctaTransformMigrationPromise;
+  try {
+    await pool.query(`
+      ALTER TABLE public.site_settings
+        ADD COLUMN IF NOT EXISTS cta_card_scale numeric NOT NULL DEFAULT 1.0,
+        ADD COLUMN IF NOT EXISTS cta_card_offset_x numeric NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS cta_card_offset_y numeric NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS cta_figure_scale numeric NOT NULL DEFAULT 1.0,
+        ADD COLUMN IF NOT EXISTS cta_figure_offset_x numeric NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS cta_figure_offset_y numeric NOT NULL DEFAULT 0;
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] CTA transform columns added successfully");
+    ctaTransformMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run CTA transform migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
 
 export async function runTickerLogosMigration(): Promise<boolean> {
-  if (tickerLogosMigrationPromise) return tickerLogosMigrationPromise;
+  if (tickerLogosMigrationDone) return true;
 
-  tickerLogosMigrationPromise = (async () => {
-    const pool = createPool();
-    if (!pool) {
-      console.warn("[DB Migration] No database connection string found for ticker logos");
-      return false;
-    }
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for ticker logos");
+    return false;
+  }
 
-    try {
-      await pool.query(`
-        ALTER TABLE public.site_settings
-          ADD COLUMN IF NOT EXISTS cta_ticker_logo_media_ids text NOT NULL DEFAULT '';
-        NOTIFY pgrst, 'reload schema';
-      `);
-      console.log("[DB Migration] Ticker logo media IDs column added successfully");
-      return true;
-    } catch (err) {
-      console.error("[DB Migration] Failed to run ticker logos migration:", err);
-      return false;
-    } finally {
-      await pool.end().catch(() => {});
-    }
-  })();
-
-  return tickerLogosMigrationPromise;
+  try {
+    await pool.query(`
+      ALTER TABLE public.site_settings
+        ADD COLUMN IF NOT EXISTS cta_ticker_logo_media_ids text NOT NULL DEFAULT '';
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] Ticker logo media IDs column added successfully");
+    tickerLogosMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run ticker logos migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
 
 export async function runBucketSizeLimitMigration(): Promise<boolean> {
