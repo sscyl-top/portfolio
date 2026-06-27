@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runTickerLogosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -15,6 +15,11 @@ const uuidOrNull = (val: FormDataEntryValue | null) => {
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isSchemaCacheError(msg: string): boolean {
+  const lower = msg.toLowerCase();
+  return lower.includes("schema") || lower.includes("column") || lower.includes("does not exist");
+}
 
 export async function saveSiteSettings(formData: FormData) {
   await requireAdmin();
@@ -33,8 +38,13 @@ export async function saveSiteSettings(formData: FormData) {
   const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
 
   const tickerLogoIdsRaw = String(formData.get("cta_ticker_logo_media_ids") ?? "").trim();
+  const ctaTickerLogoMediaIds = tickerLogoIdsRaw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .join(",");
 
-  const baseData: Record<string, unknown> = {
+  const saveData: Record<string, unknown> = {
     id: true,
     name: String(formData.get("name") ?? "").trim(),
     nickname: String(formData.get("nickname") ?? "").trim(),
@@ -48,20 +58,12 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),
     cta_figure_media_id: uuidOrNull(formData.get("cta_figure_media_id")),
     cta_ticker_logo_media_id: uuidOrNull(formData.get("cta_ticker_logo_media_id")),
+    cta_ticker_logo_media_ids: ctaTickerLogoMediaIds,
     hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
     hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
     hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
     hero_side3_video_media_id: uuidOrNull(formData.get("hero_side3_video_media_id")),
     social_links,
-  };
-
-  const tickerLogosData: Record<string, unknown> = {
-    id: true,
-    cta_ticker_logo_media_ids: tickerLogoIdsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-      .join(","),
   };
 
   const ctaTransformValues: Record<string, number> = {
@@ -75,40 +77,37 @@ export async function saveSiteSettings(formData: FormData) {
 
   await runHeroVideosMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
 
-  await wait(1000);
+  await wait(3000);
 
   const serviceClient = createSupabaseServiceClient();
 
-  const { error: baseError } = await serviceClient.from("site_settings").upsert(baseData, { onConflict: "id" });
-  if (baseError) {
-    console.error("[Settings] base settings save failed:", baseError.message);
-    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${baseError.message}`)}`);
-  }
-  console.log("[Settings] base settings saved successfully");
-
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const { error: tickerError } = await serviceClient
-      .from("site_settings")
-      .upsert(tickerLogosData, { onConflict: "id" });
-    if (!tickerError) {
-      console.log("[Settings] ticker logos saved successfully");
+  let saveError: string | null = null;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
+    if (!error) {
+      console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
+      saveError = null;
       break;
     }
-    console.warn(`[Settings] ticker logos save attempt ${attempt + 1} failed:`, tickerError.message);
-    if (
-      (tickerError.message.includes("schema") || tickerError.message.includes("column")) &&
-      attempt < 3
-    ) {
+    saveError = error.message;
+    console.warn(`[Settings] site_settings save attempt ${attempt + 1} failed:`, error.message);
+    if (isSchemaCacheError(error.message) && attempt < 5) {
       await wait(3000);
       continue;
     }
     break;
   }
 
+  if (saveError) {
+    console.error("[Settings] site_settings save failed after retries:", saveError);
+    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${saveError}`)}`);
+  }
+
   for (const [key, value] of Object.entries(ctaTransformValues)) {
     try {
-      const { data: existing } = await serviceClient
+      const { data: existing, error: findErr } = await serviceClient
         .from("text_content")
         .select("id")
         .eq("key", key)
@@ -116,25 +115,31 @@ export async function saveSiteSettings(formData: FormData) {
         .limit(1)
         .maybeSingle();
 
+      if (findErr) {
+        console.warn(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
+        continue;
+      }
+
       if (existing) {
-        await serviceClient
+        const { error: updErr } = await serviceClient
           .from("text_content")
           .update({ content: String(value), is_active: true, deleted_at: null })
           .eq("id", existing.id);
+        if (updErr) console.warn(`[Settings] Failed to update text_content ${key}:`, updErr.message);
       } else {
-        await serviceClient.from("text_content").insert({
+        const { error: insErr } = await serviceClient.from("text_content").insert({
           key,
           content: String(value),
           page: "site_settings",
           sort_order: 0,
           is_active: true,
         });
+        if (insErr) console.warn(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
       }
     } catch (e) {
-      console.warn(`[Settings] Failed to save CTA transform ${key}:`, e);
+      console.warn(`[Settings] Exception saving CTA transform ${key}:`, e);
     }
   }
-  console.log("[Settings] CTA transform settings saved to text_content successfully");
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

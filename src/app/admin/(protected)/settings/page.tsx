@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runTickerLogosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -55,8 +55,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   await runHeroVideosMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
 
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   const CTA_TRANSFORM_KEYS = [
     "cta_card_scale",
@@ -85,12 +86,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         hero_side3_video_media_id: null as string | null,
       };
 
-      try {
-        const { data: heroData } = await serviceSupabase
+      {
+        const { data: heroData, error: heroErr } = await serviceSupabase
           .from("site_settings")
           .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
           .single();
-        if (heroData) {
+        if (!heroErr && heroData) {
           heroIds = {
             hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
             hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
@@ -98,8 +99,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
           };
         }
-      } catch {
-        // columns may not exist
       }
 
       const ctaTransform = {
@@ -110,15 +109,15 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_figure_offset_x: 0,
         cta_figure_offset_y: 0,
       };
-      try {
-        const { data: textData } = await serviceSupabase
+      {
+        const { data: textData, error: textErr } = await serviceSupabase
           .from("text_content")
           .select("key,content")
           .in("key", CTA_TRANSFORM_KEYS as unknown as string[])
           .eq("page", "site_settings")
           .eq("is_active", true)
           .is("deleted_at", null);
-        if (textData) {
+        if (!textErr && textData) {
           for (const item of textData) {
             const num = Number(item.content);
             if (!isNaN(num)) {
@@ -126,22 +125,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             }
           }
         }
-      } catch {
-        // text_content query failed, use defaults
       }
 
-      // 4. 安全查询ticker logo ids列
       let tickerLogoIdsRaw: string | null = null;
-      try {
-        const { data: tickerData } = await serviceSupabase
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const { data: tickerData, error: tickerErr } = await serviceSupabase
           .from("site_settings")
           .select("cta_ticker_logo_media_ids")
           .single();
-        if (tickerData) {
+        if (!tickerErr && tickerData) {
           tickerLogoIdsRaw = tickerData.cta_ticker_logo_media_ids ?? null;
+          break;
         }
-      } catch {
-        // column may not exist
+        if (tickerErr) {
+          console.warn(`[Admin Settings] ticker logo query attempt ${attempt + 1} failed:`, tickerErr.message);
+        }
+        if (attempt < 3) {
+          await new Promise(r => setTimeout(r, 2000));
+        }
       }
 
       data = {
