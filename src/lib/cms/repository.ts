@@ -112,7 +112,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
       await runCtaTransformMigration().catch(() => {});
       await runTickerLogosMigration().catch(() => {});
 
-      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids";
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
       const { data: baseIds, error: baseError } = await client
         .from("site_settings")
         .select(baseIdColumns)
@@ -175,13 +175,25 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         // columns may not exist yet; use defaults
       }
 
+      let tickerLogoIdsRaw = "";
+      try {
+        const { data: tickerData, error: tickerError } = await client
+          .from("site_settings")
+          .select("cta_ticker_logo_media_ids")
+          .single();
+        if (!tickerError && tickerData) {
+          tickerLogoIdsRaw = String(tickerData.cta_ticker_logo_media_ids ?? "");
+        }
+      } catch {
+        // column may not exist yet; use empty string
+      }
+
       const allIds = {
         ...(baseIds as Record<string, unknown>),
         ...heroIds,
       } as Record<string, string | null>;
 
       // 解析多logo ID列表，兼容旧单图字段
-      const tickerLogoIdsRaw = (allIds.cta_ticker_logo_media_ids as string | null | undefined) || "";
       const tickerLogoIds = tickerLogoIdsRaw
         .split(",")
         .map((s) => s.trim())
@@ -474,7 +486,7 @@ export async function createServerCmsRepository() {
       await runTickerLogosMigration().catch(() => {});
 
       // 第一步：查询所有media_id字段（先查基础字段，再安全查询hero视频字段）
-      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids";
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
       const { data: baseIds, error: baseError } = await client
         .from("site_settings")
         .select(baseIdColumns)
@@ -538,6 +550,20 @@ export async function createServerCmsRepository() {
         // columns may not exist yet; use defaults
       }
 
+      // 安全查询ticker logos多图列（可能不存在）
+      let tickerLogoIdsRaw = "";
+      try {
+        const { data: tickerData, error: tickerError } = await client
+          .from("site_settings")
+          .select("cta_ticker_logo_media_ids")
+          .single();
+        if (!tickerError && tickerData) {
+          tickerLogoIdsRaw = String(tickerData.cta_ticker_logo_media_ids ?? "");
+        }
+      } catch {
+        // column may not exist yet; use empty string
+      }
+
       // 合并所有id
       const allIds = {
         ...(baseIds as Record<string, unknown>),
@@ -545,7 +571,6 @@ export async function createServerCmsRepository() {
       } as Record<string, string | null>;
 
       // 解析多logo ID列表，兼容旧单图字段
-      const tickerLogoIdsRaw = (allIds.cta_ticker_logo_media_ids as string | null | undefined) || "";
       const tickerLogoIds = tickerLogoIdsRaw
         .split(",")
         .map((s) => s.trim())

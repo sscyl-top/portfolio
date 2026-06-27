@@ -58,7 +58,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runTickerLogosMigration().catch(() => {});
 
   // 第一步：查询基础列（一定存在）
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,social_links";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
   const { data: baseData, error: baseError } = await supabase
     .from("site_settings")
     .select(baseColumns)
@@ -116,6 +116,26 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     // columns may not exist yet; use defaults
   }
 
+  // 第四步：安全查询ticker logos多图列，失败就用空字符串
+  let tickerLogosColumn = {
+    cta_ticker_logo_media_ids: "" as string,
+  };
+
+  try {
+    const { data: tickerData, error: tickerError } = await supabase
+      .from("site_settings")
+      .select("cta_ticker_logo_media_ids")
+      .single();
+
+    if (!tickerError && tickerData) {
+      tickerLogosColumn = {
+        cta_ticker_logo_media_ids: String(tickerData.cta_ticker_logo_media_ids ?? ""),
+      };
+    }
+  } catch {
+    // column may not exist yet; use default
+  }
+
   const { data: rawMedia } = await supabase
     .from("media_assets")
     .select("id,storage_key,mime_type,original_name,alt_text")
@@ -153,8 +173,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     })),
   } satisfies SettingsRow;
 
-  // 合并基础数据、hero视频数据和CTA transform数据
-  const data = baseData ? { ...(baseData as object), ...heroColumns, ...ctaTransformColumns } as SettingsRow : null;
+  // 合并基础数据、hero视频数据、CTA transform数据和ticker logos数据
+  const data = baseData ? { ...(baseData as object), ...heroColumns, ...ctaTransformColumns, ...tickerLogosColumn } as SettingsRow : null;
   const error = baseError;
   const settings = data ?? fallback;
   const socialLinks =
