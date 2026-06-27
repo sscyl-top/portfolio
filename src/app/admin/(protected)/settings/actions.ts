@@ -98,13 +98,7 @@ export async function saveSiteSettings(formData: FormData) {
     }).eq("id", true);
 
     if (ctaTransformError) {
-      const isColumnMissing = ctaTransformError.message.includes("column") && ctaTransformError.message.includes("does not exist");
-      if (isColumnMissing) {
-        throw new Error(
-          "CTA 图片缩放偏移列尚未创建，请刷新页面重试（自动迁移需几秒完成）。",
-        );
-      }
-      throw new Error(`CTA 图片设置保存失败：${ctaTransformError.message}`);
+      console.error("[Settings] Failed to save CTA transform settings:", ctaTransformError.message);
     }
   }
 
@@ -121,13 +115,7 @@ export async function saveSiteSettings(formData: FormData) {
     }).eq("id", true);
 
     if (heroError) {
-      const isColumnMissing = heroError.message.includes("column") && heroError.message.includes("does not exist");
-      if (isColumnMissing) {
-        throw new Error(
-          "Hero 视频列尚未创建。请在 Supabase SQL Editor 中执行 supabase/migrations/20260625030000_hero_videos.sql 迁移文件。",
-        );
-      }
-      throw new Error(`Hero 视频保存失败：${heroError.message}`);
+      console.error("[Settings] Failed to save hero video settings:", heroError.message);
     }
   }
 

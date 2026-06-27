@@ -121,6 +121,7 @@ export async function runCtaTransformMigration(): Promise<boolean> {
           ADD COLUMN IF NOT EXISTS cta_figure_scale numeric NOT NULL DEFAULT 1.0,
           ADD COLUMN IF NOT EXISTS cta_figure_offset_x numeric NOT NULL DEFAULT 0,
           ADD COLUMN IF NOT EXISTS cta_figure_offset_y numeric NOT NULL DEFAULT 0;
+        NOTIFY pgrst, 'reload schema';
       `);
       console.log("[DB Migration] CTA transform columns added successfully");
       return true;
