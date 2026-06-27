@@ -258,7 +258,7 @@ button {
 }
 
 .cta-logo-track {
-  animation: cta-logo-ticker 42s linear infinite;
+  animation: cta-logo-ticker 28s linear infinite;
   will-change: transform;
 }
 

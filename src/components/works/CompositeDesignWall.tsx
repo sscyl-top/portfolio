@@ -268,8 +268,8 @@ export function CompositeDesignWall({
             />
           </div>
 
-          <div className="cta-logo-ticker absolute inset-x-0 bottom-[140px] z-20 h-24 overflow-hidden opacity-70 md:bottom-[150px]">
-            <div className="cta-logo-track flex h-full w-max items-center gap-16 whitespace-nowrap">
+          <div className="cta-logo-ticker absolute inset-x-0 bottom-[100px] z-20 overflow-hidden opacity-70 md:bottom-[110px]">
+            <div className="cta-logo-track flex w-max items-center gap-12 whitespace-nowrap py-2">
               {(() => {
                 const hasCustomLogos = ctaTickerLogoUrls.length > 0;
                 const logoSrcs = hasCustomLogos ? ctaTickerLogoUrls : [infiniteProgressLogo];
@@ -286,9 +286,9 @@ export function CompositeDesignWall({
                       key={i}
                       src={infiniteProgressLogo}
                       alt=""
-                      width={240}
-                      height={60}
-                      className="h-auto w-[clamp(150px,15vw,240px)] shrink-0 opacity-55 mix-blend-screen"
+                      width={180}
+                      height={45}
+                      className="h-auto w-[clamp(100px,11vw,180px)] shrink-0 opacity-55 mix-blend-screen"
                     />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -296,7 +296,7 @@ export function CompositeDesignWall({
                       key={i}
                       src={src}
                       alt=""
-                      className="h-auto w-[clamp(150px,15vw,240px)] shrink-0 opacity-55 mix-blend-screen object-contain"
+                      className="h-auto w-[clamp(100px,11vw,180px)] max-h-[120px] shrink-0 object-contain opacity-55 mix-blend-screen"
                     />
                   )
                 ));
@@ -322,7 +322,7 @@ export function CompositeDesignWall({
           </div>
 
           <div className="relative z-40 mx-auto flex min-h-[440px] max-w-6xl flex-col items-center justify-end text-center md:min-h-[620px]">
-            <div className="flex w-full flex-col items-center justify-center gap-5 pb-6 sm:w-auto sm:flex-row sm:gap-9 md:pb-5">
+            <div className="flex w-full flex-col items-center justify-center gap-5 pb-2 sm:w-auto sm:flex-row sm:gap-9 md:pb-1">
               <Link
                 href="/resume"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
