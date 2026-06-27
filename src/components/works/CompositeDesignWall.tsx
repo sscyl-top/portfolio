@@ -121,7 +121,7 @@ export function CompositeDesignWall({
   }
 
   return (
-    <section id="section-composite" className="relative overflow-hidden px-4 pb-3 pt-24 md:px-8 md:pt-48 md:pb-4">
+    <section id="section-composite" className="relative overflow-hidden px-4 pb-8 pt-24 md:px-8 md:pt-48 md:pb-10">
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-16 text-center md:mb-28">
           <p className="font-mono text-xs uppercase text-copper" data-text-key="works.compositeKicker">
@@ -235,11 +235,11 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-24 min-h-[480px] px-0 pb-1 pt-8 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-2"
+          className="portfolio-cta-panel relative mt-24 min-h-[480px] px-0 pb-6 pt-8 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(0,0,0,0.72),transparent_42%)]" />
 
-          <div className="absolute inset-x-[4%] bottom-1 top-8 z-10 md:inset-x-[8%] md:bottom-2 md:top-12">
+          <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -268,7 +268,7 @@ export function CompositeDesignWall({
             />
           </div>
 
-          <div className="cta-logo-ticker absolute inset-x-0 bottom-[50px] z-20 overflow-hidden opacity-70 md:bottom-[55px]">
+          <div className="cta-logo-ticker absolute inset-x-0 bottom-[85px] z-20 overflow-hidden opacity-70 md:bottom-[95px]">
             <div className="cta-logo-track flex w-max items-center gap-12 whitespace-nowrap py-2">
               {(() => {
                 const hasCustomLogos = ctaTickerLogoUrls.length > 0;
@@ -322,7 +322,7 @@ export function CompositeDesignWall({
           </div>
 
           <div className="relative z-40 mx-auto flex min-h-[440px] max-w-6xl flex-col items-center justify-end text-center md:min-h-[620px]">
-            <div className="flex w-full flex-col items-center justify-center gap-5 pb-2 sm:w-auto sm:flex-row sm:gap-9 md:pb-1">
+            <div className="flex w-full flex-col items-center justify-center gap-5 pb-2 sm:w-auto sm:flex-row sm:gap-9 md:pb-2">
               <Link
                 href="/resume"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
