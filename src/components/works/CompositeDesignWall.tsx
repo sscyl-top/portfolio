@@ -133,6 +133,8 @@ export function CompositeDesignWall({
               <Link
                 key={`${work.slug}-${index}`}
                 href={`/works/${work.slug}?from=composite`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group block overflow-hidden rounded-lg border border-white/10 bg-white/[0.035] p-2 transition duration-500 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.07]"
                 style={{
                   transform: `translateY(${yOffset}px)`,

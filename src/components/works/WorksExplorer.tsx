@@ -174,6 +174,8 @@ export function WorksExplorer({
                 <Link
                   key={item.work.slug}
                   href={`/works/${item.work.slug}?from=works`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group block"
                 >
                   {card}

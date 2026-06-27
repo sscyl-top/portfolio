@@ -142,6 +142,8 @@ export default async function WorkDetailPage({
               <Link
                 key={related.slug}
                 href={`/works/${related.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.035] p-5 text-white/70 transition hover:border-white/30 hover:text-white"
               >
                 {related.title}

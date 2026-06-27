@@ -368,6 +368,8 @@ function SortableRow({
         {work.status === "published" ? (
           <Link
             href={`/works/${work.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-cyan hover:text-white"
           >
             查看
