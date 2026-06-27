@@ -34,6 +34,7 @@ export default async function WorksPage() {
     ctaCardMediaUrl: null,
     ctaFigureMediaUrl: null,
     ctaTickerLogoMediaUrl: null,
+    ctaTickerLogoMediaUrls: [],
     ctaCardScale: 1,
     ctaCardOffsetX: 0,
     ctaCardOffsetY: 0,
@@ -77,7 +78,7 @@ export default async function WorksPage() {
         textOverrides={textOverrides}
         ctaCardUrl={siteSettings.ctaCardMediaUrl}
         ctaFigureUrl={siteSettings.ctaFigureMediaUrl}
-        ctaTickerLogoUrl={siteSettings.ctaTickerLogoMediaUrl}
+        ctaTickerLogoUrls={siteSettings.ctaTickerLogoMediaUrls}
         ctaCardScale={siteSettings.ctaCardScale}
         ctaCardOffsetX={siteSettings.ctaCardOffsetX}
         ctaCardOffsetY={siteSettings.ctaCardOffsetY}

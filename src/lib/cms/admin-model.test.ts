@@ -9,6 +9,7 @@ import {
 
 const sampleWork = {
   title: "Sample",
+  subtitle: "",
   slug: "sample",
   summary: "A sample work",
   category: "Identity",

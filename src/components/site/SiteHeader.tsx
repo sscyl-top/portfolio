@@ -12,6 +12,7 @@ const defaultSiteSettings: PublicSiteSettings = {
   ctaFigureScale: 1,
   ctaFigureOffsetX: 0,
   ctaFigureOffsetY: 0,
+  ctaTickerLogoMediaUrls: [],
   description: staticSiteSettings.description,
   name: staticSiteSettings.name,
   navigation: staticSiteSettings.navigation,

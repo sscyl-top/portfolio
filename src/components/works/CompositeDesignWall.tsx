@@ -37,7 +37,7 @@ type CompositeDesignWallProps = {
   textOverrides?: CompositeTextOverrides;
   ctaCardUrl?: string;
   ctaFigureUrl?: string;
-  ctaTickerLogoUrl?: string;
+  ctaTickerLogoUrls?: string[];
   ctaCardScale?: number;
   ctaCardOffsetX?: number;
   ctaCardOffsetY?: number;
@@ -51,7 +51,7 @@ export function CompositeDesignWall({
   textOverrides = {},
   ctaCardUrl = "",
   ctaFigureUrl = "",
-  ctaTickerLogoUrl = "",
+  ctaTickerLogoUrls = [],
   ctaCardScale = 1,
   ctaCardOffsetX = 0,
   ctaCardOffsetY = 0,
@@ -270,31 +270,37 @@ export function CompositeDesignWall({
 
           <div className="cta-logo-ticker absolute inset-x-0 bottom-[140px] z-20 h-24 overflow-hidden opacity-70 md:bottom-[150px]">
             <div className="cta-logo-track flex h-full w-max items-center gap-16 whitespace-nowrap">
-              {Array.from({ length: 2 }).map((_, groupIndex) => (
-                <div key={groupIndex} className="flex items-center gap-16">
-                  {Array.from({ length: 6 }).map((_, logoIndex) => {
-                    const logoSrc = ctaTickerLogoUrl || infiniteProgressLogo;
-                    return ctaTickerLogoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={`${groupIndex}-${logoIndex}`}
-                        src={logoSrc}
-                        alt=""
-                        className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen object-contain"
-                      />
-                    ) : (
-                      <Image
-                        key={`${groupIndex}-${logoIndex}`}
-                        src={logoSrc}
-                        alt=""
-                        width={240}
-                        height={60}
-                        className="h-auto w-[clamp(150px,15vw,240px)] opacity-55 mix-blend-screen"
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+              {(() => {
+                const hasCustomLogos = ctaTickerLogoUrls.length > 0;
+                const logoSrcs = hasCustomLogos ? ctaTickerLogoUrls : [infiniteProgressLogo];
+                const minPerSet = 8;
+                const repeats = Math.max(1, Math.ceil(minPerSet / logoSrcs.length));
+                const oneSet: string[] = [];
+                for (let r = 0; r < repeats; r++) {
+                  oneSet.push(...logoSrcs);
+                }
+                const trackLogos = [...oneSet, ...oneSet];
+                return trackLogos.map((src, i) => (
+                  src === infiniteProgressLogo ? (
+                    <Image
+                      key={i}
+                      src={infiniteProgressLogo}
+                      alt=""
+                      width={240}
+                      height={60}
+                      className="h-auto w-[clamp(150px,15vw,240px)] shrink-0 opacity-55 mix-blend-screen"
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="h-auto w-[clamp(150px,15vw,240px)] shrink-0 opacity-55 mix-blend-screen object-contain"
+                    />
+                  )
+                ));
+              })()}
             </div>
           </div>
 
