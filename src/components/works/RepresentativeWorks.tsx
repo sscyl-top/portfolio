@@ -14,7 +14,6 @@ type RepresentativeCardStyle = CSSProperties & {
   "--slot-x": string; "--slot-y": string; "--slot-r": string;
   "--slot-spread": string; "--card-lift": string; "--card-scale": number;
   "--tilt-x": string; "--tilt-y": string; "--intro-delay": string;
-  "--card-z": string;
 };
 
 const fanSlots = [
@@ -47,15 +46,14 @@ const RepresentativeCard = memo(function RepresentativeCard({
 }: RepresentativeCardProps) {
   const slot = fanSlots[index] ?? fanSlots[fanSlots.length - 1];
   const cardStyle: RepresentativeCardStyle = {
-    zIndex: isActive ? 20 : slot.z,
-    opacity: hasActive && !isActive ? 0.5 : 1,
+    zIndex: isActive ? 30 : slot.z,
+    opacity: hasActive && !isActive ? 0.65 : 1,
     "--slot-x": `${slot.x}vw`,
     "--slot-y": `${slot.y}px`,
     "--slot-r": `${slot.r}deg`,
     "--slot-spread": `${hasActive && !isActive ? slot.x * 0.06 : 0}vw`,
     "--card-lift": `${isActive ? -32 : 0}px`,
-    "--card-scale": isActive ? 1.06 : hasActive ? 0.94 : 1,
-    "--card-z": isActive ? "55px" : "0px",
+    "--card-scale": isActive ? 1.06 : hasActive ? 0.95 : 1,
     "--tilt-x": "0deg",
     "--tilt-y": "0deg",
     "--intro-delay": `${index * 80}ms`,
@@ -220,7 +218,6 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
         {/* DESKTOP: fan */}
         <div
           className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
-          style={{ perspective: "1800px", perspectiveOrigin: "50% 46%" }}
           onPointerLeave={() => {
             setActiveIndex(null);
             if (frameRef.current !== null) {
