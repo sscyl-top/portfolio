@@ -1,9 +1,5 @@
-import { WorkDetailSkeleton } from "@/components/ui/Skeleton";
+import { WorkStarLoader } from "@/components/site/WorkStarLoader";
 
 export default function WorkDetailLoading() {
-  return (
-    <main className="px-5 pb-24 pt-32 md:px-8">
-      <WorkDetailSkeleton />
-    </main>
-  );
+  return <WorkStarLoader />;
 }
