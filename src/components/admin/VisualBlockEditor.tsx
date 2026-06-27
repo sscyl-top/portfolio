@@ -1050,25 +1050,59 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     const updateInsertIndicator = () => {
       const x = autoScrollMouseXRef.current;
       const y = autoScrollMouseYRef.current;
-      let el: Element | null = null;
-      try { el = document.elementFromPoint(x, y); } catch { return; }
-      if (!el) return;
-      const blockEl = el.closest("[data-block-index]") as HTMLElement | null;
-      if (blockEl) {
-        const idx = Number(blockEl.getAttribute("data-block-index"));
-        if (!Number.isNaN(idx)) {
-          const rect = blockEl.getBoundingClientRect();
-          const midY = rect.top + rect.height / 2;
-          const insertAt = y < midY ? idx : idx + 1;
-          setDragOverIndex(insertAt);
-        }
+      const draggedId = blockDragRef.current?.blockId ?? null;
+      const blockEls = container.querySelectorAll<HTMLElement>("[data-block-index]");
+      if (blockEls.length === 0) return;
+      const blocks = blocksRef.current;
+
+      let contentLeft = Infinity, contentRight = -Infinity;
+      blockEls.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.left < contentLeft) contentLeft = r.left;
+        if (r.right > contentRight) contentRight = r.right;
+      });
+      const edgePadding = 60;
+      if (x < contentLeft - edgePadding || x > contentRight + edgePadding) {
+        dragOverIndexRef.current = null;
+        setDragOverIndex(null);
+        return;
+      }
+
+      let insertAt: number | null = null;
+
+      const firstRect = blockEls[0].getBoundingClientRect();
+      if (y < firstRect.top) {
+        insertAt = 0;
       } else {
-        const triggerEl = el.closest("[data-insert-index]") as HTMLElement | null;
-        if (triggerEl) {
-          const idx = Number(triggerEl.getAttribute("data-insert-index"));
-          if (!Number.isNaN(idx)) {
-            setDragOverIndex(idx);
+        for (let i = 0; i < blockEls.length; i++) {
+          const rect = blockEls[i].getBoundingClientRect();
+          if (y >= rect.top && y <= rect.bottom) {
+            const midY = rect.top + rect.height / 2;
+            insertAt = y < midY ? i : i + 1;
+            break;
           }
+        }
+      }
+
+      if (insertAt === null) {
+        const lastRect = blockEls[blockEls.length - 1].getBoundingClientRect();
+        if (y > lastRect.bottom) {
+          insertAt = blockEls.length;
+        }
+      }
+
+      if (insertAt !== null) {
+        if (draggedId) {
+          const draggedIdx = blocks.findIndex((b) => b.id === draggedId);
+          if (draggedIdx !== -1) {
+            if (insertAt > draggedIdx) insertAt -= 1;
+          }
+        }
+        if (insertAt < 0) insertAt = 0;
+        if (insertAt > blocks.length) insertAt = blocks.length;
+        if (dragOverIndexRef.current !== insertAt) {
+          dragOverIndexRef.current = insertAt;
+          setDragOverIndex(insertAt);
         }
       }
     };
@@ -3155,10 +3189,7 @@ function toBlockRefs(raw: unknown): BlockMediaRef[] {
 }
 
 function buildBlockMediaUrl(storageKey: string, mimeType?: string): string {
-  const isImage = (mimeType ?? "").startsWith("image/");
-  if (isImage) {
-    return buildOptimizedMediaUrl(storageKey, { format: "webp", quality: 90 });
-  }
+  // 图片直接返回原始 COS/Supabase URL，由 Next.js Image 组件优化，避免 COS 双重处理产生回源流量
   return buildPublicMediaUrl(storageKey);
 }
 

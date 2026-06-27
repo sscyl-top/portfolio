@@ -811,10 +811,8 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
 }
 
 function buildMediaUrl(storageKey: string, mimeType?: string): string {
-  const isImage = (mimeType ?? "").startsWith("image/");
-  if (isImage) {
-    return buildOptimizedMediaUrl(storageKey, { format: "webp", quality: 90 });
-  }
+  // 图片直接返回原始 COS/Supabase URL，由 Next.js Image 组件在 Vercel 边缘节点做优化（缩放、格式转换、压缩）
+  // 不再使用 COS imageMogr2 做双重处理，避免产生不必要的 COS 回源流量
   return buildPublicMediaUrl(storageKey);
 }
 
