@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowUpRight, Download, Sparkles } from "lucide-react";
+import { ArrowUpRight, Download, Play, Sparkles } from "lucide-react";
 import gsap from "gsap";
 
 import { toneClass } from "@/lib/workTone";
@@ -270,37 +270,35 @@ function HeroMainCard({
   videos: { main: string; side1: string; side2: string; side3: string };
 }) {
   const mainVideoRef = useRef<HTMLVideoElement>(null);
+  const [mobileVideoPlaying, setMobileVideoPlaying] = useState(false);
 
-  // 确保视频在手机端也能自动播放（微信内置浏览器 / iOS Safari 等会阻止 autoplay）
+  // 桌面端：自动播放 + metadata 预加载（节省流量，边播边加载）
   useEffect(() => {
     const video = mainVideoRef.current;
     if (!video || !videos.main) return;
 
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    if (isMobile) return;
+
     const tryPlay = () => {
       const promise = video.play();
       if (promise === undefined) return;
-      promise.catch(() => {
-        // autoplay 被阻止，监听用户首次交互后重试
-        const onInteract = () => {
-          video.play().catch(() => {});
-          document.removeEventListener("touchstart", onInteract);
-          document.removeEventListener("click", onInteract);
-        };
-        document.addEventListener("touchstart", onInteract, { once: true, passive: true });
-        document.addEventListener("click", onInteract, { once: true });
-      });
+      promise.catch(() => {});
     };
 
-    // 立即尝试播放（普通浏览器）
     tryPlay();
-
-    // 微信内置浏览器：等 WeixinJSBridgeReady 后再试
     document.addEventListener("WeixinJSBridgeReady", tryPlay, { once: true });
 
     return () => {
       document.removeEventListener("WeixinJSBridgeReady", tryPlay);
     };
   }, [videos.main]);
+
+  const handleMobilePlay = () => {
+    const video = mainVideoRef.current;
+    if (!video) return;
+    video.play().then(() => setMobileVideoPlaying(true)).catch(() => {});
+  };
 
   return (
     <>
@@ -317,17 +315,31 @@ function HeroMainCard({
           data-testid="hero-main-video"
           src={videos.main}
           className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
+          autoPlay={false}
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
         />
       ) : null}
 
       {/* Dark overlay for text readability when video is present */}
       {videos.main ? (
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      ) : null}
+
+      {/* 手机端点击播放按钮 */}
+      {videos.main ? (
+        <button
+          type="button"
+          onClick={handleMobilePlay}
+          className={`absolute inset-0 z-20 grid place-items-center transition-opacity duration-500 md:hidden ${mobileVideoPlaying ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          aria-label="播放视频"
+        >
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition hover:bg-white/30">
+            <Play className="h-6 w-6 fill-white text-white" />
+          </span>
+        </button>
       ) : null}
 
       <div className="relative z-10 flex items-center justify-between font-mono text-[9px] uppercase text-white/50 md:text-xs">
@@ -492,8 +504,34 @@ export function FloatingImageCard({
   videoSrc?: string;
   wide?: boolean;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const card = cardRef.current;
+    if (!video || !card || !videoSrc) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(card);
+
+    return () => observer.disconnect();
+  }, [videoSrc]);
+
   return (
     <div
+      ref={cardRef}
       data-float-card
       data-hero-reveal
       data-testid="hero-floating-media-card"
@@ -501,13 +539,14 @@ export function FloatingImageCard({
     >
       {videoSrc ? (
         <video
+          ref={videoRef}
           data-testid="hero-floating-media-video"
           src={videoSrc}
           className="absolute inset-0 h-full w-full object-cover grayscale transition duration-500 group-hover:grayscale-0"
-          autoPlay
           muted
           loop
           playsInline
+          preload="metadata"
         />
       ) : null}
     </div>
