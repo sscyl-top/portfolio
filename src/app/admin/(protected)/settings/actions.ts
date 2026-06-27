@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -15,33 +15,6 @@ const uuidOrNull = (val: FormDataEntryValue | null) => {
 };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const isSchemaCacheError = (msg: string) =>
-  /column .* does not exist/i.test(msg) || /schema cache/i.test(msg);
-
-async function retryUpsert(
-  client: ReturnType<typeof createSupabaseServiceClient>,
-  data: Record<string, unknown>,
-  label: string,
-  maxAttempts = 6,
-  delayMs = 3000
-): Promise<string | null> {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const { error } = await client.from("site_settings").upsert(data, { onConflict: "id" });
-    if (!error) {
-      console.log(`[Settings] ${label} saved successfully`);
-      return null;
-    }
-    if (isSchemaCacheError(error.message) && attempt < maxAttempts - 1) {
-      console.warn(`[Settings] ${label} schema not ready (attempt ${attempt + 1}/${maxAttempts}), waiting...`);
-      await wait(delayMs);
-      continue;
-    }
-    console.error(`[Settings] ${label} save failed:`, error.message);
-    return error.message;
-  }
-  return "schema cache timeout after retries";
-}
 
 export async function saveSiteSettings(formData: FormData) {
   await requireAdmin();
@@ -82,16 +55,6 @@ export async function saveSiteSettings(formData: FormData) {
     social_links,
   };
 
-  const ctaTransformData: Record<string, unknown> = {
-    id: true,
-    cta_card_scale: isNaN(cta_card_scale) ? 1 : Math.min(5, Math.max(0.1, cta_card_scale)),
-    cta_card_offset_x: isNaN(cta_card_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_card_offset_x)),
-    cta_card_offset_y: isNaN(cta_card_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_card_offset_y)),
-    cta_figure_scale: isNaN(cta_figure_scale) ? 1 : Math.min(5, Math.max(0.1, cta_figure_scale)),
-    cta_figure_offset_x: isNaN(cta_figure_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_x)),
-    cta_figure_offset_y: isNaN(cta_figure_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_y)),
-  };
-
   const tickerLogosData: Record<string, unknown> = {
     id: true,
     cta_ticker_logo_media_ids: tickerLogoIdsRaw
@@ -101,21 +64,64 @@ export async function saveSiteSettings(formData: FormData) {
       .join(","),
   };
 
+  const ctaTransformValues: Record<string, number> = {
+    cta_card_scale: isNaN(cta_card_scale) ? 1 : Math.min(5, Math.max(0.1, cta_card_scale)),
+    cta_card_offset_x: isNaN(cta_card_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_card_offset_x)),
+    cta_card_offset_y: isNaN(cta_card_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_card_offset_y)),
+    cta_figure_scale: isNaN(cta_figure_scale) ? 1 : Math.min(5, Math.max(0.1, cta_figure_scale)),
+    cta_figure_offset_x: isNaN(cta_figure_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_x)),
+    cta_figure_offset_y: isNaN(cta_figure_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_y)),
+  };
+
   await runHeroVideosMigration().catch(() => {});
-  await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
-  await wait(3000);
+  await wait(1000);
 
   const serviceClient = createSupabaseServiceClient();
 
-  const baseError = await retryUpsert(serviceClient, baseData, "base settings", 6, 3000);
+  const { error: baseError } = await serviceClient.from("site_settings").upsert(baseData, { onConflict: "id" });
   if (baseError) {
-    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${baseError}`)}`);
+    console.error("[Settings] base settings save failed:", baseError.message);
+    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${baseError.message}`)}`);
+  }
+  console.log("[Settings] base settings saved successfully");
+
+  try {
+    await serviceClient.from("site_settings").upsert(tickerLogosData, { onConflict: "id" });
+  } catch (e) {
+    console.warn("[Settings] ticker logos save failed (column may not exist):", e);
   }
 
-  await retryUpsert(serviceClient, ctaTransformData, "CTA transform", 3, 2000);
-  await retryUpsert(serviceClient, tickerLogosData, "ticker logos", 3, 2000);
+  for (const [key, value] of Object.entries(ctaTransformValues)) {
+    try {
+      const { data: existing } = await serviceClient
+        .from("text_content")
+        .select("id")
+        .eq("key", key)
+        .eq("page", "site_settings")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await serviceClient
+          .from("text_content")
+          .update({ content: String(value), is_active: true, deleted_at: null })
+          .eq("id", existing.id);
+      } else {
+        await serviceClient.from("text_content").insert({
+          key,
+          content: String(value),
+          page: "site_settings",
+          sort_order: 0,
+          is_active: true,
+        });
+      }
+    } catch (e) {
+      console.warn(`[Settings] Failed to save CTA transform ${key}:`, e);
+    }
+  }
+  console.log("[Settings] CTA transform settings saved to text_content successfully");
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

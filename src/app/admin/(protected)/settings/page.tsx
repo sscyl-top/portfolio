@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -53,18 +53,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   const { toast } = await searchParams;
   const serviceSupabase = createSupabaseServiceClient();
 
-  // 先尝试自动迁移（幂等操作）
   await runHeroVideosMigration().catch(() => {});
-  await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 1500));
+
+  const CTA_TRANSFORM_KEYS = [
+    "cta_card_scale",
+    "cta_card_offset_x",
+    "cta_card_offset_y",
+    "cta_figure_scale",
+    "cta_figure_offset_x",
+    "cta_figure_offset_y",
+  ] as const;
 
   const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
   
   let data: SettingsRow | null = null;
 
-  // 1. 先查基础列（一定存在的列）
   try {
     const { data: baseData, error } = await serviceSupabase
       .from("site_settings")
@@ -79,7 +85,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         hero_side3_video_media_id: null as string | null,
       };
 
-      // 2. 安全查询hero视频列
       try {
         const { data: heroData } = await serviceSupabase
           .from("site_settings")
@@ -97,8 +102,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         // columns may not exist
       }
 
-      // 3. 安全查询CTA变换列
-      let ctaTransform = {
+      const ctaTransform = {
         cta_card_scale: 1,
         cta_card_offset_x: 0,
         cta_card_offset_y: 0,
@@ -107,22 +111,23 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_figure_offset_y: 0,
       };
       try {
-        const { data: ctaData } = await serviceSupabase
-          .from("site_settings")
-          .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
-          .single();
-        if (ctaData) {
-          ctaTransform = {
-            cta_card_scale: Number(ctaData.cta_card_scale ?? 1),
-            cta_card_offset_x: Number(ctaData.cta_card_offset_x ?? 0),
-            cta_card_offset_y: Number(ctaData.cta_card_offset_y ?? 0),
-            cta_figure_scale: Number(ctaData.cta_figure_scale ?? 1),
-            cta_figure_offset_x: Number(ctaData.cta_figure_offset_x ?? 0),
-            cta_figure_offset_y: Number(ctaData.cta_figure_offset_y ?? 0),
-          };
+        const { data: textData } = await serviceSupabase
+          .from("text_content")
+          .select("key,content")
+          .in("key", CTA_TRANSFORM_KEYS as unknown as string[])
+          .eq("page", "site_settings")
+          .eq("is_active", true)
+          .is("deleted_at", null);
+        if (textData) {
+          for (const item of textData) {
+            const num = Number(item.content);
+            if (!isNaN(num)) {
+              (ctaTransform as Record<string, number>)[item.key] = num;
+            }
+          }
         }
       } catch {
-        // columns may not exist
+        // text_content query failed, use defaults
       }
 
       // 4. 安全查询ticker logo ids列
