@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 
 import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
@@ -50,93 +51,45 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sscyl.top";
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ toast?: string }> }) {
   const { toast } = await searchParams;
-  const supabase = await createSupabaseServerClient();
+  const serviceSupabase = createSupabaseServiceClient();
 
   // 先尝试自动迁移（幂等操作）
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
-  // 第一步：查询基础列（一定存在）
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
-  const { data: baseData, error: baseError } = await supabase
-    .from("site_settings")
-    .select(baseColumns)
-    .single();
+  // 等待一小段时间确保NOTIFY pgrst生效
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  // 第二步：安全查询hero视频列，失败就用null
-  let heroColumns = {
-    hero_main_video_media_id: null as string | null,
-    hero_side1_video_media_id: null as string | null,
-    hero_side2_video_media_id: null as string | null,
-    hero_side3_video_media_id: null as string | null,
-  };
-
-  const { data: heroData, error: heroError } = await supabase
-    .from("site_settings")
-    .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
-    .single();
-
-  if (!heroError && heroData) {
-    heroColumns = {
-      hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
-      hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
-      hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
-      hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
-    };
-  }
-
-  // 第三步：安全查询CTA图片transform列，失败就用默认值
-  let ctaTransformColumns = {
-    cta_card_scale: 1,
-    cta_card_offset_x: 0,
-    cta_card_offset_y: 0,
-    cta_figure_scale: 1,
-    cta_figure_offset_x: 0,
-    cta_figure_offset_y: 0,
-  };
-
+  // 一次性查询所有列，使用service client绕过RLS
+  const allColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,social_links,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y";
+  
+  let data: SettingsRow | null = null;
+  let baseError = null;
+  
   try {
-    const { data: ctaTransformData, error: ctaTransformError } = await supabase
+    const { data: fetchedData, error } = await serviceSupabase
       .from("site_settings")
-      .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+      .select(allColumns)
       .single();
-
-    if (!ctaTransformError && ctaTransformData) {
-      ctaTransformColumns = {
-        cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1),
-        cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
-        cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
-        cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1),
-        cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
-        cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
-      };
+    
+    if (!error && fetchedData) {
+      data = {
+        ...(fetchedData as object),
+        cta_card_scale: Number((fetchedData as Record<string, unknown>).cta_card_scale ?? 1),
+        cta_card_offset_x: Number((fetchedData as Record<string, unknown>).cta_card_offset_x ?? 0),
+        cta_card_offset_y: Number((fetchedData as Record<string, unknown>).cta_card_offset_y ?? 0),
+        cta_figure_scale: Number((fetchedData as Record<string, unknown>).cta_figure_scale ?? 1),
+        cta_figure_offset_x: Number((fetchedData as Record<string, unknown>).cta_figure_offset_x ?? 0),
+        cta_figure_offset_y: Number((fetchedData as Record<string, unknown>).cta_figure_offset_y ?? 0),
+      } as SettingsRow;
     }
-  } catch {
-    // columns may not exist yet; use defaults
+    baseError = error;
+  } catch (err) {
+    console.error("[Admin Settings] Failed to fetch settings:", err);
   }
 
-  // 第四步：安全查询ticker logos多图列，失败就用空字符串
-  let tickerLogosColumn = {
-    cta_ticker_logo_media_ids: "" as string,
-  };
-
-  try {
-    const { data: tickerData, error: tickerError } = await supabase
-      .from("site_settings")
-      .select("cta_ticker_logo_media_ids")
-      .single();
-
-    if (!tickerError && tickerData) {
-      tickerLogosColumn = {
-        cta_ticker_logo_media_ids: String(tickerData.cta_ticker_logo_media_ids ?? ""),
-      };
-    }
-  } catch {
-    // column may not exist yet; use default
-  }
-
-  const { data: rawMedia } = await supabase
+  const { data: rawMedia } = await serviceSupabase
     .from("media_assets")
     .select("id,storage_key,mime_type,original_name,alt_text")
     .is("deleted_at", null)
@@ -173,8 +126,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     })),
   } satisfies SettingsRow;
 
-  // 合并基础数据、hero视频数据、CTA transform数据和ticker logos数据
-  const data = baseData ? { ...(baseData as object), ...heroColumns, ...ctaTransformColumns, ...tickerLogosColumn } as SettingsRow : null;
   const error = baseError;
   const settings = data ?? fallback;
   const socialLinks =

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
@@ -14,6 +15,8 @@ const uuidOrNull = (val: FormDataEntryValue | null) => {
 };
 
 export async function saveSiteSettings(formData: FormData) {
+  await requireAdmin();
+
   const labels = formData.getAll("social_label").map(String);
   const urls = formData.getAll("social_url").map(String);
   const social_links = labels
@@ -64,13 +67,12 @@ export async function saveSiteSettings(formData: FormData) {
   updateData.hero_side2_video_media_id = uuidOrNull(formData.get("hero_side2_video_media_id"));
   updateData.hero_side3_video_media_id = uuidOrNull(formData.get("hero_side3_video_media_id"));
 
-  const { client } = await requireAdmin();
-
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
-  const { error } = await client.from("site_settings").upsert(updateData);
+  const serviceClient = createSupabaseServiceClient();
+  const { error } = await serviceClient.from("site_settings").upsert(updateData, { onConflict: "id" });
 
   if (error) {
     console.error("[Settings] Failed to save site settings:", error.message);
@@ -79,5 +81,6 @@ export async function saveSiteSettings(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/settings");
+  revalidatePath("/works");
   redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}`);
 }
