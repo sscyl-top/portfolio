@@ -154,7 +154,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   const error = baseError;
   const settings = data ?? fallback;
   const socialLinks =
-    settings.social_links.length > 0
+    settings.social_links && settings.social_links.length > 0
       ? settings.social_links
       : [{ label: "", url: "" }];
 
