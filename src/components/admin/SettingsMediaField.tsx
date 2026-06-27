@@ -154,7 +154,7 @@ export function SettingsMediaField({
           <button
             type="button"
             onClick={triggerFileSelect}
-            className={`block w-full cursor-pointer p-3 text-left transition hover:bg-white/[0.03] ${circular ? "text-center" : ""}`}
+            className={`block w-full cursor-pointer overflow-hidden p-3 text-left transition hover:bg-white/[0.03] ${circular ? "text-center" : ""}`}
           >
             <div className={`flex items-start gap-3 ${circular ? "flex-col items-center" : ""}`}>
               {isGif ? (
@@ -164,8 +164,8 @@ export function SettingsMediaField({
                   alt={selected?.alt_text || previewName || label}
                   className={
                     circular
-                      ? "h-20 w-20 rounded-full object-cover border border-white/20"
-                      : "h-20 w-full rounded object-contain"
+                      ? "h-20 w-20 shrink-0 rounded-full border border-white/20 object-cover"
+                      : "h-20 w-auto max-w-[160px] shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:12px_12px] object-contain"
                   }
                 />
               ) : (
@@ -175,12 +175,12 @@ export function SettingsMediaField({
                   alt={selected?.alt_text || previewName || label}
                   className={
                     circular
-                      ? "h-20 w-20 rounded-full object-cover border border-white/20"
-                      : "h-20 w-full rounded object-contain"
+                      ? "h-20 w-20 shrink-0 rounded-full border border-white/20 object-cover"
+                      : "h-20 w-auto max-w-[160px] shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:12px_12px] object-contain"
                   }
                 />
               )}
-              <div className={`flex-1 min-w-0 ${circular ? "text-center" : ""}`}>
+              <div className={`min-w-0 flex-1 ${circular ? "text-center" : ""}`}>
                 <p className="truncate text-xs text-white/60">{previewName}</p>
                 <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
                 <p className="mt-2 text-[10px] text-white/25">
