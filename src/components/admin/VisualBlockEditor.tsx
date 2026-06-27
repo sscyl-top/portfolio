@@ -38,7 +38,7 @@ import {
   updateBlockMediaRef,
 } from "@/app/admin/(protected)/works/actions";
 import { uploadMediaFiles, uploadMediaBlob } from "@/lib/cms/upload-media";
-import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { buildPublicMediaUrl, buildOptimizedMediaUrl } from "@/lib/cms/media-url";
 import { pdfToImages } from "@/lib/cms/pdf-to-images";
 import { ImageCropper } from "@/components/admin/ImageCropper";
 import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
@@ -3072,175 +3072,139 @@ function InlineContentBlockEditor({
   return null;
 }
 
-// ── 后台 VisualBlock → 前台 ContentBlock 转换函数 ─────────────
+// ── 后台 VisualBlock → 前台 ContentBlock 转换函数（完全复制前台 toPublicBlocks 逻辑） ──
+
+type BlockMediaRef = {
+  id?: string;
+  storage_key: string;
+  mime_type?: string;
+  alt_text?: string;
+};
+
+function toBlockRefs(raw: unknown): BlockMediaRef[] {
+  if (Array.isArray(raw)) return raw as BlockMediaRef[];
+  if (raw && typeof raw === "object") return [raw as BlockMediaRef];
+  return [];
+}
+
+function buildBlockMediaUrl(storageKey: string, mimeType?: string): string {
+  const isImage = (mimeType ?? "").startsWith("image/");
+  if (isImage) {
+    return buildOptimizedMediaUrl(storageKey, { format: "webp", quality: 90 });
+  }
+  return buildPublicMediaUrl(storageKey);
+}
 
 function visualBlockToContentBlock(
   block: VisualBlock,
-  mediaAssets: MediaAsset[],
+  _mediaAssets: MediaAsset[],
 ): ContentBlock | null {
   const payload = block.payload;
-  const layout = getLayout(payload);
-  const blockLayout = {
-    width: layout.width,
-    align: layout.align,
-    columns: layout.columns,
-    free: layout.free,
-  };
 
-  function resolveMedia(mediaId: string): WorkMedia | null {
-    const asset = mediaAssets.find((a) => a.id === mediaId);
-    if (!asset) return null;
+  // 读取 layout（与前台 toPublicBlocks 一致）
+  const rawLayout = (payload.layout ?? {}) as Record<string, unknown>;
+  const rawFree = rawLayout.free as Record<string, unknown> | undefined;
+  const free =
+    rawFree &&
+    typeof rawFree.x === "number" &&
+    typeof rawFree.y === "number" &&
+    typeof rawFree.w === "number" &&
+    typeof rawFree.h === "number"
+      ? { x: rawFree.x, y: rawFree.y, w: rawFree.w, h: rawFree.h }
+      : undefined;
+  const blockLayout =
+    rawLayout && typeof rawLayout === "object"
+      ? {
+          width: (rawLayout.width as "full" | "contained" | "narrow" | "free") ?? undefined,
+          align: (rawLayout.align as "left" | "center") ?? undefined,
+          columns: (rawLayout.columns as 1 | 2 | 3 | 4) ?? undefined,
+          free,
+        }
+      : undefined;
+
+  const toMedia = (ref: BlockMediaRef): WorkMedia => ({
+    id: ref.id,
+    alt: ref.alt_text ?? "",
+    mimeType: ref.mime_type ?? "",
+    url: buildBlockMediaUrl(ref.storage_key, ref.mime_type),
+    storage_key: ref.storage_key,
+  });
+
+  const toItems = (refs: BlockMediaRef[]): WorkMedia[] => refs.map(toMedia);
+
+  if (block.block_type === "text") {
     return {
-      id: asset.id,
-      url: buildPublicMediaUrl(asset.storage_key),
-      mimeType: asset.mime_type,
-      alt: asset.alt_text ?? "",
-      storage_key: asset.storage_key,
+      type: "text",
+      heading: String(payload.heading ?? "内容"),
+      body: String(payload.body ?? ""),
+      layout: blockLayout ?? undefined,
     };
   }
 
-  function resolveMediaList(ids: string[], refs?: { id?: string; storage_key: string; mime_type?: string; alt_text?: string }[]): WorkMedia[] {
-    if (refs && refs.length > 0) {
-      return refs.map((r) => ({
-        id: r.id,
-        url: buildPublicMediaUrl(r.storage_key),
-        mimeType: r.mime_type ?? "",
-        alt: r.alt_text ?? "",
-        storage_key: r.storage_key,
-      }));
-    }
-    return ids
-      .map((id) => resolveMedia(id))
-      .filter((m): m is WorkMedia => m !== null);
+  if (block.block_type === "media" || block.block_type === "gallery") {
+    const refs = toBlockRefs(payload.media_refs ?? payload.media_ref);
+    const items = toItems(refs);
+    const caption = String(payload.caption ?? "");
+    const rawFocal = payload.focal_point as { x?: number; y?: number } | undefined;
+    const focalPoint =
+      rawFocal && typeof rawFocal.x === "number" && typeof rawFocal.y === "number"
+        ? { x: rawFocal.x, y: rawFocal.y }
+        : undefined;
+
+    return {
+      type: block.block_type as "media" | "gallery",
+      caption: caption || undefined,
+      items,
+      layout: blockLayout ?? undefined,
+      ...(block.block_type === "media" && focalPoint ? { focalPoint } : {}),
+    };
   }
 
-  switch (block.block_type) {
-    case "text":
-      return {
-        type: "text",
-        heading: String(payload.heading ?? ""),
-        body: String(payload.body ?? ""),
-        layout: blockLayout,
-      };
+  if (block.block_type === "video") {
+    const ref = payload.media_ref as BlockMediaRef | null;
+    const items = ref ? [toMedia(ref)] : [];
+    const caption = String(payload.caption ?? "");
 
-    case "media": {
-      const mediaId = String(payload.media_id ?? "");
-      const items = resolveMediaList([mediaId]);
-      const focalPoint = payload.focal_point as { x: number; y: number } | undefined;
-      return {
-        type: "media",
-        caption: payload.caption ? String(payload.caption) : undefined,
-        items,
-        layout: blockLayout,
-        focalPoint,
-      };
-    }
-
-    case "gallery": {
-      const mediaIds = (payload.media_ids as string[]) ?? [];
-      const refs = (payload.media_refs as { id?: string; storage_key: string; mime_type?: string; alt_text?: string }[]) ?? [];
-      return {
-        type: "gallery",
-        caption: payload.caption ? String(payload.caption) : undefined,
-        items: resolveMediaList(mediaIds, refs),
-        layout: blockLayout,
-      };
-    }
-
-    case "video": {
-      const mediaId = String(payload.media_id ?? "");
-      return {
-        type: "video",
-        caption: payload.caption ? String(payload.caption) : undefined,
-        items: resolveMediaList([mediaId]),
-        layout: blockLayout,
-      };
-    }
-
-    case "pdf": {
-      const mediaId = String(payload.media_id ?? "");
-      return {
-        type: "pdf",
-        caption: payload.caption ? String(payload.caption) : undefined,
-        items: resolveMediaList([mediaId]),
-        layout: blockLayout,
-      };
-    }
-
-    case "before_after": {
-      const beforeId = String(payload.before_media_id ?? "");
-      const afterId = String(payload.after_media_id ?? "");
-      return {
-        type: "beforeAfter",
-        heading: String(payload.heading ?? ""),
-        beforeLabel: String(payload.before_label ?? "Before"),
-        afterLabel: String(payload.after_label ?? "After"),
-        note: String(payload.note ?? ""),
-        beforeMedia: resolveMedia(beforeId) ?? undefined,
-        afterMedia: resolveMedia(afterId) ?? undefined,
-        layout: blockLayout,
-      };
-    }
-
-    case "code":
-      return {
-        type: "code",
-        heading: String(payload.heading ?? ""),
-        language: String(payload.language ?? "javascript") as ContentBlock extends { type: "code" } ? any : any,
-        code: String(payload.code ?? ""),
-        caption: payload.caption ? String(payload.caption) : undefined,
-        layout: blockLayout,
-      };
-
-    case "quote":
-      return {
-        type: "quote",
-        heading: String(payload.heading ?? ""),
-        text: String(payload.text ?? ""),
-        author: String(payload.author ?? ""),
-        role: payload.role ? String(payload.role) : undefined,
-        layout: blockLayout,
-      };
-
-    case "embed":
-      return {
-        type: "embed",
-        heading: String(payload.heading ?? ""),
-        url: String(payload.url ?? ""),
-        embedType: String(payload.embedType ?? "youtube") as ContentBlock extends { type: "embed" } ? any : any,
-        caption: payload.caption ? String(payload.caption) : undefined,
-        layout: blockLayout,
-      };
-
-    case "divider":
-      return {
-        type: "divider",
-        heading: String(payload.heading ?? ""),
-        style: String(payload.style ?? "solid") as "solid" | "dashed" | "dotted",
-        layout: blockLayout,
-      };
-
-    case "callout":
-      return {
-        type: "callout",
-        heading: String(payload.heading ?? ""),
-        text: String(payload.text ?? ""),
-        icon: String(payload.icon ?? "info") as ContentBlock extends { type: "callout" } ? any : any,
-        tone: String(payload.tone ?? "cyan") as ContentBlock extends { type: "callout" } ? any : any,
-        layout: blockLayout,
-      };
-
-    case "stats":
-      return {
-        type: "stats",
-        heading: String(payload.heading ?? ""),
-        items: (payload.items as Array<{ value: string; label: string }>) ?? [],
-        layout: blockLayout,
-      };
-
-    default:
-      return null;
+    return {
+      type: "video",
+      caption: caption || undefined,
+      items,
+      layout: blockLayout ?? undefined,
+    };
   }
+
+  if (block.block_type === "pdf") {
+    const ref = payload.media_ref as BlockMediaRef | null;
+    const items = ref ? [toMedia(ref)] : [];
+    const caption = String(payload.caption ?? "");
+
+    return {
+      type: "pdf",
+      caption: caption || undefined,
+      items,
+      layout: blockLayout ?? undefined,
+    };
+  }
+
+  if (block.block_type === "before_after") {
+    const beforeRef = payload.before_media_ref as BlockMediaRef | null;
+    const afterRef = payload.after_media_ref as BlockMediaRef | null;
+    const caption = String(payload.caption ?? "");
+
+    return {
+      type: "beforeAfter",
+      heading: caption || "Before / After",
+      beforeLabel: beforeRef ? (beforeRef.alt_text || "Before") : "Before",
+      afterLabel: afterRef ? (afterRef.alt_text || "After") : "After",
+      note: caption || "",
+      beforeMedia: beforeRef ? toMedia(beforeRef) : undefined,
+      afterMedia: afterRef ? toMedia(afterRef) : undefined,
+      layout: blockLayout ?? undefined,
+    };
+  }
+
+  // 其他块类型（code/quote/embed/divider/callout/stats）暂时返回 null
+  return null;
 }
 
 // ── 块内容预览（直接复用前台 WorkContentBlocks 组件，确保前后台完全一致）─────────
