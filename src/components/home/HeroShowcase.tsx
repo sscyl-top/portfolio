@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowUpRight, Download, Play, Sparkles } from "lucide-react";
+import { ArrowUpRight, Download, Sparkles } from "lucide-react";
 import gsap from "gsap";
 
 import { toneClass } from "@/lib/workTone";
@@ -270,15 +270,11 @@ function HeroMainCard({
   videos: { main: string; side1: string; side2: string; side3: string };
 }) {
   const mainVideoRef = useRef<HTMLVideoElement>(null);
-  const [mobileVideoPlaying, setMobileVideoPlaying] = useState(false);
 
-  // 桌面端：自动播放 + metadata 预加载（节省流量，边播边加载）
+  // 自动播放视频（桌面和手机端都自动播放），使用 preload="metadata" 边播边加载省流量
   useEffect(() => {
     const video = mainVideoRef.current;
     if (!video || !videos.main) return;
-
-    const isMobile = window.matchMedia("(max-width: 767px)").matches;
-    if (isMobile) return;
 
     const tryPlay = () => {
       const promise = video.play();
@@ -293,12 +289,6 @@ function HeroMainCard({
       document.removeEventListener("WeixinJSBridgeReady", tryPlay);
     };
   }, [videos.main]);
-
-  const handleMobilePlay = () => {
-    const video = mainVideoRef.current;
-    if (!video) return;
-    video.play().then(() => setMobileVideoPlaying(true)).catch(() => {});
-  };
 
   return (
     <>
@@ -315,7 +305,7 @@ function HeroMainCard({
           data-testid="hero-main-video"
           src={videos.main}
           className="absolute inset-0 h-full w-full object-cover"
-          autoPlay={false}
+          autoPlay
           muted
           loop
           playsInline
@@ -326,20 +316,6 @@ function HeroMainCard({
       {/* Dark overlay for text readability when video is present */}
       {videos.main ? (
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-      ) : null}
-
-      {/* 手机端点击播放按钮 */}
-      {videos.main ? (
-        <button
-          type="button"
-          onClick={handleMobilePlay}
-          className={`absolute inset-0 z-20 grid place-items-center transition-opacity duration-500 md:hidden ${mobileVideoPlaying ? "pointer-events-none opacity-0" : "opacity-100"}`}
-          aria-label="播放视频"
-        >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition hover:bg-white/30">
-            <Play className="h-6 w-6 fill-white text-white" />
-          </span>
-        </button>
       ) : null}
 
       <div className="relative z-10 flex items-center justify-between font-mono text-[9px] uppercase text-white/50 md:text-xs">
