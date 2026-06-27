@@ -127,7 +127,7 @@ button {
 
   100% {
     opacity: 1;
-    filter: blur(0) saturate(1);
+    filter: none;
     transform:
       translate(-50%, -50%)
       translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift)), 0)
