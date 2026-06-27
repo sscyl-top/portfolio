@@ -115,7 +115,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           .from("text_content")
           .select("key,content")
           .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
-          .eq("page", "site_settings")
           .eq("is_active", true)
           .is("deleted_at", null);
         if (!textErr && textData) {

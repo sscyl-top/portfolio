@@ -21,43 +21,52 @@ function isSchemaCacheError(msg: string): boolean {
   return lower.includes("schema") || lower.includes("column") || lower.includes("does not exist");
 }
 
-async function saveTextContent(
+async function upsertTextContent(
   serviceClient: ReturnType<typeof createSupabaseServiceClient>,
   key: string,
   content: string,
 ) {
-  try {
-    const { data: existing, error: findErr } = await serviceClient
+  const { data: existing, error: findErr } = await serviceClient
+    .from("text_content")
+    .select("id")
+    .eq("key", key)
+    .limit(1)
+    .maybeSingle();
+
+  if (findErr) {
+    console.error(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
+    throw findErr;
+  }
+
+  if (existing?.id) {
+    const { error: updErr } = await serviceClient
       .from("text_content")
-      .select("id")
-      .eq("key", key)
-      .eq("page", "site_settings")
-      .limit(1)
-      .maybeSingle();
-
-    if (findErr) {
-      console.warn(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
-      return;
-    }
-
-    if (existing) {
-      const { error: updErr } = await serviceClient
-        .from("text_content")
-        .update({ content, is_active: true, deleted_at: null })
-        .eq("id", existing.id);
-      if (updErr) console.warn(`[Settings] Failed to update text_content ${key}:`, updErr.message);
-    } else {
-      const { error: insErr } = await serviceClient.from("text_content").insert({
-        key,
+      .update({
         content,
         page: "site_settings",
-        sort_order: 0,
+        section: "settings",
         is_active: true,
-      });
-      if (insErr) console.warn(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+    if (updErr) {
+      console.error(`[Settings] Failed to update text_content ${key}:`, updErr.message);
+      throw updErr;
     }
-  } catch (e) {
-    console.warn(`[Settings] Exception saving text_content ${key}:`, e);
+  } else {
+    const { error: insErr } = await serviceClient.from("text_content").insert({
+      key,
+      content,
+      page: "site_settings",
+      section: "settings",
+      sort_order: 0,
+      is_active: true,
+    });
+    if (insErr) {
+      console.error(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
+      throw insErr;
+    }
   }
 }
 
@@ -122,7 +131,7 @@ export async function saveSiteSettings(formData: FormData) {
   const serviceClient = createSupabaseServiceClient();
 
   let saveError: string | null = null;
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
     if (!error) {
       console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
@@ -131,7 +140,7 @@ export async function saveSiteSettings(formData: FormData) {
     }
     saveError = error.message;
     console.warn(`[Settings] site_settings save attempt ${attempt + 1} failed:`, error.message);
-    if (isSchemaCacheError(error.message) && attempt < 3) {
+    if (isSchemaCacheError(error.message) && attempt < 5) {
       await wait(2000);
       continue;
     }
@@ -143,11 +152,18 @@ export async function saveSiteSettings(formData: FormData) {
     redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${saveError}`)}`);
   }
 
-  for (const [key, value] of Object.entries(ctaTransformValues)) {
-    await saveTextContent(serviceClient, key, String(value));
-  }
+  try {
+    for (const [key, value] of Object.entries(ctaTransformValues)) {
+      await upsertTextContent(serviceClient, key, String(value));
+    }
 
-  await saveTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds);
+    await upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds);
+    console.log("[Settings] text_content saved successfully, tickerLogoIds:", ctaTickerLogoMediaIds);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[Settings] text_content save failed:", errMsg);
+    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败(text_content): ${errMsg}`)}`);
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

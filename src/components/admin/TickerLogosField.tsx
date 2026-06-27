@@ -70,15 +70,6 @@ export function TickerLogosField({
       .filter((x): x is { id: string; url: string; name: string; mime: string; fromUpload: boolean } => x !== null);
   }, [ids, assets, uploadedLogos]);
 
-  const availableLibraryAssets = useMemo(() => {
-    return assets
-      .filter((a) => a.mime_type.startsWith("image/") && !ids.includes(a.id));
-  }, [assets, ids]);
-
-  const addId = useCallback((id: string) => {
-    setIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  }, []);
-
   const removeId = useCallback((id: string) => {
     setIds((prev) => prev.filter((x) => x !== id));
   }, []);
@@ -190,12 +181,12 @@ export function TickerLogosField({
         onClick={triggerFileSelect}
       >
         {selectedAssets.length > 0 ? (
-          <div className="p-3">
+          <div className="p-4">
             <div className="flex flex-wrap items-center gap-3">
               {selectedAssets.map((item) => (
                 <div
                   key={item.id}
-                  className="group relative flex h-20 w-24 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:10px_10px]"
+                  className="group relative flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:10px_10px]"
                   title={item.name}
                 >
                   <img
@@ -212,35 +203,32 @@ export function TickerLogosField({
                   </button>
                 </div>
               ))}
-
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); triggerFileSelect(); }}
-                disabled={isUploading}
-                className="flex h-20 w-24 shrink-0 flex-col items-center justify-center gap-1 rounded border border-dashed border-white/15 text-white/30 transition hover:border-cyan/40 hover:text-cyan/70 disabled:opacity-40"
-              >
-                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
-                <span className="text-[10px]">{isUploading ? "上传中" : "添加图片"}</span>
-              </button>
             </div>
-            <p className="mt-2 text-center text-[10px] text-white/25">
-              点击任意位置或拖拽图片到此处继续添加
-            </p>
+            <div className="mt-3 flex items-center justify-center gap-2 text-center">
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-cyan" />
+              ) : (
+                <UploadCloud className="h-4 w-4 text-white/30" />
+              )}
+              <span className="text-[11px] text-white/30">
+                {isUploading ? "上传中..." : "点击任意位置或拖拽图片到此处继续添加"}
+              </span>
+            </div>
           </div>
         ) : (
-          <div className="flex w-full flex-col items-center justify-center gap-2 p-6">
+          <div className="flex w-full flex-col items-center justify-center gap-2 p-8">
             {isUploading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-cyan" />
+              <Loader2 className="h-8 w-8 animate-spin text-cyan" />
             ) : (
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
-                <UploadCloud className="h-5 w-5 text-white/40" />
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10">
+                <UploadCloud className="h-6 w-6 text-white/40" />
               </div>
             )}
             <div className="text-center">
-              <p className="text-xs text-white/50">
+              <p className="text-sm text-white/50">
                 {isUploading ? "上传中..." : "点击或拖拽图片到此处上传"}
               </p>
-              <p className="mt-0.5 text-[10px] text-white/25">
+              <p className="mt-1 text-xs text-white/25">
                 支持 PNG / JPG / GIF / WEBP / SVG，建议 PNG 透明底，可多选
               </p>
             </div>
@@ -249,27 +237,6 @@ export function TickerLogosField({
       </div>
 
       <input type="hidden" name={name} value={joinIds(ids)} />
-
-      {availableLibraryAssets.length > 0 && (
-        <select
-          value=""
-          onChange={(e) => {
-            const id = e.target.value;
-            if (id) {
-              addId(id);
-              e.target.value = "";
-            }
-          }}
-          className="min-h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
-        >
-          <option value="">从媒体库选择已上传的图片...</option>
-          {availableLibraryAssets.map((asset) => (
-            <option key={asset.id} value={asset.id}>
-              {asset.original_name}
-            </option>
-          ))}
-        </select>
-      )}
 
       <input
         ref={inputRef}
