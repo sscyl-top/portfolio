@@ -321,7 +321,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-5 md:pb-6">
+          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-2 md:pb-2">
             <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-5 px-4 sm:w-auto sm:flex-row sm:gap-9 md:px-8">
               <Link
                 href="/resume"

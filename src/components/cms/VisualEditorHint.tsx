@@ -1,22 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { MousePointer2, X } from 'lucide-react'
 
 export function VisualEditorHint() {
+  const pathname = usePathname()
   const [isAdmin, setIsAdmin] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
+  const isAdminRoute = pathname?.startsWith('/admin') ?? false
+
   useEffect(() => {
+    if (!isAdminRoute) return
     fetch('/api/admin/check')
       .then((res) => res.json())
       .then((data) => {
         setIsAdmin(Boolean(data.isAdmin))
       })
       .catch(() => setIsAdmin(false))
-  }, [])
+  }, [isAdminRoute])
 
-  if (!isAdmin || dismissed) return null
+  if (!isAdminRoute || !isAdmin || dismissed) return null
 
   return (
     <div className="fixed bottom-6 left-1/2 z-[9998] -translate-x-1/2 animate-pulse">
