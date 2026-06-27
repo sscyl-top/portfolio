@@ -18,6 +18,7 @@ export const viewport: Viewport = {
 import { AnalyticsTracker } from "@/components/admin/AnalyticsTracker";
 import { VisualEditorHint } from "@/components/cms/VisualEditorHint";
 import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
+import { GlobalPageLoader } from "@/components/site/GlobalPageLoader";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { GlobalDragDropPrevention } from "@/components/GlobalDragDropPrevention";
 import { createServerCmsRepository } from "@/lib/cms/repository";
@@ -94,6 +95,7 @@ export default async function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
+        <GlobalPageLoader />
         <GlobalDragDropPrevention />
         <SiteHeader siteSettings={settings} />
         {children}
