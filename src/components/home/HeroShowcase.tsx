@@ -271,7 +271,7 @@ function HeroMainCard({
 }) {
   const mainVideoRef = useRef<HTMLVideoElement>(null);
 
-  // 确保视频在手机端也能自动播放（部分手机浏览器会阻止 autoplay）
+  // 确保视频在手机端也能自动播放（微信内置浏览器 / iOS Safari 等会阻止 autoplay）
   useEffect(() => {
     const video = mainVideoRef.current;
     if (!video || !videos.main) return;
@@ -291,7 +291,15 @@ function HeroMainCard({
       });
     };
 
+    // 立即尝试播放（普通浏览器）
     tryPlay();
+
+    // 微信内置浏览器：等 WeixinJSBridgeReady 后再试
+    document.addEventListener("WeixinJSBridgeReady", tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener("WeixinJSBridgeReady", tryPlay);
+    };
   }, [videos.main]);
 
   return (
