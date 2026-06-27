@@ -1,8 +1,8 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
-import { isCosConfigured, buildCosPublicUrl } from "@/lib/cos/config";
+import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 export function buildPublicMediaUrl(storageKey: string) {
-  if (isCosConfigured()) {
+  if (isCosPublicConfigured()) {
     return buildCosPublicUrl(storageKey);
   }
 
@@ -23,7 +23,7 @@ export function buildOptimizedMediaUrl(
 ) {
   const baseUrl = buildPublicMediaUrl(storageKey);
 
-  if (isCosConfigured()) {
+  if (isCosPublicConfigured()) {
     const parts: string[] = [];
     if (options.width || options.height) {
       const w = options.width ? String(Math.round(options.width)) : "";

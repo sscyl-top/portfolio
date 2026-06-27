@@ -6,6 +6,12 @@ export type CosConfig = {
   cdnDomain?: string;
 };
 
+export type CosPublicConfig = {
+  bucket: string;
+  region: string;
+  cdnDomain?: string;
+};
+
 export function isCosConfigured(): boolean {
   return Boolean(
     process.env.COS_SECRET_ID &&
@@ -13,6 +19,27 @@ export function isCosConfigured(): boolean {
       process.env.COS_BUCKET &&
       process.env.COS_REGION,
   );
+}
+
+export function isCosPublicConfigured(): boolean {
+  const bucket = process.env.NEXT_PUBLIC_COS_BUCKET || process.env.COS_BUCKET;
+  const region = process.env.NEXT_PUBLIC_COS_REGION || process.env.COS_REGION;
+  const cdnDomain = process.env.NEXT_PUBLIC_COS_CDN_DOMAIN || process.env.COS_CDN_DOMAIN;
+  return Boolean(cdnDomain || (bucket && region));
+}
+
+function getCosPublicConfig(): CosPublicConfig {
+  const bucket = process.env.NEXT_PUBLIC_COS_BUCKET || process.env.COS_BUCKET;
+  const region = process.env.NEXT_PUBLIC_COS_REGION || process.env.COS_REGION;
+  const cdnDomain = process.env.NEXT_PUBLIC_COS_CDN_DOMAIN || process.env.COS_CDN_DOMAIN;
+
+  if (cdnDomain) {
+    return { bucket: bucket || "", region: region || "", cdnDomain };
+  }
+  if (bucket && region) {
+    return { bucket, region };
+  }
+  throw new Error("COS 公网配置未就绪");
 }
 
 export function getCosConfig(): CosConfig {
@@ -37,12 +64,12 @@ export function getCosConfig(): CosConfig {
 }
 
 export function buildCosPublicUrl(storageKey: string): string {
-  const config = getCosConfig();
+  const pub = getCosPublicConfig();
 
-  if (config.cdnDomain) {
-    const domain = config.cdnDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  if (pub.cdnDomain) {
+    const domain = pub.cdnDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
     return `https://${domain}/${storageKey}`;
   }
 
-  return `https://${config.bucket}.cos.${config.region}.myqcloud.com/${storageKey}`;
+  return `https://${pub.bucket}.cos.${pub.region}.myqcloud.com/${storageKey}`;
 }
