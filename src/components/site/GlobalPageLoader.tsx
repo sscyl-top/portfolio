@@ -8,17 +8,15 @@ import { useEffect, useRef, useState } from "react";
  *
  * 触发时机：
  * 1. 首次打开网页 / 每次刷新 — SSR 即渲染全屏黑色 loader，hydrate 后跑 0→100% 动画再淡出
- * 2. SPA 导航到 首页(/) / 全部作品(/works) / 简历(/resume) 三个页面「第一次」切换时
+ * 2. SPA 导航到 首页(/) / 全部作品(/works) / 简历(/resume) 时，仅当导航超过阈值（卡顿）才显示
  *
  * 不触发：
  * - SPA 导航到作品详情页（/works/[slug]）等非主页面
- * - 同一主页面第二次及以后的 SPA 访问
+ * - 快速完成的 SPA 导航（无卡顿）
  */
 
-const MAIN_PAGES = new Set(["/", "/works", "/resume"]);
-
-// 当前 document 生命周期内已显示过 loader 的页面（刷新后重置）
-const shownPages = new Set<string>();
+// 导航延迟阈值：超过这个时间还没完成导航，才显示 loader
+const NAVIGATION_DELAY_MS = 300;
 
 function isMainPage(pathname: string): boolean {
   if (pathname === "/") return true;
@@ -37,6 +35,10 @@ export function GlobalPageLoader() {
   const animationRef = useRef(0);
   const timeoutRef = useRef(0);
   const hideTimeoutRef = useRef(0);
+  // 导航延迟定时器：用于延迟显示 loader（仅在卡顿时才出现）
+  const navDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 记录是否正在等待导航
+  const pendingNavRef = useRef<string | null>(null);
 
   const startAnimation = () => {
     cancelAnimationFrame(animationRef.current);
@@ -62,24 +64,60 @@ export function GlobalPageLoader() {
 
   // 首次挂载：跑加载动画（覆盖首次进入 / 刷新的情况）
   useEffect(() => {
-    shownPages.add(pathname);
     startAnimation();
     isFirstMount.current = false;
+
+    // 监听导航链接点击：仅对主页链接启动延迟定时器
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+      // 只对主页面链接触发延迟 loader
+      if (!isMainPage(href)) return;
+      // 如果是当前页面，不处理
+      if (href === pathname) return;
+
+      // 清除之前的延迟定时器
+      if (navDelayRef.current) {
+        clearTimeout(navDelayRef.current);
+      }
+      pendingNavRef.current = href;
+      // 延迟显示 loader：只有导航超过阈值才显示
+      navDelayRef.current = setTimeout(() => {
+        if (pendingNavRef.current) {
+          startAnimation();
+        }
+      }, NAVIGATION_DELAY_MS);
+    };
+
+    document.addEventListener("click", handleClick, true);
+
     return () => {
       cancelAnimationFrame(animationRef.current);
       window.clearTimeout(timeoutRef.current);
       window.clearTimeout(hideTimeoutRef.current);
+      if (navDelayRef.current) {
+        clearTimeout(navDelayRef.current);
+      }
+      document.removeEventListener("click", handleClick, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // SPA 导航：三个主页面第一次切换时触发
+  // pathname 变化：导航完成，清除延迟定时器
   useEffect(() => {
     if (isFirstMount.current) return;
-    if (!isMainPage(pathname)) return;
-    if (shownPages.has(pathname)) return;
-    shownPages.add(pathname);
-    startAnimation();
+
+    // 清除导航延迟定时器（如果 pathname 在阈值内变化，不显示 loader）
+    if (navDelayRef.current) {
+      clearTimeout(navDelayRef.current);
+      navDelayRef.current = null;
+    }
+    pendingNavRef.current = null;
+    // 如果 loader 已经在显示（说明导航超过了阈值），让它跑完动画再淡出
+    // 如果 loader 没在显示，什么都不做
   }, [pathname]);
 
   // 淡出后移除 DOM
