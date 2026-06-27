@@ -60,36 +60,102 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  const allColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,social_links,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
   
   let data: SettingsRow | null = null;
-  
-  const fetchSettings = async () => {
-    const { data: fetchedData, error } = await serviceSupabase
-      .from("site_settings")
-      .select(allColumns)
-      .single();
-    return { fetchedData, error };
-  };
 
+  // 1. 先查基础列（一定存在的列）
   try {
-    let result = await fetchSettings();
-    
-    if (result.error && /column .* does not exist/i.test(result.error.message)) {
-      console.warn("[Admin Settings] Schema cache not ready, waiting and retrying...");
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      result = await fetchSettings();
-    }
-    
-    if (!result.error && result.fetchedData) {
+    const { data: baseData, error } = await serviceSupabase
+      .from("site_settings")
+      .select(baseColumns)
+      .single();
+
+    if (!error && baseData) {
+      let heroIds = {
+        hero_main_video_media_id: null as string | null,
+        hero_side1_video_media_id: null as string | null,
+        hero_side2_video_media_id: null as string | null,
+        hero_side3_video_media_id: null as string | null,
+      };
+
+      // 2. 安全查询hero视频列
+      try {
+        const { data: heroData } = await serviceSupabase
+          .from("site_settings")
+          .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
+          .single();
+        if (heroData) {
+          heroIds = {
+            hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
+            hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
+            hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
+            hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+          };
+        }
+      } catch {
+        // columns may not exist
+      }
+
+      // 3. 安全查询CTA变换列
+      let ctaTransform = {
+        cta_card_scale: 1,
+        cta_card_offset_x: 0,
+        cta_card_offset_y: 0,
+        cta_figure_scale: 1,
+        cta_figure_offset_x: 0,
+        cta_figure_offset_y: 0,
+      };
+      try {
+        const { data: ctaData } = await serviceSupabase
+          .from("site_settings")
+          .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+          .single();
+        if (ctaData) {
+          ctaTransform = {
+            cta_card_scale: Number(ctaData.cta_card_scale ?? 1),
+            cta_card_offset_x: Number(ctaData.cta_card_offset_x ?? 0),
+            cta_card_offset_y: Number(ctaData.cta_card_offset_y ?? 0),
+            cta_figure_scale: Number(ctaData.cta_figure_scale ?? 1),
+            cta_figure_offset_x: Number(ctaData.cta_figure_offset_x ?? 0),
+            cta_figure_offset_y: Number(ctaData.cta_figure_offset_y ?? 0),
+          };
+        }
+      } catch {
+        // columns may not exist
+      }
+
+      // 4. 安全查询ticker logo ids列
+      let tickerLogoIdsRaw: string | null = null;
+      try {
+        const { data: tickerData } = await serviceSupabase
+          .from("site_settings")
+          .select("cta_ticker_logo_media_ids")
+          .single();
+        if (tickerData) {
+          tickerLogoIdsRaw = tickerData.cta_ticker_logo_media_ids ?? null;
+        }
+      } catch {
+        // column may not exist
+      }
+
       data = {
-        ...(result.fetchedData as object),
-        cta_card_scale: Number((result.fetchedData as Record<string, unknown>).cta_card_scale ?? 1),
-        cta_card_offset_x: Number((result.fetchedData as Record<string, unknown>).cta_card_offset_x ?? 0),
-        cta_card_offset_y: Number((result.fetchedData as Record<string, unknown>).cta_card_offset_y ?? 0),
-        cta_figure_scale: Number((result.fetchedData as Record<string, unknown>).cta_figure_scale ?? 1),
-        cta_figure_offset_x: Number((result.fetchedData as Record<string, unknown>).cta_figure_offset_x ?? 0),
-        cta_figure_offset_y: Number((result.fetchedData as Record<string, unknown>).cta_figure_offset_y ?? 0),
+        name: baseData.name,
+        nickname: baseData.nickname,
+        default_theme: baseData.default_theme,
+        font_preset: baseData.font_preset,
+        seo_title: baseData.seo_title,
+        seo_description: baseData.seo_description,
+        logo_media_id: baseData.logo_media_id ?? null,
+        avatar_media_id: baseData.avatar_media_id ?? null,
+        share_media_id: baseData.share_media_id ?? null,
+        cta_card_media_id: baseData.cta_card_media_id ?? null,
+        cta_figure_media_id: baseData.cta_figure_media_id ?? null,
+        cta_ticker_logo_media_id: baseData.cta_ticker_logo_media_id ?? null,
+        cta_ticker_logo_media_ids: tickerLogoIdsRaw ?? "",
+        ...ctaTransform,
+        ...heroIds,
+        social_links: baseData.social_links ?? [],
       } as SettingsRow;
     }
   } catch (err) {

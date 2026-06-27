@@ -53,6 +53,170 @@ export type PublicSiteSettings = {
   title: string;
 };
 
+async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
+  await runHeroVideosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
+  await runTickerLogosMigration().catch(() => {});
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+
+  let baseData: Record<string, unknown> | null = null;
+  try {
+    const { data, error } = await client.from("site_settings").select(baseColumns).single();
+    if (error) {
+      console.error("[getSiteSettings] 基础查询失败:", error);
+      return null;
+    }
+    baseData = data as Record<string, unknown>;
+  } catch (err) {
+    console.error("[getSiteSettings] 基础查询异常:", err);
+    return null;
+  }
+
+  if (!baseData) return null;
+
+  let heroIds = {
+    hero_main_video_media_id: null as string | null,
+    hero_side1_video_media_id: null as string | null,
+    hero_side2_video_media_id: null as string | null,
+    hero_side3_video_media_id: null as string | null,
+  };
+  try {
+    const { data, error } = await client
+      .from("site_settings")
+      .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
+      .single();
+    if (!error && data) {
+      heroIds = {
+        hero_main_video_media_id: data.hero_main_video_media_id ?? null,
+        hero_side1_video_media_id: data.hero_side1_video_media_id ?? null,
+        hero_side2_video_media_id: data.hero_side2_video_media_id ?? null,
+        hero_side3_video_media_id: data.hero_side3_video_media_id ?? null,
+      };
+    }
+  } catch {
+    // columns may not exist
+  }
+
+  let ctaTransform = {
+    cta_card_scale: 1.0,
+    cta_card_offset_x: 0,
+    cta_card_offset_y: 0,
+    cta_figure_scale: 1.0,
+    cta_figure_offset_x: 0,
+    cta_figure_offset_y: 0,
+  };
+  try {
+    const { data, error } = await client
+      .from("site_settings")
+      .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+      .single();
+    if (!error && data) {
+      ctaTransform = {
+        cta_card_scale: Number(data.cta_card_scale ?? 1.0),
+        cta_card_offset_x: Number(data.cta_card_offset_x ?? 0),
+        cta_card_offset_y: Number(data.cta_card_offset_y ?? 0),
+        cta_figure_scale: Number(data.cta_figure_scale ?? 1.0),
+        cta_figure_offset_x: Number(data.cta_figure_offset_x ?? 0),
+        cta_figure_offset_y: Number(data.cta_figure_offset_y ?? 0),
+      };
+    }
+  } catch {
+    // columns may not exist
+  }
+
+  let tickerLogoIdsRaw: string | null = null;
+  try {
+    const { data, error } = await client
+      .from("site_settings")
+      .select("cta_ticker_logo_media_ids")
+      .single();
+    if (!error && data) {
+      tickerLogoIdsRaw = data.cta_ticker_logo_media_ids ?? null;
+    }
+  } catch {
+    // column may not exist
+  }
+
+  const allIds = {
+    ...baseData,
+    ...heroIds,
+    ...ctaTransform,
+    cta_ticker_logo_media_ids: tickerLogoIdsRaw ?? "",
+  } as Record<string, unknown>;
+
+  return { allIds, ctaTransform, tickerLogoIdsRaw: tickerLogoIdsRaw ?? "" };
+}
+
+function buildSiteSettingsFromRow(
+  allIds: Record<string, unknown>,
+  ctaTransform: {
+    cta_card_scale: number;
+    cta_card_offset_x: number;
+    cta_card_offset_y: number;
+    cta_figure_scale: number;
+    cta_figure_offset_x: number;
+    cta_figure_offset_y: number;
+  },
+  tickerLogoIdsRaw: string,
+  mediaMap: Map<string, { storage_key: string }>,
+): PublicSiteSettings {
+  const getUrlForId = (id: string | null | undefined): string | undefined => {
+    if (!id) return undefined;
+    const media = mediaMap.get(id);
+    if (!media?.storage_key) return undefined;
+    return buildPublicMediaUrl(media.storage_key);
+  };
+
+  const tickerLogoIds = tickerLogoIdsRaw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+    tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+  }
+
+  const tickerLogoUrls = tickerLogoIds
+    .map((id) => getUrlForId(id))
+    .filter((url): url is string => !!url);
+
+  const settings = getStaticSiteSettings();
+  return {
+    avatarMediaUrl: getUrlForId(allIds.avatar_media_id as string | null),
+    ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id as string | null),
+    ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id as string | null),
+    ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id as string | null),
+    ctaTickerLogoMediaUrls: tickerLogoUrls,
+    ctaCardScale: ctaTransform.cta_card_scale,
+    ctaCardOffsetX: ctaTransform.cta_card_offset_x,
+    ctaCardOffsetY: ctaTransform.cta_card_offset_y,
+    ctaFigureScale: ctaTransform.cta_figure_scale,
+    ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
+    ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
+    description: (allIds.seo_description as string) || settings.description,
+    heroMainVideoUrl: getUrlForId(allIds.hero_main_video_media_id as string | null),
+    heroSide1VideoUrl: getUrlForId(allIds.hero_side1_video_media_id as string | null),
+    heroSide2VideoUrl: getUrlForId(allIds.hero_side2_video_media_id as string | null),
+    heroSide3VideoUrl: getUrlForId(allIds.hero_side3_video_media_id as string | null),
+    logoMediaUrl: getUrlForId(allIds.logo_media_id as string | null),
+    name: (allIds.name as string) || settings.name,
+    navigation: settings.navigation,
+    nickname: (allIds.nickname as string) || settings.logo,
+    seoDescription: (allIds.seo_description as string) || settings.description,
+    seoTitle: (allIds.seo_title as string) || settings.name,
+    shareMediaUrl: getUrlForId(allIds.share_media_id as string | null),
+    socialLinks: Array.isArray(allIds.social_links) && (allIds.social_links as unknown[]).length > 0
+      ? (allIds.social_links as Array<{ label: string; url: string }>).map((link) => ({
+          href: link.url,
+          label: normalizeUtf8(link.label),
+        }))
+      : settings.socialLinks,
+    title: settings.title,
+  };
+}
+
 function createSupabaseBackedRepository(client: ReturnType<typeof createSupabaseServiceClient>) {
   return createCmsRepository({
     async listPublishedWorks() {
@@ -108,52 +272,12 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
       return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listCompositeWorks");
     },
     async getSiteSettings() {
-      await runHeroVideosMigration().catch(() => {});
-      await runCtaTransformMigration().catch(() => {});
-      await runTickerLogosMigration().catch(() => {});
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const allColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y";
-      
-      let row: Record<string, unknown> | null = null;
-      try {
-        const { data, error } = await client
-          .from("site_settings")
-          .select(allColumns)
-          .single();
-
-        if (error) {
-          console.error("[getSiteSettings] 查询失败:", error);
-          return getStaticPublicSiteSettings();
-        }
-        row = data as Record<string, unknown>;
-      } catch (err) {
-        console.error("[getSiteSettings] 查询异常:", err);
+      const result = await safeQuerySiteSettings(client);
+      if (!result) {
         return getStaticPublicSiteSettings();
       }
 
-      if (!row) return getStaticPublicSiteSettings();
-
-      const ctaTransform = {
-        cta_card_scale: Number(row.cta_card_scale ?? 1.0),
-        cta_card_offset_x: Number(row.cta_card_offset_x ?? 0),
-        cta_card_offset_y: Number(row.cta_card_offset_y ?? 0),
-        cta_figure_scale: Number(row.cta_figure_scale ?? 1.0),
-        cta_figure_offset_x: Number(row.cta_figure_offset_x ?? 0),
-        cta_figure_offset_y: Number(row.cta_figure_offset_y ?? 0),
-      };
-
-      const tickerLogoIdsRaw = String(row.cta_ticker_logo_media_ids ?? "");
-      const allIds = { ...row } as Record<string, string | null>;
-
-      const tickerLogoIds = tickerLogoIdsRaw
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
-        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
-      }
+      const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
 
       const mediaIdFields = [
         "logo_media_id",
@@ -168,8 +292,16 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         "hero_side3_video_media_id",
       ] as const;
 
+      const tickerLogoIds = tickerLogoIdsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+      }
+
       const singleMediaIdsToFetch = mediaIdFields
-        .map((field) => allIds[field])
+        .map((field) => allIds[field] as string | null)
         .filter((id): id is string => typeof id === "string" && id.length > 0);
 
       const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
@@ -189,50 +321,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         }
       }
 
-      const getUrlForId = (id: string | null | undefined): string | undefined => {
-        if (!id) return undefined;
-        const media = mediaMap.get(id);
-        if (!media?.storage_key) return undefined;
-        return buildPublicMediaUrl(media.storage_key);
-      };
-
-      const tickerLogoUrls = tickerLogoIds
-        .map((id) => getUrlForId(id))
-        .filter((url): url is string => !!url);
-
-      const settings = getStaticSiteSettings();
-      return {
-        avatarMediaUrl: getUrlForId(allIds.avatar_media_id ?? null),
-        ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
-        ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
-        ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
-        ctaTickerLogoMediaUrls: tickerLogoUrls,
-        ctaCardScale: ctaTransform.cta_card_scale,
-        ctaCardOffsetX: ctaTransform.cta_card_offset_x,
-        ctaCardOffsetY: ctaTransform.cta_card_offset_y,
-        ctaFigureScale: ctaTransform.cta_figure_scale,
-        ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
-        ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
-        description: (allIds.seo_description as string) || settings.description,
-        heroMainVideoUrl: getUrlForId(allIds.hero_main_video_media_id ?? null),
-        heroSide1VideoUrl: getUrlForId(allIds.hero_side1_video_media_id ?? null),
-        heroSide2VideoUrl: getUrlForId(allIds.hero_side2_video_media_id ?? null),
-        heroSide3VideoUrl: getUrlForId(allIds.hero_side3_video_media_id ?? null),
-        logoMediaUrl: getUrlForId(allIds.logo_media_id ?? null),
-        name: (allIds.name as string) || settings.name,
-        navigation: settings.navigation,
-        nickname: (allIds.nickname as string) || settings.logo,
-        seoDescription: (allIds.seo_description as string) || settings.description,
-        seoTitle: (allIds.seo_title as string) || settings.name,
-        shareMediaUrl: getUrlForId(allIds.share_media_id ?? null),
-        socialLinks: Array.isArray(allIds.social_links) && allIds.social_links.length > 0
-          ? (allIds.social_links as Array<{ label: string; url: string }>).map((link) => ({
-              href: link.url,
-              label: normalizeUtf8(link.label),
-            }))
-          : settings.socialLinks,
-        title: settings.title,
-      };
+      return buildSiteSettingsFromRow(allIds, ctaTransform, tickerLogoIdsRaw, mediaMap);
     },
   });
 }
@@ -433,52 +522,12 @@ export async function createServerCmsRepository() {
       return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listCompositeWorks");
     },
     async getSiteSettings() {
-      await runHeroVideosMigration().catch(() => {});
-      await runCtaTransformMigration().catch(() => {});
-      await runTickerLogosMigration().catch(() => {});
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const allColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y";
-      
-      let row: Record<string, unknown> | null = null;
-      try {
-        const { data, error } = await client
-          .from("site_settings")
-          .select(allColumns)
-          .single();
-
-        if (error) {
-          console.error("[getSiteSettings] 查询失败:", error);
-          return getStaticPublicSiteSettings();
-        }
-        row = data as Record<string, unknown>;
-      } catch (err) {
-        console.error("[getSiteSettings] 查询异常:", err);
+      const result = await safeQuerySiteSettings(client);
+      if (!result) {
         return getStaticPublicSiteSettings();
       }
 
-      if (!row) return getStaticPublicSiteSettings();
-
-      const ctaTransform = {
-        cta_card_scale: Number(row.cta_card_scale ?? 1.0),
-        cta_card_offset_x: Number(row.cta_card_offset_x ?? 0),
-        cta_card_offset_y: Number(row.cta_card_offset_y ?? 0),
-        cta_figure_scale: Number(row.cta_figure_scale ?? 1.0),
-        cta_figure_offset_x: Number(row.cta_figure_offset_x ?? 0),
-        cta_figure_offset_y: Number(row.cta_figure_offset_y ?? 0),
-      };
-
-      const tickerLogoIdsRaw = String(row.cta_ticker_logo_media_ids ?? "");
-      const allIds = { ...row } as Record<string, string | null>;
-
-      const tickerLogoIds = tickerLogoIdsRaw
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
-        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
-      }
+      const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
 
       const mediaIdFields = [
         "logo_media_id",
@@ -493,8 +542,16 @@ export async function createServerCmsRepository() {
         "hero_side3_video_media_id",
       ] as const;
 
+      const tickerLogoIds = tickerLogoIdsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+      }
+
       const singleMediaIdsToFetch = mediaIdFields
-        .map((field) => allIds[field])
+        .map((field) => allIds[field] as string | null)
         .filter((id): id is string => typeof id === "string" && id.length > 0);
 
       const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
@@ -514,50 +571,7 @@ export async function createServerCmsRepository() {
         }
       }
 
-      const getUrlForId = (id: string | null | undefined): string | undefined => {
-        if (!id) return undefined;
-        const media = mediaMap.get(id);
-        if (!media?.storage_key) return undefined;
-        return buildPublicMediaUrl(media.storage_key);
-      };
-
-      const tickerLogoUrls = tickerLogoIds
-        .map((id) => getUrlForId(id))
-        .filter((url): url is string => !!url);
-
-      const settings = getStaticSiteSettings();
-      return {
-        avatarMediaUrl: getUrlForId(allIds.avatar_media_id ?? null),
-        ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
-        ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
-        ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
-        ctaTickerLogoMediaUrls: tickerLogoUrls,
-        ctaCardScale: ctaTransform.cta_card_scale,
-        ctaCardOffsetX: ctaTransform.cta_card_offset_x,
-        ctaCardOffsetY: ctaTransform.cta_card_offset_y,
-        ctaFigureScale: ctaTransform.cta_figure_scale,
-        ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
-        ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
-        description: (allIds.seo_description as string) || settings.description,
-        heroMainVideoUrl: getUrlForId(allIds.hero_main_video_media_id ?? null),
-        heroSide1VideoUrl: getUrlForId(allIds.hero_side1_video_media_id ?? null),
-        heroSide2VideoUrl: getUrlForId(allIds.hero_side2_video_media_id ?? null),
-        heroSide3VideoUrl: getUrlForId(allIds.hero_side3_video_media_id ?? null),
-        logoMediaUrl: getUrlForId(allIds.logo_media_id ?? null),
-        name: (allIds.name as string) || settings.name,
-        navigation: settings.navigation,
-        nickname: (allIds.nickname as string) || settings.logo,
-        seoDescription: (allIds.seo_description as string) || settings.description,
-        seoTitle: (allIds.seo_title as string) || settings.name,
-        shareMediaUrl: getUrlForId(allIds.share_media_id ?? null),
-        socialLinks: Array.isArray(allIds.social_links) && allIds.social_links.length > 0
-          ? (allIds.social_links as Array<{ label: string; url: string }>).map((link) => ({
-              href: link.url,
-              label: normalizeUtf8(link.label),
-            }))
-          : settings.socialLinks,
-        title: settings.title,
-      };
+      return buildSiteSettingsFromRow(allIds, ctaTransform, tickerLogoIdsRaw, mediaMap);
     },
   });
 }
