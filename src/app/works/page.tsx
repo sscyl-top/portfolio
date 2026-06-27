@@ -30,7 +30,17 @@ export default async function WorksPage() {
   let visibleCategories: any[] = [];
   let texts: Record<string, { content: string; styles: Record<string, string> }> = {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let siteSettings: any = { ctaCardMediaUrl: null, ctaFigureMediaUrl: null, ctaTickerLogoMediaUrl: null };
+  let siteSettings: any = {
+    ctaCardMediaUrl: null,
+    ctaFigureMediaUrl: null,
+    ctaTickerLogoMediaUrl: null,
+    ctaCardScale: 1,
+    ctaCardOffsetX: 0,
+    ctaCardOffsetY: 0,
+    ctaFigureScale: 1,
+    ctaFigureOffsetX: 0,
+    ctaFigureOffsetY: 0,
+  };
 
   try {
     const repository = await createServerCmsRepository();
@@ -68,6 +78,12 @@ export default async function WorksPage() {
         ctaCardUrl={siteSettings.ctaCardMediaUrl}
         ctaFigureUrl={siteSettings.ctaFigureMediaUrl}
         ctaTickerLogoUrl={siteSettings.ctaTickerLogoMediaUrl}
+        ctaCardScale={siteSettings.ctaCardScale}
+        ctaCardOffsetX={siteSettings.ctaCardOffsetX}
+        ctaCardOffsetY={siteSettings.ctaCardOffsetY}
+        ctaFigureScale={siteSettings.ctaFigureScale}
+        ctaFigureOffsetX={siteSettings.ctaFigureOffsetX}
+        ctaFigureOffsetY={siteSettings.ctaFigureOffsetY}
       />
     </WorksPageShell>
   );

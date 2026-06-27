@@ -15,7 +15,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runCtaTransformMigration, runHeroVideosMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -30,6 +30,12 @@ export type PublicSiteSettings = {
   ctaCardMediaUrl?: string;
   ctaFigureMediaUrl?: string;
   ctaTickerLogoMediaUrl?: string;
+  ctaCardScale: number;
+  ctaCardOffsetX: number;
+  ctaCardOffsetY: number;
+  ctaFigureScale: number;
+  ctaFigureOffsetX: number;
+  ctaFigureOffsetY: number;
   description: string;
   heroMainVideoUrl?: string;
   heroSide1VideoUrl?: string;
@@ -102,6 +108,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
     },
     async getSiteSettings() {
       await runHeroVideosMigration().catch(() => {});
+      await runCtaTransformMigration().catch(() => {});
 
       const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
       const { data: baseIds, error: baseError } = await client
@@ -134,6 +141,31 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
           hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
           hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
           hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+        };
+      }
+
+      let ctaTransform = {
+        cta_card_scale: 1.0,
+        cta_card_offset_x: 0,
+        cta_card_offset_y: 0,
+        cta_figure_scale: 1.0,
+        cta_figure_offset_x: 0,
+        cta_figure_offset_y: 0,
+      };
+
+      const { data: ctaTransformData } = await client
+        .from("site_settings")
+        .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+        .single();
+
+      if (ctaTransformData) {
+        ctaTransform = {
+          cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
+          cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+          cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+          cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
+          cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+          cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
         };
       }
 
@@ -187,6 +219,12 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
         ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
         ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        ctaCardScale: ctaTransform.cta_card_scale,
+        ctaCardOffsetX: ctaTransform.cta_card_offset_x,
+        ctaCardOffsetY: ctaTransform.cta_card_offset_y,
+        ctaFigureScale: ctaTransform.cta_figure_scale,
+        ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
+        ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
         description: (allIds.seo_description as string) || settings.description,
         heroMainVideoUrl: getUrlForId(heroIds.hero_main_video_media_id),
         heroSide1VideoUrl: getUrlForId(heroIds.hero_side1_video_media_id),
@@ -409,6 +447,7 @@ export async function createServerCmsRepository() {
     async getSiteSettings() {
       // 先尝试自动迁移（幂等操作）
       await runHeroVideosMigration().catch(() => {});
+      await runCtaTransformMigration().catch(() => {});
 
       // 第一步：查询所有media_id字段（先查基础字段，再安全查询hero视频字段）
       const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
@@ -443,6 +482,31 @@ export async function createServerCmsRepository() {
           hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
           hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
           hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
+        };
+      }
+
+      let ctaTransform = {
+        cta_card_scale: 1.0,
+        cta_card_offset_x: 0,
+        cta_card_offset_y: 0,
+        cta_figure_scale: 1.0,
+        cta_figure_offset_x: 0,
+        cta_figure_offset_y: 0,
+      };
+
+      const { data: ctaTransformData } = await client
+        .from("site_settings")
+        .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+        .single();
+
+      if (ctaTransformData) {
+        ctaTransform = {
+          cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1.0),
+          cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+          cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+          cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1.0),
+          cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+          cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
         };
       }
 
@@ -501,6 +565,12 @@ export async function createServerCmsRepository() {
         ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
         ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
         ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        ctaCardScale: ctaTransform.cta_card_scale,
+        ctaCardOffsetX: ctaTransform.cta_card_offset_x,
+        ctaCardOffsetY: ctaTransform.cta_card_offset_y,
+        ctaFigureScale: ctaTransform.cta_figure_scale,
+        ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
+        ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
         description: (allIds.seo_description as string) || settings.description,
         heroMainVideoUrl: getUrlForId(heroIds.hero_main_video_media_id),
         heroSide1VideoUrl: getUrlForId(heroIds.hero_side1_video_media_id),
@@ -579,6 +649,12 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
   return {
+    ctaCardScale: 1,
+    ctaCardOffsetX: 0,
+    ctaCardOffsetY: 0,
+    ctaFigureScale: 1,
+    ctaFigureOffsetX: 0,
+    ctaFigureOffsetY: 0,
     description: settings.description,
     name: settings.name,
     navigation: settings.navigation,
@@ -607,6 +683,12 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
     ctaCardMediaUrl: toPublicMediaUrl(row.cta_card_media),
     ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
     ctaTickerLogoMediaUrl: toPublicMediaUrl(row.cta_ticker_logo_media),
+    ctaCardScale: 1,
+    ctaCardOffsetX: 0,
+    ctaCardOffsetY: 0,
+    ctaFigureScale: 1,
+    ctaFigureOffsetX: 0,
+    ctaFigureOffsetY: 0,
     description: normalizeUtf8(row.seo_description) || settings.description,
     heroMainVideoUrl: toPublicMediaUrl(row.hero_main_video_media),
     heroSide1VideoUrl: toPublicMediaUrl(row.hero_side1_video_media),

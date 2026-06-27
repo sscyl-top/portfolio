@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
-import { runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runCtaTransformMigration, runHeroVideosMigration } from "@/lib/cms/migrations";
 
 const socialLinkSchema = z.object({
   label: z.string().trim().min(1),
@@ -33,6 +33,15 @@ const heroVideoSchema = z.object({
   hero_side1_video_media_id: z.string().uuid().nullable(),
   hero_side2_video_media_id: z.string().uuid().nullable(),
   hero_side3_video_media_id: z.string().uuid().nullable(),
+});
+
+const ctaTransformSchema = z.object({
+  cta_card_scale: z.coerce.number().min(0.1).max(5).default(1),
+  cta_card_offset_x: z.coerce.number().min(-500).max(500).default(0),
+  cta_card_offset_y: z.coerce.number().min(-500).max(500).default(0),
+  cta_figure_scale: z.coerce.number().min(0.1).max(5).default(1),
+  cta_figure_offset_x: z.coerce.number().min(-500).max(500).default(0),
+  cta_figure_offset_y: z.coerce.number().min(-500).max(500).default(0),
 });
 
 export async function saveSiteSettings(formData: FormData) {
@@ -63,6 +72,7 @@ export async function saveSiteSettings(formData: FormData) {
   const { client } = await requireAdmin();
 
   await runHeroVideosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
 
   const { error: baseError } = await client.from("site_settings").upsert({
     id: true,
@@ -71,6 +81,31 @@ export async function saveSiteSettings(formData: FormData) {
 
   if (baseError) {
     throw new Error(baseError.message);
+  }
+
+  const ctaTransformParsed = ctaTransformSchema.safeParse({
+    cta_card_scale: formData.get("cta_card_scale") ?? "1",
+    cta_card_offset_x: formData.get("cta_card_offset_x") ?? "0",
+    cta_card_offset_y: formData.get("cta_card_offset_y") ?? "0",
+    cta_figure_scale: formData.get("cta_figure_scale") ?? "1",
+    cta_figure_offset_x: formData.get("cta_figure_offset_x") ?? "0",
+    cta_figure_offset_y: formData.get("cta_figure_offset_y") ?? "0",
+  });
+
+  if (ctaTransformParsed.success) {
+    const { error: ctaTransformError } = await client.from("site_settings").update({
+      ...ctaTransformParsed.data,
+    }).eq("id", true);
+
+    if (ctaTransformError) {
+      const isColumnMissing = ctaTransformError.message.includes("column") && ctaTransformError.message.includes("does not exist");
+      if (isColumnMissing) {
+        throw new Error(
+          "CTA 图片缩放偏移列尚未创建，请刷新页面重试（自动迁移需几秒完成）。",
+        );
+      }
+      throw new Error(`CTA 图片设置保存失败：${ctaTransformError.message}`);
+    }
   }
 
   const heroParsed = heroVideoSchema.safeParse({

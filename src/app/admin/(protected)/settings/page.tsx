@@ -4,7 +4,7 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runCtaTransformMigration, runHeroVideosMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { SaveButton } from "@/components/admin/SaveButton";
@@ -23,6 +23,12 @@ type SettingsRow = {
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
+  cta_card_scale: number;
+  cta_card_offset_x: number;
+  cta_card_offset_y: number;
+  cta_figure_scale: number;
+  cta_figure_offset_x: number;
+  cta_figure_offset_y: number;
   hero_main_video_media_id: string | null;
   hero_side1_video_media_id: string | null;
   hero_side2_video_media_id: string | null;
@@ -46,9 +52,10 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   // 先尝试自动迁移（幂等操作）
   await runHeroVideosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
 
   // 第一步：查询基础列（一定存在）
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
   const { data: baseData, error: baseError } = await supabase
     .from("site_settings")
     .select(baseColumns)
@@ -76,6 +83,32 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     };
   }
 
+  // 第三步：安全查询CTA图片transform列，失败就用默认值
+  let ctaTransformColumns = {
+    cta_card_scale: 1,
+    cta_card_offset_x: 0,
+    cta_card_offset_y: 0,
+    cta_figure_scale: 1,
+    cta_figure_offset_x: 0,
+    cta_figure_offset_y: 0,
+  };
+
+  const { data: ctaTransformData } = await supabase
+    .from("site_settings")
+    .select("cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y")
+    .single();
+
+  if (ctaTransformData) {
+    ctaTransformColumns = {
+      cta_card_scale: Number(ctaTransformData.cta_card_scale ?? 1),
+      cta_card_offset_x: Number(ctaTransformData.cta_card_offset_x ?? 0),
+      cta_card_offset_y: Number(ctaTransformData.cta_card_offset_y ?? 0),
+      cta_figure_scale: Number(ctaTransformData.cta_figure_scale ?? 1),
+      cta_figure_offset_x: Number(ctaTransformData.cta_figure_offset_x ?? 0),
+      cta_figure_offset_y: Number(ctaTransformData.cta_figure_offset_y ?? 0),
+    };
+  }
+
   const { data: rawMedia } = await supabase
     .from("media_assets")
     .select("id,storage_key,mime_type,original_name,alt_text")
@@ -96,6 +129,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_card_media_id: null,
     cta_figure_media_id: null,
     cta_ticker_logo_media_id: null,
+    cta_card_scale: 1,
+    cta_card_offset_x: 0,
+    cta_card_offset_y: 0,
+    cta_figure_scale: 1,
+    cta_figure_offset_x: 0,
+    cta_figure_offset_y: 0,
     hero_main_video_media_id: null,
     hero_side1_video_media_id: null,
     hero_side2_video_media_id: null,
@@ -106,8 +145,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     })),
   } satisfies SettingsRow;
 
-  // 合并基础数据和hero视频数据
-  const data = baseData ? { ...(baseData as object), ...heroColumns } as SettingsRow : null;
+  // 合并基础数据、hero视频数据和CTA transform数据
+  const data = baseData ? { ...(baseData as object), ...heroColumns, ...ctaTransformColumns } as SettingsRow : null;
   const error = baseError;
   const settings = data ?? fallback;
   const socialLinks =
@@ -201,22 +240,36 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
         <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
           <h3 className="text-sm font-medium text-white/70">作品终场图片（复合设计板块底部CTA区域）</h3>
-          <p className="mt-1 text-xs text-white/40">两张不同层级的图片：背景卡在下层，人物图在上层叠加。支持 PNG 透明底 / JPG / GIF 动图 / WEBP。</p>
+          <p className="mt-1 text-xs text-white/40">两张不同层级的图片：背景卡在下层，人物图在上层叠加。支持 PNG 透明底 / JPG / GIF 动图 / WEBP。可分别调整缩放和 X/Y 轴位移来微调图片位置和大小。</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <SettingsMediaField
-              label="终场背景卡（下层）"
-              name="cta_card_media_id"
-              assets={mediaAssets}
-              defaultValue={settings.cta_card_media_id ?? ""}
-              hint="底层卡片/背景图，建议带透明或半透明设计"
-            />
-            <SettingsMediaField
-              label="终场人物图（上层）"
-              name="cta_figure_media_id"
-              assets={mediaAssets}
-              defaultValue={settings.cta_figure_media_id ?? ""}
-              hint="上层人物/主体图，建议 PNG 透明底"
-            />
+            <div className="grid gap-3">
+              <SettingsMediaField
+                label="终场背景卡（下层）"
+                name="cta_card_media_id"
+                assets={mediaAssets}
+                defaultValue={settings.cta_card_media_id ?? ""}
+                hint="底层卡片/背景图，建议带透明或半透明设计"
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <NumberField label="缩放" name="cta_card_scale" defaultValue={settings.cta_card_scale} step="0.05" min="0.1" max="5" />
+                <NumberField label="X 偏移(px)" name="cta_card_offset_x" defaultValue={settings.cta_card_offset_x} step="1" min="-500" max="500" />
+                <NumberField label="Y 偏移(px)" name="cta_card_offset_y" defaultValue={settings.cta_card_offset_y} step="1" min="-500" max="500" />
+              </div>
+            </div>
+            <div className="grid gap-3">
+              <SettingsMediaField
+                label="终场人物图（上层）"
+                name="cta_figure_media_id"
+                assets={mediaAssets}
+                defaultValue={settings.cta_figure_media_id ?? ""}
+                hint="上层人物/主体图，建议 PNG 透明底"
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <NumberField label="缩放" name="cta_figure_scale" defaultValue={settings.cta_figure_scale} step="0.05" min="0.1" max="5" />
+                <NumberField label="X 偏移(px)" name="cta_figure_offset_x" defaultValue={settings.cta_figure_offset_x} step="1" min="-500" max="500" />
+                <NumberField label="Y 偏移(px)" name="cta_figure_offset_y" defaultValue={settings.cta_figure_offset_y} step="1" min="-500" max="500" />
+              </div>
+            </div>
           </div>
           <div className="mt-4">
             <SettingsMediaField
@@ -367,6 +420,37 @@ function Field({
         defaultValue={defaultValue}
         required
         className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+      />
+    </label>
+  );
+}
+
+function NumberField({
+  label,
+  name,
+  defaultValue,
+  step = "1",
+  min,
+  max,
+}: {
+  label: string;
+  name: string;
+  defaultValue: number;
+  step?: string;
+  min?: string;
+  max?: string;
+}) {
+  return (
+    <label className="grid gap-1.5 text-xs">
+      <span className="text-white/50">{label}</span>
+      <input
+        type="number"
+        name={name}
+        defaultValue={defaultValue}
+        step={step}
+        min={min}
+        max={max}
+        className="min-h-9 rounded-md border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-cyan"
       />
     </label>
   );

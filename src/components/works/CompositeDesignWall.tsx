@@ -38,6 +38,12 @@ type CompositeDesignWallProps = {
   ctaCardUrl?: string;
   ctaFigureUrl?: string;
   ctaTickerLogoUrl?: string;
+  ctaCardScale?: number;
+  ctaCardOffsetX?: number;
+  ctaCardOffsetY?: number;
+  ctaFigureScale?: number;
+  ctaFigureOffsetX?: number;
+  ctaFigureOffsetY?: number;
 };
 
 export function CompositeDesignWall({
@@ -46,6 +52,12 @@ export function CompositeDesignWall({
   ctaCardUrl = "",
   ctaFigureUrl = "",
   ctaTickerLogoUrl = "",
+  ctaCardScale = 1,
+  ctaCardOffsetX = 0,
+  ctaCardOffsetY = 0,
+  ctaFigureScale = 1,
+  ctaFigureOffsetX = 0,
+  ctaFigureOffsetY = 0,
 }: CompositeDesignWallProps) {
   const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
@@ -234,6 +246,10 @@ export function CompositeDesignWall({
                 src={ctaCardUrl}
                 alt=""
                 className="h-full w-full object-contain object-center"
+                style={{
+                  transform: `translate(${ctaCardOffsetX}px, ${ctaCardOffsetY}px) scale(${ctaCardScale})`,
+                  transformOrigin: "center center",
+                }}
               />
             ) : (
               <div className="cta-card-upload-slot h-full w-full" aria-hidden="true" />
@@ -289,6 +305,10 @@ export function CompositeDesignWall({
                 src={ctaFigureUrl}
                 alt=""
                 className="h-full w-full object-contain object-bottom"
+                style={{
+                  transform: `translate(${ctaFigureOffsetX}px, ${ctaFigureOffsetY}px) scale(${ctaFigureScale})`,
+                  transformOrigin: "center bottom",
+                }}
               />
             ) : (
               <div className="cta-figure-upload-slot h-full w-full" aria-hidden="true" />

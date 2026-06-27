@@ -6,6 +6,12 @@ import type { PublicSiteSettings } from "@/lib/cms/repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const defaultSiteSettings: PublicSiteSettings = {
+  ctaCardScale: 1,
+  ctaCardOffsetX: 0,
+  ctaCardOffsetY: 0,
+  ctaFigureScale: 1,
+  ctaFigureOffsetX: 0,
+  ctaFigureOffsetY: 0,
   description: staticSiteSettings.description,
   name: staticSiteSettings.name,
   navigation: staticSiteSettings.navigation,

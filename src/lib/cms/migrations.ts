@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 
 let heroMigrationPromise: Promise<boolean> | null = null;
+let ctaTransformMigrationPromise: Promise<boolean> | null = null;
 let musicSettingsMigrationPromise: Promise<boolean> | null = null;
 
 function getDbConnectionString(): string | null {
@@ -98,6 +99,40 @@ export async function runHeroVideosMigration(): Promise<boolean> {
   })();
 
   return heroMigrationPromise;
+}
+
+export async function runCtaTransformMigration(): Promise<boolean> {
+  if (ctaTransformMigrationPromise) return ctaTransformMigrationPromise;
+
+  ctaTransformMigrationPromise = (async () => {
+    const connectionString = getDbConnectionString();
+    if (!connectionString) {
+      console.warn("[DB Migration] No database connection string found for CTA transform settings");
+      return false;
+    }
+
+    const pool = new Pool({ connectionString });
+    try {
+      await pool.query(`
+        ALTER TABLE public.site_settings
+          ADD COLUMN IF NOT EXISTS cta_card_scale numeric NOT NULL DEFAULT 1.0,
+          ADD COLUMN IF NOT EXISTS cta_card_offset_x numeric NOT NULL DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS cta_card_offset_y numeric NOT NULL DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS cta_figure_scale numeric NOT NULL DEFAULT 1.0,
+          ADD COLUMN IF NOT EXISTS cta_figure_offset_x numeric NOT NULL DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS cta_figure_offset_y numeric NOT NULL DEFAULT 0;
+      `);
+      console.log("[DB Migration] CTA transform columns added successfully");
+      return true;
+    } catch (err) {
+      console.error("[DB Migration] Failed to run CTA transform migration:", err);
+      return false;
+    } finally {
+      await pool.end();
+    }
+  })();
+
+  return ctaTransformMigrationPromise;
 }
 
 /**
