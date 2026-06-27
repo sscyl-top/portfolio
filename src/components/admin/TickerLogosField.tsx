@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useMemo, useEffect } from "react";
-import { Plus, UploadCloud, Loader2, X, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, Loader2, X } from "lucide-react";
 
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
@@ -55,7 +55,6 @@ export function TickerLogosField({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +97,6 @@ export function TickerLogosField({
 
     setError(null);
     setIsUploading(true);
-    setShowLibraryPicker(false);
 
     try {
       const results = await uploadMediaFiles(imageFiles, () => {});
@@ -184,11 +182,12 @@ export function TickerLogosField({
       <div
         ref={dropZoneRef}
         data-media-upload-zone
-        className={`rounded-md border transition-all ${
+        className={`relative rounded-md border transition-all cursor-pointer ${
           isDragging
             ? "border-cyan bg-cyan/10 z-[60]"
-            : "border-white/10 bg-white/[0.035]"
+            : "border-white/10 bg-white/[0.035] hover:bg-white/[0.05]"
         }`}
+        onClick={triggerFileSelect}
       >
         {selectedAssets.length > 0 ? (
           <div className="p-3">
@@ -206,7 +205,7 @@ export function TickerLogosField({
                   />
                   <button
                     type="button"
-                    onClick={() => removeId(item.id)}
+                    onClick={(e) => { e.stopPropagation(); removeId(item.id); }}
                     className="absolute right-1 top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white/80 transition hover:bg-red-500/80 hover:text-white group-hover:flex"
                   >
                     <X className="h-3 w-3" />
@@ -216,69 +215,20 @@ export function TickerLogosField({
 
               <button
                 type="button"
-                onClick={triggerFileSelect}
+                onClick={(e) => { e.stopPropagation(); triggerFileSelect(); }}
                 disabled={isUploading}
                 className="flex h-20 w-24 shrink-0 flex-col items-center justify-center gap-1 rounded border border-dashed border-white/15 text-white/30 transition hover:border-cyan/40 hover:text-cyan/70 disabled:opacity-40"
               >
-                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
-                <span className="text-[10px]">{isUploading ? "上传中" : "添加"}</span>
+                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
+                <span className="text-[10px]">{isUploading ? "上传中" : "添加图片"}</span>
               </button>
             </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
-              <button
-                type="button"
-                onClick={triggerFileSelect}
-                disabled={isUploading}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
-              >
-                {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                {isUploading ? "上传中..." : "上传新图片"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowLibraryPicker((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan"
-              >
-                <ImageIcon className="h-3.5 w-3.5" />
-                {showLibraryPicker ? "收起媒体库" : "从媒体库选择"}
-              </button>
-              <span className="text-[10px] text-white/30">或直接拖拽图片到此处</span>
-            </div>
-
-            {showLibraryPicker ? (
-              <div className="mt-3 border-t border-white/10 pt-3">
-                {availableLibraryAssets.length > 0 ? (
-                  <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-1">
-                    {availableLibraryAssets.map((asset) => {
-                      const url = buildPublicMediaUrl(asset.storage_key);
-                      return (
-                        <button
-                          key={asset.id}
-                          type="button"
-                          onClick={() => { addId(asset.id); }}
-                          className="group relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:8px_8px] transition hover:border-cyan/50"
-                          title={asset.original_name}
-                        >
-                          <img src={url} alt={asset.original_name} className="max-h-full max-w-full object-contain" />
-                          <span className="absolute inset-x-0 bottom-0 truncate bg-black/70 px-1 py-0.5 text-[9px] text-white/70 opacity-0 transition group-hover:opacity-100">
-                            {asset.original_name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[10px] text-white/25">媒体库中没有其他可选图片</p>
-                )}
-              </div>
-            ) : null}
+            <p className="mt-2 text-center text-[10px] text-white/25">
+              点击任意位置或拖拽图片到此处继续添加
+            </p>
           </div>
         ) : (
-          <div
-            className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
-            onClick={triggerFileSelect}
-          >
+          <div className="flex w-full flex-col items-center justify-center gap-2 p-6">
             {isUploading ? (
               <Loader2 className="h-6 w-6 animate-spin text-cyan" />
             ) : (
@@ -291,50 +241,35 @@ export function TickerLogosField({
                 {isUploading ? "上传中..." : "点击或拖拽图片到此处上传"}
               </p>
               <p className="mt-0.5 text-[10px] text-white/25">
-                支持 PNG / JPG / GIF / WEBP / SVG，建议 PNG 透明底
+                支持 PNG / JPG / GIF / WEBP / SVG，建议 PNG 透明底，可多选
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setShowLibraryPicker((v) => !v); }}
-              className="mt-1 text-[10px] text-cyan/50 underline underline-offset-2 hover:text-cyan"
-            >
-              {showLibraryPicker ? "收起媒体库" : "或从媒体库选择已有图片"}
-            </button>
-
-            {showLibraryPicker ? (
-              <div className="mt-2 w-full border-t border-white/10 pt-3" onClick={(e) => e.stopPropagation()}>
-                {availableLibraryAssets.length > 0 ? (
-                  <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-1">
-                    {availableLibraryAssets.map((asset) => {
-                      const url = buildPublicMediaUrl(asset.storage_key);
-                      return (
-                        <button
-                          key={asset.id}
-                          type="button"
-                          onClick={() => { addId(asset.id); setShowLibraryPicker(false); }}
-                          className="group relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:8px_8px] transition hover:border-cyan/50"
-                          title={asset.original_name}
-                        >
-                          <img src={url} alt={asset.original_name} className="max-h-full max-w-full object-contain" />
-                          <span className="absolute inset-x-0 bottom-0 truncate bg-black/70 px-1 py-0.5 text-[9px] text-white/70 opacity-0 transition group-hover:opacity-100">
-                            {asset.original_name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[10px] text-white/25">媒体库中没有其他可选图片</p>
-                )}
-              </div>
-            ) : null}
           </div>
         )}
       </div>
 
       <input type="hidden" name={name} value={joinIds(ids)} />
+
+      {availableLibraryAssets.length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const id = e.target.value;
+            if (id) {
+              addId(id);
+              e.target.value = "";
+            }
+          }}
+          className="min-h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+        >
+          <option value="">从媒体库选择已上传的图片...</option>
+          {availableLibraryAssets.map((asset) => (
+            <option key={asset.id} value={asset.id}>
+              {asset.original_name}
+            </option>
+          ))}
+        </select>
+      )}
 
       <input
         ref={inputRef}
