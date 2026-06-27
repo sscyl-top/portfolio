@@ -269,6 +269,31 @@ function HeroMainCard({
   textOverrides: HeroTextOverrides;
   videos: { main: string; side1: string; side2: string; side3: string };
 }) {
+  const mainVideoRef = useRef<HTMLVideoElement>(null);
+
+  // 确保视频在手机端也能自动播放（部分手机浏览器会阻止 autoplay）
+  useEffect(() => {
+    const video = mainVideoRef.current;
+    if (!video || !videos.main) return;
+
+    const tryPlay = () => {
+      const promise = video.play();
+      if (promise === undefined) return;
+      promise.catch(() => {
+        // autoplay 被阻止，监听用户首次交互后重试
+        const onInteract = () => {
+          video.play().catch(() => {});
+          document.removeEventListener("touchstart", onInteract);
+          document.removeEventListener("click", onInteract);
+        };
+        document.addEventListener("touchstart", onInteract, { once: true, passive: true });
+        document.addEventListener("click", onInteract, { once: true });
+      });
+    };
+
+    tryPlay();
+  }, [videos.main]);
+
   return (
     <>
     <div
@@ -280,6 +305,7 @@ function HeroMainCard({
       {/* Background video (when configured via CMS) */}
       {videos.main ? (
         <video
+          ref={mainVideoRef}
           data-testid="hero-main-video"
           src={videos.main}
           className="absolute inset-0 h-full w-full object-cover"
@@ -287,6 +313,7 @@ function HeroMainCard({
           muted
           loop
           playsInline
+          preload="auto"
         />
       ) : null}
 
