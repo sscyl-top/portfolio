@@ -269,7 +269,7 @@ export function CompositeDesignWall({
           </div>
 
           <div className="cta-logo-ticker absolute inset-x-0 bottom-[72px] z-20 overflow-hidden opacity-70 md:bottom-[82px]">
-            <div className="cta-logo-track flex w-max items-center gap-16 whitespace-nowrap py-2">
+            <div className="cta-logo-track flex w-max items-center gap-14 whitespace-nowrap py-2">
               {(() => {
                 const hasCustomLogos = ctaTickerLogoUrls.length > 0;
                 const logoSrcs = hasCustomLogos ? ctaTickerLogoUrls : [infiniteProgressLogo];
@@ -281,24 +281,27 @@ export function CompositeDesignWall({
                 }
                 const trackLogos = [...oneSet, ...oneSet];
                 return trackLogos.map((src, i) => (
-                  src === infiniteProgressLogo ? (
-                    <Image
-                      key={i}
-                      src={infiniteProgressLogo}
-                      alt=""
-                      width={180}
-                      height={45}
-                      className="h-[clamp(26px,3vw,40px)] w-auto shrink-0 opacity-55 mix-blend-screen"
-                    />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={i}
-                      src={src}
-                      alt=""
-                      className="h-[clamp(26px,3vw,40px)] w-auto shrink-0 object-contain opacity-55 mix-blend-screen"
-                    />
-                  )
+                  <div
+                    key={i}
+                    className="flex h-[clamp(24px,2.8vw,36px)] w-[clamp(80px,9vw,120px)] shrink-0 items-center justify-center"
+                  >
+                    {src === infiniteProgressLogo ? (
+                      <Image
+                        src={infiniteProgressLogo}
+                        alt=""
+                        width={180}
+                        height={45}
+                        className="h-full w-full object-contain opacity-55 mix-blend-screen"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={src}
+                        alt=""
+                        className="h-full w-full object-contain opacity-55 mix-blend-screen"
+                      />
+                    )}
+                  </div>
                 ));
               })()}
             </div>
