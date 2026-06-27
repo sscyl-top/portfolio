@@ -71,8 +71,19 @@ export async function saveSiteSettings(formData: FormData) {
   await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
   const serviceClient = createSupabaseServiceClient();
-  const { error } = await serviceClient.from("site_settings").upsert(updateData, { onConflict: "id" });
+
+  let upsertResult = await serviceClient.from("site_settings").upsert(updateData, { onConflict: "id" });
+
+  if (upsertResult.error && /column .* does not exist/i.test(upsertResult.error.message)) {
+    console.warn("[Settings] Schema cache not ready, waiting and retrying...");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    upsertResult = await serviceClient.from("site_settings").upsert(updateData, { onConflict: "id" });
+  }
+
+  const { error } = upsertResult;
 
   if (error) {
     console.error("[Settings] Failed to save site settings:", error.message);

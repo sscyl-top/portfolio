@@ -58,33 +58,40 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runCtaTransformMigration().catch(() => {});
   await runTickerLogosMigration().catch(() => {});
 
-  // 等待一小段时间确保NOTIFY pgrst生效
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
-  // 一次性查询所有列，使用service client绕过RLS
   const allColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,social_links,hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id,cta_card_scale,cta_card_offset_x,cta_card_offset_y,cta_figure_scale,cta_figure_offset_x,cta_figure_offset_y";
   
   let data: SettingsRow | null = null;
-  let baseError = null;
   
-  try {
+  const fetchSettings = async () => {
     const { data: fetchedData, error } = await serviceSupabase
       .from("site_settings")
       .select(allColumns)
       .single();
+    return { fetchedData, error };
+  };
+
+  try {
+    let result = await fetchSettings();
     
-    if (!error && fetchedData) {
+    if (result.error && /column .* does not exist/i.test(result.error.message)) {
+      console.warn("[Admin Settings] Schema cache not ready, waiting and retrying...");
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      result = await fetchSettings();
+    }
+    
+    if (!result.error && result.fetchedData) {
       data = {
-        ...(fetchedData as object),
-        cta_card_scale: Number((fetchedData as Record<string, unknown>).cta_card_scale ?? 1),
-        cta_card_offset_x: Number((fetchedData as Record<string, unknown>).cta_card_offset_x ?? 0),
-        cta_card_offset_y: Number((fetchedData as Record<string, unknown>).cta_card_offset_y ?? 0),
-        cta_figure_scale: Number((fetchedData as Record<string, unknown>).cta_figure_scale ?? 1),
-        cta_figure_offset_x: Number((fetchedData as Record<string, unknown>).cta_figure_offset_x ?? 0),
-        cta_figure_offset_y: Number((fetchedData as Record<string, unknown>).cta_figure_offset_y ?? 0),
+        ...(result.fetchedData as object),
+        cta_card_scale: Number((result.fetchedData as Record<string, unknown>).cta_card_scale ?? 1),
+        cta_card_offset_x: Number((result.fetchedData as Record<string, unknown>).cta_card_offset_x ?? 0),
+        cta_card_offset_y: Number((result.fetchedData as Record<string, unknown>).cta_card_offset_y ?? 0),
+        cta_figure_scale: Number((result.fetchedData as Record<string, unknown>).cta_figure_scale ?? 1),
+        cta_figure_offset_x: Number((result.fetchedData as Record<string, unknown>).cta_figure_offset_x ?? 0),
+        cta_figure_offset_y: Number((result.fetchedData as Record<string, unknown>).cta_figure_offset_y ?? 0),
       } as SettingsRow;
     }
-    baseError = error;
   } catch (err) {
     console.error("[Admin Settings] Failed to fetch settings:", err);
   }
@@ -126,7 +133,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     })),
   } satisfies SettingsRow;
 
-  const error = baseError;
   const settings = data ?? fallback;
   const socialLinks =
     settings.social_links && settings.social_links.length > 0
@@ -155,12 +161,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       <p className="mt-3 text-sm text-white/48">
         控制站点名称、SEO 和全局社交链接；这些内容会用于前台头部和页面元信息。
       </p>
-
-      {error && error.code !== "PGRST116" ? (
-        <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
-          设置读取失败：{error.message}
-        </p>
-      ) : null}
 
       <form
         action={saveSiteSettings}
