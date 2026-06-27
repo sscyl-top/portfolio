@@ -15,7 +15,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runCtaTransformMigration, runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -30,6 +30,7 @@ export type PublicSiteSettings = {
   ctaCardMediaUrl?: string;
   ctaFigureMediaUrl?: string;
   ctaTickerLogoMediaUrl?: string;
+  ctaTickerLogoMediaUrls: string[];
   ctaCardScale: number;
   ctaCardOffsetX: number;
   ctaCardOffsetY: number;
@@ -109,8 +110,9 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
     async getSiteSettings() {
       await runHeroVideosMigration().catch(() => {});
       await runCtaTransformMigration().catch(() => {});
+      await runTickerLogosMigration().catch(() => {});
 
-      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids";
       const { data: baseIds, error: baseError } = await client
         .from("site_settings")
         .select(baseIdColumns)
@@ -178,6 +180,16 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         ...heroIds,
       } as Record<string, string | null>;
 
+      // 解析多logo ID列表，兼容旧单图字段
+      const tickerLogoIdsRaw = (allIds.cta_ticker_logo_media_ids as string | null | undefined) || "";
+      const tickerLogoIds = tickerLogoIdsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+      }
+
       const mediaIdFields = [
         "logo_media_id",
         "avatar_media_id",
@@ -191,9 +203,11 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         "hero_side3_video_media_id",
       ] as const;
 
-      const mediaIdsToFetch = mediaIdFields
+      const singleMediaIdsToFetch = mediaIdFields
         .map((field) => allIds[field])
         .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+      const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
 
       const mediaMap = new Map<string, { storage_key: string }>();
       if (mediaIdsToFetch.length > 0) {
@@ -217,12 +231,17 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         return buildPublicMediaUrl(media.storage_key);
       };
 
+      const tickerLogoUrls = tickerLogoIds
+        .map((id) => getUrlForId(id))
+        .filter((url): url is string => !!url);
+
       const settings = getStaticSiteSettings();
       return {
         avatarMediaUrl: getUrlForId(allIds.avatar_media_id ?? null),
         ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
         ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
         ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        ctaTickerLogoMediaUrls: tickerLogoUrls,
         ctaCardScale: ctaTransform.cta_card_scale,
         ctaCardOffsetX: ctaTransform.cta_card_offset_x,
         ctaCardOffsetY: ctaTransform.cta_card_offset_y,
@@ -452,9 +471,10 @@ export async function createServerCmsRepository() {
       // 先尝试自动迁移（幂等操作）
       await runHeroVideosMigration().catch(() => {});
       await runCtaTransformMigration().catch(() => {});
+      await runTickerLogosMigration().catch(() => {});
 
       // 第一步：查询所有media_id字段（先查基础字段，再安全查询hero视频字段）
-      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+      const baseIdColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids";
       const { data: baseIds, error: baseError } = await client
         .from("site_settings")
         .select(baseIdColumns)
@@ -524,6 +544,16 @@ export async function createServerCmsRepository() {
         ...heroIds,
       } as Record<string, string | null>;
 
+      // 解析多logo ID列表，兼容旧单图字段
+      const tickerLogoIdsRaw = (allIds.cta_ticker_logo_media_ids as string | null | undefined) || "";
+      const tickerLogoIds = tickerLogoIdsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+      }
+
       // 收集所有需要查询的media_id
       const mediaIdFields = [
         "logo_media_id",
@@ -538,9 +568,11 @@ export async function createServerCmsRepository() {
         "hero_side3_video_media_id",
       ] as const;
 
-      const mediaIdsToFetch = mediaIdFields
+      const singleMediaIdsToFetch = mediaIdFields
         .map((field) => allIds[field])
         .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+      const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
 
       // 批量查询所有media资源
       const mediaMap = new Map<string, { storage_key: string }>();
@@ -566,6 +598,10 @@ export async function createServerCmsRepository() {
         return buildPublicMediaUrl(media.storage_key);
       };
 
+      const tickerLogoUrls = tickerLogoIds
+        .map((id) => getUrlForId(id))
+        .filter((url): url is string => !!url);
+
       // 构建返回结果
       const settings = getStaticSiteSettings();
       return {
@@ -573,6 +609,7 @@ export async function createServerCmsRepository() {
         ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id ?? null),
         ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id ?? null),
         ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id ?? null),
+        ctaTickerLogoMediaUrls: tickerLogoUrls,
         ctaCardScale: ctaTransform.cta_card_scale,
         ctaCardOffsetX: ctaTransform.cta_card_offset_x,
         ctaCardOffsetY: ctaTransform.cta_card_offset_y,
@@ -663,6 +700,7 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
     ctaFigureScale: 1,
     ctaFigureOffsetX: 0,
     ctaFigureOffsetY: 0,
+    ctaTickerLogoMediaUrls: [],
     description: settings.description,
     name: settings.name,
     navigation: settings.navigation,
@@ -685,12 +723,14 @@ function toPublicMediaUrl(
 
 function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
   const settings = getStaticSiteSettings();
+  const singleTickerUrl = toPublicMediaUrl(row.cta_ticker_logo_media);
 
   return {
     avatarMediaUrl: toPublicMediaUrl(row.avatar_media),
     ctaCardMediaUrl: toPublicMediaUrl(row.cta_card_media),
     ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
-    ctaTickerLogoMediaUrl: toPublicMediaUrl(row.cta_ticker_logo_media),
+    ctaTickerLogoMediaUrl: singleTickerUrl,
+    ctaTickerLogoMediaUrls: singleTickerUrl ? [singleTickerUrl] : [],
     ctaCardScale: 1,
     ctaCardOffsetX: 0,
     ctaCardOffsetY: 0,

@@ -4,9 +4,10 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runCtaTransformMigration, runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runCtaTransformMigration, runHeroVideosMigration, runTickerLogosMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
+import { TickerLogosField } from "@/components/admin/TickerLogosField";
 import { SaveButton } from "@/components/admin/SaveButton";
 import { saveSiteSettings } from "./actions";
 
@@ -23,6 +24,7 @@ type SettingsRow = {
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
+  cta_ticker_logo_media_ids: string | null;
   cta_card_scale: number;
   cta_card_offset_x: number;
   cta_card_offset_y: number;
@@ -53,9 +55,10 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   // 先尝试自动迁移（幂等操作）
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
+  await runTickerLogosMigration().catch(() => {});
 
   // 第一步：查询基础列（一定存在）
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,cta_ticker_logo_media_ids,social_links";
   const { data: baseData, error: baseError } = await supabase
     .from("site_settings")
     .select(baseColumns)
@@ -133,6 +136,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_card_media_id: null,
     cta_figure_media_id: null,
     cta_ticker_logo_media_id: null,
+    cta_ticker_logo_media_ids: "",
     cta_card_scale: 1,
     cta_card_offset_x: 0,
     cta_card_offset_y: 0,

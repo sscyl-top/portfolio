@@ -2,6 +2,7 @@ import { Pool } from "pg";
 
 let heroMigrationPromise: Promise<boolean> | null = null;
 let ctaTransformMigrationPromise: Promise<boolean> | null = null;
+let tickerLogosMigrationPromise: Promise<boolean> | null = null;
 let musicSettingsMigrationPromise: Promise<boolean> | null = null;
 
 function getDbConnectionString(): string | null {
@@ -134,6 +135,36 @@ export async function runCtaTransformMigration(): Promise<boolean> {
   })();
 
   return ctaTransformMigrationPromise;
+}
+
+export async function runTickerLogosMigration(): Promise<boolean> {
+  if (tickerLogosMigrationPromise) return tickerLogosMigrationPromise;
+
+  tickerLogosMigrationPromise = (async () => {
+    const connectionString = getDbConnectionString();
+    if (!connectionString) {
+      console.warn("[DB Migration] No database connection string found for ticker logos");
+      return false;
+    }
+
+    const pool = new Pool({ connectionString });
+    try {
+      await pool.query(`
+        ALTER TABLE public.site_settings
+          ADD COLUMN IF NOT EXISTS cta_ticker_logo_media_ids text NOT NULL DEFAULT '';
+        NOTIFY pgrst, 'reload schema';
+      `);
+      console.log("[DB Migration] Ticker logo media IDs column added successfully");
+      return true;
+    } catch (err) {
+      console.error("[DB Migration] Failed to run ticker logos migration:", err);
+      return false;
+    } finally {
+      await pool.end();
+    }
+  })();
+
+  return tickerLogosMigrationPromise;
 }
 
 /**
