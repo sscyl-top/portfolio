@@ -206,7 +206,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   return (
     <section id="section-featured" className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
-        <h1 className="text-5xl font-semibold text-white md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-copper" data-text-key="works.featuredKicker">Featured Works</p>
+        <h1 className="mt-3 text-5xl font-semibold text-white md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55 md:text-lg" data-text-key="works.featuredDescription">
           从品牌全案、视觉系统到 AIGC 提案能力，先用 7 个关键项目建立第一印象。
         </p>
