@@ -268,8 +268,8 @@ export function CompositeDesignWall({
             />
           </div>
 
-          <div className="cta-logo-ticker absolute inset-x-0 bottom-[105px] z-20 overflow-hidden opacity-70 md:bottom-[118px]">
-            <div className="cta-logo-track flex w-max items-center gap-12 whitespace-nowrap py-2">
+          <div className="cta-logo-ticker absolute inset-x-0 bottom-[72px] z-20 overflow-hidden opacity-70 md:bottom-[82px]">
+            <div className="cta-logo-track flex w-max items-center gap-10 whitespace-nowrap py-2">
               {(() => {
                 const hasCustomLogos = ctaTickerLogoUrls.length > 0;
                 const logoSrcs = hasCustomLogos ? ctaTickerLogoUrls : [infiniteProgressLogo];
@@ -288,7 +288,7 @@ export function CompositeDesignWall({
                       alt=""
                       width={180}
                       height={45}
-                      className="h-auto w-[clamp(100px,11vw,180px)] shrink-0 opacity-55 mix-blend-screen"
+                      className="h-[clamp(32px,4vw,52px)] w-auto shrink-0 opacity-55 mix-blend-screen"
                     />
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -296,7 +296,7 @@ export function CompositeDesignWall({
                       key={i}
                       src={src}
                       alt=""
-                      className="h-auto w-[clamp(100px,11vw,180px)] max-h-[120px] shrink-0 object-contain opacity-55 mix-blend-screen"
+                      className="h-[clamp(32px,4vw,52px)] w-auto shrink-0 object-contain opacity-55 mix-blend-screen"
                     />
                   )
                 ));
