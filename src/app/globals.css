@@ -103,28 +103,31 @@ button {
 @keyframes representative-card-intro {
   0% {
     opacity: 0;
+    filter: blur(14px) saturate(0.7);
     transform:
       translate(-50%, -50%)
-      translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift) + 40px), 0)
+      translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift) + 180px), 0)
       rotate(0deg)
-      rotateX(8deg)
+      rotateX(18deg)
       rotateY(0deg)
-      scale(0.9);
+      scale(0.82);
   }
 
-  60% {
+  56% {
     opacity: 1;
+    filter: blur(0) saturate(1.05);
     transform:
       translate(-50%, -50%)
-      translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift) - 6px), 0)
+      translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift) - 18px), 0)
       rotate(var(--slot-r))
-      rotateX(-2deg)
+      rotateX(-3deg)
       rotateY(0deg)
-      scale(1.015);
+      scale(1.02);
   }
 
   100% {
     opacity: 1;
+    filter: blur(0) saturate(1);
     transform:
       translate(-50%, -50%)
       translate3d(calc(var(--slot-x) + var(--slot-spread)), calc(var(--slot-y) + var(--card-lift)), 0)
@@ -214,8 +217,6 @@ button {
     scale(var(--card-scale));
   transform-style: preserve-3d;
   contain: layout style paint;
-  animation: representative-card-intro 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--intro-delay);
   will-change: transform, opacity;
   transition:
     transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1),

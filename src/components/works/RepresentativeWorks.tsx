@@ -13,7 +13,7 @@ type RepresentativeWorksProps = { works: Work[] };
 type RepresentativeCardStyle = CSSProperties & {
   "--slot-x": string; "--slot-y": string; "--slot-r": string;
   "--slot-spread": string; "--card-lift": string; "--card-scale": number;
-  "--tilt-x": string; "--tilt-y": string; "--intro-delay": string;
+  "--tilt-x": string; "--tilt-y": string;
 };
 
 const fanSlots = [
@@ -56,7 +56,6 @@ const RepresentativeCard = memo(function RepresentativeCard({
     "--card-scale": isActive ? 1.06 : hasActive ? 0.95 : 1,
     "--tilt-x": "0deg",
     "--tilt-y": "0deg",
-    "--intro-delay": `${index * 55}ms`,
   };
 
   return (
