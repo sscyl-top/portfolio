@@ -16,6 +16,33 @@ const uuidOrNull = (val: FormDataEntryValue | null) => {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const isSchemaCacheError = (msg: string) =>
+  /column .* does not exist/i.test(msg) || /schema cache/i.test(msg);
+
+async function retryUpsert(
+  client: ReturnType<typeof createSupabaseServiceClient>,
+  data: Record<string, unknown>,
+  label: string,
+  maxAttempts = 6,
+  delayMs = 3000
+): Promise<string | null> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { error } = await client.from("site_settings").upsert(data, { onConflict: "id" });
+    if (!error) {
+      console.log(`[Settings] ${label} saved successfully`);
+      return null;
+    }
+    if (isSchemaCacheError(error.message) && attempt < maxAttempts - 1) {
+      console.warn(`[Settings] ${label} schema not ready (attempt ${attempt + 1}/${maxAttempts}), waiting...`);
+      await wait(delayMs);
+      continue;
+    }
+    console.error(`[Settings] ${label} save failed:`, error.message);
+    return error.message;
+  }
+  return "schema cache timeout after retries";
+}
+
 export async function saveSiteSettings(formData: FormData) {
   await requireAdmin();
 
@@ -25,8 +52,16 @@ export async function saveSiteSettings(formData: FormData) {
     .map((label, index) => ({ label: label.trim(), url: (urls[index] ?? "").trim() }))
     .filter((link) => link.label && link.url);
 
-  // 1. 基础字段数据（一定存在的列）
-  const baseUpdateData: Record<string, unknown> = {
+  const cta_card_scale = Number(formData.get("cta_card_scale") ?? 1);
+  const cta_card_offset_x = Number(formData.get("cta_card_offset_x") ?? 0);
+  const cta_card_offset_y = Number(formData.get("cta_card_offset_y") ?? 0);
+  const cta_figure_scale = Number(formData.get("cta_figure_scale") ?? 1);
+  const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") ?? 0);
+  const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
+
+  const tickerLogoIdsRaw = String(formData.get("cta_ticker_logo_media_ids") ?? "").trim();
+
+  const baseData: Record<string, unknown> = {
     id: true,
     name: String(formData.get("name") ?? "").trim(),
     nickname: String(formData.get("nickname") ?? "").trim(),
@@ -40,16 +75,12 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),
     cta_figure_media_id: uuidOrNull(formData.get("cta_figure_media_id")),
     cta_ticker_logo_media_id: uuidOrNull(formData.get("cta_ticker_logo_media_id")),
+    hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
+    hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
+    hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
+    hero_side3_video_media_id: uuidOrNull(formData.get("hero_side3_video_media_id")),
     social_links,
   };
-
-  // 2. CTA变换字段
-  const cta_card_scale = Number(formData.get("cta_card_scale") ?? 1);
-  const cta_card_offset_x = Number(formData.get("cta_card_offset_x") ?? 0);
-  const cta_card_offset_y = Number(formData.get("cta_card_offset_y") ?? 0);
-  const cta_figure_scale = Number(formData.get("cta_figure_scale") ?? 1);
-  const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") ?? 0);
-  const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
 
   const ctaTransformData: Record<string, unknown> = {
     id: true,
@@ -61,17 +92,6 @@ export async function saveSiteSettings(formData: FormData) {
     cta_figure_offset_y: isNaN(cta_figure_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_y)),
   };
 
-  // 3. Hero视频字段
-  const heroVideosData: Record<string, unknown> = {
-    id: true,
-    hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
-    hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
-    hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
-    hero_side3_video_media_id: uuidOrNull(formData.get("hero_side3_video_media_id")),
-  };
-
-  // 4. Ticker logos字段
-  const tickerLogoIdsRaw = String(formData.get("cta_ticker_logo_media_ids") ?? "").trim();
   const tickerLogosData: Record<string, unknown> = {
     id: true,
     cta_ticker_logo_media_ids: tickerLogoIdsRaw
@@ -81,69 +101,21 @@ export async function saveSiteSettings(formData: FormData) {
       .join(","),
   };
 
-  // 先尝试运行迁移
-  const heroMigrationOk = await runHeroVideosMigration().catch(() => false);
-  const ctaMigrationOk = await runCtaTransformMigration().catch(() => false);
-  const tickerMigrationOk = await runTickerLogosMigration().catch(() => false);
+  await runHeroVideosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
+  await runTickerLogosMigration().catch(() => {});
 
-  // 等待schema刷新
-  await wait(1500);
+  await wait(3000);
 
   const serviceClient = createSupabaseServiceClient();
-  let hasError = false;
-  let errorMessage = "";
 
-  // 先保存基础字段（必须成功）
-  const tryUpsert = async (data: Record<string, unknown>, label: string, retries = 2) => {
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      const { error } = await serviceClient.from("site_settings").upsert(data, { onConflict: "id" });
-      if (!error) {
-        console.log(`[Settings] ${label} saved successfully`);
-        return true;
-      }
-      if (/column .* does not exist/i.test(error.message) && attempt < retries) {
-        console.warn(`[Settings] ${label} columns not ready, waiting and retrying...`);
-        await wait(2000);
-        continue;
-      }
-      console.error(`[Settings] Failed to save ${label}:`, error.message);
-      return { error: error.message };
-    }
-    return false;
-  };
-
-  // 保存基础字段
-  const baseResult = await tryUpsert(baseUpdateData, "base settings");
-  if (baseResult && typeof baseResult === "object" && "error" in baseResult) {
-    hasError = true;
-    errorMessage = baseResult.error;
+  const baseError = await retryUpsert(serviceClient, baseData, "base settings", 6, 3000);
+  if (baseError) {
+    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${baseError}`)}`);
   }
 
-  // 只有迁移成功时才尝试保存可选字段
-  if (ctaMigrationOk) {
-    const ctaResult = await tryUpsert(ctaTransformData, "CTA transform settings");
-    if (ctaResult && typeof ctaResult === "object" && "error" in ctaResult) {
-      console.warn("[Settings] CTA transform save failed, but base settings saved");
-    }
-  }
-
-  if (heroMigrationOk) {
-    const heroResult = await tryUpsert(heroVideosData, "hero videos settings");
-    if (heroResult && typeof heroResult === "object" && "error" in heroResult) {
-      console.warn("[Settings] Hero videos save failed, but base settings saved");
-    }
-  }
-
-  if (tickerMigrationOk) {
-    const tickerResult = await tryUpsert(tickerLogosData, "ticker logos settings");
-    if (tickerResult && typeof tickerResult === "object" && "error" in tickerResult) {
-      console.warn("[Settings] Ticker logos save failed, but base settings saved");
-    }
-  }
-
-  if (hasError) {
-    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${errorMessage}`)}`);
-  }
+  await retryUpsert(serviceClient, ctaTransformData, "CTA transform", 3, 2000);
+  await retryUpsert(serviceClient, tickerLogosData, "ticker logos", 3, 2000);
 
   revalidatePath("/");
   revalidatePath("/admin/settings");

@@ -15,23 +15,31 @@ function getDbConnectionString(): string | null {
   );
 }
 
-export function getDbPool(): Pool | null {
+function createPool(): Pool | null {
   const connectionString = getDbConnectionString();
   if (!connectionString) return null;
-  return new Pool({ connectionString });
+  return new Pool({
+    connectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+}
+
+export function getDbPool(): Pool | null {
+  return createPool();
 }
 
 export async function runMusicSettingsMigration(): Promise<boolean> {
   if (musicSettingsMigrationPromise) return musicSettingsMigrationPromise;
 
   musicSettingsMigrationPromise = (async () => {
-    const connectionString = getDbConnectionString();
-    if (!connectionString) {
+    const pool = createPool();
+    if (!pool) {
       console.warn("[DB Migration] No database connection string found for music settings");
       return false;
     }
 
-    const pool = new Pool({ connectionString });
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS public.music_settings (
@@ -63,7 +71,7 @@ export async function runMusicSettingsMigration(): Promise<boolean> {
       console.error("[DB Migration] Failed to run music settings migration:", err);
       return false;
     } finally {
-      await pool.end();
+      await pool.end().catch(() => {});
     }
   })();
 
@@ -74,13 +82,12 @@ export async function runHeroVideosMigration(): Promise<boolean> {
   if (heroMigrationPromise) return heroMigrationPromise;
 
   heroMigrationPromise = (async () => {
-    const connectionString = getDbConnectionString();
-    if (!connectionString) {
+    const pool = createPool();
+    if (!pool) {
       console.warn("[DB Migration] No database connection string found in env vars");
       return false;
     }
 
-    const pool = new Pool({ connectionString });
     try {
       await pool.query(`
         ALTER TABLE public.site_settings
@@ -96,7 +103,7 @@ export async function runHeroVideosMigration(): Promise<boolean> {
       console.error("[DB Migration] Failed to run hero videos migration:", err);
       return false;
     } finally {
-      await pool.end();
+      await pool.end().catch(() => {});
     }
   })();
 
@@ -107,13 +114,12 @@ export async function runCtaTransformMigration(): Promise<boolean> {
   if (ctaTransformMigrationPromise) return ctaTransformMigrationPromise;
 
   ctaTransformMigrationPromise = (async () => {
-    const connectionString = getDbConnectionString();
-    if (!connectionString) {
+    const pool = createPool();
+    if (!pool) {
       console.warn("[DB Migration] No database connection string found for CTA transform settings");
       return false;
     }
 
-    const pool = new Pool({ connectionString });
     try {
       await pool.query(`
         ALTER TABLE public.site_settings
@@ -131,7 +137,7 @@ export async function runCtaTransformMigration(): Promise<boolean> {
       console.error("[DB Migration] Failed to run CTA transform migration:", err);
       return false;
     } finally {
-      await pool.end();
+      await pool.end().catch(() => {});
     }
   })();
 
@@ -142,13 +148,12 @@ export async function runTickerLogosMigration(): Promise<boolean> {
   if (tickerLogosMigrationPromise) return tickerLogosMigrationPromise;
 
   tickerLogosMigrationPromise = (async () => {
-    const connectionString = getDbConnectionString();
-    if (!connectionString) {
+    const pool = createPool();
+    if (!pool) {
       console.warn("[DB Migration] No database connection string found for ticker logos");
       return false;
     }
 
-    const pool = new Pool({ connectionString });
     try {
       await pool.query(`
         ALTER TABLE public.site_settings
@@ -161,26 +166,19 @@ export async function runTickerLogosMigration(): Promise<boolean> {
       console.error("[DB Migration] Failed to run ticker logos migration:", err);
       return false;
     } finally {
-      await pool.end();
+      await pool.end().catch(() => {});
     }
   })();
 
   return tickerLogosMigrationPromise;
 }
 
-/**
- * 修复portfolio-media bucket的文件大小限制
- * 使用多种策略确保限制更新成功：
- * 1. 通过SQL直接更新storage.buckets表
- * 2. 通过Supabase Storage API更新bucket配置
- */
 export async function runBucketSizeLimitMigration(): Promise<boolean> {
   let success = false;
   const TEN_GB = 10 * 1024 * 1024 * 1024;
 
-  const connectionString = getDbConnectionString();
-  if (connectionString) {
-    const pool = new Pool({ connectionString });
+  const pool = createPool();
+  if (pool) {
     try {
       await pool.query(`
         UPDATE storage.buckets
@@ -193,7 +191,7 @@ export async function runBucketSizeLimitMigration(): Promise<boolean> {
     } catch (err) {
       console.error("[DB Migration] SQL bucket size update failed:", err);
     } finally {
-      await pool.end();
+      await pool.end().catch(() => {});
     }
   }
 
