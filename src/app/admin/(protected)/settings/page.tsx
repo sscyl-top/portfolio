@@ -55,7 +55,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runCtaTransformMigration().catch(() => {});
 
   // 第一步：查询基础列（一定存在）
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id,social_links";
   const { data: baseData, error: baseError } = await supabase
     .from("site_settings")
     .select(baseColumns)
