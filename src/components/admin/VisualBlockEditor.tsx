@@ -1092,12 +1092,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       }
 
       if (insertAt !== null) {
-        if (draggedId) {
-          const draggedIdx = blocks.findIndex((b) => b.id === draggedId);
-          if (draggedIdx !== -1) {
-            if (insertAt > draggedIdx) insertAt -= 1;
-          }
-        }
         if (insertAt < 0) insertAt = 0;
         if (insertAt > blocks.length) insertAt = blocks.length;
         if (dragOverIndexRef.current !== insertAt) {
