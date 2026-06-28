@@ -80,8 +80,10 @@ function applyNavTextOverrides(
 
 export default async function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  modal: React.ReactNode;
 }>) {
   const repository = await createServerCmsRepository();
   const [settings, navTexts] = await Promise.all([
@@ -98,6 +100,7 @@ export default async function RootLayout({
         <GlobalDragDropPrevention />
         <SiteHeader siteSettings={settings} />
         {children}
+        {modal}
         <FloatingMusicBall />
         <AnalyticsTracker />
         <Analytics />

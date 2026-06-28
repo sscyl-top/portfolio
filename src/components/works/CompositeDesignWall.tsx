@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, BriefcaseBusiness, FileText, MessagesSquare } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { openWorkDetailInNewTab } from "@/lib/open-work-detail";
 
 import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
@@ -160,14 +159,6 @@ export function CompositeDesignWall({
               <Link
                 key={`${work.slug}-${index}`}
                 href={`/works/${work.slug}?from=composite`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                  if (openWorkDetailInNewTab(`/works/${work.slug}?from=composite`)) {
-                    e.preventDefault();
-                  }
-                }}
                 className="group block overflow-hidden rounded-lg border border-white/10 bg-white/[0.035] p-1.5 transition duration-500 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.07] md:p-2"
                 style={{
                   transform: `translateY(${yOffset}px)`,
