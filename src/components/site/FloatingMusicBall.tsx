@@ -62,6 +62,8 @@ export function FloatingMusicBall() {
   const hoverActiveRef = useRef(false);
   const tipIndexRef = useRef(0);
   const dismissedRef = useRef(false);
+  // 使用 ref 存储 advanceTip 函数，避免在 setTimeout 回调中访问未声明的函数
+  const advanceTipRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     currentCatKeyRef.current = currentCategory;
@@ -132,7 +134,11 @@ export function FloatingMusicBall() {
     if (isAdmin && settings.hide_backend) shouldHide = true;
     else if (!isAdmin && settings.hide_frontend) shouldHide = true;
     if (isMobile && settings.hide_mobile) shouldHide = true;
-    setHidden(shouldHide);
+    // 使用 requestAnimationFrame 延迟更新状态，避免在 effect 中直接调用 setState
+    const frameId = requestAnimationFrame(() => {
+      setHidden(shouldHide);
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [settings.hide_frontend, settings.hide_backend, settings.hide_mobile, isMobile]);
 
   const clearTipTimer = useCallback(() => {
@@ -156,44 +162,55 @@ export function FloatingMusicBall() {
     tipTimerRef.current = setTimeout(() => {
       if (dismissedRef.current || isPlayingRef.current) return;
       if (inHover && hoverActiveRef.current) {
-        advanceTip();
+        advanceTipRef.current?.();
       } else {
         setTipOn(false);
-        tipTimerRef.current = setTimeout(advanceTip, TIP_HIDE_MS);
+        tipTimerRef.current = setTimeout(() => advanceTipRef.current?.(), TIP_HIDE_MS);
       }
     }, TIP_SHOW_MS);
   }, []);
 
+  // 将 advanceTip 存储到 ref 中供 setTimeout 回调使用
+  useEffect(() => {
+    advanceTipRef.current = advanceTip;
+  }, [advanceTip]);
+
   useEffect(() => {
     if (!loaded || categories.length === 0 || isPlaying) {
       clearTipTimer();
-      setTipOn(false);
-      return;
+      // 使用 requestAnimationFrame 延迟更新状态
+      const frameId = requestAnimationFrame(() => setTipOn(false));
+      return () => cancelAnimationFrame(frameId);
     }
 
     tipIndexRef.current = 0;
-    setTipIndex(0);
-    setTipKey(0);
-    setDismissed(false);
     dismissedRef.current = false;
+    // 使用 requestAnimationFrame 批量更新状态，避免多次渲染
+    requestAnimationFrame(() => {
+      setTipIndex(0);
+      setTipKey(0);
+      setDismissed(false);
+    });
 
     tipTimerRef.current = setTimeout(() => {
       if (isPlayingRef.current || dismissedRef.current) return;
-      setTipOn(true);
-      setTipKey((k) => k + 1);
+      requestAnimationFrame(() => {
+        setTipOn(true);
+        setTipKey((k) => k + 1);
+      });
       tipTimerRef.current = setTimeout(() => {
         if (isPlayingRef.current || dismissedRef.current) return;
         if (hoverActiveRef.current) {
-          advanceTip();
+          advanceTipRef.current?.();
         } else {
-          setTipOn(false);
-          tipTimerRef.current = setTimeout(advanceTip, TIP_HIDE_MS);
+          requestAnimationFrame(() => setTipOn(false));
+          tipTimerRef.current = setTimeout(() => advanceTipRef.current?.(), TIP_HIDE_MS);
         }
       }, TIP_SHOW_MS);
     }, 800);
 
     return () => clearTipTimer();
-  }, [loaded, categories.length, isPlaying, clearTipTimer, advanceTip]);
+  }, [loaded, categories.length, isPlaying, clearTipTimer]);
 
   useEffect(() => {
     if (!loaded || categories.length === 0 || isPlaying || dismissed) return;
@@ -201,12 +218,15 @@ export function FloatingMusicBall() {
     if (hoverActive) {
       if (!tipOn) {
         clearTipTimer();
-        setTipOn(true);
-        setTipKey((k) => k + 1);
-        tipTimerRef.current = setTimeout(advanceTip, TIP_SHOW_MS);
+        // 使用 requestAnimationFrame 延迟更新状态
+        requestAnimationFrame(() => {
+          setTipOn(true);
+          setTipKey((k) => k + 1);
+        });
+        tipTimerRef.current = setTimeout(() => advanceTipRef.current?.(), TIP_SHOW_MS);
       }
     }
-  }, [hoverActive, loaded, categories.length, isPlaying, dismissed, tipOn, clearTipTimer, advanceTip]);
+  }, [hoverActive, loaded, categories.length, isPlaying, dismissed, tipOn, clearTipTimer]);
 
   const playTrackFromCategory = useCallback((categoryKey: string) => {
     const cat = categoriesRef.current.find((c) => c.key === categoryKey);
@@ -288,9 +308,6 @@ export function FloatingMusicBall() {
   // 隐藏或未加载完成或无音乐时不渲染
   if (hidden || !loaded || categories.length === 0) return null;
 
-  const tipMessages = tipMessagesRef.current;
-  const playingLabel = playingLabelRef.current;
-
   const showTipBubble = !isPlaying && tipOn && !dismissed;
   const showPlayingBar = isPlaying;
 
@@ -313,7 +330,7 @@ export function FloatingMusicBall() {
               <div className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
                 <Volume2 className="h-5 w-5 shrink-0 text-cyan" />
                 <p className="min-w-0 truncate text-sm text-white/90">
-                  {currentTrackTitle || playingLabel}
+                  {currentTrackTitle || settings.playing_label}
                 </p>
               </div>
             ) : null}
@@ -321,7 +338,7 @@ export function FloatingMusicBall() {
             {/* Tip bubble - 和风格选项同样的样式，在同一列 */}
             {showTipBubble ? (
               <div key={tipKey} className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
-                <span className="whitespace-nowrap text-sm text-white/90">{tipMessages[tipIndex] ?? tipMessages[0]}</span>
+                <span className="whitespace-nowrap text-sm text-white/90">{settings.tip_messages[tipIndex] ?? settings.tip_messages[0]}</span>
                 {!hoverActive && (
                   <button
                     onClick={dismissTip}
@@ -336,7 +353,7 @@ export function FloatingMusicBall() {
             {/* 4 个音乐风格选项 - 与弹窗在同一列 */}
             {hoverActive
               ? categories.map((cat, idx) => {
-                  const isCurrentCat = currentCatKeyRef.current === cat.key;
+                  const isCurrentCat = currentCategory === cat.key;
                   return (
                     <button
                       key={cat.id}

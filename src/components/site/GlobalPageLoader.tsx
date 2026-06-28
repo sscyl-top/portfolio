@@ -77,7 +77,10 @@ export function GlobalPageLoader() {
       isFirstMount.current = false;
       return;
     }
-    startAnimation();
+    // 使用 requestAnimationFrame 延迟启动动画，避免在 effect 中直接调用 setState
+    const frameId = requestAnimationFrame(() => {
+      startAnimation();
+    });
     isFirstMount.current = false;
 
     // 监听导航链接点击：仅对主页链接启动延迟定时器
@@ -109,6 +112,7 @@ export function GlobalPageLoader() {
 
     return () => {
       cancelAnimationFrame(animationRef.current);
+      cancelAnimationFrame(frameId);
       window.clearTimeout(timeoutRef.current);
       window.clearTimeout(hideTimeoutRef.current);
       if (navDelayRef.current) {

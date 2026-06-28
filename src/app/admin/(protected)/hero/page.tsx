@@ -109,7 +109,7 @@ export default async function AdminHeroPage({ searchParams }: { searchParams: Pr
                     <span className="font-mono text-[10px] text-white/36">
                       当前: {selectedAsset.original_name}
                     </span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <video
                       src={buildPublicMediaUrl(selectedAsset.storage_key)}
                       muted

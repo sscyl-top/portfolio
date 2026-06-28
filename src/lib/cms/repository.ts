@@ -12,9 +12,8 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
@@ -75,21 +74,6 @@ const SETTINGS_TEXT_KEYS = [
   "cta_center_logo_offset_x",
   "cta_center_logo_offset_y",
 ] as const;
-
-const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
-  cta_card_scale: 1.0,
-  cta_card_offset_x: 0,
-  cta_card_offset_y: 0,
-  cta_figure_scale: 1.0,
-  cta_figure_offset_x: 0,
-  cta_figure_offset_y: 0,
-  cta_ticker_logo_scale: 1.0,
-  cta_ticker_logo_offset_x: 0,
-  cta_ticker_logo_offset_y: 0,
-  cta_center_logo_scale: 1.0,
-  cta_center_logo_offset_x: 0,
-  cta_center_logo_offset_y: 0,
-};
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
   await runHeroVideosMigration().catch(() => {});
@@ -676,36 +660,6 @@ export async function getPrivatePreviewWorkBySlug(slug: string, token: string) {
   return toPublicWork(row, gapMap.get(row.id) ?? false);
 }
 
-type CmsSiteSettingsRow = {
-  name: string;
-  nickname: string;
-  seo_title: string;
-  seo_description: string;
-  avatar_media_id?: string | null;
-  avatar_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  logo_media_id?: string | null;
-  logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  share_media_id?: string | null;
-  share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  cta_card_media_id?: string | null;
-  cta_card_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  cta_figure_media_id?: string | null;
-  cta_figure_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  cta_ticker_logo_media_id?: string | null;
-  cta_ticker_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  cta_center_logo_media_id?: string | null;
-  cta_center_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  hero_main_video_media_id?: string | null;
-  hero_main_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  hero_side1_video_media_id?: string | null;
-  hero_side1_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  hero_side2_video_media_id?: string | null;
-  hero_side2_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  hero_side3_video_media_id?: string | null;
-  hero_side3_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
-  social_links: Array<{ label: string; url: string }> | null;
-};
-
 function getStaticPublicSiteSettings(): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
@@ -730,59 +684,6 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
     seoDescription: settings.description,
     seoTitle: settings.name,
     socialLinks: settings.socialLinks,
-    title: settings.title,
-  };
-}
-
-function toPublicMediaUrl(
-  value: CmsMediaRow | Array<CmsMediaRow> | null | undefined,
-): string | undefined {
-  const media = Array.isArray(value) ? value[0] : value;
-  if (!media?.storage_key) return undefined;
-
-  return buildPublicMediaUrl(media.storage_key);
-}
-
-function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
-  const settings = getStaticSiteSettings();
-  const singleTickerUrl = toPublicMediaUrl(row.cta_ticker_logo_media);
-
-  return {
-    avatarMediaUrl: toPublicMediaUrl(row.avatar_media),
-    ctaCardMediaUrl: toPublicMediaUrl(row.cta_card_media),
-    ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
-    ctaTickerLogoMediaUrl: singleTickerUrl,
-    ctaTickerLogoMediaUrls: singleTickerUrl ? [singleTickerUrl] : [],
-    ctaTickerLogoScale: 1,
-    ctaTickerLogoOffsetX: 0,
-    ctaTickerLogoOffsetY: 0,
-    ctaCenterLogoMediaUrl: toPublicMediaUrl(row.cta_center_logo_media),
-    ctaCenterLogoScale: 1,
-    ctaCenterLogoOffsetX: 0,
-    ctaCenterLogoOffsetY: 0,
-    ctaCardScale: 1,
-    ctaCardOffsetX: 0,
-    ctaCardOffsetY: 0,
-    ctaFigureScale: 1,
-    ctaFigureOffsetX: 0,
-    ctaFigureOffsetY: 0,
-    description: normalizeUtf8(row.seo_description) || settings.description,
-    heroMainVideoUrl: toPublicMediaUrl(row.hero_main_video_media),
-    heroSide1VideoUrl: toPublicMediaUrl(row.hero_side1_video_media),
-    heroSide2VideoUrl: toPublicMediaUrl(row.hero_side2_video_media),
-    heroSide3VideoUrl: toPublicMediaUrl(row.hero_side3_video_media),
-    logoMediaUrl: toPublicMediaUrl(row.logo_media),
-    name: normalizeUtf8(row.name) || settings.name,
-    navigation: settings.navigation,
-    nickname: normalizeUtf8(row.nickname) || settings.logo,
-    seoDescription: normalizeUtf8(row.seo_description) || settings.description,
-    seoTitle: normalizeUtf8(row.seo_title) || settings.name,
-    shareMediaUrl: toPublicMediaUrl(row.share_media),
-    socialLinks:
-      row.social_links?.map((link) => ({
-        href: link.url,
-        label: normalizeUtf8(link.label),
-      })) ?? settings.socialLinks,
     title: settings.title,
   };
 }
@@ -876,18 +777,6 @@ function toPublicWork(row: CmsWorkRow, mediaNoGap: boolean = false): Work {
   };
 }
 
-function safeMapWorks(rows: CmsWorkRow[], context: string): Work[] {
-  const works: Work[] = [];
-  for (const row of rows) {
-    try {
-      works.push(toPublicWork(row, false));
-    } catch (err) {
-      console.error(`[safeMapWorks] 作品转换失败 (${context}), slug=${row.slug}, title=${row.title}:`, err);
-    }
-  }
-  return works;
-}
-
 function getJoinedName(
   value: { name: string } | Array<{ name: string }> | null | undefined,
 ) {
@@ -929,7 +818,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
   const toMedia = (ref: MediaRef) => ({
     alt: ref.alt_text ?? "",
     mimeType: ref.mime_type ?? "",
-    url: buildMediaUrl(ref.storage_key, ref.mime_type),
+    url: buildMediaUrl(ref.storage_key),
     storage_key: ref.storage_key,
   });
 
@@ -1026,7 +915,7 @@ function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] 
     .filter((block): block is NonNullable<typeof block> => block !== null);
 }
 
-function buildMediaUrl(storageKey: string, mimeType?: string): string {
+function buildMediaUrl(storageKey: string): string {
   // 图片直接返回原始 COS/Supabase URL，由 Next.js Image 组件在 Vercel 边缘节点做优化（缩放、格式转换、压缩）
   // 不再使用 COS imageMogr2 做双重处理，避免产生不必要的 COS 回源流量
   return buildPublicMediaUrl(storageKey);
@@ -1039,7 +928,7 @@ function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
   return {
     alt: media.alt_text,
     mimeType: media.mime_type,
-    url: buildMediaUrl(media.storage_key, media.mime_type),
+    url: buildMediaUrl(media.storage_key),
   };
 }
 

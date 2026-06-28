@@ -5,22 +5,23 @@ import { createPortal } from 'react-dom'
 import { Check, X, Type, Palette, Bold, Save } from 'lucide-react'
 import { FONT_FAMILIES, FONT_SIZES, FONT_WEIGHTS } from '@/lib/fonts'
 
-type ActiveEditor = {
+type ActiveEditorState = {
   key: string
-  el: HTMLElement
   originalContent: string
   originalStyles: Record<string, string>
 } | null
 
 export function TextEditorOverlay() {
   const [isAdmin, setIsAdmin] = useState(false)
-  const [active, setActive] = useState<ActiveEditor>(null)
+  const [active, setActive] = useState<ActiveEditorState>(null)
   const [styles, setStyles] = useState<Record<string, string>>({})
   const [panelPos, setPanelPos] = useState({ top: 0, left: 0 })
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set())
   const panelRef = useRef<HTMLDivElement>(null)
   const isSavingRef = useRef(false)
+  // 使用 ref 存储 DOM 元素引用，避免直接修改 state 中的对象属性
+  const activeElRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/check')
@@ -81,27 +82,31 @@ export function TextEditorOverlay() {
     if (el.dataset.fontWeight) existingStyles.fontWeight = el.dataset.fontWeight
     if (el.dataset.color) existingStyles.color = el.dataset.color
 
-    setActive({ key, el, originalContent: el.innerText, originalStyles: { ...existingStyles } })
+    setActive({ key, originalContent: el.innerText, originalStyles: { ...existingStyles } })
+    activeElRef.current = el
     setStyles(existingStyles)
     setSaveStatus('idle')
     requestAnimationFrame(() => updatePanelPosition(el))
   }, [updatePanelPosition, loadGoogleFont])
 
   const cancelEditing = useCallback(() => {
-    if (!active) return
-    active.el.innerText = active.originalContent
-    active.el.removeAttribute('contenteditable')
-    active.el.classList.remove('outline', 'outline-2', 'outline-cyan/60', 'rounded', 'outline-offset-2')
+    if (!active || !activeElRef.current) return
+    const el = activeElRef.current
+    el.innerText = active.originalContent
+    el.removeAttribute('contenteditable')
+    el.classList.remove('outline', 'outline-2', 'outline-cyan/60', 'rounded', 'outline-offset-2')
+    activeElRef.current = null
     setActive(null)
     setSaveStatus('idle')
   }, [active])
 
   const save = useCallback(async () => {
-    if (!active || isSavingRef.current) return
+    if (!active || !activeElRef.current || isSavingRef.current) return
+    const el = activeElRef.current
     isSavingRef.current = true
     setSaveStatus('saving')
     try {
-      const newContent = active.el.innerText
+      const newContent = el.innerText
       const res = await fetch('/api/text-content', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -116,22 +121,23 @@ export function TextEditorOverlay() {
       })
       const data = await res.json()
       if (res.ok && data.success) {
-        active.el.removeAttribute('contenteditable')
-        active.el.classList.remove('outline', 'outline-2', 'outline-cyan/60', 'rounded', 'outline-offset-2')
+        el.removeAttribute('contenteditable')
+        el.classList.remove('outline', 'outline-2', 'outline-cyan/60', 'rounded', 'outline-offset-2')
         if (data.styles) {
-          if (data.styles.fontSize) active.el.dataset.fontSize = data.styles.fontSize
-          if (data.styles.fontFamily) active.el.dataset.fontFamily = data.styles.fontFamily
-          if (data.styles.fontWeight) active.el.dataset.fontWeight = data.styles.fontWeight
-          if (data.styles.color) active.el.dataset.color = data.styles.color
+          if (data.styles.fontSize) el.dataset.fontSize = data.styles.fontSize
+          if (data.styles.fontFamily) el.dataset.fontFamily = data.styles.fontFamily
+          if (data.styles.fontWeight) el.dataset.fontWeight = data.styles.fontWeight
+          if (data.styles.color) el.dataset.color = data.styles.color
         }
         setSaveStatus('saved')
+        activeElRef.current = null
         setActive(null)
         setTimeout(() => setSaveStatus('idle'), 2000)
       } else {
         throw new Error(data.error)
       }
     } catch {
-      if (active) active.el.innerText = active.originalContent
+      if (active) el.innerText = active.originalContent
       setSaveStatus('error')
       setTimeout(() => setSaveStatus('idle'), 2000)
     } finally {
@@ -148,17 +154,17 @@ export function TextEditorOverlay() {
       } else {
         delete next[field]
       }
-      if (active) {
-        if (field === 'fontSize' && value) active.el.classList.add(value)
+      if (activeElRef.current) {
+        if (field === 'fontSize' && value) activeElRef.current.classList.add(value)
         else if (field === 'fontSize') {
-          FONT_SIZES.forEach(s => s.value && active.el.classList.remove(s.value))
+          FONT_SIZES.forEach(s => s.value && activeElRef.current?.classList.remove(s.value))
         }
-        if (field === 'fontWeight' && value) active.el.classList.add(value)
+        if (field === 'fontWeight' && value) activeElRef.current.classList.add(value)
         else if (field === 'fontWeight') {
-          FONT_WEIGHTS.forEach(w => w.value && active.el.classList.remove(w.value))
+          FONT_WEIGHTS.forEach(w => w.value && activeElRef.current?.classList.remove(w.value))
         }
-        if (field === 'fontFamily') active.el.style.fontFamily = value
-        if (field === 'color') active.el.style.color = value
+        if (field === 'fontFamily') activeElRef.current.style.fontFamily = value
+        if (field === 'color') activeElRef.current.style.color = value
       }
       return next
     })
@@ -179,8 +185,8 @@ export function TextEditorOverlay() {
     }
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (!active) return
-      if (active.el.contains(e.target as Node) || panelRef.current?.contains(e.target as Node)) return
+      if (!activeElRef.current) return
+      if (activeElRef.current.contains(e.target as Node) || panelRef.current?.contains(e.target as Node)) return
       save()
     }
 
@@ -197,7 +203,7 @@ export function TextEditorOverlay() {
     }
 
     const handleScroll = () => {
-      if (active) updatePanelPosition(active.el)
+      if (activeElRef.current) updatePanelPosition(activeElRef.current)
     }
 
     document.addEventListener('dblclick', handleDblClick)

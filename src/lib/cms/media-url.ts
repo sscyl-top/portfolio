@@ -1,6 +1,6 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { isR2Configured } from "@/lib/r2/config";
-import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
+import { isCosPublicConfigured } from "@/lib/cos/config";
 
 /**
  * R2 上传的文件 storage_key 以 "r2/" 前缀标记。

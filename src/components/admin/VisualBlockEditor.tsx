@@ -546,7 +546,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         return prev.map((b) => {
           if (b.id !== blockId) return b;
           const currentLayout = getLayout(b.payload);
-          let mergedLayout: Record<string, unknown> = { ...currentLayout, ...patch };
+          const mergedLayout: Record<string, unknown> = { ...currentLayout, ...patch };
           // 切换到"自由"宽度时，自动初始化 free 字段（如果尚未设置）
           if (patch.width === "free" && !mergedLayout.free) {
             mergedLayout.free = { x: 0, y: 0, w: 50, h: 50 };

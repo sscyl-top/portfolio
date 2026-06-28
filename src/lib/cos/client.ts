@@ -1,5 +1,5 @@
 import COS from "cos-nodejs-sdk-v5";
-import { getCosConfig, type CosConfig } from "./config";
+import { getCosConfig } from "./config";
 
 export type { CosConfig } from "./config";
 export { isCosConfigured, getCosConfig, buildCosPublicUrl } from "./config";

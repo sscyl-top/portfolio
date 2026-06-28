@@ -57,9 +57,13 @@ export function AdminButton({
 
   useEffect(() => {
     if (showSuccess) {
-      setShowSuccessState(true);
-      if (successTimerRef.current) clearTimeout(successTimerRef.current);
-      successTimerRef.current = setTimeout(() => setShowSuccessState(false), 2200);
+      // 使用 requestAnimationFrame 延迟启动，避免在 effect 中直接调用 setState
+      const frameId = requestAnimationFrame(() => {
+        setShowSuccessState(true);
+        if (successTimerRef.current) clearTimeout(successTimerRef.current);
+        successTimerRef.current = setTimeout(() => setShowSuccessState(false), 2200);
+      });
+      return () => cancelAnimationFrame(frameId);
     }
     return () => {
       if (successTimerRef.current) clearTimeout(successTimerRef.current);

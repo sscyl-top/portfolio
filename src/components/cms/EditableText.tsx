@@ -192,6 +192,8 @@ export function EditableText({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isEditing, save, content])
 
+  // 使用 any 以支持动态 HTML 标签类型（div | span）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Comp = Tag as any
 
   const fontSizeClass = styles.fontSize ?? ''

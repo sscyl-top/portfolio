@@ -201,15 +201,15 @@ function MediaBlock({
   tone: string;
   noGap?: boolean;
 }) {
+  // 图库 Lightbox 状态 - 必须在条件返回之前声明以遵守 hooks 规则
+  const [lightboxIdx, setLightboxIdx] = useState(-1);
+
   if (block.items.length === 0) return null;
 
   const isFree = block.layout?.width === "free";
   const free = block.layout?.free;
   const isGallery = block.type === "gallery";
   const isSingle = !isGallery && !isFree;
-
-  // 图库 Lightbox 状态
-  const [lightboxIdx, setLightboxIdx] = useState(-1);
 
   // 画廊列数
   const cols = isGallery
