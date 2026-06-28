@@ -1,7 +1,11 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { isR2Configured, buildR2PublicUrl } from "@/lib/r2/config";
 import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 export function buildPublicMediaUrl(storageKey: string) {
+  if (isR2Configured()) {
+    return buildR2PublicUrl(storageKey);
+  }
   if (isCosPublicConfigured()) {
     return buildCosPublicUrl(storageKey);
   }
@@ -22,6 +26,10 @@ export function buildOptimizedMediaUrl(
   options: OptimizedMediaOptions = {},
 ) {
   const baseUrl = buildPublicMediaUrl(storageKey);
+
+  if (isR2Configured()) {
+    return baseUrl;
+  }
 
   if (isCosPublicConfigured()) {
     const parts: string[] = [];

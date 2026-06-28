@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Check, Filter, Search, X as XIcon } from "lucide-react";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { uploadMediaFiles } from "@/lib/cms/upload-media";
 import { DragDropUpload } from "./DragDropUpload";
 
 type MediaOption = {
@@ -125,76 +126,19 @@ export function MediaPicker({
     setUploadProgress({});
 
     try {
-      for (const file of files) {
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
+      const results = await uploadMediaFiles(files, (p) => setUploadProgress({ ...p }));
 
-        // Step 1: Request signed upload URL
-        const signRes = await fetch("/api/media/sign-upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            fileSize: file.size,
-          }),
+      if (mode === "single" && results.length > 0) {
+        setSelected(new Set([results[0].id]));
+      } else if (results.length > 0) {
+        setSelected((prev) => {
+          const next = new Set(prev);
+          results.forEach((r) => next.add(r.id));
+          return next;
         });
-
-        const signData = await signRes.json();
-        if (!signRes.ok) {
-          throw new Error(signData.error || "获取上传凭证失败");
-        }
-
-        // Step 2: Upload file directly to Supabase Storage
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 50 }));
-
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const pct = 50 + Math.round((event.loaded / event.total) * 50);
-              setUploadProgress((prev) => ({ ...prev, [file.name]: pct }));
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              reject(new Error(`文件上传失败 (HTTP ${xhr.status})`));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error("网络连接失败，请检查网络"));
-          
-          xhr.open("PUT", signData.signedUrl);
-          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-          xhr.send(file);
-        });
-
-        // Step 3: Register media in database
-        const regRes = await fetch("/api/media/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            storage_key: signData.storageKey,
-            original_name: file.name,
-            mime_type: file.type,
-            byte_size: file.size,
-          }),
-        });
-
-        const regData = await regRes.json();
-        if (!regRes.ok) {
-          throw new Error(regData.error || "数据库记录保存失败");
-        }
-
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }));
       }
 
       setUploadMessage({ type: "ok", text: `成功上传 ${files.length} 个文件` });
-      
-      // Refresh the page to show newly uploaded media
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       setUploadMessage({ type: "error", text: (err as Error).message });

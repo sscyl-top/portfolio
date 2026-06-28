@@ -4,6 +4,7 @@ import { useCallback, useRef, useState, useTransition } from "react";
 import { Music, Pause, Play, Plus, Save, Settings as SettingsIcon, Trash2, Upload, X, PlusCircle, Eye, EyeOff, Check, Smartphone } from "lucide-react";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { uploadMediaFiles } from "@/lib/cms/upload-media";
 
 import {
   addMusicTrack,
@@ -395,65 +396,28 @@ function CategorySection({
       if (!file.type.startsWith("audio/")) {
         throw new Error("请上传音频文件");
       }
-      if (file.size > 30 * 1024 * 1024) {
-        throw new Error("文件不能超过30MB");
+      if (file.size > 100 * 1024 * 1024) {
+        throw new Error("文件不能超过100MB");
       }
 
-      // Step 1: 获取签名URL
-      const signRes = await fetch("/api/media/sign-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || "audio/mpeg",
-          fileSize: file.size,
-        }),
-      });
-      const signData = await signRes.json();
-      if (!signRes.ok) throw new Error(signData.error || "获取上传凭证失败");
-
-      // Step 2: 直传Supabase Storage（绕过Vercel大小限制）
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`上传失败 (HTTP ${xhr.status})`));
-        };
-        xhr.onerror = () => reject(new Error("网络错误"));
-        xhr.ontimeout = () => reject(new Error("上传超时"));
-        xhr.timeout = 300000;
-        xhr.open("PUT", signData.signedUrl);
-        xhr.setRequestHeader(
-          "Content-Type",
-          file.type || "application/octet-stream",
-        );
-        xhr.send(file);
+      setProgress(0);
+      const results = await uploadMediaFiles([file], (p) => {
+        const pct = p[file.name];
+        if (typeof pct === "number" && pct >= 0) {
+          setProgress(pct);
+        }
       });
 
-      // Step 3: 注册media记录
-      const regRes = await fetch("/api/media/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storage_key: signData.storageKey,
-          original_name: file.name,
-          mime_type: file.type || "audio/mpeg",
-          byte_size: file.size,
-          alt_text: title || file.name,
-        }),
-      });
-      const regData = await regRes.json();
-      if (!regRes.ok) throw new Error(regData.error || "注册失败");
+      if (!results || results.length === 0) {
+        throw new Error("上传失败");
+      }
 
-      // Step 4: 关联到音乐分类
+      const mediaResult = results[0];
+      const mediaId = mediaResult.id;
+
       const formData = new FormData();
       formData.append("categoryId", category.id);
-      formData.append("mediaId", regData.id);
+      formData.append("mediaId", mediaId);
       formData.append("title", title || file.name.replace(/\.[^.]+$/, ""));
       const result = await addMusicTrack(formData);
       if ("error" in result && result.error) {
