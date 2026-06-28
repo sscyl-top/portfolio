@@ -49,9 +49,9 @@ export function EmbedBlock({ heading, url, embedType, caption }: Props) {
   return (
     <div className="space-y-3">
       {heading ? (
-        <h2 className="text-2xl font-semibold text-white">{heading}</h2>
+        <h2 className="text-2xl font-semibold text-ink">{heading}</h2>
       ) : null}
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-black/40">
+      <div className="overflow-hidden rounded-lg border border-edge-2 bg-panel">
         <div className="relative aspect-video w-full">
           <iframe
             src={src}
@@ -64,7 +64,7 @@ export function EmbedBlock({ heading, url, embedType, caption }: Props) {
         </div>
       </div>
       {caption ? (
-        <p className="text-sm font-medium text-white/54">{caption}</p>
+        <p className="text-sm font-medium text-ink-3">{caption}</p>
       ) : null}
     </div>
   );

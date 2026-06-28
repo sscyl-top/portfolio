@@ -66,7 +66,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
-      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-white/35 hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
+      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-edge hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
@@ -317,7 +317,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                           <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-ink-2">{work.subtitle}</p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {work.tags.slice(0, 1).map((tag) => (
-                              <span key={tag} className="rounded-full border border-edge-2 bg-white/[0.05] px-2 py-0.5 font-mono text-[9px] text-ink-3">{tag}</span>
+                              <span key={tag} className="rounded-full border border-edge-2 bg-surface-2 px-2 py-0.5 font-mono text-[9px] text-ink-3">{tag}</span>
                             ))}
                           </div>
                         </div>
@@ -334,7 +334,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
             {displayWorks.map((_, i) => (
               <span key={i}
                 className={`h-1.5 rounded-full transition-all duration-250 ${
-                  i === centerIndex ? "w-6 bg-copper" : "w-1.5 bg-white/20"
+                  i === centerIndex ? "w-6 bg-copper" : "w-1.5 bg-edge-2"
                 }`} />
             ))}
           </div>

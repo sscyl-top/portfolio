@@ -9,7 +9,7 @@ export function QuoteBlock({ heading, text, author, role }: Props) {
   return (
     <div className="space-y-4">
       {heading ? (
-        <h2 className="text-2xl font-semibold text-white">{heading}</h2>
+        <h2 className="text-2xl font-semibold text-ink">{heading}</h2>
       ) : null}
       <blockquote className="relative border-l-2 border-copper pl-6">
         {/* 大引号装饰 */}
@@ -19,10 +19,10 @@ export function QuoteBlock({ heading, text, author, role }: Props) {
         >
           &ldquo;
         </span>
-        <p className="text-lg leading-8 text-white/80">{text}</p>
+        <p className="text-lg leading-8 text-ink">{text}</p>
         <footer className="mt-3 text-sm">
           <span className="font-medium text-copper">{author}</span>
-          {role ? <span className="text-white/45"> · {role}</span> : null}
+          {role ? <span className="text-ink-3"> · {role}</span> : null}
         </footer>
       </blockquote>
     </div>

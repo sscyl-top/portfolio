@@ -71,7 +71,7 @@ export function PdfBlockRenderer({ storageKey, caption }: PdfBlockRendererProps)
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-sm text-white/50">正在加载 PDF...</p>
+        <p className="text-sm text-ink-3">正在加载 PDF...</p>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export function PdfBlockRenderer({ storageKey, caption }: PdfBlockRendererProps)
       ))}
       
       {caption ? (
-        <p className="text-center text-sm text-white/60">{caption}</p>
+        <p className="text-center text-sm text-ink-2">{caption}</p>
       ) : null}
     </div>
   );

@@ -9,7 +9,7 @@ export default function WorksLoading() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className="h-9 w-20 animate-pulse rounded-full bg-white/[0.05]"
+            className="h-9 w-20 animate-pulse rounded-full bg-surface-2"
           />
         ))}
       </div>

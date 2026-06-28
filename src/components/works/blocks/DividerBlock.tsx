@@ -15,7 +15,7 @@ export function DividerBlock({ style }: Props) {
 
   return (
     <hr
-      className={`border-t border-white/15 ${borderStyleClass}`}
+      className={`border-t border-edge ${borderStyleClass}`}
       aria-hidden="true"
     />
   );

@@ -98,7 +98,7 @@ export default async function ResumePage() {
               <a
                 href={resume.downloads.pdf}
                 download
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-[13px] font-medium text-black transition hover:bg-copper md:px-5 md:py-3 md:text-sm"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-page-bg transition hover:bg-copper md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
                 下载简历 PDF

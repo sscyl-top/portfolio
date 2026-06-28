@@ -9,16 +9,16 @@ export function StatsBlock({ heading, items }: Props) {
   return (
     <div className="space-y-4">
       {heading ? (
-        <h2 className="text-2xl font-semibold text-white">{heading}</h2>
+        <h2 className="text-2xl font-semibold text-ink">{heading}</h2>
       ) : null}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {items.map((item, i) => (
           <div
             key={`${item.label}-${i}`}
-            className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-center"
+            className="rounded-lg border border-edge-2 bg-surface-3 p-4 text-center"
           >
             <p className="text-3xl font-semibold text-copper">{item.value}</p>
-            <p className="mt-1 text-sm text-white/50">{item.label}</p>
+            <p className="mt-1 text-sm text-ink-3">{item.label}</p>
           </div>
         ))}
       </div>

@@ -47,9 +47,9 @@ export function CalloutBlock({ heading, text, icon, tone }: Props) {
         />
         <div className="space-y-1">
           {heading ? (
-            <p className="font-semibold text-white">{heading}</p>
+            <p className="font-semibold text-ink">{heading}</p>
           ) : null}
-          <p className="text-sm leading-7 text-white/70">{text}</p>
+          <p className="text-sm leading-7 text-ink-2">{text}</p>
         </div>
       </div>
     </div>

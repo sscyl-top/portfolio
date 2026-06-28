@@ -360,7 +360,7 @@ export function CompositeDesignWall({
               </Link>
               <Link
                 href="/resume#hiring-contact"
-                className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-cyan sm:w-52"
+                className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-ink px-6 text-sm font-semibold text-page-bg transition hover:bg-cyan sm:w-52"
                 data-text-key="works.ctaHiring"
               >
                 <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />

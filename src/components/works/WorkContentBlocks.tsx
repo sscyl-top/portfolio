@@ -202,10 +202,10 @@ function TextBlock({ block, isModal = false }: { block: Extract<ContentBlock, { 
         : "text-left";
   return (
     <section className={`py-14 md:py-20 ${textWidthClass(block.layout, isModal)} ${align}`}>
-      <h2 className="text-2xl font-semibold text-white md:text-3xl">
+      <h2 className="text-2xl font-semibold text-ink md:text-3xl">
         {block.heading}
       </h2>
-      <p className="mt-5 whitespace-pre-wrap text-base leading-8 text-white/62 md:text-lg md:leading-9">
+      <p className="mt-5 whitespace-pre-wrap text-base leading-8 text-ink-2 md:text-lg md:leading-9">
         {block.body}
       </p>
     </section>
@@ -250,7 +250,7 @@ function MediaBlock({
   return (
     <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
-        <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
+        <p className={`text-sm font-medium text-ink-3 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
 
       <div
@@ -402,7 +402,7 @@ function VideoBlock({
   return (
     <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
-        <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
+        <p className={`text-sm font-medium text-ink-3 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
       <SmartVideo
         src={block.items[0].url}
@@ -419,7 +419,7 @@ function PdfBlock({ block, isModal = false }: { block: Extract<ContentBlock, { t
   return (
     <section className={`py-8 ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
-        <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
+        <p className="mb-4 text-sm font-medium text-ink-3">{block.caption}</p>
       ) : null}
       {pdf.storage_key ? (
         <PdfBlockRenderer storageKey={pdf.storage_key} caption={block.caption} />
@@ -428,7 +428,7 @@ function PdfBlock({ block, isModal = false }: { block: Extract<ContentBlock, { t
           href={pdf.url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 p-4 text-sm text-white/70 transition hover:border-white/25 hover:text-white"
+          className="flex items-center gap-3 rounded-md border border-edge-2 bg-surface-2 p-4 text-sm text-ink-2 transition hover:border-edge hover:text-ink"
         >
           <svg className="h-6 w-6 text-orange-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -451,15 +451,15 @@ function BeforeAfterBlock({
 }) {
   return (
     <section className={`py-8 ${layoutWidthClass(block.layout, isModal)}`}>
-      {block.heading ? <h2 className="mb-6 text-2xl font-semibold text-white">{block.heading}</h2> : null}
-      {block.note ? <p className="mb-6 text-white/58">{block.note}</p> : null}
+      {block.heading ? <h2 className="mb-6 text-2xl font-semibold text-ink">{block.heading}</h2> : null}
+      {block.note ? <p className="mb-6 text-ink-2">{block.note}</p> : null}
       <div className="grid gap-4 md:grid-cols-2">
         {[block.beforeMedia, block.afterMedia].map((media, i) => (
           <div key={i} className="space-y-2">
-            <span className="font-mono text-xs text-white/40">
+            <span className="font-mono text-xs text-ink-4">
               {i === 0 ? block.beforeLabel : block.afterLabel}
             </span>
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-white/[0.03]">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-surface-3">
               {media ? (
                 <WorkMediaFrame media={media} tone={tone as never} className="w-full" />
               ) : (

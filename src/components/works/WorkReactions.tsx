@@ -177,7 +177,7 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
     () =>
       liked
         ? "border-copper/40 bg-copper/[0.08] text-copper"
-        : "border-white/10 bg-white/[0.025] text-white/55 hover:text-white",
+        : "border-edge-2 bg-surface-3 text-ink-3 hover:text-ink",
     [liked],
   );
 
@@ -205,7 +205,7 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
           type="button"
           onClick={toggleComments}
           aria-expanded={commentsOpen}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.025] px-4 py-2 text-sm text-white/55 transition hover:text-white"
+          className="inline-flex items-center gap-2 rounded-full border border-edge-2 bg-surface-3 px-4 py-2 text-sm text-ink-3 transition hover:text-ink"
         >
           <MessageCircle aria-hidden="true" className="h-4 w-4" />
           <span className="text-xs">评论</span>
@@ -214,15 +214,15 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
 
       {/* 评论区域 */}
       {commentsOpen ? (
-        <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.025] p-5">
+        <div className="mt-5 rounded-lg border border-edge-2 bg-surface-3 p-5">
           {/* 评论列表 */}
           <div className="space-y-4">
             {commentsLoading && comments.length === 0 ? (
-              <p className="py-6 text-center text-xs text-white/30">
+              <p className="py-6 text-center text-xs text-ink-4">
                 加载中…
               </p>
             ) : comments.length === 0 ? (
-              <p className="py-6 text-center text-xs text-white/30">
+              <p className="py-6 text-center text-xs text-ink-4">
                 还没有评论，来说点什么吧
               </p>
             ) : (
@@ -230,17 +230,17 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
                 {comments.map((comment) => (
                   <li
                     key={comment.id}
-                    className="border-b border-white/8 pb-4 last:border-0 last:pb-0"
+                    className="border-b border-edge-3 pb-4 last:border-0 last:pb-0"
                   >
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-medium text-white/80">
+                      <span className="text-sm font-medium text-ink">
                         {comment.author_name || "匿名"}
                       </span>
-                      <span className="shrink-0 font-mono text-[10px] text-white/25">
+                      <span className="shrink-0 font-mono text-[10px] text-ink-4">
                         {formatRelativeTime(comment.created_at)}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm leading-6 text-white/62">
+                    <p className="mt-1 text-sm leading-6 text-ink-2">
                       {comment.content}
                     </p>
                   </li>
@@ -252,7 +252,7 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
           {/* 提交表单 */}
           <form
             onSubmit={submitComment}
-            className="mt-5 space-y-3 border-t border-white/8 pt-5"
+            className="mt-5 space-y-3 border-t border-edge-3 pt-5"
           >
             {/* Honeypot：对用户隐藏，机器人会填充 */}
             <input
@@ -271,7 +271,7 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder="昵称（可选）"
               maxLength={60}
-              className="w-full rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 placeholder:text-white/30 focus:border-copper/40 focus:outline-none"
+              className="w-full rounded-md border border-edge-2 bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-4 focus:border-copper/40 focus:outline-none"
             />
             <textarea
               value={content}
@@ -280,10 +280,10 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
               maxLength={1000}
               rows={3}
               required
-              className="w-full resize-none rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm leading-6 text-white/80 placeholder:text-white/30 focus:border-copper/40 focus:outline-none"
+              className="w-full resize-none rounded-md border border-edge-2 bg-surface-2 px-3 py-2 text-sm leading-6 text-ink placeholder:text-ink-4 focus:border-copper/40 focus:outline-none"
             />
             <div className="flex items-center justify-between gap-3">
-              <span className="font-mono text-[10px] text-white/25">
+              <span className="font-mono text-[10px] text-ink-4">
                 {content.length}/1000
               </span>
               <button
@@ -296,7 +296,7 @@ export function WorkReactions({ workSlug }: WorkReactionsProps) {
               </button>
             </div>
             {submitMessage ? (
-              <p className="text-xs text-white/45">{submitMessage}</p>
+              <p className="text-xs text-ink-3">{submitMessage}</p>
             ) : null}
           </form>
         </div>

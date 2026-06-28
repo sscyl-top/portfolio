@@ -76,13 +76,13 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
   if (!workSlug) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#181a1e]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-panel">
       <div className="min-h-screen">
-        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#181a1e]/90 px-4 py-4 backdrop-blur-xl md:px-8">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-edge-2 bg-panel/90 px-4 py-4 backdrop-blur-xl md:px-8">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-2 text-sm text-white/45 transition hover:text-white"
+            className="inline-flex items-center gap-2 text-sm text-ink-3 transition hover:text-ink"
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             返回作品列表
@@ -90,7 +90,7 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/45 transition hover:border-white/25 hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-edge-2 text-ink-3 transition hover:border-edge hover:text-ink"
             aria-label="关闭"
           >
             <X className="h-4 w-4" />
@@ -99,7 +99,7 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
 
         {loading && !work ? (
           <div className="flex h-96 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-edge-2 border-t-ink" />
           </div>
         ) : work ? (
           <>
@@ -108,20 +108,20 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
                 <p className="font-mono text-xs uppercase tracking-[0.26em] text-copper">
                   {work.category} / {work.year}
                 </p>
-                <h1 className="mt-4 text-4xl font-black leading-[0.9] tracking-tight text-white md:text-6xl lg:text-7xl">
+                <h1 className="mt-4 text-4xl font-black leading-[0.9] tracking-tight text-ink md:text-6xl lg:text-7xl">
                   {work.title}
                 </h1>
               </div>
 
-              <div className="mt-8 grid gap-8 border-y border-white/10 py-8 md:mt-12 md:grid-cols-[1fr_auto] md:items-start">
-                <p className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-white/62 md:text-lg md:leading-9">
+              <div className="mt-8 grid gap-8 border-y border-edge-2 py-8 md:mt-12 md:grid-cols-[1fr_auto] md:items-start">
+                <p className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-ink-2 md:text-lg md:leading-9">
                   {work.summary}
                 </p>
                 <div className="flex flex-wrap gap-2 md:flex-col md:items-end">
                   {work.tags.concat(work.tools).map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/52"
+                      className="rounded-full border border-edge-2 bg-surface-2 px-3 py-1 font-mono text-xs text-ink-3"
                     >
                       {tag}
                     </span>
@@ -139,8 +139,8 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
             </section>
 
             {relatedWorks.length > 0 ? (
-              <aside className="mx-auto mt-16 max-w-5xl border-t border-white/10 px-5 pt-10 md:px-8">
-                <h2 className="text-2xl font-semibold text-white">
+              <aside className="mx-auto mt-16 max-w-5xl border-t border-edge-2 px-5 pt-10 md:px-8">
+                <h2 className="text-2xl font-semibold text-ink">
                   相关作品
                 </h2>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -150,7 +150,7 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
                       href={`/works/${related.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.035] p-5 text-white/70 transition hover:border-white/30 hover:text-white"
+                      className="flex items-center justify-between rounded-lg border border-edge-2 bg-surface-3 p-5 text-ink-2 transition hover:border-edge hover:text-ink"
                     >
                       {related.title}
                       <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function WorkDetailExpander({ workSlug, onClose, allWorks = [] }: WorkDet
             ) : null}
           </>
         ) : (
-          <div className="flex h-96 items-center justify-center text-white/40">
+          <div className="flex h-96 items-center justify-center text-ink-4">
             作品加载失败
           </div>
         )}
