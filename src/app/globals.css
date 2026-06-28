@@ -44,12 +44,12 @@
   --ink-2: rgba(28, 25, 23, 0.62);
   --ink-3: rgba(28, 25, 23, 0.45);
   --ink-4: rgba(28, 25, 23, 0.28);
-  --surface: rgba(0, 0, 0, 0.04);
-  --surface-2: rgba(0, 0, 0, 0.025);
-  --surface-3: rgba(0, 0, 0, 0.015);
-  --edge: rgba(28, 25, 23, 0.15);
-  --edge-2: rgba(28, 25, 23, 0.10);
-  --edge-3: rgba(28, 25, 23, 0.06);
+  --surface: rgba(0, 0, 0, 0.06);
+  --surface-2: rgba(0, 0, 0, 0.04);
+  --surface-3: rgba(0, 0, 0, 0.03);
+  --edge: rgba(28, 25, 23, 0.16);
+  --edge-2: rgba(28, 25, 23, 0.12);
+  --edge-3: rgba(28, 25, 23, 0.08);
   --overlay: rgba(0, 0, 0, 0.12);
   --overlay-2: rgba(0, 0, 0, 0.06);
   --glass: rgba(255, 255, 255, 0.72);

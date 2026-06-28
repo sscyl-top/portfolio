@@ -312,7 +312,7 @@ export function ContactForm({
           <button
             type="submit"
             disabled={status === "pending"}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-edge bg-[#edf8ff] px-6 text-sm font-semibold text-ink transition hover:bg-[#f6fcff] disabled:cursor-wait disabled:opacity-55"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-edge bg-[#edf8ff] px-6 text-sm font-semibold text-ink transition hover:bg-[#f6fcff] [.light_&]:bg-cyan/15 [.light_&]:hover:bg-cyan/20 disabled:cursor-wait disabled:opacity-55"
           >
             <Send aria-hidden="true" className="h-4 w-4" />
             {status === "pending" ? "正在发送" : "发送消息"}
