@@ -19,6 +19,7 @@ type SettingsRow = {
   seo_title: string;
   seo_description: string;
   logo_media_id: string | null;
+  name_media_id: string | null;
   avatar_media_id: string | null;
   share_media_id: string | null;
   cta_card_media_id: string | null;
@@ -81,7 +82,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_center_logo_offset_y",
   ] as const;
 
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,name_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
 
   let data: SettingsRow | null = null;
 
@@ -170,6 +171,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         seo_title: baseData.seo_title,
         seo_description: baseData.seo_description,
         logo_media_id: baseData.logo_media_id ?? null,
+        name_media_id: baseData.name_media_id ?? null,
         avatar_media_id: baseData.avatar_media_id ?? null,
         share_media_id: baseData.share_media_id ?? null,
         cta_card_media_id: baseData.cta_card_media_id ?? null,
@@ -201,6 +203,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     seo_title: `${siteSettings.name} | ${siteSettings.title}`,
     seo_description: siteSettings.description,
     logo_media_id: null,
+    name_media_id: null,
     avatar_media_id: null,
     share_media_id: null,
     cta_card_media_id: null,
@@ -269,6 +272,13 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             label="简称"
             name="nickname"
             defaultValue={settings.nickname}
+          />
+          <SettingsMediaField
+            label="站点名称图片（可选）"
+            name="name_media_id"
+            assets={mediaAssets}
+            defaultValue={settings.name_media_id ?? ""}
+            hint="导航栏左侧站点名称位置的图片，支持 PNG（推荐）/JPG/GIF/WEBP/SVG。上传后将替换文字显示"
           />
           <label className="grid gap-2 text-sm">
             <span className="text-white/58">默认主题</span>

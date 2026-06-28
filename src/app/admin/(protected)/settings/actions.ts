@@ -108,6 +108,7 @@ export async function saveSiteSettings(formData: FormData) {
     seo_title: String(formData.get("seo_title") ?? "").trim(),
     seo_description: String(formData.get("seo_description") ?? "").trim(),
     logo_media_id: uuidOrNull(formData.get("logo_media_id")),
+    name_media_id: uuidOrNull(formData.get("name_media_id")),
     avatar_media_id: uuidOrNull(formData.get("avatar_media_id")),
     share_media_id: uuidOrNull(formData.get("share_media_id")),
     cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),

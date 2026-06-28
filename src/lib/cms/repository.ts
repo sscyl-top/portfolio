@@ -50,6 +50,7 @@ export type PublicSiteSettings = {
   heroSide3VideoUrl?: string;
   logoMediaUrl?: string;
   name: string;
+  nameMediaUrl?: string;
   navigation: Array<{ href: string; label: string }>;
   nickname: string;
   seoDescription: string;
@@ -82,7 +83,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
+  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,name_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
 
   let baseData: Record<string, unknown> | null = null;
   try {
@@ -260,6 +261,7 @@ function buildSiteSettingsFromRow(
     heroSide3VideoUrl: getUrlForId(allIds.hero_side3_video_media_id as string | null),
     logoMediaUrl: getUrlForId(allIds.logo_media_id as string | null),
     name: (allIds.name as string) || settings.name,
+    nameMediaUrl: getUrlForId(allIds.name_media_id as string | null),
     navigation: settings.navigation,
     nickname: (allIds.nickname as string) || settings.logo,
     seoDescription: (allIds.seo_description as string) || settings.description,
@@ -339,6 +341,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       const mediaIdFields = [
         "logo_media_id",
+        "name_media_id",
         "avatar_media_id",
         "share_media_id",
         "cta_card_media_id",
@@ -591,6 +594,7 @@ export async function createServerCmsRepository() {
 
       const mediaIdFields = [
         "logo_media_id",
+        "name_media_id",
         "avatar_media_id",
         "share_media_id",
         "cta_card_media_id",
