@@ -70,7 +70,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
-        <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} hover />
+        <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.2),transparent_20%),linear-gradient(to_bottom,transparent_42%,rgba(0,0,0,0.84))]" />
         <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
           <span>{String(index + 1).padStart(2, "0")}</span>
@@ -304,7 +304,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                   className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
                 >
                   <article className="relative aspect-[3/4.5] overflow-hidden rounded-xl">
-                    <WorkMediaFrame media={work.coverMedia} tone={work.coverTone} hover={false} />
+                    <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover={false} />
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_36%,rgba(0,0,0,0.88))]" />
                     {isCenter && (
                       <>

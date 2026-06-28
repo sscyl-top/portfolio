@@ -349,10 +349,12 @@ function RepresentativeSlotsManager({
   slots,
   allWorks,
   getCoverUrl,
+  getRepresentativeCoverUrl,
 }: {
   slots: { slot: number; work: AdminWorkRow | null }[];
   allWorks: AdminWorkRow[];
   getCoverUrl: (work: AdminWorkRow) => string | null;
+  getRepresentativeCoverUrl: (work: AdminWorkRow) => string | null;
 }) {
   return (
     <div className="mt-6 space-y-6">
@@ -381,26 +383,36 @@ function RepresentativeSlotsManager({
 
             {work ? (
               <div className="p-3">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-black/30">
-                  {getCoverUrl(work) ? (
+                <div className="relative aspect-[3/4.5] overflow-hidden rounded-lg bg-black/30">
+                  {getRepresentativeCoverUrl(work) ? (
+                    <img
+                      src={getRepresentativeCoverUrl(work)!}
+                      alt={work.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : getCoverUrl(work) ? (
                     <img
                       src={getCoverUrl(work)!}
                       alt={work.title}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover opacity-60"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-white/20">
                       无封面
                     </div>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <Link
                     href={`/admin/works/${work.id}`}
-                    className="absolute inset-0 flex items-center justify-center bg-black/0 transition hover:bg-black/50"
+                    className="absolute left-2 top-2 rounded-md bg-black/50 px-2 py-1 text-[10px] text-white/80 backdrop-blur-sm transition hover:bg-black/70"
                   >
-                    <span className="rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-black opacity-0 transition hover:opacity-100">
-                      编辑作品
-                    </span>
+                    编辑作品
                   </Link>
+                  {getRepresentativeCoverUrl(work) && (
+                    <div className="absolute right-2 top-2 rounded-md bg-cyan/80 px-2 py-1 text-[9px] font-medium text-black">
+                      专属封面
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3">
                   <p className="truncate text-sm font-medium text-white/90">
@@ -410,6 +422,12 @@ function RepresentativeSlotsManager({
                     {work.status === "published" ? "已发布" : work.status === "draft" ? "草稿" : "私密"}
                     {work.year ? ` · ${work.year}` : ""}
                   </p>
+                </div>
+                <div className="mt-3 border-t border-white/8 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-wider text-white/35">
+                    竖版封面（推荐比例 3:4）
+                  </p>
+                  <RepresentativeCoverUploader workId={work.id} />
                 </div>
               </div>
             ) : (
