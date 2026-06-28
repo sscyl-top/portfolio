@@ -42,25 +42,26 @@ export async function SiteHeader({
   const avatarHref = user ? "/admin" : "/resume";
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)] [.light_&]:border-black/10 [.light_&]:bg-white/80">
+    <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-3 md:h-24 md:px-8">
         <Link
           href="/"
           className="group flex min-w-0 items-center gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04] [.light_&]:border-black/15 [.light_&]:bg-black/[0.04] md:h-12 md:w-12">
+          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-edge bg-surface-2 md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={siteSettings.logoMediaUrl}
                 alt=""
                 className="h-full w-full object-contain md:h-12 md:w-12"
+                style={{ filter: "var(--png-filter)" }}
               />
             ) : (
               <span
                 aria-hidden="true"
-                className="h-6 w-6 rounded-md border border-dashed border-white/24 bg-[radial-gradient(circle_at_50%_42%,rgba(255,255,255,0.28),transparent_38%),linear-gradient(135deg,rgba(139,215,205,0.18),rgba(201,162,127,0.16))] [.light_&]:border-black/24 [.light_&]:bg-[radial-gradient(circle_at_50%_42%,rgba(0,0,0,0.18),transparent_38%),linear-gradient(135deg,rgba(45,139,128,0.18),rgba(166,124,82,0.16))] md:h-7 md:w-7"
+                className="nav-logo-placeholder h-6 w-6 rounded-md md:h-7 md:w-7"
               />
             )}
           </span>
@@ -72,17 +73,18 @@ export async function SiteHeader({
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
                   className="block h-4 max-h-4 w-auto max-w-[120px] object-contain md:h-5 md:max-h-5 md:max-w-[150px]"
+                  style={{ filter: "var(--png-filter)" }}
                 />
-                <span className="block truncate font-mono text-xs text-white/45 [.light_&]:text-black/45 md:text-sm">
+                <span className="block truncate font-mono text-xs text-ink-3 md:text-sm">
                   {siteSettings.title}
                 </span>
               </>
             ) : (
               <>
-                <span className="block truncate text-base font-semibold tracking-[0.18em] text-white [.light_&]:text-black">
+                <span className="block truncate text-base font-semibold tracking-[0.18em] text-ink">
                   {siteSettings.name}
                 </span>
-                <span className="mt-1 block truncate font-mono text-xs text-white/45 [.light_&]:text-black/45">
+                <span className="mt-1 block truncate font-mono text-xs text-ink-3">
                   {siteSettings.title}
                 </span>
               </>
@@ -97,7 +99,7 @@ export async function SiteHeader({
                 key={item.href}
                 href={item.href}
                 prefetch={true}
-                className="relative px-3 py-2 text-sm text-white/62 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-white/70 after:transition-transform hover:text-white hover:after:scale-x-100 [.light_&]:text-black/62 [.light_&]:after:bg-black/70 [.light_&]:hover:text-black md:px-5 md:py-3 md:text-base"
+                className="relative px-3 py-2 text-sm text-ink-2 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
@@ -110,7 +112,7 @@ export async function SiteHeader({
           {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="grid place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 [.light_&]:border-black/10 [.light_&]:bg-black/[0.04] [.light_&]:hover:border-black/25 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,6 +120,7 @@ export async function SiteHeader({
               src={siteSettings.avatarMediaUrl}
               alt=""
               className="h-full w-full object-cover"
+              style={{ filter: "var(--png-filter)" }}
             />
           </Link>
         ) : (

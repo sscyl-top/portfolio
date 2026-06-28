@@ -1,92 +1,127 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050505;
-  --foreground: #f4f1ea;
-  --muted: #a8a29a;
-  --panel: #10100f;
-  --line: rgba(244, 241, 234, 0.12);
+  --background: #14171a;
+  --foreground: #eef2f6;
+  --muted: #8a94a0;
+  --panel: #1a1e23;
+  --line: rgba(238, 242, 246, 0.10);
   --copper: #c9a27f;
-  --cyan: #8bd7cd;
+  --cyan: #5ce0f2;
 
-  --page-bg: #050505;
-  --page-fg: #f4f1ea;
-  --ink: rgba(244, 241, 234, 1);
-  --ink-2: rgba(244, 241, 234, 0.62);
-  --ink-3: rgba(244, 241, 234, 0.45);
-  --ink-4: rgba(244, 241, 234, 0.28);
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-3: rgba(255, 255, 255, 0.025);
-  --edge: rgba(255, 255, 255, 0.15);
-  --edge-2: rgba(255, 255, 255, 0.10);
-  --edge-3: rgba(255, 255, 255, 0.06);
-  --overlay: rgba(0, 0, 0, 0.84);
-  --overlay-2: rgba(0, 0, 0, 0.42);
-  --glass: rgba(0, 0, 0, 0.36);
-  --glass-strong: rgba(0, 0, 0, 0.52);
-  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
-  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
+  --page-bg: #14171a;
+  --page-fg: #eef2f6;
+  --ink: rgba(238, 242, 246, 1);
+  --ink-2: rgba(238, 242, 246, 0.62);
+  --ink-3: rgba(238, 242, 246, 0.42);
+  --ink-4: rgba(238, 242, 246, 0.24);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.035);
+  --surface-3: rgba(255, 255, 255, 0.02);
+  --edge: rgba(255, 255, 255, 0.12);
+  --edge-2: rgba(255, 255, 255, 0.08);
+  --edge-3: rgba(255, 255, 255, 0.05);
+  --overlay: rgba(6, 10, 14, 0.80);
+  --overlay-2: rgba(6, 10, 14, 0.38);
+  --glass: rgba(10, 14, 18, 0.50);
+  --glass-strong: rgba(10, 14, 18, 0.66);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.40);
+  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.55);
+
+  --glass-nav: rgba(10, 14, 18, 0.72);
+  --music-glow: 92, 224, 242;
+  --music-ball-bg: linear-gradient(135deg, #1a2830 0%, #0f1a20 50%, #182832 100%);
+  --music-panel-bg: rgba(14, 20, 26, 0.92);
+  --music-panel-text: rgba(238, 242, 246, 0.88);
+  --music-panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --music-glow-soft: rgba(92, 224, 242, 0.14);
+  --music-glow-medium: rgba(92, 224, 242, 0.32);
+  --music-glow-strong: rgba(92, 224, 242, 0.38);
+  --music-active-text: #ffffff;
+  --png-filter: none;
 }
 
 .light {
-  --background: #f5f5f4;
-  --foreground: #1c1917;
-  --muted: #78716c;
+  --background: #f7fbfd;
+  --foreground: #1a2330;
+  --muted: #6b7a8a;
   --panel: #ffffff;
-  --line: rgba(28, 25, 23, 0.12);
+  --line: rgba(26, 35, 48, 0.10);
   --copper: #a67c52;
-  --cyan: #2d8b80;
+  --cyan: #2aa8c0;
 
-  --page-bg: #f5f5f4;
-  --page-fg: #1c1917;
-  --ink: rgba(28, 25, 23, 1);
-  --ink-2: rgba(28, 25, 23, 0.62);
-  --ink-3: rgba(28, 25, 23, 0.45);
-  --ink-4: rgba(28, 25, 23, 0.28);
-  --surface: rgba(0, 0, 0, 0.06);
-  --surface-2: rgba(0, 0, 0, 0.04);
-  --surface-3: rgba(0, 0, 0, 0.03);
-  --edge: rgba(28, 25, 23, 0.16);
-  --edge-2: rgba(28, 25, 23, 0.12);
-  --edge-3: rgba(28, 25, 23, 0.08);
-  --overlay: rgba(0, 0, 0, 0.12);
-  --overlay-2: rgba(0, 0, 0, 0.06);
+  --page-bg: #f7fbfd;
+  --page-fg: #1a2330;
+  --ink: rgba(26, 35, 48, 1);
+  --ink-2: rgba(26, 35, 48, 0.62);
+  --ink-3: rgba(26, 35, 48, 0.42);
+  --ink-4: rgba(26, 35, 48, 0.24);
+  --surface: rgba(10, 20, 32, 0.05);
+  --surface-2: rgba(10, 20, 32, 0.035);
+  --surface-3: rgba(10, 20, 32, 0.02);
+  --edge: rgba(26, 35, 48, 0.12);
+  --edge-2: rgba(26, 35, 48, 0.08);
+  --edge-3: rgba(26, 35, 48, 0.05);
+  --overlay: rgba(6, 12, 20, 0.10);
+  --overlay-2: rgba(6, 12, 20, 0.05);
   --glass: rgba(255, 255, 255, 0.72);
-  --glass-strong: rgba(255, 255, 255, 0.85);
-  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --glass-strong: rgba(255, 255, 255, 0.88);
+  --shadow-card: 0 12px 40px rgba(10, 20, 40, 0.09);
+  --shadow-card-hover: 0 20px 60px rgba(10, 20, 40, 0.14);
+
+  --glass-nav: rgba(247, 251, 253, 0.82);
+  --music-glow: 42, 168, 192;
+  --music-ball-bg: linear-gradient(135deg, #ffffff 0%, #f0f7fa 50%, #e2eef3 100%);
+  --music-panel-bg: rgba(255, 255, 255, 0.92);
+  --music-panel-text: rgba(26, 35, 48, 0.85);
+  --music-panel-shadow: 0 4px 20px rgba(10, 20, 40, 0.08);
+  --music-glow-soft: rgba(42, 168, 192, 0.10);
+  --music-glow-medium: rgba(42, 168, 192, 0.24);
+  --music-glow-strong: rgba(42, 168, 192, 0.30);
+  --music-active-text: #0a1420;
+  --png-filter: invert(1);
 }
 
 /* 首页固定深色：无论全局主题如何，首页始终使用深色变量 */
 body:has(.home-dark-scope) {
-  --background: #050505;
-  --foreground: #f4f1ea;
-  --muted: #a8a29a;
-  --panel: #10100f;
-  --line: rgba(244, 241, 234, 0.12);
+  --background: #14171a;
+  --foreground: #eef2f6;
+  --muted: #8a94a0;
+  --panel: #1a1e23;
+  --line: rgba(238, 242, 246, 0.10);
   --copper: #c9a27f;
-  --cyan: #8bd7cd;
-  --page-bg: #050505;
-  --page-fg: #f4f1ea;
-  --ink: rgba(244, 241, 234, 1);
-  --ink-2: rgba(244, 241, 234, 0.62);
-  --ink-3: rgba(244, 241, 234, 0.45);
-  --ink-4: rgba(244, 241, 234, 0.28);
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-3: rgba(255, 255, 255, 0.025);
-  --edge: rgba(255, 255, 255, 0.15);
-  --edge-2: rgba(255, 255, 255, 0.10);
-  --edge-3: rgba(255, 255, 255, 0.06);
-  --overlay: rgba(0, 0, 0, 0.84);
-  --overlay-2: rgba(0, 0, 0, 0.42);
-  --glass: rgba(0, 0, 0, 0.36);
-  --glass-strong: rgba(0, 0, 0, 0.52);
-  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
-  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
-  background: #050505;
-  color: #f4f1ea;
+  --cyan: #5ce0f2;
+  --page-bg: #14171a;
+  --page-fg: #eef2f6;
+  --ink: rgba(238, 242, 246, 1);
+  --ink-2: rgba(238, 242, 246, 0.62);
+  --ink-3: rgba(238, 242, 246, 0.42);
+  --ink-4: rgba(238, 242, 246, 0.24);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.035);
+  --surface-3: rgba(255, 255, 255, 0.02);
+  --edge: rgba(255, 255, 255, 0.12);
+  --edge-2: rgba(255, 255, 255, 0.08);
+  --edge-3: rgba(255, 255, 255, 0.05);
+  --overlay: rgba(6, 10, 14, 0.80);
+  --overlay-2: rgba(6, 10, 14, 0.38);
+  --glass: rgba(10, 14, 18, 0.50);
+  --glass-strong: rgba(10, 14, 18, 0.66);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.40);
+  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.55);
+  --glass-nav: rgba(10, 14, 18, 0.72);
+  --music-glow: 92, 224, 242;
+  --music-ball-bg: linear-gradient(135deg, #1a2830 0%, #0f1a20 50%, #182832 100%);
+  --music-panel-bg: rgba(14, 20, 26, 0.92);
+  --music-panel-text: rgba(238, 242, 246, 0.88);
+  --music-panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --music-glow-soft: rgba(92, 224, 242, 0.14);
+  --music-glow-medium: rgba(92, 224, 242, 0.32);
+  --music-glow-strong: rgba(92, 224, 242, 0.38);
+  --music-active-text: #ffffff;
+  --png-filter: none;
+  background: #14171a;
+  color: #eef2f6;
 }
 
 @theme inline {
@@ -128,25 +163,25 @@ html {
 }
 
 .light .works-route-blob {
-  opacity: 0.06;
+  opacity: 0.12;
   mix-blend-mode: normal;
-  filter: blur(120px) saturate(0.3);
+  filter: blur(100px) saturate(0.6);
 }
 
 .light .works-route-blob-a {
-  background: radial-gradient(circle at 50% 50%, rgba(45, 139, 128, 0.35), rgba(166, 124, 82, 0.2) 42%, transparent 75%);
+  background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(42, 200, 230, 0.55), rgba(92, 224, 242, 0.25) 40%, transparent 75%);
 }
 
 .light .works-route-blob-b {
-  background: radial-gradient(circle at 50% 50%, rgba(166, 124, 82, 0.28), rgba(45, 139, 128, 0.2) 44%, transparent 75%);
+  opacity: 0;
 }
 
 .featured-glow {
-  background: color-mix(in oklch, var(--cyan) 10%, transparent);
+  background: radial-gradient(ellipse 50% 60% at 50% 40%, rgba(92, 224, 242, 0.18), rgba(42, 168, 192, 0.06) 50%, transparent 75%);
 }
 
 .light .featured-glow {
-  background: radial-gradient(ellipse at center, rgba(180, 160, 140, 0.08), transparent 65%);
+  background: radial-gradient(ellipse 50% 60% at 50% 40%, rgba(42, 168, 192, 0.10), transparent 65%);
   opacity: 1;
 }
 
@@ -159,6 +194,28 @@ html {
 
 .light .representative-work-card-mobile {
   box-shadow: 0 20px 56px rgba(0, 0, 0, 0.22);
+}
+
+/* 导航栏 logo 占位符：默认深色变量；浅色模式覆盖；首页深色 scope 再覆盖回深色 */
+.nav-logo-placeholder {
+  border: 1px dashed rgba(255, 255, 255, 0.24);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.28), transparent 38%),
+    linear-gradient(135deg, rgba(139, 215, 205, 0.18), rgba(201, 162, 127, 0.16));
+}
+
+.light .nav-logo-placeholder {
+  border-color: rgba(0, 0, 0, 0.24);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.18), transparent 38%),
+    linear-gradient(135deg, rgba(45, 139, 128, 0.18), rgba(166, 124, 82, 0.16));
+}
+
+body:has(.home-dark-scope) .nav-logo-placeholder {
+  border-color: rgba(255, 255, 255, 0.24);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.28), transparent 38%),
+    linear-gradient(135deg, rgba(139, 215, 205, 0.18), rgba(201, 162, 127, 0.16));
 }
 
 ::selection {
@@ -571,12 +628,12 @@ button {
 @keyframes music-ball-pulse {
   0%, 100% {
     box-shadow:
-      0 0 0 0 rgba(139, 215, 205, 0.4),
+      0 0 0 0 rgba(var(--music-glow), 0.4),
       0 8px 32px rgba(0, 0, 0, 0.4);
   }
   50% {
     box-shadow:
-      0 0 0 10px rgba(139, 215, 205, 0),
+      0 0 0 10px rgba(var(--music-glow), 0),
       0 8px 32px rgba(0, 0, 0, 0.4);
   }
 }
@@ -617,7 +674,7 @@ button {
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #1a2a2e 0%, #0d1819 50%, #152528 100%);
+  background: var(--music-ball-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -650,7 +707,7 @@ button {
   position: absolute;
   inset: -2px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(139, 215, 205, 0.3), rgba(139, 215, 205, 0.05));
+  background: linear-gradient(135deg, var(--music-glow-medium), rgba(var(--music-glow), 0.05));
   z-index: 1;
   opacity: 0.7;
 }
@@ -691,10 +748,10 @@ button {
   align-items: center;
   min-height: 44px;
   padding: 10px 18px 10px 14px;
-  background: rgba(15, 22, 24, 0.92);
+  background: var(--music-panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(139, 215, 205, 0.15);
+  border: 1px solid var(--music-glow-soft);
   border-radius: 28px;
   opacity: 0;
   transform: translateX(16px) scale(0.9);
@@ -702,8 +759,9 @@ button {
   transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
               transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--music-panel-shadow);
   box-sizing: border-box;
+  color: var(--music-panel-text);
 }
 
 .music-bubble p {
@@ -783,31 +841,31 @@ button {
   min-height: 44px;
   gap: 10px;
   padding: 10px 18px 10px 14px;
-  background: rgba(15, 22, 24, 0.92);
+  background: var(--music-panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(139, 215, 205, 0.15);
+  border: 1px solid var(--music-glow-soft);
   border-radius: 28px;
-  color: rgba(244, 241, 234, 0.85);
+  color: var(--music-panel-text);
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--music-panel-shadow);
   box-sizing: border-box;
 }
 
 .music-option-item:hover {
-  background: rgba(139, 215, 205, 0.12);
-  border-color: rgba(139, 215, 205, 0.35);
-  color: #fff;
+  background: var(--music-glow-soft);
+  border-color: var(--music-glow-medium);
+  color: var(--music-active-text);
   transform: translateX(-4px);
 }
 
 .music-option-active {
-  background: rgba(139, 215, 205, 0.15);
-  border-color: rgba(139, 215, 205, 0.4);
-  color: #fff;
+  background: var(--music-glow-soft);
+  border-color: var(--music-glow-strong);
+  color: var(--music-active-text);
 }
 
 .music-option-stop {
