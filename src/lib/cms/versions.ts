@@ -239,33 +239,38 @@ export async function listWorkVersions(
   workId: string,
   limit = 50,
 ): Promise<WorkVersionListItem[]> {
-  const [{ data: rows }, currentSnapshot] = await Promise.all([
-    client
-      .from("work_versions")
-      .select("version_number,snapshot,label,created_at")
-      .eq("work_id", workId)
-      .order("version_number", { ascending: false })
-      .limit(limit),
-    captureWorkSnapshot(client, workId),
-  ]);
+  try {
+    const [{ data: rows }, currentSnapshot] = await Promise.all([
+      client
+        .from("work_versions")
+        .select("version_number,snapshot,label,created_at")
+        .eq("work_id", workId)
+        .order("version_number", { ascending: false })
+        .limit(limit),
+      captureWorkSnapshot(client, workId),
+    ]);
 
-  return (rows ?? []).map((row) => {
-    const snapshot = (row.snapshot ?? {}) as WorkVersionSnapshot;
-    const isCurrent = currentSnapshot
-      ? snapshotsEqual(snapshot, currentSnapshot)
-      : false;
-    const title = String(snapshot.work?.title ?? "(无标题)");
+    return (rows ?? []).map((row) => {
+      const snapshot = (row.snapshot ?? {}) as WorkVersionSnapshot;
+      const isCurrent = currentSnapshot
+        ? snapshotsEqual(snapshot, currentSnapshot)
+        : false;
+      const title = String(snapshot.work?.title ?? "(无标题)");
 
-    return {
-      version_number: row.version_number as number,
-      created_at: row.created_at as string,
-      label: (row.label as string | null) ?? null,
-      source: snapshot.meta?.source ?? "auto",
-      is_current: isCurrent,
-      block_count: (snapshot.blocks ?? []).length,
-      title,
-    };
-  });
+      return {
+        version_number: row.version_number as number,
+        created_at: row.created_at as string,
+        label: (row.label as string | null) ?? null,
+        source: snapshot.meta?.source ?? "auto",
+        is_current: isCurrent,
+        block_count: (snapshot.blocks ?? []).length,
+        title,
+      };
+    });
+  } catch (err) {
+    console.warn("[versions] Failed to list work versions, returning empty list:", err);
+    return [];
+  }
 }
 
 /** 读取某个版本的完整快照 */
