@@ -16,6 +16,7 @@ type Props = {
   blocks: ContentBlock[];
   coverTone: string;
   mediaNoGap?: boolean;
+  isModal?: boolean;
 };
 
 /**
@@ -24,10 +25,10 @@ type Props = {
  * - 文字块居中带适度宽度
  * - 支持自由排版（free layout）
  */
-export function WorkContentBlocks({ blocks, coverTone, mediaNoGap = false }: Props) {
+export function WorkContentBlocks({ blocks, coverTone, mediaNoGap = false, isModal = false }: Props) {
   return (
     <div className="space-y-0">
-      {blocks.map((block, index) => renderBlock(block, index, coverTone, mediaNoGap))}
+      {blocks.map((block, index) => renderBlock(block, index, coverTone, mediaNoGap, isModal))}
     </div>
   );
 }
@@ -133,19 +134,19 @@ function GalleryLightbox({
   );
 }
 
-function renderBlock(block: ContentBlock, index: number, coverTone: string, mediaNoGap: boolean = false) {
+function renderBlock(block: ContentBlock, index: number, coverTone: string, mediaNoGap: boolean = false, isModal: boolean = false) {
   switch (block.type) {
     case "text":
-      return <TextBlock key={`text-${index}`} block={block} />;
+      return <TextBlock key={`text-${index}`} block={block} isModal={isModal} />;
     case "media":
     case "gallery":
-      return <MediaBlock key={`media-${index}`} block={block} tone={coverTone} noGap={mediaNoGap} />;
+      return <MediaBlock key={`media-${index}`} block={block} tone={coverTone} noGap={mediaNoGap} isModal={isModal} />;
     case "video":
-      return <VideoBlock key={`video-${index}`} block={block} noGap={mediaNoGap} />;
+      return <VideoBlock key={`video-${index}`} block={block} noGap={mediaNoGap} isModal={isModal} />;
     case "pdf":
-      return <PdfBlock key={`pdf-${index}`} block={block} />;
+      return <PdfBlock key={`pdf-${index}`} block={block} isModal={isModal} />;
     case "beforeAfter":
-      return <BeforeAfterBlock key={`ba-${index}`} block={block} tone={coverTone} />;
+      return <BeforeAfterBlock key={`ba-${index}`} block={block} tone={coverTone} isModal={isModal} />;
     case "code":
       return <CodeBlock key={`code-${index}`} {...blockProps(block)} />;
     case "quote":
@@ -163,17 +164,24 @@ function renderBlock(block: ContentBlock, index: number, coverTone: string, medi
   }
 }
 
-function layoutWidthClass(layout?: BlockLayout): string {
-  // 与导航栏 max-w-[1420px] 对齐，内容区域左右边界与头像/"无限进步"一致
+function layoutWidthClass(layout?: BlockLayout, isModal: boolean = false): string {
+  if (isModal) {
+    if (!layout || !layout.width || layout.width === "contained") {
+      return "mx-auto w-full px-4 md:px-8 lg:px-12";
+    }
+    if (layout.width === "narrow") return "mx-auto max-w-5xl px-4 md:px-8 lg:px-12";
+    if (layout.width === "free") return "relative mx-auto w-full px-0";
+    return "w-full px-0";
+  }
   if (!layout || !layout.width || layout.width === "contained") {
     return "mx-auto max-w-[1420px] px-3 md:px-8";
   }
   if (layout.width === "narrow") return "mx-auto max-w-4xl px-3 md:px-8";
   if (layout.width === "free") return "relative mx-auto max-w-7xl";
-  return ""; // full - 无约束
+  return "";
 }
 
-function TextBlock({ block }: { block: Extract<ContentBlock, { type: "text" }> }) {
+function TextBlock({ block, isModal = false }: { block: Extract<ContentBlock, { type: "text" }>; isModal?: boolean }) {
   const align =
     block.layout?.align === "center"
       ? "text-center"
@@ -181,7 +189,7 @@ function TextBlock({ block }: { block: Extract<ContentBlock, { type: "text" }> }
         ? "text-right"
         : "text-left";
   return (
-    <section className={`py-14 md:py-20 ${layoutWidthClass(block.layout)} ${align}`}>
+    <section className={`py-14 md:py-20 ${layoutWidthClass(block.layout, isModal)} ${align}`}>
       <h2 className="text-2xl font-semibold text-white md:text-3xl">
         {block.heading}
       </h2>
@@ -196,10 +204,12 @@ function MediaBlock({
   block,
   tone,
   noGap = false,
+  isModal = false,
 }: {
   block: Extract<ContentBlock, { type: "media" | "gallery" }>;
   tone: string;
   noGap?: boolean;
+  isModal?: boolean;
 }) {
   // 图库 Lightbox 状态 - 必须在条件返回之前声明以遵守 hooks 规则
   const [lightboxIdx, setLightboxIdx] = useState(-1);
@@ -226,7 +236,7 @@ function MediaBlock({
   const galleryGap = noGap ? "gap-0" : "gap-2 md:gap-3";
 
   return (
-    <section className={`${sectionPy} ${layoutWidthClass(block.layout)}`}>
+    <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
         <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
@@ -369,14 +379,16 @@ function MediaBlock({
 function VideoBlock({
   block,
   noGap = false,
+  isModal = false,
 }: {
   block: Extract<ContentBlock, { type: "video" }>;
   noGap?: boolean;
+  isModal?: boolean;
 }) {
   if (block.items.length === 0) return null;
   const sectionPy = noGap ? "py-0" : "py-2";
   return (
-    <section className={`${sectionPy} ${layoutWidthClass(block.layout)}`}>
+    <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
         <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
@@ -389,11 +401,11 @@ function VideoBlock({
   );
 }
 
-function PdfBlock({ block }: { block: Extract<ContentBlock, { type: "pdf" }> }) {
+function PdfBlock({ block, isModal = false }: { block: Extract<ContentBlock, { type: "pdf" }>; isModal?: boolean }) {
   if (block.items.length === 0) return null;
   const pdf = block.items[0];
   return (
-    <section className={`py-8 ${layoutWidthClass(block.layout)}`}>
+    <section className={`py-8 ${layoutWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
         <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
       ) : null}
@@ -419,12 +431,14 @@ function PdfBlock({ block }: { block: Extract<ContentBlock, { type: "pdf" }> }) 
 function BeforeAfterBlock({
   block,
   tone,
+  isModal = false,
 }: {
   block: Extract<ContentBlock, { type: "beforeAfter" }>;
   tone: string;
+  isModal?: boolean;
 }) {
   return (
-    <section className={`py-8 ${layoutWidthClass(block.layout)}`}>
+    <section className={`py-8 ${layoutWidthClass(block.layout, isModal)}`}>
       {block.heading ? <h2 className="mb-6 text-2xl font-semibold text-white">{block.heading}</h2> : null}
       {block.note ? <p className="mb-6 text-white/58">{block.note}</p> : null}
       <div className="grid gap-4 md:grid-cols-2">

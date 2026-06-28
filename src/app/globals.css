@@ -8,6 +8,54 @@
   --line: rgba(244, 241, 234, 0.12);
   --copper: #c9a27f;
   --cyan: #8bd7cd;
+
+  --page-bg: #050505;
+  --page-fg: #f4f1ea;
+  --ink: rgba(244, 241, 234, 1);
+  --ink-2: rgba(244, 241, 234, 0.62);
+  --ink-3: rgba(244, 241, 234, 0.45);
+  --ink-4: rgba(244, 241, 234, 0.28);
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --surface-3: rgba(255, 255, 255, 0.025);
+  --edge: rgba(255, 255, 255, 0.15);
+  --edge-2: rgba(255, 255, 255, 0.10);
+  --edge-3: rgba(255, 255, 255, 0.06);
+  --overlay: rgba(0, 0, 0, 0.84);
+  --overlay-2: rgba(0, 0, 0, 0.42);
+  --glass: rgba(0, 0, 0, 0.36);
+  --glass-strong: rgba(0, 0, 0, 0.52);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.light {
+  --background: #f5f5f4;
+  --foreground: #1c1917;
+  --muted: #78716c;
+  --panel: #ffffff;
+  --line: rgba(28, 25, 23, 0.12);
+  --copper: #a67c52;
+  --cyan: #2d8b80;
+
+  --page-bg: #f5f5f4;
+  --page-fg: #1c1917;
+  --ink: rgba(28, 25, 23, 1);
+  --ink-2: rgba(28, 25, 23, 0.62);
+  --ink-3: rgba(28, 25, 23, 0.45);
+  --ink-4: rgba(28, 25, 23, 0.28);
+  --surface: rgba(0, 0, 0, 0.04);
+  --surface-2: rgba(0, 0, 0, 0.025);
+  --surface-3: rgba(0, 0, 0, 0.015);
+  --edge: rgba(28, 25, 23, 0.15);
+  --edge-2: rgba(28, 25, 23, 0.10);
+  --edge-3: rgba(28, 25, 23, 0.06);
+  --overlay: rgba(0, 0, 0, 0.12);
+  --overlay-2: rgba(0, 0, 0, 0.06);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 @theme inline {
@@ -18,6 +66,22 @@
   --color-line: var(--line);
   --color-copper: var(--copper);
   --color-cyan: var(--cyan);
+  --color-page-bg: var(--page-bg);
+  --color-page-fg: var(--page-fg);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-edge: var(--edge);
+  --color-edge-2: var(--edge-2);
+  --color-edge-3: var(--edge-3);
+  --color-overlay: var(--overlay);
+  --color-overlay-2: var(--overlay-2);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
@@ -25,6 +89,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+.light .works-route-blob {
+  opacity: 0.3;
+  mix-blend-mode: normal;
+  filter: blur(86px) saturate(0.8);
 }
 
 ::selection {

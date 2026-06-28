@@ -4,6 +4,7 @@ import Link from "next/link";
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const defaultSiteSettings: PublicSiteSettings = {
   ctaCardScale: 1,
@@ -99,10 +100,12 @@ export async function SiteHeader({
           </div>
         </div>
 
-        {siteSettings.avatarMediaUrl ? (
+        <div className="flex items-center gap-2 justify-self-end">
+          <ThemeToggle />
+          {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="justify-self-end grid place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            className="grid place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] transition hover:border-white/25 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -115,7 +118,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="justify-self-end grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40"
+            className="grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
@@ -128,6 +131,7 @@ export async function SiteHeader({
             />
           </Link>
         )}
+        </div>
       </nav>
     </header>
   );

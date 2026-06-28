@@ -18,15 +18,15 @@ export function WorkDetailContent({ work, relatedWorks, isModal = false }: WorkD
     : "min-h-screen pb-24 pt-28 md:pt-32";
 
   const headerClass = isModal
-    ? "mx-auto max-w-[1420px] px-4 md:px-8 lg:px-12"
+    ? "w-full px-4 md:px-8 lg:px-12"
     : "mx-auto max-w-[1420px] px-3 md:px-8";
 
   const reactionsClass = isModal
-    ? "mx-auto mt-16 max-w-[1420px] px-4 md:px-8 lg:px-12"
+    ? "mt-16 w-full px-4 md:px-8 lg:px-12"
     : "mx-auto mt-16 max-w-[1420px] px-3 md:px-8";
 
   const relatedClass = isModal
-    ? "mx-auto mt-16 max-w-[1420px] border-t border-white/10 px-4 pt-10 md:px-8 lg:px-12"
+    ? "mt-16 w-full border-t border-white/10 px-4 pt-10 md:px-8 lg:px-12"
     : "mx-auto mt-16 max-w-5xl border-t border-white/10 px-5 pt-10 md:px-8";
 
   return (
@@ -68,7 +68,7 @@ export function WorkDetailContent({ work, relatedWorks, isModal = false }: WorkD
       </header>
 
       <div className="mt-8 md:mt-12">
-        <WorkContentBlocks blocks={work.blocks} coverTone={work.coverTone} mediaNoGap={work.mediaNoGap} />
+        <WorkContentBlocks blocks={work.blocks} coverTone={work.coverTone} mediaNoGap={work.mediaNoGap} isModal={isModal} />
       </div>
 
       <section className={reactionsClass}>
