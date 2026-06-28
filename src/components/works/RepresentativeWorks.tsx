@@ -205,7 +205,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   });
 
   return (
-    <section id="section-featured" className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
+    <section id="section-featured" className="relative overflow-visible px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-copper" data-text-key="works.featuredKicker">Featured Works</p>
         <h1 className="mt-3 text-5xl font-semibold text-ink md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
@@ -215,7 +215,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
 
         {/* DESKTOP: fan */}
         <div
-          className="relative mx-auto mt-20 hidden h-[640px] max-w-7xl md:block"
+          className="relative mx-auto mt-20 hidden h-[640px] w-full max-w-none overflow-visible md:block"
           onPointerLeave={() => {
             setActiveIndex(null);
             if (frameRef.current !== null) {
