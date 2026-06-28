@@ -16,8 +16,6 @@ const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 type StorageBackend = "r2" | "cos" | "supabase";
 
 function getStorageBackend(): StorageBackend {
-  if (isR2Configured()) return "r2";
-  if (isCosConfigured()) return "cos";
   return "supabase";
 }
 
@@ -110,7 +108,6 @@ export async function POST(request: Request) {
       .insert({
         id,
         storage_key: storageKey,
-        storage_backend: backend,
         mime_type: mimeType,
         original_name: file.name,
         byte_size: file.size,
