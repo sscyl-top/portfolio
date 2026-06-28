@@ -39,10 +39,9 @@ export function getR2Config(): R2Config {
 
 export function buildR2PublicUrl(storageKey: string): string {
   const config = getR2Config();
-  if (!config.publicUrl) {
-    return storageKey;
-  }
-  const baseUrl = config.publicUrl.replace(/\/$/, "");
+  const baseUrl = config.publicUrl
+    ? config.publicUrl.replace(/\/$/, "")
+    : `https://${config.bucket}.${config.accountId}.r2.dev`;
   return `${baseUrl}/${storageKey}`;
 }
 
