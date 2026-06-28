@@ -7,11 +7,15 @@ import { useRouter } from "next/navigation";
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
 import { updateRepresentativeCover, clearRepresentativeCover } from "@/app/admin/(protected)/works/actions";
 
-const ACCEPTED_IMAGE_TYPES = [
+const ACCEPTED_MEDIA_TYPES = [
   "image/jpeg",
   "image/png",
   "image/gif",
   "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
 ];
 
 export function RepresentativeCoverUploader({ workId }: { workId: string }) {
@@ -25,8 +29,8 @@ export function RepresentativeCoverUploader({ workId }: { workId: string }) {
 
   const handleFile = useCallback(
     async (file: File) => {
-      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        setError("仅支持 JPG / PNG / GIF / WEBP 格式图片");
+      if (!ACCEPTED_MEDIA_TYPES.includes(file.type)) {
+        setError("仅支持 JPG / PNG / GIF / WEBP 图片或 MP4 / WEBM 视频");
         return;
       }
 
@@ -136,7 +140,7 @@ export function RepresentativeCoverUploader({ workId }: { workId: string }) {
             点击或拖拽上传
             <input
               type="file"
-              accept={ACCEPTED_IMAGE_TYPES.join(",")}
+              accept={ACCEPTED_MEDIA_TYPES.join(",")}
               className="sr-only"
               onChange={handleFileInput}
               disabled={isBusy}

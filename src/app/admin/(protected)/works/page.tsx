@@ -120,15 +120,15 @@ export default async function AdminWorksPage({
   const getCoverUrl = (work: AdminWorkRow) => {
     if (!work.cover_media_id) return null;
     const media = coverMediaMap.get(work.cover_media_id);
-    if (!media || !media.mime_type.startsWith("image/")) return null;
-    return buildPublicMediaUrl(media.storage_key);
+    if (!media) return null;
+    return { url: buildPublicMediaUrl(media.storage_key), mime_type: media.mime_type };
   };
 
   const getRepresentativeCoverUrl = (work: AdminWorkRow) => {
     if (!work.representative_cover_media_id) return null;
     const media = coverMediaMap.get(work.representative_cover_media_id);
-    if (!media || !media.mime_type.startsWith("image/")) return null;
-    return buildPublicMediaUrl(media.storage_key);
+    if (!media) return null;
+    return { url: buildPublicMediaUrl(media.storage_key), mime_type: media.mime_type };
   };
 
   const filteredWorks = works.filter((work) => {
@@ -345,6 +345,26 @@ function SectionTabs({
   );
 }
 
+type CoverPreview = { url: string; mime_type: string } | null;
+
+function CoverPreviewMedia({ media, alt, className }: { media: CoverPreview; alt: string; className?: string }) {
+  if (!media) return null;
+  if (media.mime_type.startsWith("video/")) {
+    return (
+      <video
+        src={media.url}
+        className={className}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+      />
+    );
+  }
+  return <img src={media.url} alt={alt} className={className} />;
+}
+
 function RepresentativeSlotsManager({
   slots,
   allWorks,
@@ -353,8 +373,8 @@ function RepresentativeSlotsManager({
 }: {
   slots: { slot: number; work: AdminWorkRow | null }[];
   allWorks: AdminWorkRow[];
-  getCoverUrl: (work: AdminWorkRow) => string | null;
-  getRepresentativeCoverUrl: (work: AdminWorkRow) => string | null;
+  getCoverUrl: (work: AdminWorkRow) => CoverPreview;
+  getRepresentativeCoverUrl: (work: AdminWorkRow) => CoverPreview;
 }) {
   return (
     <div className="mt-6 space-y-6">
@@ -385,14 +405,14 @@ function RepresentativeSlotsManager({
               <div className="p-3">
                 <div className="relative aspect-[3/4.5] overflow-hidden rounded-lg bg-black/30">
                   {getRepresentativeCoverUrl(work) ? (
-                    <img
-                      src={getRepresentativeCoverUrl(work)!}
+                    <CoverPreviewMedia
+                      media={getRepresentativeCoverUrl(work)}
                       alt={work.title}
                       className="h-full w-full object-cover"
                     />
                   ) : getCoverUrl(work) ? (
-                    <img
-                      src={getCoverUrl(work)!}
+                    <CoverPreviewMedia
+                      media={getCoverUrl(work)}
                       alt={work.title}
                       className="h-full w-full object-cover opacity-60"
                     />
@@ -472,8 +492,8 @@ function RepresentativeSlotsManager({
                   <div className="group relative overflow-hidden rounded-md border border-white/8">
                     <div className="aspect-square bg-black/30">
                       {getCoverUrl(work) ? (
-                        <img
-                          src={getCoverUrl(work)!}
+                        <CoverPreviewMedia
+                          media={getCoverUrl(work)}
                           alt={work.title}
                           className="h-full w-full object-cover"
                         />

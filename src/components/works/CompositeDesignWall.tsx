@@ -168,20 +168,11 @@ export function CompositeDesignWall({
               >
                 <article className="relative h-[188px] overflow-hidden rounded-md md:h-[300px]">
                   {work.coverMedia ? (
-                    work.coverMedia.mimeType === "image/gif" ? (
-                      <img
-                        src={work.coverMedia.url}
-                        alt={work.coverMedia.alt}
-                        className="absolute inset-0 h-full w-full object-cover opacity-72 saturate-[0.72] transition-all duration-500 group-hover:scale-105 group-hover:opacity-0"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <WorkMediaFrame
-                        media={work.coverMedia}
-                        tone={work.coverTone}
-                        className="opacity-72 saturate-[0.72] transition-all duration-500 group-hover:scale-105 group-hover:opacity-0"
-                      />
-                    )
+                    <WorkMediaFrame
+                      media={work.coverMedia}
+                      tone={work.coverTone}
+                      className="opacity-72 saturate-[0.72] transition-all duration-500 group-hover:scale-105 group-hover:opacity-0"
+                    />
                   ) : (
                     <div
                       className={`absolute inset-0 opacity-72 saturate-[0.72] transition duration-700 group-hover:scale-105 group-hover:opacity-0 ${toneClass(
@@ -190,20 +181,11 @@ export function CompositeDesignWall({
                     />
                   )}
                   {work.hoverMedia ? (
-                    work.hoverMedia.mimeType === "image/gif" ? (
-                      <img
-                        src={work.hoverMedia.url}
-                        alt={work.hoverMedia.alt}
-                        className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <WorkMediaFrame
-                        media={work.hoverMedia}
-                        tone={work.alternateTone}
-                        className="scale-105 opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100"
-                      />
-                    )
+                    <WorkMediaFrame
+                      media={work.hoverMedia}
+                      tone={work.alternateTone}
+                      className="scale-105 opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100"
+                    />
                   ) : (
                     <div
                       className={`absolute inset-0 scale-105 opacity-0 saturate-[0.72] transition duration-700 group-hover:scale-100 group-hover:opacity-70 ${toneClass(
