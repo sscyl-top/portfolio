@@ -14,7 +14,7 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -80,6 +80,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   await runHeroVideosMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
   await runWorkTablesMigration().catch(() => {});
+  await runRepresentativeCoverMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -277,6 +278,37 @@ function buildSiteSettingsFromRow(
   };
 }
 
+async function fetchRepresentativeCovers(
+  client: ReturnType<typeof createSupabaseServiceClient>,
+  workIds: string[],
+): Promise<Map<string, CmsMediaRow>> {
+  const coverMap = new Map<string, CmsMediaRow>();
+  if (workIds.length === 0) return coverMap;
+
+  await runRepresentativeCoverMigration().catch(() => {});
+
+  try {
+    const { data, error } = await client
+      .from("works")
+      .select("id,representative_cover_media:media_assets!works_representative_cover_media_id_fkey(storage_key,mime_type,alt_text)")
+      .in("id", workIds)
+      .is("deleted_at", null);
+
+    if (!error && data) {
+      for (const row of data as Array<{ id: string; representative_cover_media: CmsMediaRow | CmsMediaRow[] | null }>) {
+        const media = Array.isArray(row.representative_cover_media) ? row.representative_cover_media[0] : row.representative_cover_media;
+        if (media?.storage_key) {
+          coverMap.set(row.id, media);
+        }
+      }
+    }
+  } catch {
+    // column may not exist yet, silently ignore
+  }
+
+  return coverMap;
+}
+
 function createSupabaseBackedRepository(client: ReturnType<typeof createSupabaseServiceClient>) {
   return createCmsRepository({
     async listPublishedWorks() {
@@ -315,7 +347,18 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listFeaturedWorks");
+      const rows = ((data ?? []) as unknown as CmsWorkRow[]);
+      const workIds = rows.map((r) => r.id);
+      const repCoverMap = await fetchRepresentativeCovers(client, workIds);
+
+      for (const row of rows) {
+        const repCover = repCoverMap.get(row.id);
+        if (repCover) {
+          row.representative_cover_media = repCover;
+        }
+      }
+
+      return enrichWorksWithMediaNoGap(client, rows, "listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -411,6 +454,7 @@ type CmsWorkRow = {
   sort_order: number;
   private_token_hash?: string | null;
   cover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  representative_cover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   hover_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   share_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   work_categories?: Array<{
@@ -568,7 +612,18 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listFeaturedWorks");
+      const rows = ((data ?? []) as unknown as CmsWorkRow[]);
+      const workIds = rows.map((r) => r.id);
+      const repCoverMap = await fetchRepresentativeCovers(client, workIds);
+
+      for (const row of rows) {
+        const repCover = repCoverMap.get(row.id);
+        if (repCover) {
+          row.representative_cover_media = repCover;
+        }
+      }
+
+      return enrichWorksWithMediaNoGap(client, rows, "server:listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -774,6 +829,7 @@ function toPublicWork(row: CmsWorkRow, mediaNoGap: boolean = false): Work {
     palette: row.palette ?? [],
     coverTone: "graphite",
     coverMedia: toPublicMedia(row.cover_media),
+    representativeCoverMedia: toPublicMedia(row.representative_cover_media),
     hoverMedia: toPublicMedia(row.hover_media),
     shareMedia: toPublicMedia(row.share_media),
     blocks: toPublicBlocks(row.work_blocks ?? []),

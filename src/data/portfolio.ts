@@ -135,6 +135,7 @@ export type Work = {
   palette: string[];
   coverTone: string;
   coverMedia?: WorkMedia;
+  representativeCoverMedia?: WorkMedia;
   hoverMedia?: WorkMedia;
   shareMedia?: WorkMedia;
   blocks: ContentBlock[];

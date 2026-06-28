@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { runRepresentativeCoverMigration } from "@/lib/cms/migrations";
 import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
+import { RepresentativeCoverUploader } from "@/components/admin/RepresentativeCoverUploader";
 import {
   publishScheduledWorks,
   assignToRepresentativeSlot,
@@ -24,6 +26,7 @@ type AdminWorkRow = {
   composite_order: number | null;
   updated_at: string;
   cover_media_id: string | null;
+  representative_cover_media_id?: string | null;
 };
 
 type CoverMediaRow = {
@@ -61,6 +64,9 @@ export default async function AdminWorksPage({
   const query = q.trim().toLowerCase();
 
   const supabase = await createSupabaseServerClient();
+
+  await runRepresentativeCoverMigration().catch(() => {});
+
   const [
     { data, error },
     { data: categoriesData },
@@ -82,16 +88,45 @@ export default async function AdminWorksPage({
       .select("id,storage_key,mime_type")
       .is("deleted_at", null),
   ]);
-  const works = (data ?? []) as AdminWorkRow[];
+  let works = (data ?? []) as AdminWorkRow[];
   const categories = (categoriesData ?? []) as TaxonomyRow[];
   const tags = (tagsData ?? []) as TaxonomyRow[];
   const coverMedia = (coverMediaData ?? []) as CoverMediaRow[];
+
+  try {
+    const workIds = works.map((w) => w.id);
+    if (workIds.length > 0) {
+      const { data: repCoverData } = await supabase
+        .from("works")
+        .select("id,representative_cover_media_id")
+        .in("id", workIds)
+        .is("deleted_at", null);
+      if (repCoverData) {
+        const repCoverMap = new Map(
+          (repCoverData as Array<{ id: string; representative_cover_media_id: string | null }>).map((r) => [r.id, r.representative_cover_media_id]),
+        );
+        works = works.map((w) => ({
+          ...w,
+          representative_cover_media_id: repCoverMap.get(w.id) ?? null,
+        }));
+      }
+    }
+  } catch {
+    // column may not exist yet
+  }
 
   const coverMediaMap = new Map(coverMedia.map((m) => [m.id, m]));
 
   const getCoverUrl = (work: AdminWorkRow) => {
     if (!work.cover_media_id) return null;
     const media = coverMediaMap.get(work.cover_media_id);
+    if (!media || !media.mime_type.startsWith("image/")) return null;
+    return buildPublicMediaUrl(media.storage_key);
+  };
+
+  const getRepresentativeCoverUrl = (work: AdminWorkRow) => {
+    if (!work.representative_cover_media_id) return null;
+    const media = coverMediaMap.get(work.representative_cover_media_id);
     if (!media || !media.mime_type.startsWith("image/")) return null;
     return buildPublicMediaUrl(media.storage_key);
   };
@@ -167,6 +202,7 @@ export default async function AdminWorksPage({
           slots={representativeSlots}
           allWorks={nonRepresentativeWorks}
           getCoverUrl={getCoverUrl}
+          getRepresentativeCoverUrl={getRepresentativeCoverUrl}
         />
       ) : (
         <>

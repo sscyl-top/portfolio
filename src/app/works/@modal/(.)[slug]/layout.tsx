@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { X } from "lucide-react";
 
 export default function WorkModalLayout({
   children,
@@ -34,32 +34,25 @@ export default function WorkModalLayout({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[#181a1e]"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === overlayRef.current) {
           onDismiss();
         }
       }}
     >
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#181a1e]/90 px-4 py-4 backdrop-blur-xl md:px-8">
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="inline-flex items-center gap-2 text-sm text-white/45 transition hover:text-white"
-        >
-          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          返回作品列表
-        </button>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/45 transition hover:border-white/25 hover:text-white"
-          aria-label="关闭"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="fixed right-4 top-4 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white/80 transition hover:bg-black/70 hover:text-white md:right-6 md:top-6"
+        aria-label="关闭"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      <div className="mx-auto my-4 w-[calc(100%-2rem)] max-w-5xl overflow-hidden rounded-2xl bg-[#181a1e] shadow-2xl md:my-8">
+        {children}
       </div>
-      {children}
     </div>
   );
 }

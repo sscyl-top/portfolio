@@ -2176,6 +2176,52 @@ export async function removeFromRepresentative(formData: FormData) {
   revalidatePath("/works");
 }
 
+const representativeCoverSchema = z.object({
+  work_id: z.string().uuid(),
+  media_id: z.string().uuid().nullable(),
+});
+
+export async function updateRepresentativeCover(formData: FormData) {
+  const parsed = representativeCoverSchema.safeParse({
+    work_id: formData.get("work_id"),
+    media_id: formData.get("media_id") || null,
+  });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { work_id, media_id } = parsed.data;
+
+  const { error } = await client
+    .from("works")
+    .update({ representative_cover_media_id: media_id })
+    .eq("id", work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath("/");
+  revalidatePath("/works");
+}
+
+export async function clearRepresentativeCover(formData: FormData) {
+  const parsed = z.object({ work_id: z.string().uuid() }).safeParse({
+    work_id: formData.get("work_id"),
+  });
+  if (!parsed.success) return;
+
+  const { client } = await requireAdmin();
+  const { error } = await client
+    .from("works")
+    .update({ representative_cover_media_id: null })
+    .eq("id", parsed.data.work_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/works");
+  revalidatePath("/");
+  revalidatePath("/works");
+}
+
 const emptyWorkSchema = z.object({
   section: z.enum(["all", "representative", "composite"]).default("all"),
   representative_slot: z.coerce.number().int().min(1).max(7).optional(),
