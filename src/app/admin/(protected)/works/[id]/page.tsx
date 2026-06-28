@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listWorkVersions } from "@/lib/cms/versions";
 import type { WorkVersionListItem } from "@/lib/cms/versions";
+import { runWorkTablesMigration } from "@/lib/cms/migrations";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
 import { Toast } from "@/components/admin/Toast";
@@ -89,72 +90,99 @@ export default async function AdminWorkEditorPage({
   const { id } = await params;
   const { privatePreview, toast } = await searchParams;
   const supabase = await createSupabaseServerClient();
-  const [
-    { data: work },
-    { data: blocks },
-    { data: categories },
-    { data: tags },
-    { data: mediaAssets },
-    { data: workCategories },
-    { data: workTags },
-    { data: mediaNoGapRow },
-    versions,
-  ] = await Promise.all([
-    supabase
-      .from("works")
-      .select(
-        "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,cover_media_id,hover_media_id,share_media_id,seo_title,seo_description,scheduled_publish_at,updated_at",
-      )
-      .eq("id", id)
-      .is("deleted_at", null)
-      .single(),
-    supabase
-      .from("work_blocks")
-      .select("id,block_type,sort_order,is_visible,payload")
-      .eq("work_id", id)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("categories")
-      .select("id,name,slug,sort_order")
-      .is("deleted_at", null)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("tags")
-      .select("id,name,slug")
-      .is("deleted_at", null)
-      .order("name", { ascending: true }),
-    supabase
-      .from("media_assets")
-      .select("id,storage_key,mime_type,original_name,alt_text")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    supabase.from("work_categories").select("category_id").eq("work_id", id),
-    supabase.from("work_tags").select("tag_id").eq("work_id", id),
-    supabase
-      .from("text_content")
-      .select("content")
-      .eq("key", `work_media_no_gap_${id}`)
-      .eq("page", "work_settings")
-      .eq("is_active", true)
-      .is("deleted_at", null)
-      .maybeSingle(),
-    listWorkVersions(supabase, id),
-  ]);
+
+  await runWorkTablesMigration().catch(() => {});
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  let work: WorkEditorRow | null = null;
+  let blocks: WorkBlockRow[] = [];
+  let categories: TaxonomyOptionRow[] = [];
+  let tags: TaxonomyOptionRow[] = [];
+  let mediaAssets: MediaOptionRow[] = [];
+  let workCategories: WorkCategoryRow[] = [];
+  let workTags: WorkTagRow[] = [];
+  let mediaNoGap = false;
+  let versions: WorkVersionListItem[] = [];
+
+  try {
+    const [
+      workResult,
+      blocksResult,
+      categoriesResult,
+      tagsResult,
+      mediaResult,
+      workCategoriesResult,
+      workTagsResult,
+      mediaNoGapResult,
+      versionsResult,
+    ] = await Promise.all([
+      supabase
+        .from("works")
+        .select(
+          "id,slug,title,subtitle,summary,year,client,status,palette,is_representative,representative_order,is_composite,composite_order,sort_order,cover_media_id,hover_media_id,share_media_id,seo_title,seo_description,scheduled_publish_at,updated_at",
+        )
+        .eq("id", id)
+        .is("deleted_at", null)
+        .single(),
+      supabase
+        .from("work_blocks")
+        .select("id,block_type,sort_order,is_visible,payload")
+        .eq("work_id", id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("categories")
+        .select("id,name,slug,sort_order")
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("tags")
+        .select("id,name,slug")
+        .is("deleted_at", null)
+        .order("name", { ascending: true }),
+      supabase
+        .from("media_assets")
+        .select("id,storage_key,mime_type,original_name,alt_text")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      supabase.from("work_categories").select("category_id").eq("work_id", id),
+      supabase.from("work_tags").select("tag_id").eq("work_id", id),
+      supabase
+        .from("text_content")
+        .select("content")
+        .eq("key", `work_media_no_gap_${id}`)
+        .eq("page", "work_settings")
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      listWorkVersions(supabase, id),
+    ]);
+
+    work = workResult.data as WorkEditorRow | null;
+    blocks = (blocksResult.data ?? []) as WorkBlockRow[];
+    categories = (categoriesResult.data ?? []) as TaxonomyOptionRow[];
+    tags = (tagsResult.data ?? []) as TaxonomyOptionRow[];
+    mediaAssets = (mediaResult.data ?? []) as MediaOptionRow[];
+    workCategories = (workCategoriesResult.data ?? []) as WorkCategoryRow[];
+    workTags = (workTagsResult.data ?? []) as WorkTagRow[];
+    mediaNoGap = mediaNoGapResult.data?.content === "true";
+    versions = versionsResult ?? [];
+  } catch (err) {
+    console.error("[WorkEditor] Failed to load work data:", err);
+  }
 
   if (!work) notFound();
 
   const workRow = work as WorkEditorRow;
-  const blockRows = (blocks ?? []) as WorkBlockRow[];
-  const categoryRows = (categories ?? []) as TaxonomyOptionRow[];
-  const mediaRows = (mediaAssets ?? []) as MediaOptionRow[];
-  const tagRows = (tags ?? []) as TaxonomyOptionRow[];
-  const versionRows = (versions ?? []) as WorkVersionListItem[];
-  const mediaNoGap = mediaNoGapRow?.content === "true";
+  const blockRows = blocks;
+  const categoryRows = categories;
+  const mediaRows = mediaAssets;
+  const tagRows = tags;
+  const versionRows = versions;
   const selectedCategoryIds = new Set(
-    ((workCategories ?? []) as WorkCategoryRow[]).map((item) => item.category_id),
+    workCategories.map((item) => item.category_id),
   );
   const selectedTagIds = new Set(
-    ((workTags ?? []) as WorkTagRow[]).map((item) => item.tag_id),
+    workTags.map((item) => item.tag_id),
   );
 
   return (

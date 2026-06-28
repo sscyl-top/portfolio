@@ -15,7 +15,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -94,6 +94,7 @@ const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
   await runHeroVideosMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
+  await runWorkTablesMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 500));
 

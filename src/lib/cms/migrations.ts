@@ -5,6 +5,7 @@ let ctaTransformMigrationDone = false;
 let tickerLogosMigrationDone = false;
 let centerLogoMigrationDone = false;
 let musicSettingsMigrationDone = false;
+let workTablesMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -230,4 +231,57 @@ export async function runBucketSizeLimitMigration(): Promise<boolean> {
   }
 
   return success;
+}
+
+export async function runWorkTablesMigration(): Promise<boolean> {
+  if (workTablesMigrationDone) return true;
+
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for work tables");
+    return false;
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE public.works
+        ADD COLUMN IF NOT EXISTS subtitle text NOT NULL DEFAULT '';
+
+      CREATE TABLE IF NOT EXISTS public.work_versions (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        work_id uuid NOT NULL REFERENCES public.works(id) ON DELETE CASCADE,
+        version_number integer NOT NULL,
+        snapshot jsonb NOT NULL DEFAULT '{}'::jsonb,
+        label text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE(work_id, version_number)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_work_versions_work_id ON public.work_versions(work_id);
+      CREATE INDEX IF NOT EXISTS idx_work_versions_version_number ON public.work_versions(work_id, version_number DESC);
+
+      CREATE TABLE IF NOT EXISTS public.audit_logs (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        admin_user_id uuid,
+        action text NOT NULL,
+        entity_type text NOT NULL,
+        entity_id text NOT NULL,
+        details jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON public.audit_logs(entity_type, entity_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] Work tables (subtitle, work_versions, audit_logs) ready");
+    workTablesMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run work tables migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
 }
