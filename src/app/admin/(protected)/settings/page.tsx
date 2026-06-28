@@ -264,7 +264,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             >
               <option value="dark">深色</option>
               <option value="light">浅色</option>
-              <option value="system">跟随系统</option>
             </select>
           </label>
           <Field

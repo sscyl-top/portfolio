@@ -58,6 +58,37 @@
   --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
+/* 首页固定深色：无论全局主题如何，首页始终使用深色变量 */
+body:has(.home-dark-scope) {
+  --background: #050505;
+  --foreground: #f4f1ea;
+  --muted: #a8a29a;
+  --panel: #10100f;
+  --line: rgba(244, 241, 234, 0.12);
+  --copper: #c9a27f;
+  --cyan: #8bd7cd;
+  --page-bg: #050505;
+  --page-fg: #f4f1ea;
+  --ink: rgba(244, 241, 234, 1);
+  --ink-2: rgba(244, 241, 234, 0.62);
+  --ink-3: rgba(244, 241, 234, 0.45);
+  --ink-4: rgba(244, 241, 234, 0.28);
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --surface-3: rgba(255, 255, 255, 0.025);
+  --edge: rgba(255, 255, 255, 0.15);
+  --edge-2: rgba(255, 255, 255, 0.10);
+  --edge-3: rgba(255, 255, 255, 0.06);
+  --overlay: rgba(0, 0, 0, 0.84);
+  --overlay-2: rgba(0, 0, 0, 0.42);
+  --glass: rgba(0, 0, 0, 0.36);
+  --glass-strong: rgba(0, 0, 0, 0.52);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
+  background: #050505;
+  color: #f4f1ea;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
