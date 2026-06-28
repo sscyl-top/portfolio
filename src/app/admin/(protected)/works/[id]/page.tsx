@@ -92,7 +92,6 @@ export default async function AdminWorkEditorPage({
   const supabase = await createSupabaseServerClient();
 
   await runWorkTablesMigration().catch(() => {});
-  await new Promise(resolve => setTimeout(resolve, 300));
 
   let work: WorkEditorRow | null = null;
   let blocks: WorkBlockRow[] = [];

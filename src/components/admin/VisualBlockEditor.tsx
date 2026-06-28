@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Plus,
   X,
+  Loader2,
 } from "lucide-react";
 import {
   reorderWorkBlocks,
@@ -414,6 +415,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   const [pdfParseStatus, setPdfParseStatus] = useState<string | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [showBlockMenu, setShowBlockMenu] = useState(false);
+  const [deletingBlockId, setDeletingBlockId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -1427,6 +1429,9 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
   const handleDeleteBlock = useCallback(
     async (blockId: string) => {
+      // 防止重复点击
+      if (deletingBlockId) return;
+      setDeletingBlockId(blockId);
       try {
         await deleteBlockDirect(blockId, workId, workSlug);
         setBlocks((prev) => {
@@ -1437,9 +1442,12 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         router.refresh();
       } catch (err) {
         console.error("Delete failed:", err);
+        alert(`删除失败：${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setDeletingBlockId(null);
       }
     },
-    [workId, workSlug, router],
+    [workId, workSlug, router, deletingBlockId],
   );
 
   // ── 添加文本块 ─────────────────────────────────────────────
@@ -1799,6 +1807,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 index={index}
                 isEditing={editingBlockId === block.id}
                 isDragging={draggedBlockId === block.id}
+                isDeleting={deletingBlockId === block.id}
                 isDropTargetBefore={dragOverIndex === index}
                 isDropTargetAfter={dragOverIndex === index + 1}
                 onEdit={() => setEditingBlockId(editingBlockId === block.id ? null : block.id)}
@@ -2046,6 +2055,7 @@ function BlockCard({
   index,
   isEditing,
   isDragging: isDraggingProp,
+  isDeleting,
   isDropTargetBefore,
   isDropTargetAfter,
   onEdit,
@@ -2070,6 +2080,7 @@ function BlockCard({
   index: number;
   isEditing: boolean;
   isDragging: boolean;
+  isDeleting: boolean;
   isDropTargetBefore: boolean;
   isDropTargetAfter: boolean;
   onEdit: () => void;
@@ -2130,7 +2141,7 @@ function BlockCard({
             : isEditing
               ? "rounded-lg border border-cyan/30 bg-white/[0.04]"
               : ""
-        }`}
+        } ${isDeleting ? "pointer-events-none opacity-60" : ""}`}
         onDragOver={isDraggingProp ? undefined : onFileDragOver}
         onDrop={isDraggingProp ? undefined : onFileDrop}
       >
@@ -2170,10 +2181,15 @@ function BlockCard({
               <button
                 type="button"
                 onClick={onDelete}
-                className="rounded p-1 text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
-                title="删除"
+                disabled={isDeleting}
+                className={`rounded p-1 transition ${
+                  isDeleting
+                    ? "cursor-wait bg-red-500/20 text-red-400"
+                    : "text-white/25 hover:bg-red-500/10 hover:text-red-400"
+                }`}
+                title={isDeleting ? "删除中…" : "删除"}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
@@ -2197,10 +2213,15 @@ function BlockCard({
             <button
               type="button"
               onClick={onDelete}
-              className="rounded p-1 text-white/50 transition hover:bg-red-500/20 hover:text-red-400"
-              title="删除"
+              disabled={isDeleting}
+              className={`rounded p-1 transition ${
+                isDeleting
+                  ? "cursor-wait bg-red-500/20 text-red-400"
+                  : "text-white/50 hover:bg-red-500/20 hover:text-red-400"
+              }`}
+              title={isDeleting ? "删除中…" : "删除"}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
             </button>
           </div>
         )}
@@ -3189,7 +3210,7 @@ function buildBlockMediaUrl(storageKey: string, mimeType?: string): string {
 
 function visualBlockToContentBlock(
   block: VisualBlock,
-  _mediaAssets: MediaAsset[],
+  mediaAssets: MediaAsset[],
 ): ContentBlock | null {
   const payload = block.payload;
 
@@ -3234,7 +3255,21 @@ function visualBlockToContentBlock(
   }
 
   if (block.block_type === "media" || block.block_type === "gallery") {
-    const refs = toBlockRefs(payload.media_refs ?? payload.media_ref);
+    // 优先用 payload.media_refs；缺失时从 mediaAssets 查找（兼容刚上传但尚未 refetch 的块）
+    let refs = toBlockRefs(payload.media_refs ?? payload.media_ref);
+    if (refs.length === 0) {
+      const mediaId = payload.media_id as string | undefined;
+      const mediaIds = payload.media_ids as string[] | undefined;
+      const ids = mediaIds ?? (mediaId ? [mediaId] : []);
+      refs = mediaAssets
+        .filter((a) => ids.includes(a.id))
+        .map((a) => ({
+          id: a.id,
+          storage_key: a.storage_key,
+          mime_type: a.mime_type,
+          alt_text: a.alt_text,
+        }));
+    }
     const items = toItems(refs);
     const caption = String(payload.caption ?? "");
     const rawFocal = payload.focal_point as { x?: number; y?: number } | undefined;
@@ -3253,7 +3288,18 @@ function visualBlockToContentBlock(
   }
 
   if (block.block_type === "video") {
-    const ref = payload.media_ref as BlockMediaRef | null;
+    let ref = payload.media_ref as BlockMediaRef | null;
+    if (!ref && payload.media_id) {
+      const asset = mediaAssets.find((a) => a.id === payload.media_id);
+      if (asset) {
+        ref = {
+          id: asset.id,
+          storage_key: asset.storage_key,
+          mime_type: asset.mime_type,
+          alt_text: asset.alt_text,
+        };
+      }
+    }
     const items = ref ? [toMedia(ref)] : [];
     const caption = String(payload.caption ?? "");
 
@@ -3266,7 +3312,18 @@ function visualBlockToContentBlock(
   }
 
   if (block.block_type === "pdf") {
-    const ref = payload.media_ref as BlockMediaRef | null;
+    let ref = payload.media_ref as BlockMediaRef | null;
+    if (!ref && payload.media_id) {
+      const asset = mediaAssets.find((a) => a.id === payload.media_id);
+      if (asset) {
+        ref = {
+          id: asset.id,
+          storage_key: asset.storage_key,
+          mime_type: asset.mime_type,
+          alt_text: asset.alt_text,
+        };
+      }
+    }
     const items = ref ? [toMedia(ref)] : [];
     const caption = String(payload.caption ?? "");
 
