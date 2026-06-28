@@ -64,16 +64,16 @@ export async function SiteHeader({
               />
             )}
           </span>
-          <span className="hidden min-w-0 sm:block">
+          <span className="hidden h-10 min-w-0 flex-col justify-start sm:flex md:h-12">
             {siteSettings.nameMediaUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
-                  className="block h-7 max-h-7 w-auto max-w-[160px] object-contain md:h-8 md:max-h-8 md:max-w-[200px]"
+                  className="block h-5 max-h-5 w-auto max-w-[120px] object-contain md:h-6 md:max-h-6 md:max-w-[150px]"
                 />
-                <span className="mt-1 block truncate font-mono text-xs text-white/45">
+                <span className="mt-0.5 block truncate font-mono text-[10px] text-white/45 md:mt-1 md:text-xs">
                   {siteSettings.title}
                 </span>
               </>
