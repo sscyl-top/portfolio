@@ -61,7 +61,8 @@ export function DraggableAddFab({
   useEffect(() => {
     const saved = loadSavedPosition();
     const initial = saved ? clampPosition(saved.left, saved.top) : getDefaultPosition();
-    setPos(initial);
+    const frameId = requestAnimationFrame(() => setPos(initial));
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
   useEffect(() => {

@@ -23,11 +23,12 @@ const WORKS_TEXT_KEYS = [
 ];
 
 export default async function WorksPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   let works: any[] = [];
   let featuredWorks: any[] = [];
   let compositeWorks: any[] = [];
   let visibleCategories: any[] = [];
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   let texts: Record<string, { content: string; styles: Record<string, string> }> = {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let siteSettings: any = {

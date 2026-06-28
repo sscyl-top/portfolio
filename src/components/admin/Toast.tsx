@@ -21,9 +21,12 @@ export function Toast({
   }, [onClose]);
 
   useEffect(() => {
-    setVisible(true);
+    const frameId = requestAnimationFrame(() => setVisible(true));
     const timer = setTimeout(close, 3000);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer);
+    };
   }, [close]);
 
   if (!visible) return null;

@@ -82,6 +82,7 @@ async function fetchMusicData() {
       const mediaMap = new Map();
       (medias ?? []).forEach((m) => mediaMap.set(m.id, m));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const t of tracks as any[]) {
         safeTracks.push({
           id: t.id,

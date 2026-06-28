@@ -49,8 +49,11 @@ export function ResizableTwoPanels({
       if (saved) {
         const w = parseInt(saved, 10);
         if (!isNaN(w) && w >= minFixedWidth && w <= maxFixedWidth) {
-          setFixedWidth(w);
-          fixedWidthRef.current = w;
+          const frameId = requestAnimationFrame(() => {
+            setFixedWidth(w);
+            fixedWidthRef.current = w;
+          });
+          return () => cancelAnimationFrame(frameId);
         }
       }
     } catch {

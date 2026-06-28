@@ -39,10 +39,9 @@ import {
   updateBlockMediaRef,
 } from "@/app/admin/(protected)/works/actions";
 import { uploadMediaFiles, uploadMediaBlob } from "@/lib/cms/upload-media";
-import { buildPublicMediaUrl, buildOptimizedMediaUrl } from "@/lib/cms/media-url";
+import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { pdfToImages } from "@/lib/cms/pdf-to-images";
 import { ImageCropper } from "@/components/admin/ImageCropper";
-import { PdfBlockRenderer } from "@/components/works/PdfBlockRenderer";
 import { WorkContentBlocks } from "@/components/works/WorkContentBlocks";
 import type { ContentBlock, WorkMedia } from "@/data/portfolio";
 
@@ -152,16 +151,6 @@ function getLayout(payload: Record<string, unknown>): {
   };
 }
 
-/** 将 layout 合并写回 payload */
-function withLayout(
-  payload: Record<string, unknown>,
-  layout: Partial<{ width: LayoutWidth; align: "left" | "center" | "right"; columns: 1 | 2 | 3 | 4; free?: FreeLayout }>,
-): Record<string, unknown> {
-  return {
-    ...payload,
-    layout: { ...getLayout(payload), ...layout },
-  };
-}
 
 // ── 后台预览 Lightbox（点击查看大图）─────────────────────────
 function AdminLightbox({
@@ -355,7 +344,8 @@ function FreePositionPanel({
 
   // 当外部 free 值变化且与本地值不同时同步（但如果用户正在输入则不打断）
   useEffect(() => {
-    setLocalValues({ ...defaults, ...free });
+    const frameId = requestAnimationFrame(() => setLocalValues({ ...defaults, ...free }));
+    return () => cancelAnimationFrame(frameId);
   }, [free?.x, free?.y, free?.w, free?.h]);
 
   const commit = (key: keyof FreeLayout, rawValue: string) => {
@@ -397,7 +387,9 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     () => [...initialBlocks].sort((a, b) => a.sort_order - b.sort_order),
   );
   const blocksRef = useRef<VisualBlock[]>(blocks);
-  blocksRef.current = blocks;
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -408,7 +400,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     started: boolean;
     handleEl: HTMLElement;
   } | null>(null);
-  const blockContainerRef = useRef<HTMLDivElement | null>(null);
   const dragOverIndexRef = useRef<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
@@ -449,8 +440,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         const parsed = JSON.parse(raw);
         if (typeof parsed.left === "number" && typeof parsed.top === "number") {
           initial = clampFabPos(parsed.left, parsed.top);
-          setFabPos(initial);
-          return;
+          const frameId = requestAnimationFrame(() => setFabPos(initial));
+          return () => cancelAnimationFrame(frameId);
         }
       }
     } catch {}
@@ -460,7 +451,8 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       left: window.innerWidth - FAB_SIZE - rightOffset,
       top: window.innerHeight - FAB_SIZE - 32,
     };
-    setFabPos(initial);
+    const frameId = requestAnimationFrame(() => setFabPos(initial));
+    return () => cancelAnimationFrame(frameId);
   }, [embedded, clampFabPos]);
 
   useEffect(() => {
@@ -520,17 +512,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     setShowBlockMenu((v) => !v);
   }, []);
 
-  // 乐观更新：立即替换本地 payload，不等待服务器响应
-  // 使用函数式 setState 基于 prev 状态更新，避免因事件时序导致的覆盖
-  const handleOptimisticUpdate = useCallback(
-    (blockId: string, newPayload: Record<string, unknown>) => {
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? { ...b, payload: newPayload } : b)),
-      );
-    },
-    [],
-  );
-
   // 专用：布局变更（基于prev状态函数式更新，彻底避免闭包导致的状态覆盖/跳动）
   const pendingLayoutSaveRef = useRef<{ blockId: string; timer: ReturnType<typeof setTimeout>; latestPayload: Record<string, unknown> } | null>(null);
 
@@ -587,8 +568,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     insertAt: number;
   } | null>(null);
 
-  // before_after 专用
-  const [baStep, setBaStep] = useState<{ blockId: string; step: "before" | "after" } | null>(null);
   // 裁剪状态
   const [croppingImageSrc, setCroppingImageSrc] = useState<string | null>(null);
   const [croppingBlockId, setCroppingBlockId] = useState<string | null>(null);
@@ -964,10 +943,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     return Array.from(e.dataTransfer.types).includes("Files");
   }, []);
 
-  const isBlockDrag = useCallback((e: React.DragEvent) => {
-    return Array.from(e.dataTransfer.types).includes("block-id");
-  }, []);
-
   const handleFilesDrop = useCallback(
     async (files: File[], insertAt: number) => {
       const images = files.filter((f) => f.type.startsWith("image/"));
@@ -1052,7 +1027,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     const updateInsertIndicator = () => {
       const x = autoScrollMouseXRef.current;
       const y = autoScrollMouseYRef.current;
-      const draggedId = blockDragRef.current?.blockId ?? null;
       const blockEls = container.querySelectorAll<HTMLElement>("[data-block-index]");
       if (blockEls.length === 0) return;
       const blocks = blocksRef.current;
@@ -1108,7 +1082,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       const y = autoScrollMouseYRef.current;
       const rect = container.getBoundingClientRect();
       const containerTop = rect.top;
-      const containerBottom = rect.bottom;
       const containerHeight = rect.height;
       const edgeZone = Math.min(120, containerHeight * 0.2);
       const maxSpeed = 12;
@@ -1155,15 +1128,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       handleEl: e.currentTarget,
     };
   }, []);
-
-  const cancelBlockDrag = useCallback(() => {
-    blockDragRef.current = null;
-    setDraggedBlockId(null);
-    setDragOverIndex(null);
-    stopAutoScroll();
-    document.body.style.cursor = "";
-    document.body.style.userSelect = "";
-  }, [stopAutoScroll]);
 
   useEffect(() => {
     const handleGlobalPointerMove = (e: PointerEvent) => {
@@ -1296,24 +1260,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
     setContextMenu(null);
   }, [persistOrder]);
 
-  const moveBlockToIndex = useCallback(
-    (blockId: string, targetIndex: number) => {
-      const sourceIndex = blocks.findIndex((b) => b.id === blockId);
-      if (sourceIndex === -1) return;
-      if (sourceIndex === targetIndex) return;
-
-      const reordered = [...blocks];
-      const [moved] = reordered.splice(sourceIndex, 1);
-      const adjustedTarget = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-      reordered.splice(adjustedTarget, 0, moved);
-      reordered.forEach((b, i) => { b.sort_order = i; });
-
-      setBlocks(reordered);
-      persistOrder(reordered);
-    },
-    [blocks, persistOrder],
-  );
-
   const handleFileDragOverBlock = useCallback(
     (e: React.DragEvent, index: number, _blockId: string) => {
       if (!isFileDrag(e)) return;
@@ -1354,7 +1300,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
   );
 
   const handleFileDropBlock = useCallback(
-    (e: React.DragEvent, index: number, blockId: string) => {
+    (e: React.DragEvent, index: number, _blockId: string) => {
       if (!isFileDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -1408,7 +1354,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         setBlocks((prev) =>
           prev.map((b) => (b.id === fileInputIntent.blockId ? { ...b, payload: newPayload } : b)),
         );
-        setBaStep(null);
         router.refresh();
       } catch (err) {
         console.error("BA upload failed:", err);
@@ -1530,19 +1475,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
       });
     },
     [workId, workSlug],
-  );
-
-  // 布局保存（轻量版）：仅更新后端，不触发 revalidatePath/router.refresh()
-  // 防止服务端 RSC 重新渲染覆盖本地乐观更新，导致布局按钮来回跳动
-  const saveLayoutToServer = useCallback(
-    async (blockId: string, newPayload: Record<string, unknown>) => {
-      try {
-        await updateBlockLayoutDirect(workId, blockId, newPayload);
-      } catch (err) {
-        console.error("Save layout failed:", err);
-      }
-    },
-    [workId],
   );
 
   // ── 渲染 ─────────────────────────────────────────────────
@@ -1822,9 +1754,7 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 onFileDrop={(e) => handleFileDropBlock(e, index, block.id)}
                 mediaAssets={mediaAssets}
                 onUpdatePayload={(newPayload) => handleUpdateBlock(block.id, newPayload, block.block_type)}
-                onOptimisticUpdate={(newPayload) => handleOptimisticUpdate(block.id, newPayload)}
                 onLayoutChange={(patch) => handleLayoutChange(block.id, patch)}
-                onSaveLayout={(newPayload) => saveLayoutToServer(block.id, newPayload)}
                 onSaveAndClose={() => setEditingBlockId(null)}
                 onReplaceMedia={(blockId) => {
                   setFileInputIntent({ mode: "replace", blockId });
@@ -1842,7 +1772,6 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
                 }}
                 onAddImagesToGallery={handleAddImagesToGallery}
                 onSelectBaFile={(blockId, step) => {
-                  setBaStep({ blockId, step });
                   setFileInputIntent({ mode: "ba", blockId, step });
                   if (fileInputRef.current) {
                     fileInputRef.current.accept = "image/*";
@@ -2066,15 +1995,12 @@ function BlockCard({
   onFileDrop,
   mediaAssets,
   onUpdatePayload,
-  onOptimisticUpdate,
   onLayoutChange,
-  onSaveLayout,
   onSaveAndClose,
   onReplaceMedia,
   onAddImagesToGallery,
   onSelectBaFile,
   onCropImage,
-  onReorderGallery,
 }: {
   block: VisualBlock;
   index: number;
@@ -2091,15 +2017,12 @@ function BlockCard({
   onFileDrop: (e: React.DragEvent) => void;
   mediaAssets: MediaAsset[];
   onUpdatePayload: (newPayload: Record<string, unknown>) => void;
-  onOptimisticUpdate: (newPayload: Record<string, unknown>) => void;
   onLayoutChange: (patch: LayoutPatch) => void;
-  onSaveLayout: (newPayload: Record<string, unknown>) => void;
   onSaveAndClose: () => void;
   onReplaceMedia: (blockId: string) => void;
   onAddImagesToGallery: (blockId: string, files: File[]) => void;
   onSelectBaFile: (blockId: string, step: "before" | "after") => void;
   onCropImage: (blockId: string) => void;
-  onReorderGallery?: (fromIndex: number, toIndex: number) => void;
 }) {
   const blockTypeConfig = BLOCK_TYPE_META[block.block_type as keyof typeof BLOCK_TYPE_META];
 
@@ -3203,7 +3126,7 @@ function toBlockRefs(raw: unknown): BlockMediaRef[] {
   return [];
 }
 
-function buildBlockMediaUrl(storageKey: string, mimeType?: string): string {
+function buildBlockMediaUrl(storageKey: string, _mimeType?: string): string {
   // 图片直接返回原始 COS/Supabase URL，由 Next.js Image 组件优化，避免 COS 双重处理产生回源流量
   return buildPublicMediaUrl(storageKey);
 }

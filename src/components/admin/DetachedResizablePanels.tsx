@@ -83,29 +83,32 @@ export function DetachedResizablePanels({
   }, []);
 
   useEffect(() => {
-    setWidths((current) => {
-      let changed = false;
-      const next = { ...current };
+    const frameId = requestAnimationFrame(() => {
+      setWidths((current) => {
+        let changed = false;
+        const next = { ...current };
 
-      for (const panel of panels) {
-        let width = panel.defaultWidth;
-        try {
-          const saved = localStorage.getItem(panel.storageKey);
-          const parsed = saved ? Number.parseInt(saved, 10) : NaN;
-          if (!Number.isNaN(parsed)) width = parsed;
-        } catch {
-          // Width persistence is optional; keep dragging functional without it.
+        for (const panel of panels) {
+          let width = panel.defaultWidth;
+          try {
+            const saved = localStorage.getItem(panel.storageKey);
+            const parsed = saved ? Number.parseInt(saved, 10) : NaN;
+            if (!Number.isNaN(parsed)) width = parsed;
+          } catch {
+            // Width persistence is optional; keep dragging functional without it.
+          }
+
+          width = clamp(width, panel.minWidth, panel.maxWidth);
+          if (next[panel.id] !== width) {
+            next[panel.id] = width;
+            changed = true;
+          }
         }
 
-        width = clamp(width, panel.minWidth, panel.maxWidth);
-        if (next[panel.id] !== width) {
-          next[panel.id] = width;
-          changed = true;
-        }
-      }
-
-      return changed ? next : current;
+        return changed ? next : current;
+      });
     });
+    return () => cancelAnimationFrame(frameId);
   }, [panels, panelSignature]);
 
   const effectiveWidths = useMemo(() => {

@@ -28,17 +28,20 @@ export function SaveButton({
 
   useEffect(() => {
     if (saved) {
-      setShowSuccess(true);
+      const frameId = requestAnimationFrame(() => setShowSuccess(true));
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShowSuccess(false), 2500);
+      return () => cancelAnimationFrame(frameId);
     }
   }, [saved]);
 
   useEffect(() => {
     if (prevPendingRef.current && !pending) {
-      setShowSuccess(true);
+      const frameId = requestAnimationFrame(() => setShowSuccess(true));
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShowSuccess(false), 2500);
+      prevPendingRef.current = pending;
+      return () => cancelAnimationFrame(frameId);
     }
     prevPendingRef.current = pending;
   }, [pending]);
