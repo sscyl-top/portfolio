@@ -1,5 +1,4 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
-import { isR2Configured } from "@/lib/r2/config";
 import { isCosPublicConfigured } from "@/lib/cos/config";
 
 /**
@@ -17,9 +16,7 @@ export function isR2StorageKey(storageKey: string): boolean {
 }
 
 export function buildPublicMediaUrl(storageKey: string): string {
-  if (isR2StorageKey(storageKey) && isR2Configured()) {
-    // 通过应用域名代理访问 R2 文件，绕过 r2.dev 速率限制
-    // storageKey 形如 "r2/uploads/2026/06/xxx.png" → "/api/media/file/r2/uploads/2026/06/xxx.png"
+  if (isR2StorageKey(storageKey)) {
     return `${R2_PROXY_BASE}/${storageKey}`;
   }
 
@@ -41,7 +38,7 @@ export function buildOptimizedMediaUrl(
   const baseUrl = buildPublicMediaUrl(storageKey);
 
   // R2 通过代理访问时直接返回原文件（R2 不支持变换参数）
-  if (isR2StorageKey(storageKey) && isR2Configured()) {
+  if (isR2StorageKey(storageKey)) {
     return baseUrl;
   }
 
