@@ -27,7 +27,7 @@ export function WorksPageShell({ children }: WorksPageShellProps) {
 
   return (
     <main
-      className="relative isolate overflow-hidden bg-page-bg"
+      className="relative isolate overflow-visible bg-page-bg"
       onPointerMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         setPointer({
