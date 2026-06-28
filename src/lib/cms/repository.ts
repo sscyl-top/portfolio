@@ -85,11 +85,9 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,name_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
-
   let baseData: Record<string, unknown> | null = null;
   try {
-    const { data, error } = await client.from("site_settings").select(baseColumns).single();
+    const { data, error } = await client.from("site_settings").select("*").single();
     if (error) {
       console.error("[getSiteSettings] 基础查询失败:", error);
       return null;
@@ -102,41 +100,13 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
 
   if (!baseData) return null;
 
-  let heroIds = {
-    hero_main_video_media_id: null as string | null,
-    hero_side1_video_media_id: null as string | null,
-    hero_side2_video_media_id: null as string | null,
-    hero_side3_video_media_id: null as string | null,
+  const heroIds = {
+    hero_main_video_media_id: (baseData.hero_main_video_media_id as string | null) ?? null,
+    hero_side1_video_media_id: (baseData.hero_side1_video_media_id as string | null) ?? null,
+    hero_side2_video_media_id: (baseData.hero_side2_video_media_id as string | null) ?? null,
+    hero_side3_video_media_id: (baseData.hero_side3_video_media_id as string | null) ?? null,
   };
-  try {
-    const { data, error } = await client
-      .from("site_settings")
-      .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
-      .single();
-    if (!error && data) {
-      heroIds = {
-        hero_main_video_media_id: data.hero_main_video_media_id ?? null,
-        hero_side1_video_media_id: data.hero_side1_video_media_id ?? null,
-        hero_side2_video_media_id: data.hero_side2_video_media_id ?? null,
-        hero_side3_video_media_id: data.hero_side3_video_media_id ?? null,
-      };
-    }
-  } catch {
-    // columns may not exist
-  }
-
-  let ctaCenterLogoId: string | null = null;
-  try {
-    const { data, error } = await client
-      .from("site_settings")
-      .select("cta_center_logo_media_id")
-      .single();
-    if (!error && data) {
-      ctaCenterLogoId = data.cta_center_logo_media_id ?? null;
-    }
-  } catch {
-    // column may not exist
-  }
+  const ctaCenterLogoId = (baseData.cta_center_logo_media_id as string | null) ?? null;
 
   const ctaTransform: {
     cta_card_scale: number;

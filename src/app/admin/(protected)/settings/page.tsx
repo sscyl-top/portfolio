@@ -83,49 +83,23 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_center_logo_offset_y",
   ] as const;
 
-  const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,name_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
-
   let data: SettingsRow | null = null;
 
   try {
     const { data: baseData, error } = await serviceSupabase
       .from("site_settings")
-      .select(baseColumns)
+      .select("*")
       .single();
 
     if (!error && baseData) {
-      let heroIds = {
-        hero_main_video_media_id: null as string | null,
-        hero_side1_video_media_id: null as string | null,
-        hero_side2_video_media_id: null as string | null,
-        hero_side3_video_media_id: null as string | null,
+      const row = baseData as Record<string, unknown>;
+      const heroIds = {
+        hero_main_video_media_id: (row.hero_main_video_media_id as string | null) ?? null,
+        hero_side1_video_media_id: (row.hero_side1_video_media_id as string | null) ?? null,
+        hero_side2_video_media_id: (row.hero_side2_video_media_id as string | null) ?? null,
+        hero_side3_video_media_id: (row.hero_side3_video_media_id as string | null) ?? null,
       };
-
-      {
-        const { data: heroData, error: heroErr } = await serviceSupabase
-          .from("site_settings")
-          .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
-          .single();
-        if (!heroErr && heroData) {
-          heroIds = {
-            hero_main_video_media_id: heroData.hero_main_video_media_id ?? null,
-            hero_side1_video_media_id: heroData.hero_side1_video_media_id ?? null,
-            hero_side2_video_media_id: heroData.hero_side2_video_media_id ?? null,
-            hero_side3_video_media_id: heroData.hero_side3_video_media_id ?? null,
-          };
-        }
-      }
-
-      let ctaCenterLogoId: string | null = null;
-      {
-        const { data: centerLogoData, error: centerLogoErr } = await serviceSupabase
-          .from("site_settings")
-          .select("cta_center_logo_media_id")
-          .single();
-        if (!centerLogoErr && centerLogoData) {
-          ctaCenterLogoId = centerLogoData.cta_center_logo_media_id ?? null;
-        }
-      }
+      const ctaCenterLogoId = (row.cta_center_logo_media_id as string | null) ?? null;
 
       const ctaTransform = {
         cta_card_scale: 1,
@@ -165,24 +139,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       }
 
       data = {
-        name: baseData.name,
-        nickname: baseData.nickname,
-        default_theme: baseData.default_theme,
-        font_preset: baseData.font_preset,
-        seo_title: baseData.seo_title,
-        seo_description: baseData.seo_description,
-        logo_media_id: baseData.logo_media_id ?? null,
-        name_media_id: baseData.name_media_id ?? null,
-        avatar_media_id: baseData.avatar_media_id ?? null,
-        share_media_id: baseData.share_media_id ?? null,
-        cta_card_media_id: baseData.cta_card_media_id ?? null,
-        cta_figure_media_id: baseData.cta_figure_media_id ?? null,
-        cta_ticker_logo_media_id: baseData.cta_ticker_logo_media_id ?? null,
+        name: (row.name as string) ?? "",
+        nickname: (row.nickname as string) ?? "",
+        default_theme: ((row.default_theme as string) ?? "dark") as SettingsRow["default_theme"],
+        font_preset: (row.font_preset as string) ?? "default",
+        seo_title: (row.seo_title as string) ?? "",
+        seo_description: (row.seo_description as string) ?? "",
+        logo_media_id: (row.logo_media_id as string | null) ?? null,
+        name_media_id: (row.name_media_id as string | null) ?? null,
+        avatar_media_id: (row.avatar_media_id as string | null) ?? null,
+        share_media_id: (row.share_media_id as string | null) ?? null,
+        cta_card_media_id: (row.cta_card_media_id as string | null) ?? null,
+        cta_figure_media_id: (row.cta_figure_media_id as string | null) ?? null,
+        cta_ticker_logo_media_id: (row.cta_ticker_logo_media_id as string | null) ?? null,
         cta_center_logo_media_id: ctaCenterLogoId,
         cta_ticker_logo_media_ids: tickerLogoIdsRaw,
         ...ctaTransform,
         ...heroIds,
-        social_links: baseData.social_links ?? [],
+        social_links: (row.social_links as SettingsRow["social_links"]) ?? [],
       } as SettingsRow;
     }
   } catch (err) {

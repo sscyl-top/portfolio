@@ -99,6 +99,24 @@ export async function saveSiteSettings(formData: FormData) {
     .filter((s) => s.length > 0)
     .join(",");
 
+  await runHeroVideosMigration().catch(() => {});
+  await runCtaTransformMigration().catch(() => {});
+  await runCenterLogoMigration().catch(() => {});
+  await runNameMediaMigration().catch(() => {});
+
+  await wait(1500);
+
+  const serviceClient = createSupabaseServiceClient();
+
+  // 先查询数据库已有的列，避免 upsert 包含不存在的列导致失败
+  const { data: existingRow } = await serviceClient
+    .from("site_settings")
+    .select("*")
+    .single();
+  const existingColumns = new Set(
+    existingRow ? Object.keys(existingRow) : []
+  );
+
   const saveData: Record<string, unknown> = {
     id: true,
     name: String(formData.get("name") ?? "").trim(),
@@ -107,20 +125,29 @@ export async function saveSiteSettings(formData: FormData) {
     font_preset: String(formData.get("font_preset") ?? "default").trim(),
     seo_title: String(formData.get("seo_title") ?? "").trim(),
     seo_description: String(formData.get("seo_description") ?? "").trim(),
-    logo_media_id: uuidOrNull(formData.get("logo_media_id")),
-    name_media_id: uuidOrNull(formData.get("name_media_id")),
-    avatar_media_id: uuidOrNull(formData.get("avatar_media_id")),
-    share_media_id: uuidOrNull(formData.get("share_media_id")),
-    cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),
-    cta_figure_media_id: uuidOrNull(formData.get("cta_figure_media_id")),
-    cta_ticker_logo_media_id: uuidOrNull(formData.get("cta_ticker_logo_media_id")),
-    cta_center_logo_media_id: uuidOrNull(formData.get("cta_center_logo_media_id")),
-    hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
-    hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
-    hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
-    hero_side3_video_media_id: uuidOrNull(formData.get("hero_side3_video_media_id")),
     social_links,
   };
+
+  // 只保存数据库中实际存在的 media_id 列
+  const mediaIdFields = [
+    "logo_media_id",
+    "name_media_id",
+    "avatar_media_id",
+    "share_media_id",
+    "cta_card_media_id",
+    "cta_figure_media_id",
+    "cta_ticker_logo_media_id",
+    "cta_center_logo_media_id",
+    "hero_main_video_media_id",
+    "hero_side1_video_media_id",
+    "hero_side2_video_media_id",
+    "hero_side3_video_media_id",
+  ];
+  for (const field of mediaIdFields) {
+    if (existingColumns.has(field)) {
+      saveData[field] = uuidOrNull(formData.get(field));
+    }
+  }
 
   const ctaTransformValues: Record<string, number> = {
     cta_card_scale: isNaN(cta_card_scale) ? 1 : Math.min(5, Math.max(0.1, cta_card_scale)),
@@ -136,15 +163,6 @@ export async function saveSiteSettings(formData: FormData) {
     cta_center_logo_offset_x: isNaN(cta_center_logo_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_center_logo_offset_x)),
     cta_center_logo_offset_y: isNaN(cta_center_logo_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_center_logo_offset_y)),
   };
-
-  await runHeroVideosMigration().catch(() => {});
-  await runCtaTransformMigration().catch(() => {});
-  await runCenterLogoMigration().catch(() => {});
-  await runNameMediaMigration().catch(() => {});
-
-  await wait(1500);
-
-  const serviceClient = createSupabaseServiceClient();
 
   let saveError: string | null = null;
   for (let attempt = 0; attempt < 6; attempt++) {
