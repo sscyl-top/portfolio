@@ -66,7 +66,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
-      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
+      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] focus-visible:border-copper"
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
@@ -301,7 +301,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                     if (hasDragged.current) { e.preventDefault(); return; }
                   }}
                   style={style}
-                  className="representative-work-card-mobile group block overflow-hidden rounded-2xl border border-edge bg-surface p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-sm"
+                  className="representative-work-card-mobile group block overflow-hidden rounded-2xl border border-edge bg-surface p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-sm"
                 >
                   <article className="relative aspect-[3/4.5] overflow-hidden rounded-xl">
                     <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover={false} />
