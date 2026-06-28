@@ -684,6 +684,14 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
 
           const payload: Record<string, unknown> = {
             media_id: result.id,
+            media_ref: {
+              id: result.id,
+              storage_key: result.storage_key,
+              mime_type: result.mime_type,
+              alt_text: "",
+              original_name: result.original_name,
+              byte_size: result.byte_size,
+            },
             caption: "",
           };
           const created = await createBlockDirect(workId, workSlug, blockType, payload, currentInsertAt);
@@ -738,7 +746,15 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         });
 
         const mediaIds = results.map((r) => r.id);
-        const payload: Record<string, unknown> = { media_ids: mediaIds, caption: "" };
+        const mediaRefs = results.map((r) => ({
+          id: r.id,
+          storage_key: r.storage_key,
+          mime_type: r.mime_type,
+          alt_text: "",
+          original_name: r.original_name,
+          byte_size: r.byte_size,
+        }));
+        const payload: Record<string, unknown> = { media_ids: mediaIds, media_refs: mediaRefs, caption: "" };
 
         const created = await createBlockDirect(
           workId,
@@ -791,10 +807,20 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         if (!block) return;
 
         const existingIds = (block.payload.media_ids as string[]) ?? [];
+        const existingRefs = (block.payload.media_refs as Array<{ id: string; storage_key: string; mime_type: string; alt_text: string; original_name?: string; byte_size?: number }>) ?? [];
         const newIds = results.map((r) => r.id);
+        const newRefs = results.map((r) => ({
+          id: r.id,
+          storage_key: r.storage_key,
+          mime_type: r.mime_type,
+          alt_text: "",
+          original_name: r.original_name,
+          byte_size: r.byte_size,
+        }));
         const newPayload = {
           ...block.payload,
           media_ids: [...existingIds, ...newIds],
+          media_refs: [...existingRefs, ...newRefs],
         };
 
         await updateBlockDirect(workId, workSlug, blockId, {
@@ -854,10 +880,20 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
         // 如果是图库块，追加图片
         if (block.block_type === "gallery") {
           const existingIds = (block.payload.media_ids as string[]) ?? [];
+          const existingRefs = (block.payload.media_refs as Array<{ id: string; storage_key: string; mime_type: string; alt_text: string; original_name?: string; byte_size?: number }>) ?? [];
           const newIds = results.map((r) => r.id);
+          const newRefs = results.map((r) => ({
+            id: r.id,
+            storage_key: r.storage_key,
+            mime_type: r.mime_type,
+            alt_text: "",
+            original_name: r.original_name,
+            byte_size: r.byte_size,
+          }));
           const newPayload = {
             ...block.payload,
             media_ids: [...existingIds, ...newIds],
+            media_refs: [...existingRefs, ...newRefs],
           };
           await updateBlockDirect(workId, workSlug, blockId, {
             ...newPayload,
@@ -874,6 +910,14 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           const newPayload = {
             ...block.payload,
             media_id: result.id,
+            media_ref: {
+              id: result.id,
+              storage_key: result.storage_key,
+              mime_type: result.mime_type,
+              alt_text: "",
+              original_name: result.original_name,
+              byte_size: result.byte_size,
+            },
           };
           await updateBlockDirect(workId, workSlug, blockId, {
             ...newPayload,
@@ -916,6 +960,14 @@ export function VisualBlockEditor({ workId, workSlug, initialBlocks, mediaAssets
           const newPayload = {
             ...block.payload,
             media_id: result.id,
+            media_ref: {
+              id: result.id,
+              storage_key: result.storage_key,
+              mime_type: result.mime_type,
+              alt_text: "",
+              original_name: result.original_name,
+              byte_size: result.byte_size,
+            },
           };
           setBlocks((prev) =>
             prev.map((b) =>
@@ -2344,7 +2396,8 @@ function InlineMediaEditor({
 }) {
   const payload = block.payload;
   const mediaId = String(payload.media_id ?? "");
-  const asset = mediaAssets.find((a) => a.id === mediaId);
+  const mediaRef = payload.media_ref as { id: string; storage_key: string; mime_type: string; alt_text: string; original_name?: string } | undefined;
+  const asset = mediaRef ?? mediaAssets.find((a) => a.id === mediaId);
   const url = asset ? buildPublicMediaUrl(asset.storage_key) : null;
   const isImage = block.block_type === "media";
 
