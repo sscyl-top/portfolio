@@ -14,7 +14,7 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration, runNameMediaMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -81,6 +81,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   await runCenterLogoMigration().catch(() => {});
   await runWorkTablesMigration().catch(() => {});
   await runRepresentativeCoverMigration().catch(() => {});
+  await runNameMediaMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 500));
 

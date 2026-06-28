@@ -4,7 +4,7 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -63,6 +63,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
+  await runNameMediaMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 

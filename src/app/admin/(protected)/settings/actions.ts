@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -140,6 +140,7 @@ export async function saveSiteSettings(formData: FormData) {
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
+  await runNameMediaMigration().catch(() => {});
 
   await wait(1500);
 

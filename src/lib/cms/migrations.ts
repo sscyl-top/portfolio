@@ -8,6 +8,7 @@ let musicSettingsMigrationDone = false;
 let workTablesMigrationDone = false;
 let mediaBackendMigrationDone = false;
 let representativeCoverMigrationDone = false;
+let nameMediaMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -336,6 +337,33 @@ export async function runRepresentativeCoverMigration(): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("[DB Migration] Failed to run representative cover migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
+}
+
+export async function runNameMediaMigration(): Promise<boolean> {
+  if (nameMediaMigrationDone) return true;
+
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for name media");
+    return false;
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE public.site_settings
+        ADD COLUMN IF NOT EXISTS name_media_id uuid REFERENCES public.media_assets(id);
+
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] site_settings.name_media_id column added successfully");
+    nameMediaMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run name media migration:", err);
     return false;
   } finally {
     await pool.end().catch(() => {});
