@@ -171,11 +171,11 @@ export function CompositeDesignWall({
                     <WorkMediaFrame
                       media={work.coverMedia}
                       tone={work.coverTone}
-                      className="opacity-72 saturate-[0.72] transition-all duration-500 group-hover:scale-105 group-hover:opacity-0"
+                      className="transition-all duration-500 group-hover:scale-105 group-hover:opacity-0"
                     />
                   ) : (
                     <div
-                      className={`absolute inset-0 opacity-72 saturate-[0.72] transition duration-700 group-hover:scale-105 group-hover:opacity-0 ${toneClass(
+                      className={`absolute inset-0 transition duration-700 group-hover:scale-105 group-hover:opacity-0 ${toneClass(
                         work.coverTone,
                       )}`}
                     />
@@ -188,12 +188,12 @@ export function CompositeDesignWall({
                     />
                   ) : (
                     <div
-                      className={`absolute inset-0 scale-105 opacity-0 saturate-[0.72] transition duration-700 group-hover:scale-100 group-hover:opacity-70 ${toneClass(
+                      className={`absolute inset-0 scale-105 opacity-0 transition duration-700 group-hover:scale-100 group-hover:opacity-70 ${toneClass(
                         work.alternateTone,
                       )}`}
                     />
                   )}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--surface-3),transparent_34%,var(--overlay))]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--surface-3),transparent_40%,var(--overlay-2))]" />
                   <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-ink-3 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
