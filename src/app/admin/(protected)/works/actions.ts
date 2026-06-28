@@ -11,6 +11,7 @@ import {
   hashPrivatePreviewToken,
 } from "@/lib/cms/private-preview";
 import { seedStaticPortfolioData } from "@/lib/cms/seed-static-portfolio";
+import { runRepresentativeCoverMigration } from "@/lib/cms/migrations";
 import {
   archiveWorkVersion,
   listWorkVersions,
@@ -2186,7 +2187,10 @@ export async function updateRepresentativeCover(formData: FormData) {
     work_id: formData.get("work_id"),
     media_id: formData.get("media_id") || null,
   });
-  if (!parsed.success) return;
+  if (!parsed.success) return { success: false as const, error: "参数无效" };
+
+  // 先尝试自动迁移（DATABASE_URL 或 exec_ddl RPC），失败则继续以便返回更具体的错误
+  await runRepresentativeCoverMigration().catch(() => {});
 
   const { client } = await requireAdmin();
   const { work_id, media_id } = parsed.data;
@@ -2196,18 +2200,38 @@ export async function updateRepresentativeCover(formData: FormData) {
     .update({ representative_cover_media_id: media_id })
     .eq("id", work_id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    const msg = error.message || "";
+    // 检测列不存在的错误，返回友好提示
+    if (
+      msg.includes("representative_cover_media_id") &&
+      (msg.toLowerCase().includes("could not find the column") ||
+        msg.toLowerCase().includes("does not exist") ||
+        msg.toLowerCase().includes("schema cache"))
+    ) {
+      return {
+        success: false as const,
+        error:
+          "数据库缺少 representative_cover_media_id 列。请在 Supabase SQL 编辑器执行以下 SQL 后重试：\nALTER TABLE public.works ADD COLUMN IF NOT EXISTS representative_cover_media_id uuid REFERENCES public.media_assets(id);\nNOTIFY pgrst, 'reload schema';",
+      };
+    }
+    throw new Error(msg);
+  }
 
   revalidatePath("/admin/works");
   revalidatePath("/");
   revalidatePath("/works");
+  return { success: true as const };
 }
 
 export async function clearRepresentativeCover(formData: FormData) {
   const parsed = z.object({ work_id: z.string().uuid() }).safeParse({
     work_id: formData.get("work_id"),
   });
-  if (!parsed.success) return;
+  if (!parsed.success) return { success: false as const, error: "参数无效" };
+
+  // 先尝试自动迁移
+  await runRepresentativeCoverMigration().catch(() => {});
 
   const { client } = await requireAdmin();
   const { error } = await client
@@ -2215,11 +2239,27 @@ export async function clearRepresentativeCover(formData: FormData) {
     .update({ representative_cover_media_id: null })
     .eq("id", parsed.data.work_id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    const msg = error.message || "";
+    if (
+      msg.includes("representative_cover_media_id") &&
+      (msg.toLowerCase().includes("could not find the column") ||
+        msg.toLowerCase().includes("does not exist") ||
+        msg.toLowerCase().includes("schema cache"))
+    ) {
+      // 列不存在时，等价于已清除，不报错
+      revalidatePath("/admin/works");
+      revalidatePath("/");
+      revalidatePath("/works");
+      return { success: true as const };
+    }
+    throw new Error(msg);
+  }
 
   revalidatePath("/admin/works");
   revalidatePath("/");
   revalidatePath("/works");
+  return { success: true as const };
 }
 
 const emptyWorkSchema = z.object({

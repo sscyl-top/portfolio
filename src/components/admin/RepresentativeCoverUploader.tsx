@@ -51,8 +51,12 @@ export function RepresentativeCoverUploader({ workId }: { workId: string }) {
 
           startTransition(() => {
             updateRepresentativeCover(formData)
-              .then(() => {
-                router.refresh();
+              .then((result) => {
+                if (result && result.success === false) {
+                  setError(result.error || "保存封面失败");
+                } else {
+                  router.refresh();
+                }
               })
               .catch((err) => {
                 setError(err instanceof Error ? err.message : "保存封面失败");
@@ -100,8 +104,12 @@ export function RepresentativeCoverUploader({ workId }: { workId: string }) {
     formData.append("work_id", workId);
     startTransition(() => {
       clearRepresentativeCover(formData)
-        .then(() => {
-          router.refresh();
+        .then((result) => {
+          if (result && result.success === false) {
+            setError(result.error || "移除封面失败");
+          } else {
+            router.refresh();
+          }
         })
         .catch((err) => {
           setError(err instanceof Error ? err.message : "移除封面失败");
@@ -158,10 +166,10 @@ export function RepresentativeCoverUploader({ workId }: { workId: string }) {
         </div>
       )}
       {error ? (
-        <p className="flex items-center gap-1 text-[10px] text-red-300">
-          <X className="h-3 w-3" />
-          {error}
-        </p>
+        <div className="flex gap-1 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[10px] leading-relaxed text-red-300">
+          <X className="h-3 w-3 shrink-0 mt-0.5" />
+          <p className="whitespace-pre-line break-words">{error}</p>
+        </div>
       ) : null}
     </div>
   );

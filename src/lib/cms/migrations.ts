@@ -1,5 +1,7 @@
 import { Pool } from "pg";
 
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+
 let heroMigrationDone = false;
 let ctaTransformMigrationDone = false;
 let tickerLogosMigrationDone = false;
@@ -33,6 +35,66 @@ function createPool(): Pool | null {
 
 export function getDbPool(): Pool | null {
   return createPool();
+}
+
+/**
+ * 通过 Supabase service role client 调用 exec_ddl RPC 函数执行 DDL。
+ * 这是 DATABASE_URL 不可用时的 fallback 方案。
+ *
+ * 前置条件：需要在数据库中先创建 exec_ddl 函数（见 SQL 脚本）：
+ *   CREATE OR REPLACE FUNCTION public.exec_ddl(sql text) RETURNS void
+ *   LANGUAGE plpgsql SECURITY DEFINER AS $$
+ *   BEGIN EXECUTE sql; END; $$;
+ *   REVOKE EXECUTE ON FUNCTION public.exec_ddl(text) FROM PUBLIC, anon, authenticated;
+ *   GRANT EXECUTE ON FUNCTION public.exec_ddl(text) TO service_role;
+ *
+ * 如果 exec_ddl 函数不存在，RPC 调用会失败，返回 false，调用方应静默忽略。
+ */
+async function runDdlViaRpc(sql: string): Promise<boolean> {
+  try {
+    const client = createSupabaseServiceClient();
+    const { error } = await client.rpc("exec_ddl", { sql });
+    if (error) {
+      console.warn("[DB Migration] runDdlViaRpc failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("[DB Migration] runDdlViaRpc exception:", err);
+    return false;
+  }
+}
+
+/**
+ * 通用 DDL 执行入口：优先使用 pg Pool（DATABASE_URL），不可用时 fallback 到 service role RPC。
+ * 成功后发送 NOTIFY pgrst, 'reload schema' 让 PostgREST 刷新 schema cache。
+ */
+async function runDdl(ddlSql: string, notifyKey = "pgrst"): Promise<boolean> {
+  const fullSql = notifyKey
+    ? `${ddlSql}\nNOTIFY ${notifyKey}, 'reload schema';`
+    : ddlSql;
+
+  const pool = createPool();
+  if (pool) {
+    try {
+      await pool.query(fullSql);
+      return true;
+    } catch (err) {
+      console.error("[DB Migration] pool.query failed:", err);
+      return false;
+    } finally {
+      await pool.end().catch(() => {});
+    }
+  }
+
+  // fallback: 通过 service role client 调用 exec_ddl RPC
+  const rpcOk = await runDdlViaRpc(ddlSql);
+  if (rpcOk && notifyKey) {
+    // NOTIFY 通过 RPC 也能生效，但 PostgREST schema cache 可能需要单独刷新
+    // 再次调用一次空 NOTIFY 来确保刷新
+    await runDdlViaRpc(`NOTIFY ${notifyKey}, 'reload schema'`).catch(() => {});
+  }
+  return rpcOk;
 }
 
 export async function runMusicSettingsMigration(): Promise<boolean> {
@@ -169,27 +231,19 @@ export async function runTickerLogosMigration(): Promise<boolean> {
 export async function runCenterLogoMigration(): Promise<boolean> {
   if (centerLogoMigrationDone) return true;
 
-  const pool = createPool();
-  if (!pool) {
-    console.warn("[DB Migration] No database connection string found for center logo");
-    return false;
-  }
+  const ddlSql = `
+    ALTER TABLE public.site_settings
+      ADD COLUMN IF NOT EXISTS cta_center_logo_media_id uuid REFERENCES public.media_assets(id);
+  `;
 
-  try {
-    await pool.query(`
-      ALTER TABLE public.site_settings
-        ADD COLUMN IF NOT EXISTS cta_center_logo_media_id uuid REFERENCES public.media_assets(id);
-      NOTIFY pgrst, 'reload schema';
-    `);
+  const ok = await runDdl(ddlSql);
+  if (ok) {
     console.log("[DB Migration] Center logo media ID column added successfully");
     centerLogoMigrationDone = true;
-    return true;
-  } catch (err) {
-    console.error("[DB Migration] Failed to run center logo migration:", err);
-    return false;
-  } finally {
-    await pool.end().catch(() => {});
+  } else {
+    console.warn("[DB Migration] center logo migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
+  return ok;
 }
 
 export async function runBucketSizeLimitMigration(): Promise<boolean> {
@@ -319,53 +373,35 @@ export async function runMediaBackendMigration(): Promise<boolean> {
 export async function runRepresentativeCoverMigration(): Promise<boolean> {
   if (representativeCoverMigrationDone) return true;
 
-  const pool = createPool();
-  if (!pool) {
-    console.warn("[DB Migration] No database connection string found for representative cover");
-    return false;
-  }
+  const ddlSql = `
+    ALTER TABLE public.works
+      ADD COLUMN IF NOT EXISTS representative_cover_media_id uuid REFERENCES public.media_assets(id);
+  `;
 
-  try {
-    await pool.query(`
-      ALTER TABLE public.works
-        ADD COLUMN IF NOT EXISTS representative_cover_media_id uuid REFERENCES public.media_assets(id);
-
-      NOTIFY pgrst, 'reload schema';
-    `);
+  const ok = await runDdl(ddlSql);
+  if (ok) {
     console.log("[DB Migration] works.representative_cover_media_id column added successfully");
     representativeCoverMigrationDone = true;
-    return true;
-  } catch (err) {
-    console.error("[DB Migration] Failed to run representative cover migration:", err);
-    return false;
-  } finally {
-    await pool.end().catch(() => {});
+  } else {
+    console.warn("[DB Migration] representative cover migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
+  return ok;
 }
 
 export async function runNameMediaMigration(): Promise<boolean> {
   if (nameMediaMigrationDone) return true;
 
-  const pool = createPool();
-  if (!pool) {
-    console.warn("[DB Migration] No database connection string found for name media");
-    return false;
-  }
+  const ddlSql = `
+    ALTER TABLE public.site_settings
+      ADD COLUMN IF NOT EXISTS name_media_id uuid REFERENCES public.media_assets(id);
+  `;
 
-  try {
-    await pool.query(`
-      ALTER TABLE public.site_settings
-        ADD COLUMN IF NOT EXISTS name_media_id uuid REFERENCES public.media_assets(id);
-
-      NOTIFY pgrst, 'reload schema';
-    `);
+  const ok = await runDdl(ddlSql);
+  if (ok) {
     console.log("[DB Migration] site_settings.name_media_id column added successfully");
     nameMediaMigrationDone = true;
-    return true;
-  } catch (err) {
-    console.error("[DB Migration] Failed to run name media migration:", err);
-    return false;
-  } finally {
-    await pool.end().catch(() => {});
+  } else {
+    console.warn("[DB Migration] name media migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
+  return ok;
 }
