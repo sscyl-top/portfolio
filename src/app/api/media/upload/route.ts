@@ -16,6 +16,8 @@ const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 type StorageBackend = "r2" | "cos" | "supabase";
 
 function getStorageBackend(): StorageBackend {
+  if (isR2Configured()) return "r2";
+  if (isCosConfigured()) return "cos";
   return "supabase";
 }
 
@@ -46,7 +48,9 @@ export async function POST(request: Request) {
     }
 
     const id = randomUUID();
-    const storageKey = buildStorageKey(file.name, id);
+    const baseKey = buildStorageKey(file.name, id);
+    // R2上传的文件storage_key加 "r2/" 前缀，用于URL构建时区分存储后端
+    const storageKey = backend === "r2" ? `r2/${baseKey}` : baseKey;
     const mimeType = file.type || "application/octet-stream";
 
     const arrayBuffer = await file.arrayBuffer();

@@ -2,16 +2,19 @@ import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { isR2Configured, buildR2PublicUrl } from "@/lib/r2/config";
 import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
-export type StorageBackend = "supabase" | "r2" | "cos";
+/**
+ * R2上传的文件storage_key以 "r2/" 前缀标记。
+ * 通过前缀自动判断文件存储在后端，无需数据库额外字段。
+ */
+const R2_PREFIX = "r2/";
 
-export function buildPublicMediaUrl(storageKey: string, backend?: StorageBackend): string {
-  const effectiveBackend = backend ?? "supabase";
+export function isR2StorageKey(storageKey: string): boolean {
+  return storageKey.startsWith(R2_PREFIX);
+}
 
-  if (effectiveBackend === "r2" && isR2Configured()) {
+export function buildPublicMediaUrl(storageKey: string): string {
+  if (isR2StorageKey(storageKey) && isR2Configured()) {
     return buildR2PublicUrl(storageKey);
-  }
-  if (effectiveBackend === "cos" && isCosPublicConfigured()) {
-    return buildCosPublicUrl(storageKey);
   }
 
   const { url } = getSupabasePublicConfig();
@@ -28,16 +31,14 @@ export type OptimizedMediaOptions = {
 export function buildOptimizedMediaUrl(
   storageKey: string,
   options: OptimizedMediaOptions = {},
-  backend?: StorageBackend,
 ) {
-  const baseUrl = buildPublicMediaUrl(storageKey, backend);
-  const effectiveBackend = backend ?? "supabase";
+  const baseUrl = buildPublicMediaUrl(storageKey);
 
-  if (effectiveBackend === "r2" && isR2Configured()) {
+  if (isR2StorageKey(storageKey) && isR2Configured()) {
     return baseUrl;
   }
 
-  if (effectiveBackend === "cos" && isCosPublicConfigured()) {
+  if (isCosPublicConfigured()) {
     const parts: string[] = [];
     if (options.width || options.height) {
       const w = options.width ? String(Math.round(options.width)) : "";

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-session";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
+import { isR2Configured, uploadR2Object, deleteR2Object } from "@/lib/r2/client";
 import { isCosConfigured, uploadCosObject, deleteCosObject } from "@/lib/cos/client";
 import { execFile } from "node:child_process";
 import { writeFile, unlink } from "node:fs/promises";
@@ -66,10 +67,14 @@ export async function uploadMediaAsset(formData: FormData) {
 
   const { client } = await requireAdmin();
   const id = randomUUID();
-  const storageKey = buildStorageKey(file.name, id);
+  let storageKey = buildStorageKey(file.name, id);
   const mimeType = file.type || "application/octet-stream";
 
-  if (isCosConfigured()) {
+  if (isR2Configured()) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    storageKey = `r2/${storageKey}`;
+    await uploadR2Object(storageKey, buffer, mimeType);
+  } else if (isCosConfigured()) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await uploadCosObject(storageKey, buffer, mimeType);
   } else {
@@ -122,7 +127,9 @@ export async function uploadMediaAsset(formData: FormData) {
   });
 
   if (dbError) {
-    if (isCosConfigured()) {
+    if (isR2Configured()) {
+      await deleteR2Object(storageKey).catch(() => {});
+    } else if (isCosConfigured()) {
       await deleteCosObject(storageKey).catch(() => {});
     } else {
       await client.storage.from("portfolio-media").remove([storageKey]).catch(() => {});
