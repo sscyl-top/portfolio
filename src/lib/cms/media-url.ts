@@ -1,12 +1,16 @@
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
-import { isR2Configured, buildR2PublicUrl } from "@/lib/r2/config";
+import { isR2Configured } from "@/lib/r2/config";
 import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
 /**
- * R2上传的文件storage_key以 "r2/" 前缀标记。
+ * R2 上传的文件 storage_key 以 "r2/" 前缀标记。
  * 通过前缀自动判断文件存储在后端，无需数据库额外字段。
+ *
+ * R2 文件统一通过应用域名下的代理路由 /api/media/file/ 访问，
+ * 避免 r2.dev 开发域名的严格速率限制。
  */
 const R2_PREFIX = "r2/";
+const R2_PROXY_BASE = "/api/media/file";
 
 export function isR2StorageKey(storageKey: string): boolean {
   return storageKey.startsWith(R2_PREFIX);
@@ -14,7 +18,9 @@ export function isR2StorageKey(storageKey: string): boolean {
 
 export function buildPublicMediaUrl(storageKey: string): string {
   if (isR2StorageKey(storageKey) && isR2Configured()) {
-    return buildR2PublicUrl(storageKey);
+    // 通过应用域名代理访问 R2 文件，绕过 r2.dev 速率限制
+    // storageKey 形如 "r2/uploads/2026/06/xxx.png" → "/api/media/file/r2/uploads/2026/06/xxx.png"
+    return `${R2_PROXY_BASE}/${storageKey}`;
   }
 
   const { url } = getSupabasePublicConfig();
@@ -34,6 +40,7 @@ export function buildOptimizedMediaUrl(
 ) {
   const baseUrl = buildPublicMediaUrl(storageKey);
 
+  // R2 通过代理访问时直接返回原文件（R2 不支持变换参数）
   if (isR2StorageKey(storageKey) && isR2Configured()) {
     return baseUrl;
   }
