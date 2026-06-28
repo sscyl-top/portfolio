@@ -110,6 +110,7 @@ export async function POST(request: Request) {
       .insert({
         id,
         storage_key: storageKey,
+        storage_backend: backend,
         mime_type: mimeType,
         original_name: file.name,
         byte_size: file.size,

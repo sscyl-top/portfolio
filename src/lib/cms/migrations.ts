@@ -6,6 +6,7 @@ let tickerLogosMigrationDone = false;
 let centerLogoMigrationDone = false;
 let musicSettingsMigrationDone = false;
 let workTablesMigrationDone = false;
+let mediaBackendMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -280,6 +281,33 @@ export async function runWorkTablesMigration(): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("[DB Migration] Failed to run work tables migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
+}
+
+export async function runMediaBackendMigration(): Promise<boolean> {
+  if (mediaBackendMigrationDone) return true;
+
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for media backend");
+    return false;
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE public.media_assets
+        ADD COLUMN IF NOT EXISTS storage_backend text NOT NULL DEFAULT 'supabase';
+
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] media_assets.storage_backend column added successfully");
+    mediaBackendMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run media backend migration:", err);
     return false;
   } finally {
     await pool.end().catch(() => {});

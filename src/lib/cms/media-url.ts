@@ -2,11 +2,15 @@ import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { isR2Configured, buildR2PublicUrl } from "@/lib/r2/config";
 import { isCosPublicConfigured, buildCosPublicUrl } from "@/lib/cos/config";
 
-export function buildPublicMediaUrl(storageKey: string) {
-  if (isR2Configured()) {
+export type StorageBackend = "supabase" | "r2" | "cos";
+
+export function buildPublicMediaUrl(storageKey: string, backend?: StorageBackend): string {
+  const effectiveBackend = backend ?? "supabase";
+
+  if (effectiveBackend === "r2" && isR2Configured()) {
     return buildR2PublicUrl(storageKey);
   }
-  if (isCosPublicConfigured()) {
+  if (effectiveBackend === "cos" && isCosPublicConfigured()) {
     return buildCosPublicUrl(storageKey);
   }
 
@@ -24,14 +28,16 @@ export type OptimizedMediaOptions = {
 export function buildOptimizedMediaUrl(
   storageKey: string,
   options: OptimizedMediaOptions = {},
+  backend?: StorageBackend,
 ) {
-  const baseUrl = buildPublicMediaUrl(storageKey);
+  const baseUrl = buildPublicMediaUrl(storageKey, backend);
+  const effectiveBackend = backend ?? "supabase";
 
-  if (isR2Configured()) {
+  if (effectiveBackend === "r2" && isR2Configured()) {
     return baseUrl;
   }
 
-  if (isCosPublicConfigured()) {
+  if (effectiveBackend === "cos" && isCosPublicConfigured()) {
     const parts: string[] = [];
     if (options.width || options.height) {
       const w = options.width ? String(Math.round(options.width)) : "";
