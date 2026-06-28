@@ -66,7 +66,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
-      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-edge hover:shadow-[0_40px_100px_rgba(0,0,0,0.7)] focus-visible:border-copper"
+      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[var(--shadow-card)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-edge hover:shadow-[var(--shadow-card-hover)] focus-visible:border-copper"
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
@@ -224,7 +224,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
             }
           }}
         >
-          <div className="pointer-events-none absolute left-1/2 top-[45%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan/10 blur-3xl" />
+          <div className="featured-glow pointer-events-none absolute left-1/2 top-[45%] h-[500px] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" />
           {displayWorks.map((work, index) => {
             const isActive = activeIndex === index;
             const hasActive = activeIndex !== null;
@@ -301,7 +301,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                     if (hasDragged.current) { e.preventDefault(); return; }
                   }}
                   style={style}
-                  className="group block overflow-hidden rounded-2xl border border-edge bg-surface p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
+                  className="group block overflow-hidden rounded-2xl border border-edge bg-surface p-1.5 shadow-[var(--shadow-card)] backdrop-blur-sm"
                 >
                   <article className="relative aspect-[3/4.5] overflow-hidden rounded-xl">
                     <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover={false} />

@@ -123,9 +123,26 @@ body {
 }
 
 .light .works-route-blob {
-  opacity: 0.3;
+  opacity: 0.12;
   mix-blend-mode: normal;
-  filter: blur(86px) saturate(0.8);
+  filter: blur(100px) saturate(0.5);
+}
+
+.light .works-route-blob-a {
+  background: radial-gradient(circle at 50% 50%, rgba(45, 139, 128, 0.5), rgba(166, 124, 82, 0.3) 38%, transparent 70%);
+}
+
+.light .works-route-blob-b {
+  background: radial-gradient(circle at 50% 50%, rgba(166, 124, 82, 0.4), rgba(45, 139, 128, 0.3) 40%, transparent 70%);
+}
+
+.featured-glow {
+  background: color-mix(in oklch, var(--cyan) 10%, transparent);
+}
+
+.light .featured-glow {
+  background: color-mix(in oklch, var(--copper) 5%, var(--cyan) 4%, transparent);
+  opacity: 0.6;
 }
 
 ::selection {
