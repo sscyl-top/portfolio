@@ -138,6 +138,7 @@ export type Work = {
   hoverMedia?: WorkMedia;
   shareMedia?: WorkMedia;
   blocks: ContentBlock[];
+  mediaNoGap?: boolean;
 };
 
 export type WorkMedia = {

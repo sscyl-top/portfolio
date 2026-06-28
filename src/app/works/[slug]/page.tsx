@@ -123,7 +123,7 @@ export default async function WorkDetailPage({
 
       {/* 内容块区域：无框、自由排版 */}
       <div className="mt-8 md:mt-12">
-        <WorkContentBlocks blocks={work.blocks} coverTone={work.coverTone} />
+        <WorkContentBlocks blocks={work.blocks} coverTone={work.coverTone} mediaNoGap={work.mediaNoGap} />
       </div>
 
       {/* 互动区 */}

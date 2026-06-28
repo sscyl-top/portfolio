@@ -423,6 +423,37 @@ export async function updateWork(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  if (formData.has("media_no_gap")) {
+    const mediaNoGap = formData.get("media_no_gap") === "on";
+    const gapKey = `work_media_no_gap_${workId}`;
+    try {
+      const { data: existing } = await client
+        .from("text_content")
+        .select("id")
+        .eq("key", gapKey)
+        .eq("page", "work_settings")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await client
+          .from("text_content")
+          .update({ content: mediaNoGap ? "true" : "false", is_active: true, deleted_at: null })
+          .eq("id", existing.id);
+      } else {
+        await client.from("text_content").insert({
+          key: gapKey,
+          content: mediaNoGap ? "true" : "false",
+          page: "work_settings",
+          sort_order: 0,
+          is_active: true,
+        });
+      }
+    } catch (e) {
+      console.warn(`[updateWork] Failed to save media_no_gap setting:`, e);
+    }
+  }
+
   await autoArchiveAfterChange(client, workId, user.id, "更新作品元数据");
 
   // 点击「保存作品」按钮时自动归档历史版本（mainWorkForm 带 archive_on_save=1 标记）

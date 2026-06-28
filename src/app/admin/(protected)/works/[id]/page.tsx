@@ -97,6 +97,7 @@ export default async function AdminWorkEditorPage({
     { data: mediaAssets },
     { data: workCategories },
     { data: workTags },
+    { data: mediaNoGapRow },
     versions,
   ] = await Promise.all([
     supabase
@@ -129,6 +130,14 @@ export default async function AdminWorkEditorPage({
       .order("created_at", { ascending: false }),
     supabase.from("work_categories").select("category_id").eq("work_id", id),
     supabase.from("work_tags").select("tag_id").eq("work_id", id),
+    supabase
+      .from("text_content")
+      .select("content")
+      .eq("key", `work_media_no_gap_${id}`)
+      .eq("page", "work_settings")
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .maybeSingle(),
     listWorkVersions(supabase, id),
   ]);
 
@@ -140,6 +149,7 @@ export default async function AdminWorkEditorPage({
   const mediaRows = (mediaAssets ?? []) as MediaOptionRow[];
   const tagRows = (tags ?? []) as TaxonomyOptionRow[];
   const versionRows = (versions ?? []) as WorkVersionListItem[];
+  const mediaNoGap = mediaNoGapRow?.content === "true";
   const selectedCategoryIds = new Set(
     ((workCategories ?? []) as WorkCategoryRow[]).map((item) => item.category_id),
   );
@@ -263,7 +273,7 @@ export default async function AdminWorkEditorPage({
                     description="Slug、年份、客户、状态、SEO 等"
                     defaultOpen
                   >
-                    <SettingsPanel work={workRow} />
+                    <SettingsPanel work={workRow} mediaNoGap={mediaNoGap} />
                   </CollapsibleSection>
                   <CollapsibleSection
                     title="分类与标签"
@@ -424,7 +434,7 @@ function MediaForm({
 /* ═══════ 蓝框组件：辅助面板（紧凑版） ═══════ */
 
 /** 更多设置面板：Slug/年份/客户/状态/Palette/SEO 等 */
-function SettingsPanel({ work }: { work: WorkEditorRow }) {
+function SettingsPanel({ work, mediaNoGap }: { work: WorkEditorRow; mediaNoGap: boolean }) {
   return (
     <AutoSaveForm action={updateWork} className="grid gap-4">
       <input type="hidden" name="id" value={work.id} />
@@ -445,6 +455,7 @@ function SettingsPanel({ work }: { work: WorkEditorRow }) {
         </label>
         <CheckField label="代表作" name="is_representative" defaultChecked={work.is_representative} compact />
         <CheckField label="复合设计" name="is_composite" defaultChecked={work.is_composite} compact />
+        <CheckField label="图片无间距" name="media_no_gap" defaultChecked={mediaNoGap} compact />
         <Field label="SEO 标题" name="seo_title" defaultValue={work.seo_title} compact />
       </div>
 

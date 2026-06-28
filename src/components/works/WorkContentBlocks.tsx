@@ -15,6 +15,7 @@ import { StatsBlock } from "./blocks/StatsBlock";
 type Props = {
   blocks: ContentBlock[];
   coverTone: string;
+  mediaNoGap?: boolean;
 };
 
 /**
@@ -23,10 +24,10 @@ type Props = {
  * - 文字块居中带适度宽度
  * - 支持自由排版（free layout）
  */
-export function WorkContentBlocks({ blocks, coverTone }: Props) {
+export function WorkContentBlocks({ blocks, coverTone, mediaNoGap = false }: Props) {
   return (
     <div className="space-y-0">
-      {blocks.map((block, index) => renderBlock(block, index, coverTone))}
+      {blocks.map((block, index) => renderBlock(block, index, coverTone, mediaNoGap))}
     </div>
   );
 }
@@ -132,15 +133,15 @@ function GalleryLightbox({
   );
 }
 
-function renderBlock(block: ContentBlock, index: number, coverTone: string) {
+function renderBlock(block: ContentBlock, index: number, coverTone: string, mediaNoGap: boolean = false) {
   switch (block.type) {
     case "text":
       return <TextBlock key={`text-${index}`} block={block} />;
     case "media":
     case "gallery":
-      return <MediaBlock key={`media-${index}`} block={block} tone={coverTone} />;
+      return <MediaBlock key={`media-${index}`} block={block} tone={coverTone} noGap={mediaNoGap} />;
     case "video":
-      return <VideoBlock key={`video-${index}`} block={block} />;
+      return <VideoBlock key={`video-${index}`} block={block} noGap={mediaNoGap} />;
     case "pdf":
       return <PdfBlock key={`pdf-${index}`} block={block} />;
     case "beforeAfter":
@@ -194,9 +195,11 @@ function TextBlock({ block }: { block: Extract<ContentBlock, { type: "text" }> }
 function MediaBlock({
   block,
   tone,
+  noGap = false,
 }: {
   block: Extract<ContentBlock, { type: "media" | "gallery" }>;
   tone: string;
+  noGap?: boolean;
 }) {
   if (block.items.length === 0) return null;
 
@@ -219,16 +222,19 @@ function MediaBlock({
           : "grid-cols-2 md:grid-cols-3"
     : "";
 
+  const sectionPy = noGap ? "py-0" : "py-2";
+  const galleryGap = noGap ? "gap-0" : "gap-2 md:gap-3";
+
   return (
-    <section className={`py-2 ${layoutWidthClass(block.layout)}`}>
+    <section className={`${sectionPy} ${layoutWidthClass(block.layout)}`}>
       {block.caption ? (
-        <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
+        <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
 
       <div
         className={
           isGallery
-            ? `grid gap-2 md:gap-3 ${cols}`
+            ? `grid ${galleryGap} ${cols}`
             : isFree
               ? "relative h-[580px] md:h-[880px]"
               : "w-full"
@@ -360,12 +366,19 @@ function MediaBlock({
   );
 }
 
-function VideoBlock({ block }: { block: Extract<ContentBlock, { type: "video" }> }) {
+function VideoBlock({
+  block,
+  noGap = false,
+}: {
+  block: Extract<ContentBlock, { type: "video" }>;
+  noGap?: boolean;
+}) {
   if (block.items.length === 0) return null;
+  const sectionPy = noGap ? "py-0" : "py-2";
   return (
-    <section className={`py-2 ${layoutWidthClass(block.layout)}`}>
+    <section className={`${sectionPy} ${layoutWidthClass(block.layout)}`}>
       {block.caption ? (
-        <p className="mb-4 text-sm font-medium text-white/50">{block.caption}</p>
+        <p className={`text-sm font-medium text-white/50 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
       <SmartVideo
         src={block.items[0].url}

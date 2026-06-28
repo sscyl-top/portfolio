@@ -15,7 +15,7 @@ import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildOptimizedMediaUrl, buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -31,6 +31,13 @@ export type PublicSiteSettings = {
   ctaFigureMediaUrl?: string;
   ctaTickerLogoMediaUrl?: string;
   ctaTickerLogoMediaUrls: string[];
+  ctaTickerLogoScale: number;
+  ctaTickerLogoOffsetX: number;
+  ctaTickerLogoOffsetY: number;
+  ctaCenterLogoMediaUrl?: string;
+  ctaCenterLogoScale: number;
+  ctaCenterLogoOffsetX: number;
+  ctaCenterLogoOffsetY: number;
   ctaCardScale: number;
   ctaCardOffsetX: number;
   ctaCardOffsetY: number;
@@ -60,7 +67,13 @@ const SETTINGS_TEXT_KEYS = [
   "cta_figure_scale",
   "cta_figure_offset_x",
   "cta_figure_offset_y",
+  "cta_ticker_logo_scale",
+  "cta_ticker_logo_offset_x",
+  "cta_ticker_logo_offset_y",
   "cta_ticker_logo_media_ids",
+  "cta_center_logo_scale",
+  "cta_center_logo_offset_x",
+  "cta_center_logo_offset_y",
 ] as const;
 
 const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
@@ -70,10 +83,17 @@ const CTA_TRANSFORM_DEFAULTS: Record<string, number> = {
   cta_figure_scale: 1.0,
   cta_figure_offset_x: 0,
   cta_figure_offset_y: 0,
+  cta_ticker_logo_scale: 1.0,
+  cta_ticker_logo_offset_x: 0,
+  cta_ticker_logo_offset_y: 0,
+  cta_center_logo_scale: 1.0,
+  cta_center_logo_offset_x: 0,
+  cta_center_logo_offset_y: 0,
 };
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
   await runHeroVideosMigration().catch(() => {});
+  await runCenterLogoMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -117,6 +137,19 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     // columns may not exist
   }
 
+  let ctaCenterLogoId: string | null = null;
+  try {
+    const { data, error } = await client
+      .from("site_settings")
+      .select("cta_center_logo_media_id")
+      .single();
+    if (!error && data) {
+      ctaCenterLogoId = data.cta_center_logo_media_id ?? null;
+    }
+  } catch {
+    // column may not exist
+  }
+
   const ctaTransform: {
     cta_card_scale: number;
     cta_card_offset_x: number;
@@ -124,6 +157,12 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_figure_scale: number;
     cta_figure_offset_x: number;
     cta_figure_offset_y: number;
+    cta_ticker_logo_scale: number;
+    cta_ticker_logo_offset_x: number;
+    cta_ticker_logo_offset_y: number;
+    cta_center_logo_scale: number;
+    cta_center_logo_offset_x: number;
+    cta_center_logo_offset_y: number;
   } = {
     cta_card_scale: 1.0,
     cta_card_offset_x: 0,
@@ -131,6 +170,12 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_figure_scale: 1.0,
     cta_figure_offset_x: 0,
     cta_figure_offset_y: 0,
+    cta_ticker_logo_scale: 1.0,
+    cta_ticker_logo_offset_x: 0,
+    cta_ticker_logo_offset_y: 0,
+    cta_center_logo_scale: 1.0,
+    cta_center_logo_offset_x: 0,
+    cta_center_logo_offset_y: 0,
   };
   let tickerLogoIdsRaw = "";
   try {
@@ -159,6 +204,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   const allIds = {
     ...baseData,
     ...heroIds,
+    cta_center_logo_media_id: ctaCenterLogoId,
   } as Record<string, unknown>;
 
   return { allIds, ctaTransform, tickerLogoIdsRaw };
@@ -173,6 +219,12 @@ function buildSiteSettingsFromRow(
     cta_figure_scale: number;
     cta_figure_offset_x: number;
     cta_figure_offset_y: number;
+    cta_ticker_logo_scale: number;
+    cta_ticker_logo_offset_x: number;
+    cta_ticker_logo_offset_y: number;
+    cta_center_logo_scale: number;
+    cta_center_logo_offset_x: number;
+    cta_center_logo_offset_y: number;
   },
   tickerLogoIdsRaw: string,
   mediaMap: Map<string, { storage_key: string }>,
@@ -203,6 +255,13 @@ function buildSiteSettingsFromRow(
     ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id as string | null),
     ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id as string | null),
     ctaTickerLogoMediaUrls: tickerLogoUrls,
+    ctaTickerLogoScale: ctaTransform.cta_ticker_logo_scale,
+    ctaTickerLogoOffsetX: ctaTransform.cta_ticker_logo_offset_x,
+    ctaTickerLogoOffsetY: ctaTransform.cta_ticker_logo_offset_y,
+    ctaCenterLogoMediaUrl: getUrlForId(allIds.cta_center_logo_media_id as string | null),
+    ctaCenterLogoScale: ctaTransform.cta_center_logo_scale,
+    ctaCenterLogoOffsetX: ctaTransform.cta_center_logo_offset_x,
+    ctaCenterLogoOffsetY: ctaTransform.cta_center_logo_offset_y,
     ctaCardScale: ctaTransform.cta_card_scale,
     ctaCardOffsetX: ctaTransform.cta_card_offset_x,
     ctaCardOffsetY: ctaTransform.cta_card_offset_y,
@@ -243,7 +302,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listPublishedWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -269,7 +328,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listFeaturedWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -283,7 +342,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "listCompositeWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listCompositeWorks");
     },
     async getSiteSettings() {
       const result = await safeQuerySiteSettings(client);
@@ -300,6 +359,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         "cta_card_media_id",
         "cta_figure_media_id",
         "cta_ticker_logo_media_id",
+        "cta_center_logo_media_id",
         "hero_main_video_media_id",
         "hero_side1_video_media_id",
         "hero_side2_video_media_id",
@@ -348,6 +408,7 @@ export function createPublicCmsRepository() {
 }
 
 type CmsWorkRow = {
+  id: string;
   slug: string;
   title: string;
   subtitle: string;
@@ -379,7 +440,7 @@ type CmsWorkRow = {
 };
 
 const publicWorkSelect = `
-  slug,title,subtitle,summary,year,status,palette,is_representative,
+  id,slug,title,subtitle,summary,year,status,palette,is_representative,
   representative_order,is_composite,composite_order,sort_order,
   cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
   hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
@@ -493,7 +554,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listPublishedWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -519,7 +580,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listFeaturedWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
       const { data, error } = await client
@@ -533,7 +594,7 @@ export async function createServerCmsRepository() {
 
       if (error) throw error;
 
-      return safeMapWorks(((data ?? []) as unknown as CmsWorkRow[]), "server:listCompositeWorks");
+      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listCompositeWorks");
     },
     async getSiteSettings() {
       const result = await safeQuerySiteSettings(client);
@@ -550,6 +611,7 @@ export async function createServerCmsRepository() {
         "cta_card_media_id",
         "cta_figure_media_id",
         "cta_ticker_logo_media_id",
+        "cta_center_logo_media_id",
         "hero_main_video_media_id",
         "hero_side1_video_media_id",
         "hero_side2_video_media_id",
@@ -609,7 +671,8 @@ export async function getPrivatePreviewWorkBySlug(slug: string, token: string) {
     return null;
   }
 
-  return toPublicWork(row);
+  const gapMap = await fetchWorksMediaNoGapMap(client, [row.id]);
+  return toPublicWork(row, gapMap.get(row.id) ?? false);
 }
 
 type CmsSiteSettingsRow = {
@@ -629,6 +692,8 @@ type CmsSiteSettingsRow = {
   cta_figure_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   cta_ticker_logo_media_id?: string | null;
   cta_ticker_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
+  cta_center_logo_media_id?: string | null;
+  cta_center_logo_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   hero_main_video_media_id?: string | null;
   hero_main_video_media?: CmsMediaRow | Array<CmsMediaRow> | null;
   hero_side1_video_media_id?: string | null;
@@ -644,6 +709,12 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
   const settings = getStaticSiteSettings();
 
   return {
+    ctaTickerLogoScale: 1,
+    ctaTickerLogoOffsetX: 0,
+    ctaTickerLogoOffsetY: 0,
+    ctaCenterLogoScale: 1,
+    ctaCenterLogoOffsetX: 0,
+    ctaCenterLogoOffsetY: 0,
     ctaCardScale: 1,
     ctaCardOffsetX: 0,
     ctaCardOffsetY: 0,
@@ -681,6 +752,13 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
     ctaFigureMediaUrl: toPublicMediaUrl(row.cta_figure_media),
     ctaTickerLogoMediaUrl: singleTickerUrl,
     ctaTickerLogoMediaUrls: singleTickerUrl ? [singleTickerUrl] : [],
+    ctaTickerLogoScale: 1,
+    ctaTickerLogoOffsetX: 0,
+    ctaTickerLogoOffsetY: 0,
+    ctaCenterLogoMediaUrl: toPublicMediaUrl(row.cta_center_logo_media),
+    ctaCenterLogoScale: 1,
+    ctaCenterLogoOffsetX: 0,
+    ctaCenterLogoOffsetY: 0,
     ctaCardScale: 1,
     ctaCardOffsetX: 0,
     ctaCardOffsetY: 0,
@@ -708,7 +786,63 @@ function toPublicSiteSettings(row: CmsSiteSettingsRow): PublicSiteSettings {
   };
 }
 
-function toPublicWork(row: CmsWorkRow): Work {
+function workMediaNoGapKey(workId: string): string {
+  return `work_media_no_gap_${workId}`;
+}
+
+async function fetchWorksMediaNoGapMap(
+  client: ReturnType<typeof createSupabaseServiceClient>,
+  workIds: string[],
+): Promise<Map<string, boolean>> {
+  const result = new Map<string, boolean>();
+  if (workIds.length === 0) return result;
+
+  const keys = workIds.map(workMediaNoGapKey);
+  try {
+    const { data, error } = await client
+      .from("text_content")
+      .select("key,content")
+      .in("key", keys)
+      .eq("page", "work_settings")
+      .eq("is_active", true)
+      .is("deleted_at", null);
+
+    if (!error && data) {
+      for (const item of data) {
+        const match = /^work_media_no_gap_(.+)$/.exec(item.key);
+        if (match) {
+          const id = match[1];
+          result.set(id, item.content === "true");
+        }
+      }
+    }
+  } catch {
+    // text_content query failed, return empty map (default: has gap)
+  }
+  return result;
+}
+
+async function enrichWorksWithMediaNoGap(
+  client: ReturnType<typeof createSupabaseServiceClient>,
+  rows: CmsWorkRow[],
+  context: string,
+): Promise<Work[]> {
+  const works: Work[] = [];
+  const workIds = rows.map((r) => r.id);
+  const idGapMap = await fetchWorksMediaNoGapMap(client, workIds);
+
+  for (const row of rows) {
+    try {
+      const mediaNoGap = idGapMap.get(row.id) ?? false;
+      works.push(toPublicWork(row, mediaNoGap));
+    } catch (err) {
+      console.error(`[safeMapWorks] 作品转换失败 (${context}), slug=${row.slug}, title=${row.title}:`, err);
+    }
+  }
+  return works;
+}
+
+function toPublicWork(row: CmsWorkRow, mediaNoGap: boolean = false): Work {
   const category =
     getJoinedName(row.work_categories?.[0]?.categories) ??
     getStaticVisibleCategories()[0].name;
@@ -737,6 +871,7 @@ function toPublicWork(row: CmsWorkRow): Work {
     hoverMedia: toPublicMedia(row.hover_media),
     shareMedia: toPublicMedia(row.share_media),
     blocks: toPublicBlocks(row.work_blocks ?? []),
+    mediaNoGap,
   };
 }
 
@@ -744,7 +879,7 @@ function safeMapWorks(rows: CmsWorkRow[], context: string): Work[] {
   const works: Work[] = [];
   for (const row of rows) {
     try {
-      works.push(toPublicWork(row));
+      works.push(toPublicWork(row, false));
     } catch (err) {
       console.error(`[safeMapWorks] 作品转换失败 (${context}), slug=${row.slug}, title=${row.title}:`, err);
     }
