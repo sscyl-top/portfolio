@@ -56,7 +56,7 @@ export default function WorkModalLayout({
 
       <div
         ref={panelRef}
-        className="mx-auto my-6 w-[calc(100%-1.5rem)] overflow-hidden bg-panel md:my-10 md:w-[calc(100%-3rem)] lg:max-w-[1400px]"
+        className="mx-auto my-4 w-[calc(100%-1rem)] overflow-hidden bg-panel sm:my-6 sm:w-[calc(100%-2rem)] md:my-8 md:w-[calc(100%-3rem)] lg:max-w-[1400px]"
       >
         {children}
       </div>
