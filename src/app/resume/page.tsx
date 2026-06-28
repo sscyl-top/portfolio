@@ -38,12 +38,12 @@ export default async function ResumePage() {
       : undefined;
 
   return (
-    <main className="relative isolate overflow-hidden bg-[#050505]">
+    <main className="relative isolate overflow-hidden bg-page-bg">
       <div className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-62" />
       <div className="works-route-blob works-route-blob-b pointer-events-none fixed z-0 h-[900px] w-[900px] rounded-full opacity-56" />
       <section className="relative min-h-screen overflow-hidden px-4 pb-14 pt-22 md:px-8 md:pt-28">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_18%_22%,rgba(201,162,127,0.12),transparent_26%),radial-gradient(circle_at_78%_48%,rgba(139,215,205,0.1),transparent_30%)]" />
-        <div className="absolute inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:96px_96px] opacity-20" />
+        <div className="absolute inset-0 z-0 bg-[linear-gradient(var(--edge-3)_1px,transparent_1px),linear-gradient(90deg,var(--surface-3)_1px,transparent_1px)] bg-[size:96px_96px] opacity-20" />
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-10rem)] max-w-7xl flex-col justify-between">
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
@@ -52,7 +52,7 @@ export default async function ResumePage() {
               <p>{resume.role}</p>
               <p>Portfolio / Resume 2026</p>
             </div>
-            <div className="grid gap-2 text-[13px] text-white/64 md:justify-items-end md:text-sm">
+            <div className="grid gap-2 text-[13px] text-ink-2 md:justify-items-end md:text-sm">
               <span className="inline-flex items-center gap-2">
                 <Mail aria-hidden="true" className="h-4 w-4" />
                 {resume.contact.email}
@@ -72,9 +72,9 @@ export default async function ResumePage() {
             <p className="font-mono text-xs uppercase text-copper md:text-sm">
               HI, I&apos;M {resume.name}
             </p>
-            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-white sm:text-6xl md:text-8xl lg:text-9xl">
+            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-ink sm:text-6xl md:text-8xl lg:text-9xl">
               BRAND
-              <span className="block text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.62)]">
+              <span className="block text-transparent [-webkit-text-stroke:1px_var(--ink-3)]">
                 VISUAL
               </span>
             </h1>
@@ -82,7 +82,7 @@ export default async function ResumePage() {
               {resume.highlights.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 font-mono text-[11px] text-white/56 md:px-4 md:py-2 md:text-xs"
+                  className="rounded-full border border-edge-2 bg-surface-3 px-3 py-1.5 font-mono text-[11px] text-ink-2 md:px-4 md:py-2 md:text-xs"
                 >
                   {item}
                 </span>
@@ -90,8 +90,8 @@ export default async function ResumePage() {
             </div>
           </div>
 
-          <div className="grid gap-6 border-t border-white/10 pt-8 md:-translate-y-16 lg:grid-cols-[1fr_auto] lg:items-end">
-            <p className="max-w-3xl text-[15px] leading-7 text-white/66 md:text-lg md:leading-8">
+          <div className="grid gap-6 border-t border-edge-2 pt-8 md:-translate-y-16 lg:grid-cols-[1fr_auto] lg:items-end">
+            <p className="max-w-3xl text-[15px] leading-7 text-ink-2 md:text-lg md:leading-8">
               我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。
             </p>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -106,7 +106,7 @@ export default async function ResumePage() {
               <a
                 href={resume.downloads.jpg}
                 download
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 px-4 py-2.5 text-[13px] text-white/72 transition hover:border-white/40 hover:text-white md:px-5 md:py-3 md:text-sm"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-edge px-4 py-2.5 text-[13px] text-ink-2 transition hover:border-edge hover:text-ink md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
                 下载简历 JPG
@@ -123,7 +123,7 @@ export default async function ResumePage() {
               {resume.strengths.map((strength) => (
                 <p
                   key={strength}
-                  className="border-t border-white/10 pt-4 leading-8 text-white/66"
+                  className="border-t border-edge-2 pt-4 leading-8 text-ink-2"
                 >
                   {strength}
                 </p>
@@ -134,12 +134,12 @@ export default async function ResumePage() {
           <ResumeSection title="社会经历" subtitle="Social experience">
             <div className="space-y-8">
               {resume.experience.map((item) => (
-                <article key={item.company} className="border-t border-white/10 pt-6">
+                <article key={item.company} className="border-t border-edge-2 pt-6">
                   <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-baseline">
-                    <h3 className="text-2xl font-semibold text-white">
+                    <h3 className="text-2xl font-semibold text-ink">
                       {item.company}
                     </h3>
-                    <span className="font-mono text-sm text-white/42">
+                    <span className="font-mono text-sm text-ink-3">
                       {item.period}
                     </span>
                   </div>
@@ -150,7 +150,7 @@ export default async function ResumePage() {
                     {item.points.map((point, index) => (
                       <li
                         key={point}
-                        className="grid grid-cols-[2rem_1fr] gap-3 leading-8 text-white/62"
+                        className="grid grid-cols-[2rem_1fr] gap-3 leading-8 text-ink-2"
                       >
                         <span className="font-mono text-sm text-copper">
                           {index + 1}.
@@ -167,16 +167,16 @@ export default async function ResumePage() {
           <ResumeSection title="校园经历" subtitle="Campus experience">
             <div className="space-y-6">
               {resume.campus.map((item) => (
-                <article key={item.company} className="border-t border-white/10 pt-5">
+                <article key={item.company} className="border-t border-edge-2 pt-5">
                   <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-baseline">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="text-xl font-semibold text-ink">
                       {item.company} / {item.title}
                     </h3>
-                    <span className="font-mono text-sm text-white/42">
+                    <span className="font-mono text-sm text-ink-3">
                       {item.period}
                     </span>
                   </div>
-                  <p className="mt-3 leading-8 text-white/60">
+                  <p className="mt-3 leading-8 text-ink-2">
                     {item.description}
                   </p>
                 </article>
@@ -189,28 +189,28 @@ export default async function ResumePage() {
             subtitle="Educational background"
             testId="education-section"
           >
-            <div className="border-t border-white/10 pt-4">
+            <div className="border-t border-edge-2 pt-4">
               <div
                 data-testid="education-school-summary"
                 className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4 md:items-start"
               >
                 <div>
-                  <p className="font-mono text-xs uppercase text-white/36">
+                  <p className="font-mono text-xs uppercase text-ink-4">
                     {resume.education.schoolEnglish}
                   </p>
-                  <h3 className="mt-1.5 text-xl font-semibold text-white md:text-2xl">
+                  <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
                     {resume.education.school}
                   </h3>
                 </div>
                 <div>
-                  <p className="font-mono text-xs text-white/38">
+                  <p className="font-mono text-xs text-ink-4">
                     {resume.education.majorEnglish}
                   </p>
-                  <h3 className="mt-1.5 text-xl font-semibold text-white md:text-2xl">
+                  <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
                     {resume.education.major}
                   </h3>
                 </div>
-                <span className="font-mono text-sm text-white/42 md:pt-1">
+                <span className="font-mono text-sm text-ink-3 md:pt-1">
                   {resume.education.period}
                 </span>
               </div>
@@ -223,10 +223,10 @@ export default async function ResumePage() {
                   <article
                     key={`${achievement.label}-${achievement.value}`}
                     data-testid="education-achievement"
-                    className="flex h-24 min-h-[60px] flex-col justify-between rounded-lg border border-white/10 bg-black/20 p-2.5 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
+                    className="flex h-24 min-h-[60px] flex-col justify-between rounded-lg border border-edge-2 bg-surface-2 p-2.5 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] uppercase text-white/34">
+                      <span className="font-mono text-[10px] uppercase text-ink-4">
                         {achievement.label}
                       </span>
                       {index === 0 ? (
@@ -246,13 +246,13 @@ export default async function ResumePage() {
                         className={
                           index === 0
                             ? "text-2xl font-semibold leading-none text-copper md:text-3xl"
-                            : "text-sm font-medium leading-6 text-white/76"
+                            : "text-sm font-medium leading-6 text-ink"
                         }
                       >
                         {achievement.value}
                       </p>
                       {achievement.detail ? (
-                        <p className="mt-0.5 text-[11px] text-white/46">
+                        <p className="mt-0.5 text-[11px] text-ink-3">
                           {achievement.detail}
                         </p>
                       ) : null}
@@ -269,19 +269,19 @@ export default async function ResumePage() {
             subtitle="Activities"
             testId="education-activities-section"
           >
-            <div className="border-t border-white/10">
+            <div className="border-t border-edge-2">
               {resume.education.activities.map((activity) => (
                 <article
                   key={`${activity.period}-${activity.title}`}
-                  className="grid gap-1.5 border-b border-white/10 py-3 md:grid-cols-[7.5rem_11rem_1fr] md:gap-5 md:py-4"
+                  className="grid gap-1.5 border-b border-edge-2 py-3 md:grid-cols-[7.5rem_11rem_1fr] md:gap-5 md:py-4"
                 >
                   <p className="font-mono text-xs text-copper">
                     {activity.period}
                   </p>
-                  <h3 className="text-sm font-medium text-white/78">
+                  <h3 className="text-sm font-medium text-ink">
                     {activity.title}
                   </h3>
-                  <p className="text-sm leading-6 text-white/52">
+                  <p className="text-sm leading-6 text-ink-3">
                     {activity.description}
                   </p>
                 </article>
@@ -316,11 +316,11 @@ function ResumeSection({
   return (
     <section
       data-testid={testId}
-      className="grid gap-5 rounded-lg border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[0.35fr_1fr] md:gap-8 md:p-8"
+      className="grid gap-5 rounded-lg border border-edge-2 bg-surface-3 p-4 md:grid-cols-[0.35fr_1fr] md:gap-8 md:p-8"
     >
       <div>
         <p className="font-mono text-xs uppercase text-copper">{subtitle}</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">{title}</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-ink md:text-3xl">{title}</h2>
       </div>
       <div>{children}</div>
     </section>

@@ -167,9 +167,9 @@ function renderBlock(block: ContentBlock, index: number, coverTone: string, medi
 function layoutWidthClass(layout?: BlockLayout, isModal: boolean = false): string {
   if (isModal) {
     if (!layout || !layout.width || layout.width === "contained") {
-      return "mx-auto w-full px-2 md:px-3 lg:px-4";
+      return "mx-auto w-full px-4 md:px-8 lg:px-10";
     }
-    if (layout.width === "narrow") return "mx-auto max-w-5xl px-4 md:px-6 lg:px-8";
+    if (layout.width === "narrow") return "mx-auto max-w-5xl px-4 md:px-8 lg:px-10";
     if (layout.width === "free") return "relative mx-auto w-full px-0";
     return "w-full px-0";
   }
@@ -184,11 +184,11 @@ function layoutWidthClass(layout?: BlockLayout, isModal: boolean = false): strin
 function textWidthClass(layout?: BlockLayout, isModal: boolean = false): string {
   if (isModal) {
     if (!layout || !layout.width || layout.width === "contained") {
-      return "mx-auto w-full max-w-3xl px-4 md:px-8 lg:px-12";
+      return "mx-auto w-full max-w-3xl px-4 md:px-8 lg:px-10";
     }
-    if (layout.width === "narrow") return "mx-auto max-w-2xl px-4 md:px-8 lg:px-12";
-    if (layout.width === "free") return "relative mx-auto w-full px-4 md:px-8 lg:px-12";
-    return "mx-auto w-full max-w-3xl px-4 md:px-8 lg:px-12";
+    if (layout.width === "narrow") return "mx-auto max-w-2xl px-4 md:px-8 lg:px-10";
+    if (layout.width === "free") return "relative mx-auto w-full px-4 md:px-8 lg:px-10";
+    return "mx-auto w-full max-w-3xl px-4 md:px-8 lg:px-10";
   }
   return layoutWidthClass(layout, false);
 }

@@ -19,12 +19,12 @@ type ContactFormProps = {
 type FieldError = { name?: string; email?: string; message?: string };
 
 const fieldClass =
-  "min-h-9 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+  "min-h-9 w-full rounded-lg border border-edge-2 bg-surface px-3 py-1.5 text-sm text-ink outline-none transition placeholder:text-ink-4 focus:border-copper/65 focus:bg-surface-2";
 
 const errorFieldClass =
-  "min-h-9 w-full rounded-lg border border-red-400/40 bg-black/25 px-3 py-1.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-copper/65 focus:bg-black/40";
+  "min-h-9 w-full rounded-lg border border-red-400/40 bg-surface px-3 py-1.5 text-sm text-ink outline-none transition placeholder:text-ink-4 focus:border-copper/65 focus:bg-surface-2";
 
-const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-300";
+const errorTextClass = "mt-1 flex items-center gap-1 text-xs text-red-500 [.light_&]:text-red-600";
 
 export function ContactForm({
   id,
@@ -115,14 +115,14 @@ export function ContactForm({
     <article
       id={id}
       data-testid={`${type}-contact-card`}
-      className="scroll-mt-24 rounded-lg border border-white/10 bg-white/[0.035] p-4 md:p-5"
+      className="scroll-mt-24 rounded-lg border border-edge-2 bg-surface-3 p-4 md:p-5"
     >
-      <div className="border-b border-white/10 pb-4">
+      <div className="border-b border-edge-2 pb-4">
         <p className="font-mono text-[10px] uppercase text-copper">
           {type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
         </p>
-        <h3 className="mt-3 text-3xl font-semibold text-white">{title}</h3>
-        <p className="mt-3 max-w-xl text-[15px] leading-7 text-white/58">
+        <h3 className="mt-3 text-3xl font-semibold text-ink">{title}</h3>
+        <p className="mt-3 max-w-xl text-[15px] leading-7 text-ink-2">
           {description}
         </p>
       </div>
@@ -147,7 +147,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-name`}
-            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
           >
             姓名
           </label>
@@ -174,7 +174,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-email`}
-            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
           >
             邮箱
           </label>
@@ -203,7 +203,7 @@ export function ContactForm({
           <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-company`}
-              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
             >
               公司
             </label>
@@ -224,7 +224,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-subject`}
-            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
           >
             {subjectLabel}
           </label>
@@ -243,7 +243,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-range`}
-            className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
           >
             {rangeLabel}
           </label>
@@ -263,7 +263,7 @@ export function ContactForm({
           <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-message`}
-              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
             >
               {messageLabel}
             </label>
@@ -291,7 +291,7 @@ export function ContactForm({
           <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-note`}
-              className="shrink-0 text-xs text-white/55 sm:text-sm sm:text-white/68"
+              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
             >
               备注
             </label>
@@ -312,7 +312,7 @@ export function ContactForm({
           <button
             type="submit"
             disabled={status === "pending"}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-[#edf8ff] px-6 text-sm font-semibold text-black/90 transition hover:bg-[#f6fcff] disabled:cursor-wait disabled:opacity-55"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-edge bg-[#edf8ff] px-6 text-sm font-semibold text-ink transition hover:bg-[#f6fcff] disabled:cursor-wait disabled:opacity-55"
           >
             <Send aria-hidden="true" className="h-4 w-4" />
             {status === "pending" ? "正在发送" : "发送消息"}
@@ -321,9 +321,9 @@ export function ContactForm({
             aria-live="polite"
             className={`mt-3 min-h-5 text-center text-xs ${
               status === "error"
-                ? "text-red-300"
+                ? "text-red-400 [.light_&]:text-red-600"
                 : status === "success"
-                  ? "text-emerald-300"
+                  ? "text-emerald-300 [.light_&]:text-emerald-600"
                   : "text-cyan/75"
             }`}
           >

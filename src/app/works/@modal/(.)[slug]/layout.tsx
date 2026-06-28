@@ -35,7 +35,7 @@ export default function WorkModalLayout({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/50 px-1 pb-1 pt-1 md:px-2 md:pb-2 md:pt-2"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60"
       onClick={(e) => {
         if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
           onDismiss();
@@ -56,7 +56,7 @@ export default function WorkModalLayout({
 
       <div
         ref={panelRef}
-        className="w-full overflow-hidden bg-[#181a1e]"
+        className="mx-auto my-6 w-[calc(100%-1.5rem)] overflow-hidden bg-[#181a1e] md:my-10 md:w-[calc(100%-3rem)] lg:max-w-[1400px]"
       >
         {children}
       </div>

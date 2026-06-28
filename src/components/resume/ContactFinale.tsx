@@ -25,13 +25,13 @@ function renderMarqueeItem(item: string, index: number) {
   const isStroke = item.startsWith("stroke:");
   if (isStroke) {
     return (
-      <span key={index} className="font-sans font-semibold text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.32)]">
+      <span key={index} className="font-sans font-semibold text-transparent [-webkit-text-stroke:1px_var(--ink-4)]">
         {item.slice(7)}
       </span>
     );
   }
   return (
-    <span key={index} className="font-sans font-semibold text-white">{item}</span>
+    <span key={index} className="font-sans font-semibold text-ink">{item}</span>
   );
 }
 
@@ -39,43 +39,43 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
   const items = marqueeItems && marqueeItems.length > 0 ? marqueeItems : defaultMarqueeItems;
 
   return (
-    <section className="relative z-10 overflow-hidden border-t border-white/10 pb-8 pt-14 md:pt-20 md:pb-10">
+    <section className="relative z-10 overflow-hidden border-t border-edge-2 pb-8 pt-14 md:pt-20 md:pb-10">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div>
           <p className="font-mono text-xs uppercase text-copper">
             Design service / Contact
           </p>
-          <h2 className="mt-3 text-3xl font-semibold text-white md:text-6xl">
+          <h2 className="mt-3 text-3xl font-semibold text-ink md:text-6xl">
             设计服务合作
           </h2>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 border-y border-white/10 lg:grid-cols-4 md:mt-10">
-          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center sm:border-r lg:border-b-0">
+        <div className="mt-8 grid grid-cols-2 border-y border-edge-2 lg:grid-cols-4 md:mt-10">
+          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center sm:border-r lg:border-b-0">
             <Phone aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-white/38">
+              <span className="block font-mono text-[11px] uppercase text-ink-4">
                 Phone
               </span>
-              <span className="mt-1.5 block text-sm font-medium text-white/82 md:text-lg">{phone}</span>
+              <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">{phone}</span>
             </span>
           </div>
-          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center lg:border-b-0 lg:border-r">
+          <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center lg:border-b-0 lg:border-r">
             <Mail aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-white/38">
+              <span className="block font-mono text-[11px] uppercase text-ink-4">
                 Email
               </span>
-              <span className="mt-1.5 block break-all text-sm font-medium text-white/82 md:text-lg">{email}</span>
+              <span className="mt-1.5 block break-all text-sm font-medium text-ink md:text-lg">{email}</span>
             </span>
           </div>
-          <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-white/10 px-5 text-center sm:border-r sm:border-b-0">
+          <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center sm:border-r sm:border-b-0">
             <MapPin aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-white/38">
+              <span className="block font-mono text-[11px] uppercase text-ink-4">
                 Location
               </span>
-              <span className="mt-1.5 block text-sm font-medium text-white/82 md:text-lg">
+              <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">
                 {location}
               </span>
             </span>
@@ -83,10 +83,10 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
           <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 px-5 text-center">
             <MessageCircle aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-white/38">
+              <span className="block font-mono text-[11px] uppercase text-ink-4">
                 WeChat
               </span>
-              <span className="mt-1.5 block text-sm font-medium text-white/82 md:text-lg">
+              <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">
                 {wechatId}
               </span>
             </span>
@@ -123,7 +123,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
 
       <div
         data-testid="contact-marquee"
-        className="mt-14 overflow-hidden border-y border-white/10 py-5 md:mt-20 md:py-6"
+        className="mt-14 overflow-hidden border-y border-edge-2 py-5 md:mt-20 md:py-6"
       >
         <div className="resume-contact-marquee-track flex w-max min-w-[200%] items-center">
           {marqueeGroups.map((group) => (
