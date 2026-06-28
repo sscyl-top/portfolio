@@ -181,6 +181,22 @@ function layoutWidthClass(layout?: BlockLayout, isModal: boolean = false): strin
   return "";
 }
 
+function mediaWidthClass(layout?: BlockLayout, isModal: boolean = false): string {
+  if (isModal) {
+    if (!layout || !layout.width || layout.width === "contained") {
+      return "mx-auto w-full px-0";
+    }
+    if (layout.width === "narrow") return "mx-auto max-w-5xl px-4 md:px-8 lg:px-10";
+    if (layout.width === "free") return "relative mx-auto w-full px-0";
+    return "w-full px-0";
+  }
+  return layoutWidthClass(layout, false);
+}
+
+function captionPadClass(isModal: boolean = false): string {
+  return isModal ? "px-4 md:px-8 lg:px-10" : "";
+}
+
 function textWidthClass(layout?: BlockLayout, isModal: boolean = false): string {
   if (isModal) {
     if (!layout || !layout.width || layout.width === "contained") {
@@ -248,9 +264,9 @@ function MediaBlock({
   const galleryGap = noGap ? "gap-0" : "gap-2 md:gap-3";
 
   return (
-    <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
+    <section className={`${sectionPy} ${mediaWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
-        <p className={`text-sm font-medium text-ink-3 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
+        <p className={`text-sm font-medium text-ink-3 ${captionPadClass(isModal)} ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
 
       <div
@@ -400,9 +416,9 @@ function VideoBlock({
   if (block.items.length === 0) return null;
   const sectionPy = noGap ? "py-0" : "py-2";
   return (
-    <section className={`${sectionPy} ${layoutWidthClass(block.layout, isModal)}`}>
+    <section className={`${sectionPy} ${mediaWidthClass(block.layout, isModal)}`}>
       {block.caption ? (
-        <p className={`text-sm font-medium text-ink-3 ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
+        <p className={`text-sm font-medium text-ink-3 ${captionPadClass(isModal)} ${noGap ? "mb-0" : "mb-4"}`}>{block.caption}</p>
       ) : null}
       <SmartVideo
         src={block.items[0].url}
