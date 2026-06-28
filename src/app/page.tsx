@@ -21,14 +21,9 @@ export default async function Home() {
   const data = await getHomeData();
 
   return (
-    <main className="home-dark-scope relative isolate overflow-visible">
-      <div className="pointer-events-none absolute inset-0 z-0" />
-      <div className="home-aurora home-aurora-a pointer-events-none fixed z-0" />
-      <div className="home-aurora home-aurora-b pointer-events-none fixed z-0" />
-      <div className="relative z-10">
-        <HeroShowcase data={data.hero} />
-        <CapabilityBands strengths={data.strengths} textOverrides={data.textOverrides} />
-      </div>
+    <main className="home-dark-scope">
+      <HeroShowcase data={data.hero} />
+      <CapabilityBands strengths={data.strengths} textOverrides={data.textOverrides} />
     </main>
   );
 }

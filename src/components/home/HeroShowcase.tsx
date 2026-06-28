@@ -294,7 +294,7 @@ function HeroMainCard({
     <>
     <div
       data-hero-reveal
-      className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/10 bg-[radial-gradient(circle_at_66%_30%,rgba(92,224,242,0.18),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.10),transparent_34%),linear-gradient(135deg,#1c2329,#0e1419_66%,#161d24)] p-3 shadow-2xl shadow-black/60 md:aspect-[16/9] md:px-5 md:pt-5 md:pb-[40px]"
+      className="relative mx-auto aspect-[5/3] w-full max-w-[1420px] overflow-hidden rounded-lg border border-white/15 bg-[radial-gradient(circle_at_66%_30%,rgba(139,215,205,0.22),transparent_28%),radial-gradient(circle_at_34%_72%,rgba(201,162,127,0.16),transparent_34%),linear-gradient(135deg,#191c1d,#050505_66%,#11100e)] p-3 shadow-2xl shadow-black md:aspect-[16/9] md:px-5 md:pt-5 md:pb-[40px]"
     >
       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-35" />
 
