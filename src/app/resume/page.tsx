@@ -47,7 +47,7 @@ export default async function ResumePage() {
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-10rem)] max-w-7xl flex-col justify-between">
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-            <div className="space-y-2 font-mono text-xs uppercase text-white/45">
+            <div className="space-y-2 font-mono text-xs uppercase text-ink-3">
               <p>{resume.alias}</p>
               <p>{resume.role}</p>
               <p>Portfolio / Resume 2026</p>

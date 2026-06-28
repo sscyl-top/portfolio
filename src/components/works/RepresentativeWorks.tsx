@@ -72,27 +72,27 @@ const RepresentativeCard = memo(function RepresentativeCard({
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
         <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,var(--surface-3),transparent_20%),linear-gradient(to_bottom,transparent_42%,var(--overlay))]" />
-        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/48">
+        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
-        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/12 bg-black/36 p-3 shadow-2xl backdrop-blur-lg transition duration-300 group-hover:bg-black/52">
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-edge bg-glass p-3 shadow-2xl backdrop-blur-lg transition duration-300 group-hover:bg-glass-strong">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>
-              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-white">{work.title}</h2>
+              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-ink">{work.title}</h2>
             </div>
             <ArrowUpRight
               aria-hidden="true"
-              className="mt-1 h-5 w-5 flex-none text-white/45 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
+              className="mt-1 h-5 w-5 flex-none text-ink-3 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink"
             />
           </div>
-          <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/62">{work.subtitle}</p>
+          <p className="mt-2 line-clamp-1 text-xs leading-5 text-ink-2">{work.subtitle}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {work.tags.slice(0, 1).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-white/55"
+                className="rounded-full border border-edge-2 bg-surface px-2.5 py-1 font-mono text-[10px] text-ink-2"
               >
                 {tag}
               </span>
@@ -208,8 +208,8 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
     <section id="section-featured" className="relative overflow-hidden px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-copper" data-text-key="works.featuredKicker">Featured Works</p>
-        <h1 className="mt-3 text-5xl font-semibold text-white md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55 md:text-lg" data-text-key="works.featuredDescription">
+        <h1 className="mt-3 text-5xl font-semibold text-ink md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
+        <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-ink-2 md:text-lg" data-text-key="works.featuredDescription">
           从品牌全案、视觉系统到 AIGC 提案能力，先用 7 个关键项目建立第一印象。
         </p>
 
@@ -301,23 +301,23 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                     if (hasDragged.current) { e.preventDefault(); return; }
                   }}
                   style={style}
-                  className="group block overflow-hidden rounded-2xl border border-white/12 bg-white/[0.06] p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
+                  className="group block overflow-hidden rounded-2xl border border-edge bg-surface p-1.5 shadow-2xl shadow-black/40 backdrop-blur-sm"
                 >
                   <article className="relative aspect-[3/4.5] overflow-hidden rounded-xl">
                     <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover={false} />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_36%,rgba(0,0,0,0.88))]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_36%,var(--overlay))]" />
                     {isCenter && (
                       <>
-                        <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
+                        <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
                           <span>0{realIndex + 1}</span><span>{work.year}</span>
                         </div>
-                        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-white/10 bg-black/50 p-2.5 backdrop-blur-md">
+                        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-edge-2 bg-glass-strong p-2.5 backdrop-blur-md">
                           <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-copper">{work.category}</p>
-                          <h2 className="mt-1 text-sm font-semibold leading-snug text-white">{work.title}</h2>
-                          <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-white/58">{work.subtitle}</p>
+                          <h2 className="mt-1 text-sm font-semibold leading-snug text-ink">{work.title}</h2>
+                          <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-ink-2">{work.subtitle}</p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {work.tags.slice(0, 1).map((tag) => (
-                              <span key={tag} className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-[9px] text-white/50">{tag}</span>
+                              <span key={tag} className="rounded-full border border-edge-2 bg-white/[0.05] px-2 py-0.5 font-mono text-[9px] text-ink-3">{tag}</span>
                             ))}
                           </div>
                         </div>
@@ -338,7 +338,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                 }`} />
             ))}
           </div>
-          <p className="mt-2 font-mono text-[10px] text-white/25" data-text-key="works.swipeHint">左右滑动</p>
+          <p className="mt-2 font-mono text-[10px] text-ink-4" data-text-key="works.swipeHint">左右滑动</p>
         </div>
       </div>
     </section>

@@ -140,10 +140,10 @@ export function CompositeDesignWall({
           <p className="font-mono text-xs uppercase text-copper" data-text-key="works.compositeKicker">
             {textOverrides.compositeKicker || "Composite Design / Visual Flow"}
           </p>
-          <h2 className="mt-3 text-4xl font-semibold text-white md:text-7xl" data-text-key="works.compositeTitle">
+          <h2 className="mt-3 text-4xl font-semibold text-ink md:text-7xl" data-text-key="works.compositeTitle">
             {textOverrides.compositeTitle || "复合设计"}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/56 md:text-base md:leading-8" data-text-key="works.compositeDescription">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink-2 md:text-base md:leading-8" data-text-key="works.compositeDescription">
             {textOverrides.compositeDescription ||
               "用更密集的作品墙展示图案、装备、曲面贴花和多介质延展。当前为开发占位，后续可在后台替换图片与项目内容。"}
           </p>
@@ -159,7 +159,7 @@ export function CompositeDesignWall({
               <Link
                 key={`${work.slug}-${index}`}
                 href={`/works/${work.slug}?from=composite`}
-                className="group block overflow-hidden rounded-lg border border-white/10 bg-white/[0.035] p-1.5 transition duration-500 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.07] md:p-2"
+                className="group block overflow-hidden rounded-lg border border-edge-2 bg-surface-3 p-1.5 transition duration-500 hover:-translate-y-2 hover:border-edge hover:bg-surface md:p-2"
                 style={{
                   transform: `translateY(${yOffset}px)`,
                   transition:
@@ -211,24 +211,24 @@ export function CompositeDesignWall({
                       )}`}
                     />
                   )}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.08),transparent_34%,rgba(0,0,0,0.82))]" />
-                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-white/48 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--surface-3),transparent_34%,var(--overlay))]" />
+                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-ink-3 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/10 bg-black/32 p-2 backdrop-blur-md md:bottom-3 md:left-3 md:right-3 md:p-3">
+                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-edge-2 bg-glass p-2 backdrop-blur-md md:bottom-3 md:left-3 md:right-3 md:p-3">
                     <div className="flex items-start justify-between gap-2 md:gap-3">
                       <div>
                         <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-copper md:text-[10px] md:tracking-[0.16em]">
                           {work.tags[0] ?? "Composite"}
                         </p>
-                        <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-white md:mt-1.5 md:text-lg md:leading-tight">
+                        <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-ink md:mt-1.5 md:text-lg md:leading-tight">
                           {work.title}
                         </h3>
                       </div>
                       <ArrowUpRight
                         aria-hidden="true"
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white md:mt-1 md:h-4 md:w-4"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink md:mt-1 md:h-4 md:w-4"
                       />
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export function CompositeDesignWall({
           ref={ctaRef}
           className="portfolio-cta-panel relative mt-24 min-h-[480px] px-0 pb-6 pt-8 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
-          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,rgba(0,0,0,0.72),transparent_42%)]" />
+          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
           <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
@@ -352,7 +352,7 @@ export function CompositeDesignWall({
             <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-5 px-4 sm:w-auto sm:flex-row sm:gap-9 md:px-8">
               <Link
                 href="/resume"
-                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-white/35 hover:text-white sm:w-48"
+                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-edge bg-glass-strong px-6 text-sm text-ink backdrop-blur transition hover:border-edge hover:text-ink sm:w-48"
                 data-text-key="works.ctaResume"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
@@ -368,7 +368,7 @@ export function CompositeDesignWall({
               </Link>
               <Link
                 href="/resume#commercial-contact"
-                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-white/15 bg-black/45 px-6 text-sm text-white/78 backdrop-blur transition hover:border-copper/60 hover:text-white sm:w-48"
+                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-edge bg-glass-strong px-6 text-sm text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink sm:w-48"
                 data-text-key="works.ctaCommercial"
               >
                 <MessagesSquare className="h-4 w-4" aria-hidden="true" />
