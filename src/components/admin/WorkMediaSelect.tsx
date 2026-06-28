@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UploadCloud, Loader2, X, Image as ImageIcon, Film } from "lucide-react";
 
 import { uploadMediaFiles } from "@/lib/cms/upload-media";
@@ -43,6 +44,7 @@ export function WorkMediaSelect({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const selected = assets.find((a) => a.id === value);
   const previewUrl = selected ? buildPublicMediaUrl(selected.storage_key) : undefined;
@@ -97,15 +99,16 @@ export function WorkMediaSelect({
           hiddenInput.value = result.id;
         }
         form.requestSubmit();
+        // 轻量刷新：只重取服务端数据，不重置客户端状态，避免整页 reload 的卡顿感
         setTimeout(() => {
-          window.location.reload();
-        }, 800);
+          router.refresh();
+        }, 600);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "上传失败");
       setIsUploading(false);
     }
-  }, [autoSave, name]);
+  }, [autoSave, name, router]);
 
   useEffect(() => {
     const el = dropZoneRef.current;

@@ -15,6 +15,7 @@ import { StatusSelect } from "@/components/admin/StatusSelect";
 import { WorkMediaSelect } from "@/components/admin/WorkMediaSelect";
 import { DetachedResizablePanels } from "@/components/admin/DetachedResizablePanels";
 import { AutoSaveForm } from "@/components/admin/AutoSaveForm";
+import { SaveWorkCard } from "@/components/admin/SaveWorkCard";
 
 import {
   clearPrivatePreviewLink,
@@ -332,33 +333,6 @@ export default async function AdminWorkEditorPage({
     </div>
   );
 }
-function SaveWorkCard({ updatedAt }: { updatedAt: string }) {
-  const updatedDate = updatedAt ? new Date(updatedAt) : null;
-  const updatedLabel = updatedDate
-    ? `${updatedDate.getMonth() + 1}/${updatedDate.getDate()} ${String(updatedDate.getHours()).padStart(2, "0")}:${String(updatedDate.getMinutes()).padStart(2, "0")}`
-    : "-";
-
-  return (
-    <section className="rounded-md border border-cyan/20 bg-cyan/[0.055] p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-white/88">保存作品</h3>
-          <p className="mt-1 truncate text-[10px] text-white/38">
-            最近更新 {updatedLabel}
-          </p>
-        </div>
-      </div>
-      <button
-        type="submit"
-        form="mainWorkForm"
-        className="mt-3 min-h-9 w-full rounded-md bg-cyan px-4 text-sm font-medium text-black transition hover:bg-white"
-      >
-        保存作品
-      </button>
-    </section>
-  );
-}
-
 function PrivatePreviewForm({
   previewPath,
   work,
