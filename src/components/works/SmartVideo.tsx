@@ -217,7 +217,10 @@ export function SmartVideo({
   ...rest
 }: SmartVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasMetadata, setHasMetadata] = useState(false);
 
   const togglePlay = useCallback(() => {
     const el = videoRef.current;
@@ -242,6 +245,34 @@ export function SmartVideo({
     return registerMotion(el, "video", el, setIsPlaying);
   }, []);
 
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    setIsLoaded(false);
+    setHasMetadata(false);
+    const onLoadedMeta = () => {
+      setHasMetadata(true);
+      if (el.videoWidth && el.videoHeight && wrapperRef.current) {
+        wrapperRef.current.style.aspectRatio = `${el.videoWidth} / ${el.videoHeight}`;
+      }
+    };
+    const onLoaded = () => setIsLoaded(true);
+    if (el.readyState >= 1) {
+      onLoadedMeta();
+    }
+    if (el.readyState >= 2) {
+      setIsLoaded(true);
+    }
+    el.addEventListener("loadedmetadata", onLoadedMeta);
+    el.addEventListener("loadeddata", onLoaded);
+    el.addEventListener("canplay", onLoaded);
+    return () => {
+      el.removeEventListener("loadedmetadata", onLoadedMeta);
+      el.removeEventListener("loadeddata", onLoaded);
+      el.removeEventListener("canplay", onLoaded);
+    };
+  }, [src]);
+
   const showBigButton = !isPlaying;
 
   const videoElement = (
@@ -250,18 +281,36 @@ export function SmartVideo({
       src={src}
       loop
       playsInline
-      preload="metadata"
-      controls={controls}
-      className={className}
+      preload="auto"
+      controls={isLoaded && controls}
+      className={`absolute inset-0 h-full w-full bg-surface-2 transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"}`}
       {...rest}
     />
   );
 
+  const loadingOverlay = !isLoaded && (
+    <div className="absolute inset-0 z-[5] flex items-center justify-center bg-surface-2">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-edge-2 border-t-copper" />
+        <span className="font-mono text-xs text-ink-4">视频加载中</span>
+      </div>
+    </div>
+  );
+
+  const wrapperStyle = !hasMetadata ? { aspectRatio: "16 / 9" } : undefined;
+
+  const wrapperBaseClass = `relative w-full overflow-hidden bg-surface-2`;
+
   if (showContainer) {
     return (
-      <div className={`relative w-full overflow-hidden bg-panel ${containerClassName ?? ""}`}>
+      <div
+        ref={wrapperRef}
+        style={wrapperStyle}
+        className={`${wrapperBaseClass} ${containerClassName ?? ""}`}
+      >
         {videoElement}
-        {showBigButton && (
+        {loadingOverlay}
+        {showBigButton && isLoaded && (
           <button
             type="button"
             onClick={(e) => {
@@ -288,9 +337,10 @@ export function SmartVideo({
   }
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} style={wrapperStyle} className={wrapperBaseClass}>
       {videoElement}
-      {showBigButton && (
+      {loadingOverlay}
+      {showBigButton && isLoaded && (
         <button
           type="button"
           onClick={(e) => {
