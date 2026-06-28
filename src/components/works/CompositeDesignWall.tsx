@@ -38,12 +38,19 @@ type CompositeDesignWallProps = {
   ctaCardUrl?: string;
   ctaFigureUrl?: string;
   ctaTickerLogoUrls?: string[];
+  ctaCenterLogoUrl?: string;
   ctaCardScale?: number;
   ctaCardOffsetX?: number;
   ctaCardOffsetY?: number;
   ctaFigureScale?: number;
   ctaFigureOffsetX?: number;
   ctaFigureOffsetY?: number;
+  ctaTickerLogoScale?: number;
+  ctaTickerLogoOffsetX?: number;
+  ctaTickerLogoOffsetY?: number;
+  ctaCenterLogoScale?: number;
+  ctaCenterLogoOffsetX?: number;
+  ctaCenterLogoOffsetY?: number;
 };
 
 export function CompositeDesignWall({
@@ -52,12 +59,19 @@ export function CompositeDesignWall({
   ctaCardUrl = "",
   ctaFigureUrl = "",
   ctaTickerLogoUrls = [],
+  ctaCenterLogoUrl = "",
   ctaCardScale = 1,
   ctaCardOffsetX = 0,
   ctaCardOffsetY = 0,
   ctaFigureScale = 1,
   ctaFigureOffsetX = 0,
   ctaFigureOffsetY = 0,
+  ctaTickerLogoScale = 1,
+  ctaTickerLogoOffsetX = 0,
+  ctaTickerLogoOffsetY = 0,
+  ctaCenterLogoScale = 1,
+  ctaCenterLogoOffsetX = 0,
+  ctaCenterLogoOffsetY = 0,
 }: CompositeDesignWallProps) {
   const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
@@ -257,18 +271,37 @@ export function CompositeDesignWall({
           </div>
 
           <div className="pointer-events-none absolute inset-x-0 top-24 z-40 flex justify-center md:top-28">
-            <Image
-              src={infiniteProgressLogo}
-              alt="无限进步"
-              width={360}
-              height={90}
-              className={`cta-logo-image h-auto w-[min(360px,64vw)] ${
-                ctaVisible ? "is-visible" : ""
-              }`}
-            />
+            {ctaCenterLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={ctaCenterLogoUrl}
+                alt="中心Logo"
+                className={`h-auto w-[min(360px,64vw)] ${ctaVisible ? "is-visible" : ""}`}
+                style={{
+                  transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
+                  transformOrigin: "center center",
+                }}
+              />
+            ) : (
+              <Image
+                src={infiniteProgressLogo}
+                alt="无限进步"
+                width={360}
+                height={90}
+                className={`cta-logo-image h-auto w-[min(360px,64vw)] ${
+                  ctaVisible ? "is-visible" : ""
+                }`}
+              />
+            )}
           </div>
 
-          <div className="cta-logo-ticker absolute inset-x-0 bottom-[72px] z-20 overflow-hidden opacity-70 md:bottom-[82px]">
+          <div
+            className="cta-logo-ticker absolute inset-x-0 bottom-[72px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            style={{
+              transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
+              transformOrigin: "center center",
+            }}
+          >
             <div className="cta-logo-track flex w-max items-center gap-14 whitespace-nowrap py-2">
               {(() => {
                 const hasCustomLogos = ctaTickerLogoUrls.length > 0;

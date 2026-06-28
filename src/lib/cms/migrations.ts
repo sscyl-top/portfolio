@@ -3,6 +3,7 @@ import { Pool } from "pg";
 let heroMigrationDone = false;
 let ctaTransformMigrationDone = false;
 let tickerLogosMigrationDone = false;
+let centerLogoMigrationDone = false;
 let musicSettingsMigrationDone = false;
 
 function getDbConnectionString(): string | null {
@@ -155,6 +156,32 @@ export async function runTickerLogosMigration(): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("[DB Migration] Failed to run ticker logos migration:", err);
+    return false;
+  } finally {
+    await pool.end().catch(() => {});
+  }
+}
+
+export async function runCenterLogoMigration(): Promise<boolean> {
+  if (centerLogoMigrationDone) return true;
+
+  const pool = createPool();
+  if (!pool) {
+    console.warn("[DB Migration] No database connection string found for center logo");
+    return false;
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE public.site_settings
+        ADD COLUMN IF NOT EXISTS cta_center_logo_media_id uuid REFERENCES public.media_assets(id);
+      NOTIFY pgrst, 'reload schema';
+    `);
+    console.log("[DB Migration] Center logo media ID column added successfully");
+    centerLogoMigrationDone = true;
+    return true;
+  } catch (err) {
+    console.error("[DB Migration] Failed to run center logo migration:", err);
     return false;
   } finally {
     await pool.end().catch(() => {});

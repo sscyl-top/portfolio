@@ -35,12 +35,19 @@ export default async function WorksPage() {
     ctaFigureMediaUrl: null,
     ctaTickerLogoMediaUrl: null,
     ctaTickerLogoMediaUrls: [],
+    ctaCenterLogoMediaUrl: null,
     ctaCardScale: 1,
     ctaCardOffsetX: 0,
     ctaCardOffsetY: 0,
     ctaFigureScale: 1,
     ctaFigureOffsetX: 0,
     ctaFigureOffsetY: 0,
+    ctaTickerLogoScale: 1,
+    ctaTickerLogoOffsetX: 0,
+    ctaTickerLogoOffsetY: 0,
+    ctaCenterLogoScale: 1,
+    ctaCenterLogoOffsetX: 0,
+    ctaCenterLogoOffsetY: 0,
   };
 
   try {
@@ -79,12 +86,19 @@ export default async function WorksPage() {
         ctaCardUrl={siteSettings.ctaCardMediaUrl}
         ctaFigureUrl={siteSettings.ctaFigureMediaUrl}
         ctaTickerLogoUrls={siteSettings.ctaTickerLogoMediaUrls}
+        ctaCenterLogoUrl={siteSettings.ctaCenterLogoMediaUrl}
         ctaCardScale={siteSettings.ctaCardScale}
         ctaCardOffsetX={siteSettings.ctaCardOffsetX}
         ctaCardOffsetY={siteSettings.ctaCardOffsetY}
         ctaFigureScale={siteSettings.ctaFigureScale}
         ctaFigureOffsetX={siteSettings.ctaFigureOffsetX}
         ctaFigureOffsetY={siteSettings.ctaFigureOffsetY}
+        ctaTickerLogoScale={siteSettings.ctaTickerLogoScale}
+        ctaTickerLogoOffsetX={siteSettings.ctaTickerLogoOffsetX}
+        ctaTickerLogoOffsetY={siteSettings.ctaTickerLogoOffsetY}
+        ctaCenterLogoScale={siteSettings.ctaCenterLogoScale}
+        ctaCenterLogoOffsetX={siteSettings.ctaCenterLogoOffsetX}
+        ctaCenterLogoOffsetY={siteSettings.ctaCenterLogoOffsetY}
       />
     </WorksPageShell>
   );

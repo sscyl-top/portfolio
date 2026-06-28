@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -85,6 +85,12 @@ export async function saveSiteSettings(formData: FormData) {
   const cta_figure_scale = Number(formData.get("cta_figure_scale") ?? 1);
   const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") ?? 0);
   const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
+  const cta_ticker_logo_scale = Number(formData.get("cta_ticker_logo_scale") ?? 1);
+  const cta_ticker_logo_offset_x = Number(formData.get("cta_ticker_logo_offset_x") ?? 0);
+  const cta_ticker_logo_offset_y = Number(formData.get("cta_ticker_logo_offset_y") ?? 0);
+  const cta_center_logo_scale = Number(formData.get("cta_center_logo_scale") ?? 1);
+  const cta_center_logo_offset_x = Number(formData.get("cta_center_logo_offset_x") ?? 0);
+  const cta_center_logo_offset_y = Number(formData.get("cta_center_logo_offset_y") ?? 0);
 
   const tickerLogoIdsRaw = String(formData.get("cta_ticker_logo_media_ids") ?? "").trim();
   const ctaTickerLogoMediaIds = tickerLogoIdsRaw
@@ -107,6 +113,7 @@ export async function saveSiteSettings(formData: FormData) {
     cta_card_media_id: uuidOrNull(formData.get("cta_card_media_id")),
     cta_figure_media_id: uuidOrNull(formData.get("cta_figure_media_id")),
     cta_ticker_logo_media_id: uuidOrNull(formData.get("cta_ticker_logo_media_id")),
+    cta_center_logo_media_id: uuidOrNull(formData.get("cta_center_logo_media_id")),
     hero_main_video_media_id: uuidOrNull(formData.get("hero_main_video_media_id")),
     hero_side1_video_media_id: uuidOrNull(formData.get("hero_side1_video_media_id")),
     hero_side2_video_media_id: uuidOrNull(formData.get("hero_side2_video_media_id")),
@@ -121,10 +128,17 @@ export async function saveSiteSettings(formData: FormData) {
     cta_figure_scale: isNaN(cta_figure_scale) ? 1 : Math.min(5, Math.max(0.1, cta_figure_scale)),
     cta_figure_offset_x: isNaN(cta_figure_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_x)),
     cta_figure_offset_y: isNaN(cta_figure_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_y)),
+    cta_ticker_logo_scale: isNaN(cta_ticker_logo_scale) ? 1 : Math.min(5, Math.max(0.1, cta_ticker_logo_scale)),
+    cta_ticker_logo_offset_x: isNaN(cta_ticker_logo_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_ticker_logo_offset_x)),
+    cta_ticker_logo_offset_y: isNaN(cta_ticker_logo_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_ticker_logo_offset_y)),
+    cta_center_logo_scale: isNaN(cta_center_logo_scale) ? 1 : Math.min(5, Math.max(0.1, cta_center_logo_scale)),
+    cta_center_logo_offset_x: isNaN(cta_center_logo_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_center_logo_offset_x)),
+    cta_center_logo_offset_y: isNaN(cta_center_logo_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_center_logo_offset_y)),
   };
 
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
+  await runCenterLogoMigration().catch(() => {});
 
   await wait(1500);
 

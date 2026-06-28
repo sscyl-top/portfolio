@@ -4,7 +4,7 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCtaTransformMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -24,6 +24,7 @@ type SettingsRow = {
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
+  cta_center_logo_media_id: string | null;
   cta_ticker_logo_media_ids: string;
   cta_card_scale: number;
   cta_card_offset_x: number;
@@ -31,6 +32,12 @@ type SettingsRow = {
   cta_figure_scale: number;
   cta_figure_offset_x: number;
   cta_figure_offset_y: number;
+  cta_ticker_logo_scale: number;
+  cta_ticker_logo_offset_x: number;
+  cta_ticker_logo_offset_y: number;
+  cta_center_logo_scale: number;
+  cta_center_logo_offset_x: number;
+  cta_center_logo_offset_y: number;
   hero_main_video_media_id: string | null;
   hero_side1_video_media_id: string | null;
   hero_side2_video_media_id: string | null;
@@ -54,6 +61,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   await runHeroVideosMigration().catch(() => {});
   await runCtaTransformMigration().catch(() => {});
+  await runCenterLogoMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -64,7 +72,13 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_figure_scale",
     "cta_figure_offset_x",
     "cta_figure_offset_y",
+    "cta_ticker_logo_scale",
+    "cta_ticker_logo_offset_x",
+    "cta_ticker_logo_offset_y",
     "cta_ticker_logo_media_ids",
+    "cta_center_logo_scale",
+    "cta_center_logo_offset_x",
+    "cta_center_logo_offset_y",
   ] as const;
 
   const baseColumns = "name,nickname,default_theme,font_preset,seo_title,seo_description,social_links,logo_media_id,avatar_media_id,share_media_id,cta_card_media_id,cta_figure_media_id,cta_ticker_logo_media_id";
@@ -100,6 +114,17 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         }
       }
 
+      let ctaCenterLogoId: string | null = null;
+      {
+        const { data: centerLogoData, error: centerLogoErr } = await serviceSupabase
+          .from("site_settings")
+          .select("cta_center_logo_media_id")
+          .single();
+        if (!centerLogoErr && centerLogoData) {
+          ctaCenterLogoId = centerLogoData.cta_center_logo_media_id ?? null;
+        }
+      }
+
       const ctaTransform = {
         cta_card_scale: 1,
         cta_card_offset_x: 0,
@@ -107,6 +132,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_figure_scale: 1,
         cta_figure_offset_x: 0,
         cta_figure_offset_y: 0,
+        cta_ticker_logo_scale: 1,
+        cta_ticker_logo_offset_x: 0,
+        cta_ticker_logo_offset_y: 0,
+        cta_center_logo_scale: 1,
+        cta_center_logo_offset_x: 0,
+        cta_center_logo_offset_y: 0,
       };
       let tickerLogoIdsRaw = "";
 
@@ -144,6 +175,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_card_media_id: baseData.cta_card_media_id ?? null,
         cta_figure_media_id: baseData.cta_figure_media_id ?? null,
         cta_ticker_logo_media_id: baseData.cta_ticker_logo_media_id ?? null,
+        cta_center_logo_media_id: ctaCenterLogoId,
         cta_ticker_logo_media_ids: tickerLogoIdsRaw,
         ...ctaTransform,
         ...heroIds,
@@ -174,6 +206,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_card_media_id: null,
     cta_figure_media_id: null,
     cta_ticker_logo_media_id: null,
+    cta_center_logo_media_id: null,
     cta_ticker_logo_media_ids: "",
     cta_card_scale: 1,
     cta_card_offset_x: 0,
@@ -181,6 +214,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_figure_scale: 1,
     cta_figure_offset_x: 0,
     cta_figure_offset_y: 0,
+    cta_ticker_logo_scale: 1,
+    cta_ticker_logo_offset_x: 0,
+    cta_ticker_logo_offset_y: 0,
+    cta_center_logo_scale: 1,
+    cta_center_logo_offset_x: 0,
+    cta_center_logo_offset_y: 0,
     hero_main_video_media_id: null,
     hero_side1_video_media_id: null,
     hero_side2_video_media_id: null,
@@ -316,6 +355,25 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
               defaultValue={settings.cta_ticker_logo_media_ids ?? ""}
               hint="终场横向滚动条幅中重复出现的多个 logo/图案，建议 PNG 透明底。支持点击或拖拽上传多个图片，自动横向滚动循环显示"
             />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <NumberField label="缩放" name="cta_ticker_logo_scale" defaultValue={settings.cta_ticker_logo_scale} step="0.05" min="0.1" max="5" />
+              <NumberField label="X 偏移(px)" name="cta_ticker_logo_offset_x" defaultValue={settings.cta_ticker_logo_offset_x} step="1" min="-500" max="500" />
+              <NumberField label="Y 偏移(px)" name="cta_ticker_logo_offset_y" defaultValue={settings.cta_ticker_logo_offset_y} step="1" min="-500" max="500" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <SettingsMediaField
+              label="终场中心Logo"
+              name="cta_center_logo_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.cta_center_logo_media_id ?? ""}
+              hint="终场CTA区域居中显示的大Logo，替换默认的「无限进步」文字logo，建议 PNG 透明底"
+            />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <NumberField label="缩放" name="cta_center_logo_scale" defaultValue={settings.cta_center_logo_scale} step="0.01" min="0.1" max="3" />
+              <NumberField label="X 偏移(px)" name="cta_center_logo_offset_x" defaultValue={settings.cta_center_logo_offset_x} step="1" min="-200" max="200" />
+              <NumberField label="Y 偏移(px)" name="cta_center_logo_offset_y" defaultValue={settings.cta_center_logo_offset_y} step="1" min="-200" max="200" />
+            </div>
           </div>
         </div>
 
