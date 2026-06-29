@@ -311,7 +311,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                         <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
                           <span>0{realIndex + 1}</span><span>{work.year}</span>
                         </div>
-                        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-edge-2 bg-glass-strong p-2.5 backdrop-blur-md">
+                        <div className="absolute inset-x-2 bottom-2 rounded-xl border border-edge-2 bg-glass-strong p-2.5 backdrop-blur-sm">
                           <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-copper">{work.category}</p>
                           <h2 className="mt-1 text-sm font-semibold leading-snug text-ink">{work.title}</h2>
                           <p className="mt-1 line-clamp-1 text-[11px] leading-4 text-ink-2">{work.subtitle}</p>
