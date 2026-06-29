@@ -43,10 +43,10 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 md:h-24 md:px-8">
+      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 md:h-24 md:grid-cols-[1fr_auto_1fr] md:px-8">
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4"
+          className="group flex min-w-0 items-center gap-2 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-9 sm:w-9 md:h-12 md:w-12">
@@ -64,26 +64,26 @@ export async function SiteHeader({
               />
             )}
           </span>
-          <span className="hidden h-8 min-w-0 flex-col justify-between sm:flex sm:h-9 md:h-12">
+          <span className="relative hidden h-8 min-w-0 sm:flex sm:h-9 md:h-12">
             {siteSettings.nameMediaUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
-                  className="block h-4 w-auto max-w-[100px] object-contain object-left-top sm:h-5 sm:max-w-[130px] md:h-6 md:max-w-[160px]"
+                  className="absolute left-0 top-0 block h-4 w-auto max-w-[100px] object-contain object-left-top sm:h-5 sm:max-w-[130px] md:h-6 md:max-w-[160px]"
                   style={{ filter: "var(--png-filter)" }}
                 />
-                <span className="block truncate font-mono text-[10px] leading-none text-ink-3 sm:text-[11px] md:text-xs">
+                <span className="absolute bottom-0 left-0 block truncate font-mono text-[10px] leading-none text-ink-3 sm:text-[11px] md:text-xs">
                   {siteSettings.title}
                 </span>
               </>
             ) : (
               <>
-                <span className="block truncate text-sm font-semibold tracking-[0.15em] text-ink sm:text-base md:tracking-[0.18em]">
+                <span className="absolute left-0 top-0 block truncate text-sm font-semibold tracking-[0.15em] text-ink sm:text-base md:tracking-[0.18em]">
                   {siteSettings.name}
                 </span>
-                <span className="mt-1 block truncate font-mono text-xs text-ink-3">
+                <span className="absolute bottom-0 left-0 block truncate font-mono text-xs text-ink-3">
                   {siteSettings.title}
                 </span>
               </>
@@ -91,7 +91,7 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        <div className="justify-self-center">
+        <div className="justify-self-center md:justify-self-center">
           <div className="flex items-center gap-0 sm:gap-1">
             {siteSettings.navigation.map((item) => (
               <Link

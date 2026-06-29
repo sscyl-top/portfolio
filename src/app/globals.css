@@ -23,8 +23,8 @@
   --edge-3: rgba(255, 255, 255, 0.05);
   --overlay: rgba(6, 10, 14, 0.80);
   --overlay-2: rgba(6, 10, 14, 0.38);
-  --glass: rgba(10, 14, 18, 0.50);
-  --glass-strong: rgba(10, 14, 18, 0.66);
+  --glass: rgba(10, 14, 18, 0.62);
+  --glass-strong: rgba(10, 14, 18, 0.78);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.40);
   --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.55);
 
@@ -64,8 +64,8 @@
   --edge-3: rgba(26, 35, 48, 0.05);
   --overlay: rgba(6, 12, 20, 0.10);
   --overlay-2: rgba(6, 12, 20, 0.05);
-  --glass: rgba(255, 255, 255, 0.72);
-  --glass-strong: rgba(255, 255, 255, 0.88);
+  --glass: rgba(255, 255, 255, 0.80);
+  --glass-strong: rgba(255, 255, 255, 0.92);
   --shadow-card: 0 12px 40px rgba(10, 20, 40, 0.09);
   --shadow-card-hover: 0 20px 60px rgba(10, 20, 40, 0.14);
 
@@ -105,8 +105,8 @@ body:has(.home-dark-scope) {
   --edge-3: rgba(255, 255, 255, 0.06);
   --overlay: rgba(0, 0, 0, 0.84);
   --overlay-2: rgba(0, 0, 0, 0.42);
-  --glass: rgba(0, 0, 0, 0.36);
-  --glass-strong: rgba(0, 0, 0, 0.52);
+  --glass: rgba(0, 0, 0, 0.50);
+  --glass-strong: rgba(0, 0, 0, 0.66);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
   --glass-nav: rgba(0, 0, 0, 0.8);
