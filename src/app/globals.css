@@ -547,15 +547,16 @@ button {
 }
 
 .light .portfolio-cta-panel a:not([href*="hiring-contact"]) {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(26, 35, 48, 0.15) !important;
-  color: rgba(26, 35, 48, 0.85) !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  border-color: rgba(26, 35, 48, 0.1) !important;
+  color: rgba(26, 35, 48, 0.65) !important;
   backdrop-filter: blur(12px);
 }
 
 .light .portfolio-cta-panel a:not([href*="hiring-contact"]):hover {
-  border-color: var(--copper) !important;
-  color: rgba(26, 35, 48, 1) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-color: rgba(26, 35, 48, 0.2) !important;
+  color: rgba(26, 35, 48, 0.9) !important;
 }
 
 @media (max-width: 767px) {
