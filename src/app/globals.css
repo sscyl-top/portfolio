@@ -525,9 +525,9 @@ button {
 }
 
 .light .portfolio-cta-panel .cta-logo-ticker img {
-  filter: invert(0.25) sepia(0.15) saturate(1.5) hue-rotate(330deg) brightness(0.9);
+  filter: brightness(0) invert(0.3) sepia(0.25) saturate(1.8) hue-rotate(330deg) brightness(0.95);
   mix-blend-mode: normal !important;
-  opacity: 0.55 !important;
+  opacity: 0.85 !important;
 }
 
 .light .portfolio-cta-panel .cta-card-image {
