@@ -102,7 +102,7 @@ function MeteorShower() {
     };
 
     const scheduleNext = () => {
-      const delay = 5000 + Math.random() * 3000;
+      const delay = 4000 + Math.random() * 2000;
       timeoutRef.current = setTimeout(triggerBatch, delay);
     };
 
