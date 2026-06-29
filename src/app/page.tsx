@@ -21,7 +21,7 @@ export default async function Home() {
   const data = await getHomeData();
 
   return (
-    <main>
+    <main className="home-dark-scope">
       <HeroShowcase data={data.hero} />
       <CapabilityBands strengths={data.strengths} textOverrides={data.textOverrides} />
     </main>
