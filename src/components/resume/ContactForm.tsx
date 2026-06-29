@@ -147,7 +147,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-name`}
-            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+            className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
           >
             姓名
           </label>
@@ -174,7 +174,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-email`}
-            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+            className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
           >
             邮箱
           </label>
@@ -203,7 +203,7 @@ export function ContactForm({
           <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-company`}
-              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+              className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
             >
               公司
             </label>
@@ -224,7 +224,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-subject`}
-            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+            className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
           >
             {subjectLabel}
           </label>
@@ -243,7 +243,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1">
           <label
             htmlFor={`${type}-range`}
-            className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+            className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
           >
             {rangeLabel}
           </label>
@@ -263,7 +263,7 @@ export function ContactForm({
           <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-message`}
-              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+              className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
             >
               {messageLabel}
             </label>
@@ -291,7 +291,7 @@ export function ContactForm({
           <div className="flex items-start gap-2 sm:flex-col sm:items-start sm:gap-1">
             <label
               htmlFor={`${type}-note`}
-              className="shrink-0 text-xs text-ink-3 sm:text-sm sm:text-ink-2"
+              className="shrink-0 text-xs font-medium text-ink-2 sm:text-sm"
             >
               备注
             </label>
@@ -312,7 +312,7 @@ export function ContactForm({
           <button
             type="submit"
             disabled={status === "pending"}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-edge bg-[#edf8ff] px-6 text-sm font-semibold text-ink transition hover:bg-[#f6fcff] [.light_&]:bg-cyan/15 [.light_&]:hover:bg-cyan/20 disabled:cursor-wait disabled:opacity-55"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-edge bg-surface px-6 text-sm font-semibold text-ink transition hover:bg-surface-2 [.light_&]:bg-cyan/15 [.light_&]:hover:bg-cyan/20 disabled:cursor-wait disabled:opacity-55"
           >
             <Send aria-hidden="true" className="h-4 w-4" />
             {status === "pending" ? "正在发送" : "发送消息"}

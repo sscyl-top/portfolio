@@ -139,7 +139,7 @@ export default async function ResumePage() {
                     <h3 className="text-2xl font-semibold text-ink">
                       {item.company}
                     </h3>
-                    <span className="font-mono text-sm text-ink-3">
+                    <span className="font-mono text-sm font-medium text-ink-2">
                       {item.period}
                     </span>
                   </div>
@@ -172,7 +172,7 @@ export default async function ResumePage() {
                     <h3 className="text-xl font-semibold text-ink">
                       {item.company} / {item.title}
                     </h3>
-                    <span className="font-mono text-sm text-ink-3">
+                    <span className="font-mono text-sm font-medium text-ink-2">
                       {item.period}
                     </span>
                   </div>
@@ -210,7 +210,7 @@ export default async function ResumePage() {
                     {resume.education.major}
                   </h3>
                 </div>
-                <span className="font-mono text-sm text-ink-3 md:pt-1">
+                <span className="font-mono text-sm font-medium text-ink-2 md:pt-1">
                   {resume.education.period}
                 </span>
               </div>

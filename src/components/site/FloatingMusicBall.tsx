@@ -329,7 +329,7 @@ export function FloatingMusicBall() {
             {showPlayingBar ? (
               <div className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
                 <Volume2 className="h-5 w-5 shrink-0 text-cyan" />
-                <p className="min-w-0 truncate text-sm text-white/90">
+                <p className="min-w-0 truncate text-sm">
                   {currentTrackTitle || settings.playing_label}
                 </p>
               </div>
@@ -338,11 +338,11 @@ export function FloatingMusicBall() {
             {/* Tip bubble - 和风格选项同样的样式，在同一列 */}
             {showTipBubble ? (
               <div key={tipKey} className="music-option-item music-option-anim is-visible" style={{ animationDelay: "0.05s" }}>
-                <span className="whitespace-nowrap text-sm text-white/90">{settings.tip_messages[tipIndex] ?? settings.tip_messages[0]}</span>
+                <span className="whitespace-nowrap text-sm">{settings.tip_messages[tipIndex] ?? settings.tip_messages[0]}</span>
                 {!hoverActive && (
                   <button
                     onClick={dismissTip}
-                    className="ml-2 text-white/40 hover:text-white/70"
+                    className="ml-2 text-ink-3 hover:text-ink"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
