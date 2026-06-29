@@ -106,7 +106,7 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-5 sm:gap-7 md:gap-10 justify-self-end min-w-[80px] sm:min-w-[100px] md:min-w-[140px]">
+        <div className="flex items-center gap-2 sm:gap-4 md:gap-5 justify-self-end">
           <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
           <Link
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="grid h-10 w-12 place-items-center justify-end shrink-0 sm:h-12 sm:w-16 md:h-14 md:w-20"
+            className="grid h-10 w-16 place-items-center justify-end shrink-0 sm:h-12 sm:w-20 md:h-16 md:w-28"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
