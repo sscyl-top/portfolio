@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #14171a;
+  --background: #0c0f13;
   --foreground: #eef2f6;
   --muted: #8a94a0;
-  --panel: #1a1e23;
+  --panel: #131820;
   --line: rgba(238, 242, 246, 0.10);
   --copper: #c9a27f;
   --cyan: #5ce0f2;
 
-  --page-bg: #14171a;
+  --page-bg: #0c0f13;
   --page-fg: #eef2f6;
   --ink: rgba(238, 242, 246, 1);
   --ink-2: rgba(238, 242, 246, 0.62);
@@ -163,18 +163,18 @@ html {
 }
 
 .light .works-route-blob {
-  opacity: 0.18;
+  opacity: 0.45;
   mix-blend-mode: normal;
-  filter: blur(70px) saturate(0.8);
+  filter: blur(72px) saturate(1.15);
 }
 
 .light .works-route-blob-a {
-  background: radial-gradient(circle at 50% 50%, rgba(42, 168, 192, 0.5), rgba(120, 210, 235, 0.2) 40%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 180, 255, 0.62), rgba(70, 200, 255, 0.28) 38%, transparent 68%);
 }
 
 .light .works-route-blob-b {
-  background: radial-gradient(circle at 50% 50%, rgba(80, 200, 180, 0.4), rgba(160, 230, 240, 0.15) 42%, transparent 72%);
-  opacity: 0.14;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 215, 205, 0.50), rgba(90, 210, 245, 0.20) 40%, transparent 70%);
+  opacity: 0.40;
 }
 
 .featured-glow {
@@ -361,7 +361,7 @@ button {
 }
 
 .works-route-blob {
-  filter: blur(86px) saturate(1.4);
+  filter: blur(80px) saturate(1.6);
   mix-blend-mode: screen;
   will-change: transform, filter;
   transition:
@@ -372,14 +372,14 @@ button {
 .works-route-blob-a {
   left: 0;
   top: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 224, 255, 0.78), rgba(0, 150, 255, 0.42) 34%, transparent 66%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.92), rgba(0, 165, 255, 0.55) 30%, transparent 66%);
   animation: works-route-blob-a 18s ease-in-out infinite;
 }
 
 .works-route-blob-b {
   left: 0;
   top: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(40, 245, 210, 0.62), rgba(0, 200, 255, 0.38) 36%, transparent 68%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 240, 210, 0.78), rgba(0, 190, 255, 0.50) 35%, transparent 68%);
   animation: works-route-blob-b 20s ease-in-out infinite reverse;
 }
 
