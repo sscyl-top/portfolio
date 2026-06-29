@@ -442,10 +442,10 @@ function HeroTicker({
       : resume.highlights;
 
   return (
-    <div className="absolute inset-x-0 top-12 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-3.5 sm:top-14 md:top-24 md:py-4">
+    <div className="absolute inset-x-0 top-12 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-2 sm:top-14 md:top-24 md:py-2.5">
       <div className="ticker-track flex w-max items-center font-mono text-sm text-white/45 md:text-base">
         {[0, 1, 2, 3].map((group) => (
-          <div key={group} className="ticker-group flex shrink-0 items-center gap-10 whitespace-nowrap px-5">
+          <div key={group} className="ticker-group flex shrink-0 items-center gap-12 whitespace-nowrap px-5">
             {tickerItems.map((item, index) => (
               <span key={`${group}-${index}`}>
                 {item}
