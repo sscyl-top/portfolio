@@ -46,10 +46,10 @@ export async function SiteHeader({
       <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-3 md:h-24 md:px-8">
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-4"
+          className="group flex min-w-0 items-center gap-3 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg md:h-12 md:w-12">
+          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -64,17 +64,17 @@ export async function SiteHeader({
               />
             )}
           </span>
-          <span className="hidden h-10 min-w-0 flex-col items-start justify-between sm:flex md:h-12">
+          <span className="hidden h-9 min-w-0 flex-col justify-between sm:flex md:h-12">
             {siteSettings.nameMediaUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
-                  className="block h-4 max-h-4 w-auto max-w-[120px] object-contain md:h-5 md:max-h-5 md:max-w-[150px]"
+                  className="block h-5 w-auto max-w-[130px] object-contain object-left-top md:h-6 md:max-w-[160px]"
                   style={{ filter: "var(--png-filter)" }}
                 />
-                <span className="block truncate font-mono text-xs text-ink-3 md:text-sm">
+                <span className="block truncate font-mono text-[11px] leading-none text-ink-3 md:text-xs">
                   {siteSettings.title}
                 </span>
               </>
@@ -91,7 +91,7 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        <div className="justify-self-center">
+        <div className="hidden justify-self-center md:block">
           <div className="flex items-center gap-1">
             {siteSettings.navigation.map((item) => (
               <Link
@@ -106,12 +106,12 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 md:gap-5 justify-self-end">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-5 justify-self-end">
           <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-9 w-9 shrink-0 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-8 w-8 shrink-0 sm:h-9 sm:w-9 md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="grid h-10 w-16 place-items-center justify-end shrink-0 sm:h-12 sm:w-20 md:h-16 md:w-28"
+            className="grid h-8 w-12 place-items-center justify-end shrink-0 sm:h-9 sm:w-14 md:h-16 md:w-28"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
@@ -133,7 +133,7 @@ export async function SiteHeader({
               alt="无限进步"
               width={120}
               height={30}
-              className="h-auto w-[4rem] shrink-0 sm:w-24 md:w-36"
+              className="h-auto w-[2.5rem] shrink-0 sm:w-[3rem] md:w-36"
               priority
               style={{ filter: "var(--png-filter)" }}
             />
