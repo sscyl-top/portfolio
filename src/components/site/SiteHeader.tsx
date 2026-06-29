@@ -43,10 +43,11 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-[auto_1fr_auto] items-center gap-1 px-2 sm:h-14 sm:gap-2 sm:px-3 md:h-24 md:grid-cols-[1fr_auto_1fr] md:gap-2 md:px-8">
+      <nav className="mx-auto flex h-12 max-w-[1420px] items-center justify-between px-2 sm:h-14 sm:px-3 md:h-24 md:px-8">
+        {/* 左侧 Logo */}
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-2 sm:gap-2 md:gap-4"
+          className="group flex shrink-0 items-center gap-2 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-8 sm:w-8 md:h-12 md:w-12">
@@ -91,14 +92,15 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        <div className="justify-self-center md:justify-self-center">
-          <div className="flex items-center gap-0 sm:gap-1">
+        {/* 中间导航 */}
+        <div className="flex flex-1 justify-center px-1 sm:px-2 md:px-4">
+          <div className="flex items-center">
             {siteSettings.navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch={true}
-                className="relative px-1.5 py-1.5 text-[11px] text-ink-2 transition after:absolute after:inset-x-2 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-xs md:px-5 md:py-3 md:text-base"
+                className="relative whitespace-nowrap px-1.5 py-1.5 text-[11px] text-ink-2 transition after:absolute after:inset-x-1.5 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-xs md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
@@ -106,39 +108,40 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 justify-self-end sm:gap-2 md:gap-5">
+        {/* 右侧按钮 */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-5">
           <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
-          <Link
-            href={avatarHref}
-            className="hidden grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-7 w-7 shrink-0 sm:h-8 sm:w-8 sm:grid md:h-12 md:w-12"
-            aria-label={user ? "进入后台" : "查看简历"}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={siteSettings.avatarMediaUrl}
-              alt=""
-              className="h-full w-full object-cover"
-              style={{ filter: "var(--png-filter)" }}
-            />
-          </Link>
-        ) : (
-          <Link
-            href={avatarHref}
-            className="hidden h-7 w-10 place-items-center justify-end shrink-0 sm:grid sm:h-8 sm:w-12 md:h-16 md:w-28"
-            aria-label={user ? "进入后台" : "查看简历"}
-          >
-            <Image
-              src="/brand/infinite-progress-logo.svg"
-              alt="无限进步"
-              width={120}
-              height={30}
-              className="h-auto w-[2rem] shrink-0 sm:w-[2.5rem] md:w-36"
-              priority
-              style={{ filter: "var(--png-filter)" }}
-            />
-          </Link>
-        )}
+            <Link
+              href={avatarHref}
+              className="hidden h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge sm:grid sm:h-8 sm:w-8 md:h-12 md:w-12"
+              aria-label={user ? "进入后台" : "查看简历"}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={siteSettings.avatarMediaUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                style={{ filter: "var(--png-filter)" }}
+              />
+            </Link>
+          ) : (
+            <Link
+              href={avatarHref}
+              className="hidden h-7 w-10 shrink-0 place-items-center justify-end sm:grid sm:h-8 sm:w-12 md:h-16 md:w-28"
+              aria-label={user ? "进入后台" : "查看简历"}
+            >
+              <Image
+                src="/brand/infinite-progress-logo.svg"
+                alt="无限进步"
+                width={120}
+                height={30}
+                className="h-auto w-[2rem] shrink-0 sm:w-[2.5rem] md:w-36"
+                priority
+                style={{ filter: "var(--png-filter)" }}
+              />
+            </Link>
+          )}
         </div>
       </nav>
     </header>
