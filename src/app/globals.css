@@ -105,11 +105,11 @@ body:has(.home-dark-scope) {
   --edge-3: rgba(255, 255, 255, 0.06);
   --overlay: rgba(0, 0, 0, 0.84);
   --overlay-2: rgba(0, 0, 0, 0.42);
-  --glass: rgba(0, 0, 0, 0.50);
-  --glass-strong: rgba(0, 0, 0, 0.66);
+  --glass: rgba(0, 0, 0, 0.36);
+  --glass-strong: rgba(0, 0, 0, 0.52);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
-  --glass-nav: rgba(0, 0, 0, 0.8);
+  --glass-nav: rgba(0, 0, 0, 0.92);
   --music-glow: 139, 215, 205;
   --music-ball-bg: linear-gradient(135deg, #1a2a2e 0%, #0d1819 50%, #152528 100%);
   --music-panel-bg: rgba(15, 22, 24, 0.92);
