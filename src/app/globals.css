@@ -169,11 +169,11 @@ html {
 }
 
 .light .works-route-blob-a {
-  background: radial-gradient(circle at 50% 50%, rgba(0, 175, 255, 0.68), rgba(0, 150, 255, 0.4) 32%, rgba(0, 125, 255, 0.14) 60%, transparent 78%);
+  background: radial-gradient(circle at 50% 50%, rgba(1, 183, 242, 0.68), rgba(1, 158, 212, 0.4) 32%, rgba(1, 128, 175, 0.14) 60%, transparent 78%);
 }
 
 .light .works-route-blob-b {
-  background: radial-gradient(circle at 50% 50%, rgba(0, 228, 200, 0.6), rgba(0, 208, 182, 0.35) 34%, rgba(0, 182, 162, 0.12) 62%, transparent 78%);
+  background: radial-gradient(circle at 50% 50%, rgba(56, 240, 217, 0.6), rgba(48, 215, 195, 0.35) 34%, rgba(38, 188, 170, 0.12) 62%, transparent 78%);
   opacity: 0.46;
 }
 
@@ -396,14 +396,14 @@ button {
 .works-route-blob-a {
   left: 0;
   top: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 195, 255, 0.95), rgba(0, 160, 255, 0.7) 28%, rgba(0, 125, 255, 0.28) 56%, transparent 74%);
+  background: radial-gradient(circle at 50% 50%, rgba(1, 183, 242, 0.95), rgba(1, 162, 218, 0.7) 28%, rgba(1, 135, 188, 0.28) 56%, transparent 74%);
   animation: works-route-blob-a 22s ease-in-out infinite;
 }
 
 .works-route-blob-b {
   left: 0;
   top: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 255, 210, 0.88), rgba(0, 238, 195, 0.65) 30%, rgba(0, 212, 175, 0.25) 58%, transparent 75%);
+  background: radial-gradient(circle at 50% 50%, rgba(56, 240, 217, 0.88), rgba(48, 222, 200, 0.65) 30%, rgba(36, 195, 176, 0.25) 58%, transparent 75%);
   animation: works-route-blob-b 26s ease-in-out infinite reverse;
 }
 
