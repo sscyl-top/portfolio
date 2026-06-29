@@ -159,7 +159,7 @@ export function CompositeDesignWall({
               <Link
                 key={`${work.slug}-${index}`}
                 href={`/works/${work.slug}?from=composite`}
-                className="group block overflow-hidden rounded-lg border border-edge-2 bg-surface-3 p-1.5 transition duration-500 hover:-translate-y-2 hover:border-edge hover:bg-surface md:p-2"
+                className="group block overflow-hidden rounded-lg border border-white/15 bg-surface/40 p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.25),inset_0_0_20px_rgba(255,255,255,0.02)] backdrop-blur-md transition duration-500 hover:-translate-y-2 hover:border-white/25 hover:bg-surface/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_0_30px_rgba(255,255,255,0.04)] md:p-2"
                 style={{
                   transform: `translateY(${yOffset}px)`,
                   transition:
@@ -198,7 +198,7 @@ export function CompositeDesignWall({
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-edge-2 bg-glass p-2 backdrop-blur-md md:bottom-3 md:left-3 md:right-3 md:p-3">
+                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/12 bg-white/8 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl md:bottom-3 md:left-3 md:right-3 md:p-3">
                     <div className="flex items-start justify-between gap-2 md:gap-3">
                       <div>
                         <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-copper md:text-[10px] md:tracking-[0.16em]">

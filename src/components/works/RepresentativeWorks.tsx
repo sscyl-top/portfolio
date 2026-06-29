@@ -66,7 +66,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       onPointerEnter={onEnter}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
-      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-edge bg-surface p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-lg transition-[border-color,box-shadow] duration-300 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] focus-visible:border-copper"
+      className="representative-work-card group absolute left-1/2 top-[46%] block w-[clamp(214px,18vw,278px)] origin-bottom overflow-hidden rounded-[34px] border border-white/15 bg-surface/60 p-2 text-left shadow-[0_30px_80px_rgba(0,0,0,0.45),inset_0_0_30px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-[0_40px_100px_rgba(0,0,0,0.6),inset_0_0_40px_rgba(255,255,255,0.05)] focus-visible:border-copper"
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
@@ -76,7 +76,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
-        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-edge bg-glass p-3 shadow-2xl backdrop-blur-md transition duration-300 group-hover:bg-glass-strong">
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/12 bg-white/8 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl transition duration-300 group-hover:border-white/20 group-hover:bg-white/12">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>

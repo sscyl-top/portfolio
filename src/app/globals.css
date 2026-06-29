@@ -23,8 +23,9 @@
   --edge-3: rgba(255, 255, 255, 0.05);
   --overlay: rgba(6, 10, 14, 0.80);
   --overlay-2: rgba(6, 10, 14, 0.38);
-  --glass: rgba(10, 14, 18, 0.62);
-  --glass-strong: rgba(10, 14, 18, 0.78);
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --glass-glow: rgba(255, 255, 255, 0.06);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.40);
   --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.55);
 
@@ -64,8 +65,9 @@
   --edge-3: rgba(26, 35, 48, 0.05);
   --overlay: rgba(6, 12, 20, 0.10);
   --overlay-2: rgba(6, 12, 20, 0.05);
-  --glass: rgba(255, 255, 255, 0.80);
-  --glass-strong: rgba(255, 255, 255, 0.92);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-glow: rgba(255, 255, 255, 0.40);
   --shadow-card: 0 12px 40px rgba(10, 20, 40, 0.09);
   --shadow-card-hover: 0 20px 60px rgba(10, 20, 40, 0.14);
 
@@ -105,8 +107,9 @@ body:has(.home-dark-scope) {
   --edge-3: rgba(255, 255, 255, 0.06);
   --overlay: rgba(0, 0, 0, 0.84);
   --overlay-2: rgba(0, 0, 0, 0.42);
-  --glass: rgba(0, 0, 0, 0.36);
-  --glass-strong: rgba(0, 0, 0, 0.52);
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.14);
+  --glass-glow: rgba(255, 255, 255, 0.06);
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 30px 80px rgba(0, 0, 0, 0.45);
   --glass-nav: rgba(0, 0, 0, 0.92);
@@ -649,7 +652,7 @@ button {
     }
     100% {
       opacity: 0;
-      transform: translateX(-130vw);
+      transform: translateX(-200vw);
     }
   }
 
@@ -658,21 +661,21 @@ button {
       transform: translateY(0);
     }
     100% {
-      transform: translateY(75vh);
+      transform: translateY(45vh);
     }
   }
 
   @keyframes meteor-rotate-mobile {
     0% {
-      transform: rotate(-15deg);
+      transform: rotate(-20deg);
     }
     100% {
-      transform: rotate(-40deg);
+      transform: rotate(-50deg);
     }
   }
 
   .meteor {
-    right: -50px !important;
+    right: -320px !important;
   }
 
   .meteor.is-animating {
@@ -690,7 +693,7 @@ button {
   .meteor-visual {
     width: 340px;
     height: 120px;
-    transform: rotate(-15deg);
+    transform: rotate(-20deg);
   }
 
   .meteor-secondary .meteor-visual {
