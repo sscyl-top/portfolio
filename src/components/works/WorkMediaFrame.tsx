@@ -84,10 +84,11 @@ export function WorkMediaFrame({
           ref={videoRef}
           src={media.url}
           className={`absolute inset-0 h-full w-full object-cover ${className} ${hoverClass}`}
+          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={inViewport ? "metadata" : "none"}
           style={positionStyle}
         />
       ) : isGif && media ? (

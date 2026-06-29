@@ -252,24 +252,19 @@ export function SmartVideo({
     setHasMetadata(false);
     const onLoadedMeta = () => {
       setHasMetadata(true);
+      // metadata 加载完成即认为可显示：避免 preload="metadata" 下
+      // loadeddata/canplay 不触发导致 video 永久 opacity-0 不可见
+      setIsLoaded(true);
       if (el.videoWidth && el.videoHeight && wrapperRef.current) {
         wrapperRef.current.style.aspectRatio = `${el.videoWidth} / ${el.videoHeight}`;
       }
     };
-    const onLoaded = () => setIsLoaded(true);
     if (el.readyState >= 1) {
       onLoadedMeta();
     }
-    if (el.readyState >= 2) {
-      setIsLoaded(true);
-    }
     el.addEventListener("loadedmetadata", onLoadedMeta);
-    el.addEventListener("loadeddata", onLoaded);
-    el.addEventListener("canplay", onLoaded);
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMeta);
-      el.removeEventListener("loadeddata", onLoaded);
-      el.removeEventListener("canplay", onLoaded);
     };
   }, [src]);
 

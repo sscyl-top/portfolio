@@ -5,6 +5,7 @@ import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { MobileNavRight } from "@/components/site/MobileNavRight";
 
 const defaultSiteSettings: PublicSiteSettings = {
   ctaCardScale: 1,
@@ -43,11 +44,11 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto flex h-12 max-w-[1420px] items-center justify-between px-2 sm:h-14 sm:px-3 md:h-24 md:px-8">
+      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-3 items-center px-2 sm:h-14 sm:px-3 md:flex md:items-center md:justify-between md:px-8">
         {/* 左侧 Logo */}
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2 md:gap-4"
+          className="group flex min-w-0 items-center gap-2 md:shrink-0 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-8 sm:w-8 md:h-12 md:w-12">
@@ -93,7 +94,7 @@ export async function SiteHeader({
         </Link>
 
         {/* 中间导航 */}
-        <div className="flex flex-1 justify-center px-1 sm:px-2 md:px-4">
+        <div className="flex justify-center">
           <div className="flex items-center">
             {siteSettings.navigation.map((item) => (
               <Link
@@ -109,39 +110,46 @@ export async function SiteHeader({
         </div>
 
         {/* 右侧按钮 */}
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-5">
-          <ThemeToggle className="shrink-0" />
-          {siteSettings.avatarMediaUrl ? (
-            <Link
-              href={avatarHref}
-              className="hidden h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge sm:grid sm:h-8 sm:w-8 md:h-12 md:w-12"
-              aria-label={user ? "进入后台" : "查看简历"}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={siteSettings.avatarMediaUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                style={{ filter: "var(--png-filter)" }}
-              />
-            </Link>
-          ) : (
-            <Link
-              href={avatarHref}
-              className="hidden h-7 w-10 shrink-0 place-items-center justify-end sm:grid sm:h-8 sm:w-12 md:h-16 md:w-28"
-              aria-label={user ? "进入后台" : "查看简历"}
-            >
-              <Image
-                src="/brand/infinite-progress-logo.svg"
-                alt="无限进步"
-                width={120}
-                height={30}
-                className="h-auto w-[2rem] shrink-0 sm:w-[2.5rem] md:w-36"
-                priority
-                style={{ filter: "var(--png-filter)" }}
-              />
-            </Link>
-          )}
+        <div className="flex items-center justify-end md:gap-5">
+          <MobileNavRight
+            avatarMediaUrl={siteSettings.avatarMediaUrl}
+            avatarHref={avatarHref}
+            userLoggedIn={!!user}
+          />
+          <div className="hidden items-center gap-2 sm:flex sm:gap-2 md:gap-5">
+            <ThemeToggle className="shrink-0" />
+            {siteSettings.avatarMediaUrl ? (
+              <Link
+                href={avatarHref}
+                className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge md:h-12 md:w-12"
+                aria-label={user ? "进入后台" : "查看简历"}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={siteSettings.avatarMediaUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  style={{ filter: "var(--png-filter)" }}
+                />
+              </Link>
+            ) : (
+              <Link
+                href={avatarHref}
+                className="grid h-8 w-12 shrink-0 place-items-center justify-end md:h-16 md:w-28"
+                aria-label={user ? "进入后台" : "查看简历"}
+              >
+                <Image
+                  src="/brand/infinite-progress-logo.svg"
+                  alt="无限进步"
+                  width={120}
+                  height={30}
+                  className="h-auto w-[2.5rem] shrink-0 md:w-36"
+                  priority
+                  style={{ filter: "var(--png-filter)" }}
+                />
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
     </header>

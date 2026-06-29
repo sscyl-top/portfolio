@@ -2492,7 +2492,13 @@ function InlineMediaEditor({
               draggable={false}
             />
           ) : url && block.block_type === "video" ? (
-            <video src={url} controls className="max-h-80 w-full rounded-md object-cover" />
+            <video
+              src={url}
+              controls
+              playsInline
+              preload="metadata"
+              className="max-h-80 min-h-[160px] w-full rounded-md bg-black/30 object-cover"
+            />
           ) : asset ? (
             <div className="flex items-center gap-3 rounded-md bg-white/5 p-4">
               <FileText className="h-10 w-10 text-orange-400/60" />
