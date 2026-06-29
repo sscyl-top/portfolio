@@ -44,11 +44,11 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-[auto_1fr_auto] items-center px-2 sm:h-14 sm:px-3 md:h-24 md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:px-8">
+      <nav className="relative mx-auto h-12 max-w-[1420px] px-2 sm:h-14 sm:px-3 md:h-24 md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:px-8">
         {/* 左侧 Logo */}
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-2 md:shrink-0 md:gap-4"
+          className="absolute left-2 top-1/2 flex h-full -translate-y-1/2 items-center gap-2 sm:left-3 md:static md:translate-y-0 md:shrink-0 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-8 sm:w-8 md:h-12 md:w-12">
@@ -93,8 +93,8 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        {/* 中间导航 - 固定宽度 */}
-        <div className="flex justify-center">
+        {/* 中间导航 - 手机端绝对居中，桌面端Grid居中 */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0 md:flex md:justify-center">
           <div className="flex items-center">
             {siteSettings.navigation.map((item) => (
               <Link
@@ -110,7 +110,7 @@ export async function SiteHeader({
         </div>
 
         {/* 右侧按钮 */}
-        <div className="flex items-center justify-end md:gap-5">
+        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-end sm:right-3 md:static md:translate-y-0 md:gap-5">
           <MobileNavRight
             avatarMediaUrl={siteSettings.avatarMediaUrl}
             avatarHref={avatarHref}

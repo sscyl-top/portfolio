@@ -61,7 +61,6 @@ export function MobileNavRight({
     );
   }
 
-  if (!mounted) return null;
   const isDark = resolvedTheme === "dark";
 
   return (
