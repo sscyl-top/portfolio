@@ -635,6 +635,70 @@ button {
     0 0 32px 12px rgba(120, 170, 255, 0.1);
 }
 
+@media (max-width: 767px) {
+  @keyframes meteor-move-x-mobile {
+    0% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    2% {
+      opacity: 1;
+    }
+    96% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-130vw);
+    }
+  }
+
+  @keyframes meteor-move-y-mobile {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(75vh);
+    }
+  }
+
+  @keyframes meteor-rotate-mobile {
+    0% {
+      transform: rotate(-15deg);
+    }
+    100% {
+      transform: rotate(-40deg);
+    }
+  }
+
+  .meteor {
+    right: -50px !important;
+  }
+
+  .meteor.is-animating {
+    animation: meteor-move-x-mobile 10s linear forwards;
+  }
+
+  .meteor.is-animating .meteor-y {
+    animation: meteor-move-y-mobile 10s cubic-bezier(0.28, 0, 0.72, 0.12) forwards;
+  }
+
+  .meteor.is-animating .meteor-visual {
+    animation: meteor-rotate-mobile 10s cubic-bezier(0.28, 0, 0.72, 0.12) forwards;
+  }
+
+  .meteor-visual {
+    width: 340px;
+    height: 120px;
+    transform: rotate(-15deg);
+  }
+
+  .meteor-secondary .meteor-visual {
+    width: 240px;
+    height: 100px;
+  }
+}
+
 /* ════════════════ Floating Music Ball ════════════════ */
 
 @keyframes music-icon-spin {
