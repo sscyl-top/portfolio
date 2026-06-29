@@ -52,18 +52,18 @@ export default async function ResumePage() {
               <p>{resume.role}</p>
               <p>Portfolio / Resume 2026</p>
             </div>
-            <div className="grid gap-2 text-[13px] text-ink-2 md:justify-items-end md:text-sm">
-              <span className="inline-flex items-center gap-2">
-                <Mail aria-hidden="true" className="h-4 w-4" />
-                {resume.contact.email}
+            <div className="grid gap-2 text-right text-[12px] text-ink-2 md:text-right md:text-xs">
+              <span className="inline-flex items-center justify-end gap-2">
+                <span>{resume.contact.email}</span>
+                <Mail aria-hidden="true" className="h-3.5 w-3.5" />
               </span>
-              <span className="inline-flex items-center gap-2">
-                <Phone aria-hidden="true" className="h-4 w-4" />
-                {resume.contact.phone}
+              <span className="inline-flex items-center justify-end gap-2">
+                <span>{resume.contact.phone}</span>
+                <Phone aria-hidden="true" className="h-3.5 w-3.5" />
               </span>
-              <span className="inline-flex items-center gap-2">
-                <MapPin aria-hidden="true" className="h-4 w-4" />
-                {resume.location}
+              <span className="inline-flex items-center justify-end gap-2">
+                <span>{resume.location}</span>
+                <MapPin aria-hidden="true" className="h-3.5 w-3.5" />
               </span>
             </div>
           </div>
@@ -78,11 +78,11 @@ export default async function ResumePage() {
                 VISUAL
               </span>
             </h1>
-            <div className="mt-5 flex max-w-4xl flex-wrap gap-2">
+            <div className="mt-4 flex max-w-4xl flex-wrap gap-1.5">
               {resume.highlights.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-edge-2 bg-surface-3 px-3.5 py-2 font-mono text-xs text-ink-2 md:px-4 md:py-2 md:text-xs"
+                  className="rounded-full border border-edge-2 bg-surface-3 px-2.5 py-1.5 font-mono text-[10px] text-ink-2 md:px-3 md:py-1.5 md:text-[10px]"
                 >
                   {item}
                 </span>
