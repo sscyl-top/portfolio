@@ -106,12 +106,12 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 md:gap-8 justify-self-end">
-          <ThemeToggle />
+        <div className="flex items-center gap-5 sm:gap-7 md:gap-10 justify-self-end min-w-[80px] sm:min-w-[100px] md:min-w-[140px]">
+          <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
+            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-9 w-9 shrink-0 sm:h-10 sm:w-10 md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="grid h-10 w-16 place-items-center place-self-end sm:h-12 sm:w-20 md:h-16 md:w-28"
+            className="grid h-10 w-12 place-items-center justify-end shrink-0 sm:h-12 sm:w-16 md:h-14 md:w-20"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
@@ -133,7 +133,7 @@ export async function SiteHeader({
               alt="无限进步"
               width={120}
               height={30}
-              className="h-auto w-[4rem] sm:w-24 md:w-36"
+              className="h-auto w-[4rem] shrink-0 sm:w-24 md:w-36"
               priority
               style={{ filter: "var(--png-filter)" }}
             />

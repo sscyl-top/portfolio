@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = "" }: { className?: string }) {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -21,7 +21,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="group grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:text-white [.light_&]:border-black/10 [.light_&]:bg-black/[0.04] [.light_&]:text-black/70 [.light_&]:hover:border-black/25 [.light_&]:hover:text-black"
+      className={`group grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:text-white [.light_&]:border-black/10 [.light_&]:bg-black/[0.04] [.light_&]:text-black/70 [.light_&]:hover:border-black/25 [.light_&]:hover:text-black shrink-0 ${className}`}
       aria-label={isDark ? "切换到浅色模式" : "切换到深色模式"}
       title={isDark ? "切换到浅色模式" : "切换到深色模式"}
     >
