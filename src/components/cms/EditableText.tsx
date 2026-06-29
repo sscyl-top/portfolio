@@ -12,6 +12,8 @@ type EditableTextProps = {
   initialStyles?: Record<string, string>
   as?: 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'strong' | 'em' | 'a'
   href?: string
+  page?: string
+  section?: string
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -24,6 +26,8 @@ export function EditableText({
   initialStyles,
   as: Tag = 'span',
   href,
+  page,
+  section,
 }: EditableTextProps) {
   const [content, setContent] = useState(initialContent ?? fallback)
   const [styles, setStyles] = useState<Record<string, string>>(initialStyles ?? {})
@@ -115,6 +119,8 @@ export function EditableText({
           font_family: styles.fontFamily ?? '',
           font_weight: styles.fontWeight ?? '',
           color: styles.color ?? '',
+          page: page ?? null,
+          section: section ?? null,
         }),
       })
       const data = await res.json()
@@ -205,7 +211,7 @@ export function EditableText({
   const adminClasses = isAdmin
     ? isEditing
       ? 'outline outline-2 outline-cyan/60 rounded outline-offset-2'
-      : 'hover:outline hover:outline-1 hover:outline-dashed hover:outline-cyan/40 hover:rounded hover:outline-offset-2 cursor-text'
+      : 'hover:outline hover:outline-1 hover:outline-dashed hover:outline-cyan/50 hover:rounded hover:outline-offset-2 cursor-text'
     : ''
 
   const combinedClassName = [className, fontSizeClass, fontWeightClass, adminClasses]
@@ -213,6 +219,7 @@ export function EditableText({
     .join(' ')
 
   const linkProps = Tag === 'a' && href ? { href } : {}
+  const adminTitle = isAdmin && !isEditing ? '双击可编辑文字' : undefined
 
   return (
     <>
@@ -223,6 +230,7 @@ export function EditableText({
         onDoubleClick={isAdmin ? startEditing : undefined}
         className={combinedClassName}
         style={fontStyleObj}
+        title={adminTitle}
         {...linkProps}
       >
         {isLoading ? fallback : content}

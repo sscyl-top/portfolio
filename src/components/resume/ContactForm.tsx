@@ -3,6 +3,8 @@
 import { AlertCircle, CheckCircle, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
+import { EditableText } from "@/components/cms/EditableText";
+
 type ContactFormProps = {
   id?: string;
   type: "hiring" | "commercial";
@@ -118,13 +120,30 @@ export function ContactForm({
       className="scroll-mt-24 rounded-lg border border-edge-2 bg-surface-3 p-4 md:p-5"
     >
       <div className="border-b border-edge-2 pb-4">
-        <p className="font-mono text-[10px] uppercase text-copper md:text-xs md:font-medium">
-          {type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
-        </p>
-        <h3 className="mt-3 text-3xl font-semibold text-ink">{title}</h3>
-        <p className="mt-3 max-w-xl text-[15px] leading-7 text-ink-2 md:text-base md:leading-8">
-          {description}
-        </p>
+        <EditableText
+          textKey={`resume.contact.${type}.kicker`}
+          fallback={type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
+          as="p"
+          className="font-mono text-[10px] uppercase text-copper md:text-xs md:font-medium"
+          page="resume"
+          section="contact"
+        />
+        <EditableText
+          textKey={`resume.contact.${type}.title`}
+          fallback={title}
+          as="h3"
+          className="mt-3 text-3xl font-semibold text-ink"
+          page="resume"
+          section="contact"
+        />
+        <EditableText
+          textKey={`resume.contact.${type}.description`}
+          fallback={description}
+          as="p"
+          className="mt-3 max-w-xl text-[15px] leading-7 text-ink-2 md:text-base md:leading-8"
+          page="resume"
+          section="contact"
+        />
       </div>
 
       <form

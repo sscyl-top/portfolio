@@ -9,6 +9,7 @@ import {
 import type { Metadata } from "next";
 
 import { ContactFinale } from "@/components/resume/ContactFinale";
+import { EditableText } from "@/components/cms/EditableText";
 import { getResumeData } from "@/lib/cms/resume";
 import { getTextContentsByKeys, parseTextContentArray } from "@/lib/cms/text-content";
 
@@ -50,7 +51,13 @@ export default async function ResumePage() {
             <div className="space-y-2 font-mono text-xs uppercase text-ink-3 md:text-sm md:font-medium">
               <p>{resume.alias}</p>
               <p>{resume.role}</p>
-              <p>Portfolio / Resume 2026</p>
+              <EditableText
+                textKey="resume.hero.yearLabel"
+                fallback="Portfolio / Resume 2026"
+                as="p"
+                page="resume"
+                section="hero"
+              />
             </div>
             <div className="grid gap-2 text-right text-[12px] text-ink-2 md:text-right md:text-sm md:font-medium">
               <span className="inline-flex items-center justify-end gap-2">
@@ -69,9 +76,14 @@ export default async function ResumePage() {
           </div>
 
           <div className="py-10 md:-translate-y-14">
-            <p className="font-mono text-sm uppercase tracking-wide text-copper md:text-base md:font-medium">
-              HI, I&apos;M {resume.name}
-            </p>
+            <EditableText
+              textKey="resume.hero.greeting"
+              fallback={`HI, I'M ${resume.name}`}
+              as="p"
+              className="font-mono text-sm uppercase tracking-wide text-copper md:text-base md:font-medium"
+              page="resume"
+              section="hero"
+            />
             <h1 className="mt-4 max-w-5xl text-7xl font-semibold leading-[0.88] text-ink md:text-8xl lg:text-9xl">
               BRAND
               <span className="block text-transparent [-webkit-text-stroke:1px_var(--ink-3)]">
@@ -91,9 +103,14 @@ export default async function ResumePage() {
           </div>
 
           <div className="grid gap-6 border-t border-edge-2 pt-8 md:-translate-y-16 lg:grid-cols-[1fr_auto] lg:items-end">
-            <p className="max-w-3xl text-[15px] leading-7 text-ink-2 md:text-xl md:leading-9 md:font-normal">
-              我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。
-            </p>
+            <EditableText
+              textKey="resume.hero.intro"
+              fallback="我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。"
+              as="p"
+              className="max-w-3xl text-[15px] leading-7 text-ink-2 md:text-xl md:leading-9 md:font-normal"
+              page="resume"
+              section="hero"
+            />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <a
                 href={resume.downloads.jpg}
@@ -101,7 +118,13 @@ export default async function ResumePage() {
                 className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-page-bg transition hover:bg-copper md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
-                下载简历 JPG
+                <EditableText
+                  textKey="resume.hero.downloadJpg"
+                  fallback="下载简历 JPG"
+                  as="span"
+                  page="resume"
+                  section="hero"
+                />
               </a>
               <a
                 href={resume.downloads.pdf}
@@ -109,7 +132,13 @@ export default async function ResumePage() {
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-edge px-4 py-2.5 text-[13px] text-ink-2 transition hover:border-edge hover:text-ink md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
-                下载简历 PDF
+                <EditableText
+                  textKey="resume.hero.downloadPdf"
+                  fallback="下载简历 PDF"
+                  as="span"
+                  page="resume"
+                  section="hero"
+                />
               </a>
             </div>
           </div>
@@ -118,7 +147,12 @@ export default async function ResumePage() {
 
       <section className="relative z-10 px-4 py-14 md:px-8 md:py-20">
         <div className="mx-auto max-w-7xl space-y-6">
-          <ResumeSection title="核心优势" subtitle="Core strengths">
+          <ResumeSection
+            titleKey="resume.section.strengths.title"
+            title="核心优势"
+            subtitleKey="resume.section.strengths.subtitle"
+            subtitle="Core strengths"
+          >
             <div className="space-y-4">
               {resume.strengths.map((strength) => (
                 <p
@@ -131,7 +165,12 @@ export default async function ResumePage() {
             </div>
           </ResumeSection>
 
-          <ResumeSection title="社会经历" subtitle="Social experience">
+          <ResumeSection
+            titleKey="resume.section.experience.title"
+            title="社会经历"
+            subtitleKey="resume.section.experience.subtitle"
+            subtitle="Social experience"
+          >
             <div className="space-y-8">
               {resume.experience.map((item) => (
                 <article key={item.company} className="border-t border-edge-2 pt-6">
@@ -164,7 +203,12 @@ export default async function ResumePage() {
             </div>
           </ResumeSection>
 
-          <ResumeSection title="校园经历" subtitle="Campus experience">
+          <ResumeSection
+            titleKey="resume.section.campus.title"
+            title="校园经历"
+            subtitleKey="resume.section.campus.subtitle"
+            subtitle="Campus experience"
+          >
             <div className="space-y-6">
               {resume.campus.map((item) => (
                 <article key={item.company} className="border-t border-edge-2 pt-5">
@@ -185,7 +229,9 @@ export default async function ResumePage() {
           </ResumeSection>
 
           <ResumeSection
+            titleKey="resume.section.education.title"
             title="教育背景"
+            subtitleKey="resume.section.education.subtitle"
             subtitle="Educational background"
             testId="education-section"
           >
@@ -265,7 +311,9 @@ export default async function ResumePage() {
           </ResumeSection>
 
           <ResumeSection
+            titleKey="resume.section.activities.title"
             title="组织与实践"
+            subtitleKey="resume.section.activities.subtitle"
             subtitle="Activities"
             testId="education-activities-section"
           >
@@ -303,12 +351,16 @@ export default async function ResumePage() {
 }
 
 function ResumeSection({
+  titleKey,
   title,
+  subtitleKey,
   subtitle,
   testId,
   children,
 }: {
+  titleKey?: string;
   title: string;
+  subtitleKey?: string;
   subtitle: string;
   testId?: string;
   children: React.ReactNode;
@@ -319,8 +371,30 @@ function ResumeSection({
       className="grid gap-5 rounded-lg border border-edge-2 bg-surface-3 p-4 md:grid-cols-[0.35fr_1fr] md:gap-8 md:p-8"
     >
       <div>
-        <p className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium">{subtitle}</p>
-        <h2 className="mt-2 text-2xl font-semibold text-ink md:text-3xl">{title}</h2>
+        {subtitleKey ? (
+          <EditableText
+            textKey={subtitleKey}
+            fallback={subtitle}
+            as="p"
+            className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium"
+            page="resume"
+            section="sections"
+          />
+        ) : (
+          <p className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium">{subtitle}</p>
+        )}
+        {titleKey ? (
+          <EditableText
+            textKey={titleKey}
+            fallback={title}
+            as="h2"
+            className="mt-2 text-2xl font-semibold text-ink md:text-3xl"
+            page="resume"
+            section="sections"
+          />
+        ) : (
+          <h2 className="mt-2 text-2xl font-semibold text-ink md:text-3xl">{title}</h2>
+        )}
       </div>
       <div>{children}</div>
     </section>

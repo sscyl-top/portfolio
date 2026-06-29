@@ -1,6 +1,7 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { ContactForm } from "./ContactForm";
+import { EditableText } from "@/components/cms/EditableText";
 
 type ContactFinaleProps = {
   email: string;
@@ -42,12 +43,22 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
     <section className="relative z-10 overflow-hidden border-t border-edge-2 pb-8 pt-14 md:pt-20 md:pb-10">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div>
-          <p className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium">
-            Design service / Contact
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold text-ink md:text-6xl">
-            设计服务合作
-          </h2>
+          <EditableText
+            textKey="resume.contact.subtitle"
+            fallback="Design service / Contact"
+            as="p"
+            className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium"
+            page="resume"
+            section="contact"
+          />
+          <EditableText
+            textKey="resume.contact.title"
+            fallback="设计服务合作"
+            as="h2"
+            className="mt-3 text-3xl font-semibold text-ink md:text-6xl"
+            page="resume"
+            section="contact"
+          />
         </div>
 
         <div className="mt-8 grid grid-cols-2 border-y border-edge-2 lg:grid-cols-4 md:mt-10">
