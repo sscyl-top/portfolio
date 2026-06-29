@@ -43,13 +43,13 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center px-3 md:h-24 md:px-8">
+      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 md:h-24 md:px-8">
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-3 md:gap-4"
+          className="group flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg md:h-12 md:w-12">
+          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-9 sm:w-9 md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -64,23 +64,23 @@ export async function SiteHeader({
               />
             )}
           </span>
-          <span className="hidden h-9 min-w-0 flex-col justify-between sm:flex md:h-12">
+          <span className="hidden h-8 min-w-0 flex-col justify-between sm:flex sm:h-9 md:h-12">
             {siteSettings.nameMediaUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
-                  className="block h-5 w-auto max-w-[130px] object-contain object-left-top md:h-6 md:max-w-[160px]"
+                  className="block h-4 w-auto max-w-[100px] object-contain object-left-top sm:h-5 sm:max-w-[130px] md:h-6 md:max-w-[160px]"
                   style={{ filter: "var(--png-filter)" }}
                 />
-                <span className="block truncate font-mono text-[11px] leading-none text-ink-3 md:text-xs">
+                <span className="block truncate font-mono text-[10px] leading-none text-ink-3 sm:text-[11px] md:text-xs">
                   {siteSettings.title}
                 </span>
               </>
             ) : (
               <>
-                <span className="block truncate text-base font-semibold tracking-[0.18em] text-ink">
+                <span className="block truncate text-sm font-semibold tracking-[0.15em] text-ink sm:text-base md:tracking-[0.18em]">
                   {siteSettings.name}
                 </span>
                 <span className="mt-1 block truncate font-mono text-xs text-ink-3">
@@ -91,14 +91,14 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        <div className="hidden justify-self-center md:block">
-          <div className="flex items-center gap-1">
+        <div className="justify-self-center">
+          <div className="flex items-center gap-0 sm:gap-1">
             {siteSettings.navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch={true}
-                className="relative px-3 py-2 text-sm text-ink-2 transition after:absolute after:inset-x-4 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 md:px-5 md:py-3 md:text-base"
+                className="relative px-2 py-2 text-xs text-ink-2 transition after:absolute after:inset-x-3 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-3 sm:text-sm md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
@@ -106,12 +106,12 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-5 justify-self-end">
+        <div className="flex items-center gap-2 justify-self-end sm:gap-3 md:gap-5">
           <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-8 w-8 shrink-0 sm:h-9 sm:w-9 md:h-12 md:w-12"
+            className="hidden grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-8 w-8 shrink-0 sm:h-9 sm:w-9 md:h-12 md:w-12 sm:grid"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="grid h-8 w-12 place-items-center justify-end shrink-0 sm:h-9 sm:w-14 md:h-16 md:w-28"
+            className="hidden h-8 w-12 place-items-center justify-end shrink-0 sm:grid sm:h-9 sm:w-14 md:h-16 md:w-28"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
