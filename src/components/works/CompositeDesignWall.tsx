@@ -154,6 +154,9 @@ export function CompositeDesignWall({
             const column = index % 4;
             const direction = column % 2 === 0 ? -1 : 1;
             const yOffset = direction * ((scrollShift + column * 10) % 34);
+            const mobileColumn = index % 2;
+            const mobileDirection = mobileColumn % 2 === 0 ? -1 : 1;
+            const mobileYOffset = mobileDirection * ((scrollShift * 0.4 + mobileColumn * 8) % 16);
 
             return (
               <Link
@@ -161,7 +164,7 @@ export function CompositeDesignWall({
                 href={`/works/${work.slug}?from=composite`}
                 className="group block overflow-hidden rounded-lg border border-white/15 bg-surface/40 p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.25),inset_0_0_20px_rgba(255,255,255,0.02)] backdrop-blur-md transition duration-500 hover:-translate-y-2 hover:border-white/25 hover:bg-surface/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_0_30px_rgba(255,255,255,0.04)] md:p-2"
                 style={{
-                  transform: `translateY(${yOffset}px)`,
+                  transform: window.innerWidth >= 1024 ? `translateY(${yOffset}px)` : `translateY(${mobileYOffset}px)`,
                   transition:
                     "transform 420ms cubic-bezier(.2,.8,.2,1), border-color 300ms ease, background-color 300ms ease",
                 }}
