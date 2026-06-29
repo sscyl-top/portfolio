@@ -198,7 +198,7 @@ export function CompositeDesignWall({
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/12 bg-white/8 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl md:bottom-3 md:left-3 md:right-3 md:p-3">
+                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/20 bg-white/16 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.35),inset_0_0_16px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-xl md:bottom-3 md:left-3 md:right-3 md:p-3">
                     <div className="flex items-start justify-between gap-2 md:gap-3">
                       <div>
                         <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-copper md:text-[10px] md:tracking-[0.16em]">
