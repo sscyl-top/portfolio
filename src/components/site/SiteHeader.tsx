@@ -101,7 +101,7 @@ export async function SiteHeader({
                 key={item.href}
                 href={item.href}
                 prefetch={true}
-                className="relative whitespace-nowrap px-1.5 py-1.5 text-[11px] text-ink-2 transition after:absolute after:inset-x-1.5 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-xs md:px-5 md:py-3 md:text-base"
+                className="relative whitespace-nowrap px-2 py-1.5 text-[13px] text-ink-2 transition after:absolute after:inset-x-2 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-sm md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>

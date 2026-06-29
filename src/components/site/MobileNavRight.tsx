@@ -41,7 +41,7 @@ export function MobileNavRight({
     return (
       <Link
         href={avatarHref}
-        className="grid h-7 w-10 shrink-0 place-items-center justify-end sm:hidden"
+        className="flex h-8 w-14 shrink-0 items-center justify-end sm:hidden"
         aria-label={userLoggedIn ? "进入后台" : "查看简历"}
       >
         <Image
@@ -49,7 +49,7 @@ export function MobileNavRight({
           alt="无限进步"
           width={120}
           height={30}
-          className="h-auto w-[2rem] shrink-0"
+          className="h-auto w-[3.5rem] shrink-0"
           priority
           style={{ filter: "var(--png-filter)" }}
         />
