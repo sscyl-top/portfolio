@@ -249,7 +249,7 @@ export function CompositeDesignWall({
               <img
                 src={ctaCenterLogoUrl}
                 alt="中心Logo"
-                className={`h-auto w-[min(360px,64vw)] ${ctaVisible ? "is-visible" : ""}`}
+                className={`cta-logo-image h-auto w-[min(360px,64vw)] ${ctaVisible ? "is-visible" : ""}`}
                 style={{
                   transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
                   transformOrigin: "center center",

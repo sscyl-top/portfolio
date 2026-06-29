@@ -265,15 +265,13 @@ button {
 
 @keyframes cta-logo-cut-in {
   0% {
-    clip-path: inset(0 100% 0 0);
     opacity: 0;
-    transform: translateY(-18px) skewX(-8deg);
+    transform: translateY(-24px) scale(0.92) skewX(-6deg);
   }
 
   100% {
-    clip-path: inset(0 0 0 0);
     opacity: 1;
-    transform: translateY(0) skewX(-8deg);
+    transform: translateY(0) scale(1) skewX(0);
   }
 }
 
@@ -474,9 +472,8 @@ button {
 }
 
 .cta-logo-image {
-  clip-path: inset(0 100% 0 0);
   opacity: 0;
-  transform: translateY(-18px) skewX(-8deg);
+  transform: translateY(-24px) scale(0.92) skewX(-6deg);
 }
 
 .cta-logo-image.is-visible {
