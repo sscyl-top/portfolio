@@ -197,7 +197,7 @@ export function CompositeDesignWall({
                     />
                   )}
                   <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--surface-3),transparent_40%,var(--overlay-2))]" />
-                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-slate-600 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
+                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(0,0,0,0.35)] md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>

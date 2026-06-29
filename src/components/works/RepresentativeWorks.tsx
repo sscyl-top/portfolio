@@ -72,7 +72,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
         <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,var(--surface-3),transparent_20%),linear-gradient(to_bottom,transparent_42%,var(--overlay))]" />
-        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-slate-600">
+        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(0,0,0,0.35)]">
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
@@ -308,7 +308,7 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_36%,var(--overlay))]" />
                     {isCenter && (
                       <>
-                        <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
+                        <div className="absolute inset-x-3 top-3 flex items-center justify-between font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(0,0,0,0.35)]">
                           <span>0{realIndex + 1}</span><span>{work.year}</span>
                         </div>
                         <div className="absolute inset-x-2 bottom-2 rounded-xl border border-edge-2 bg-glass-strong p-2.5 backdrop-blur-sm">
