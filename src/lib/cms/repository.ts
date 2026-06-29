@@ -83,7 +83,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   await runRepresentativeCoverMigration().catch(() => {});
   await runNameMediaMigration().catch(() => {});
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1500));
 
   let baseData: Record<string, unknown> | null = null;
   try {

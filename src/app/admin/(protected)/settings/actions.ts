@@ -203,5 +203,5 @@ export async function saveSiteSettings(formData: FormData) {
   revalidatePath("/admin/settings");
   revalidatePath("/works");
   const timestamp = Date.now();
-  redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}&t=${timestamp}`);
+  redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}&t=${timestamp}&cache_bust=${Math.random().toString(36).substr(2, 9)}`);
 }
