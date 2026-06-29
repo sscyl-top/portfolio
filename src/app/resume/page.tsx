@@ -47,12 +47,12 @@ export default async function ResumePage() {
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-10rem)] max-w-7xl flex-col justify-between">
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-            <div className="space-y-2 font-mono text-xs uppercase text-ink-3">
+            <div className="space-y-2 font-mono text-xs uppercase text-ink-3 md:text-sm md:font-medium">
               <p>{resume.alias}</p>
               <p>{resume.role}</p>
               <p>Portfolio / Resume 2026</p>
             </div>
-            <div className="grid gap-2 text-right text-[12px] text-ink-2 md:text-right md:text-xs">
+            <div className="grid gap-2 text-right text-[12px] text-ink-2 md:text-right md:text-sm md:font-medium">
               <span className="inline-flex items-center justify-end gap-2">
                 <span>{resume.contact.email}</span>
                 <Mail aria-hidden="true" className="h-3.5 w-3.5" />
@@ -82,7 +82,7 @@ export default async function ResumePage() {
               {resume.highlights.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-edge-2 bg-surface-3 px-2.5 py-1.5 font-mono text-[10px] text-ink-2 md:px-3 md:py-1.5 md:text-[10px]"
+                  className="rounded-full border border-edge-2 bg-surface-3 px-2.5 py-1.5 font-mono text-[10px] text-ink-2 md:px-3.5 md:py-2 md:text-xs md:font-medium"
                 >
                   {item}
                 </span>
@@ -91,7 +91,7 @@ export default async function ResumePage() {
           </div>
 
           <div className="grid gap-6 border-t border-edge-2 pt-8 md:-translate-y-16 lg:grid-cols-[1fr_auto] lg:items-end">
-            <p className="max-w-3xl text-[15px] leading-7 text-ink-2 md:text-lg md:leading-8">
+            <p className="max-w-3xl text-[15px] leading-7 text-ink-2 md:text-xl md:leading-9 md:font-normal">
               我是陈涛涛，一名专注于品牌全链路视觉、商业设计落地与 AIGC 工作流的设计师。当前以求职面试为主，同时保留少量品牌视觉与网页视觉服务合作入口。
             </p>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -123,7 +123,7 @@ export default async function ResumePage() {
               {resume.strengths.map((strength) => (
                 <p
                   key={strength}
-                  className="border-t border-edge-2 pt-4 leading-8 text-ink-2"
+                  className="border-t border-edge-2 pt-4 leading-8 text-ink-2 md:text-lg md:leading-9"
                 >
                   {strength}
                 </p>
@@ -143,16 +143,16 @@ export default async function ResumePage() {
                       {item.period}
                     </span>
                   </div>
-                  <p className="mt-2 text-lg font-medium text-cyan/80">
+                  <p className="mt-2 text-lg font-medium text-cyan md:text-xl">
                     {item.title}
                   </p>
                   <ol className="mt-4 space-y-3">
                     {item.points.map((point, index) => (
                       <li
                         key={point}
-                        className="grid grid-cols-[2rem_1fr] gap-3 leading-8 text-ink-2"
+                        className="grid grid-cols-[2rem_1fr] gap-3 leading-8 text-ink-2 md:text-lg md:leading-9"
                       >
-                        <span className="font-mono text-sm text-copper">
+                        <span className="font-mono text-sm text-copper md:text-base">
                           {index + 1}.
                         </span>
                         <span>{point}</span>
@@ -176,7 +176,7 @@ export default async function ResumePage() {
                       {item.period}
                     </span>
                   </div>
-                  <p className="mt-3 leading-8 text-ink-2">
+                  <p className="mt-3 leading-8 text-ink-2 md:text-lg md:leading-9">
                     {item.description}
                   </p>
                 </article>
@@ -195,7 +195,7 @@ export default async function ResumePage() {
                 className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4 md:items-start"
               >
                 <div>
-                  <p className="font-mono text-xs uppercase text-ink-4">
+                  <p className="font-mono text-xs uppercase text-ink-4 md:text-sm md:font-medium">
                     {resume.education.schoolEnglish}
                   </p>
                   <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
@@ -203,7 +203,7 @@ export default async function ResumePage() {
                   </h3>
                 </div>
                 <div>
-                  <p className="font-mono text-xs text-ink-4">
+                  <p className="font-mono text-xs text-ink-4 md:text-sm md:font-medium">
                     {resume.education.majorEnglish}
                   </p>
                   <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
@@ -226,7 +226,7 @@ export default async function ResumePage() {
                     className="flex min-h-[72px] flex-col justify-between rounded-lg border border-edge-2 bg-surface-2 p-2 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] uppercase text-ink-4">
+                      <span className="font-mono text-[10px] uppercase text-ink-4 md:text-xs md:font-medium">
                         {achievement.label}
                       </span>
                       {index === 0 ? (
@@ -252,7 +252,7 @@ export default async function ResumePage() {
                         {achievement.value}
                       </p>
                       {achievement.detail ? (
-                        <p className="mt-0.5 text-[11px] text-ink-3">
+                        <p className="mt-0.5 text-[11px] text-ink-3 md:text-xs">
                           {achievement.detail}
                         </p>
                       ) : null}
@@ -275,13 +275,13 @@ export default async function ResumePage() {
                   key={`${activity.period}-${activity.title}`}
                   className="grid gap-1.5 border-b border-edge-2 py-3 md:grid-cols-[7.5rem_11rem_1fr] md:gap-5 md:py-4"
                 >
-                  <p className="font-mono text-xs text-copper">
+                  <p className="font-mono text-xs text-copper md:text-sm">
                     {activity.period}
                   </p>
-                  <h3 className="text-sm font-medium text-ink">
+                  <h3 className="text-sm font-medium text-ink md:text-base">
                     {activity.title}
                   </h3>
-                  <p className="text-sm leading-6 text-ink-3">
+                  <p className="text-sm leading-6 text-ink-3 md:text-base md:leading-7">
                     {activity.description}
                   </p>
                 </article>

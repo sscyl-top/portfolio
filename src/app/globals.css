@@ -84,6 +84,15 @@
   --png-filter: invert(0.75);
 }
 
+/* 电脑端浅色模式：提高非标题文字颜色深度与字重，增强可读性 */
+@media (min-width: 768px) {
+  .light {
+    --ink-2: rgba(26, 35, 48, 0.78);
+    --ink-3: rgba(26, 35, 48, 0.60);
+    --ink-4: rgba(26, 35, 48, 0.45);
+  }
+}
+
 /* 首页固定深色：无论全局主题如何，首页始终使用深色变量 */
 body:has(.home-dark-scope) {
   --background: #050505;

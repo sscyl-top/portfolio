@@ -118,11 +118,11 @@ export function ContactForm({
       className="scroll-mt-24 rounded-lg border border-edge-2 bg-surface-3 p-4 md:p-5"
     >
       <div className="border-b border-edge-2 pb-4">
-        <p className="font-mono text-[10px] uppercase text-copper">
+        <p className="font-mono text-[10px] uppercase text-copper md:text-xs md:font-medium">
           {type === "hiring" ? "Hiring enquiry" : "Commercial enquiry"}
         </p>
         <h3 className="mt-3 text-3xl font-semibold text-ink">{title}</h3>
-        <p className="mt-3 max-w-xl text-[15px] leading-7 text-ink-2">
+        <p className="mt-3 max-w-xl text-[15px] leading-7 text-ink-2 md:text-base md:leading-8">
           {description}
         </p>
       </div>
