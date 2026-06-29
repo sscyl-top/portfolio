@@ -96,7 +96,7 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="min-h-screen overflow-x-hidden bg-background text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
+      <body className="min-h-screen bg-background text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <ThemeProvider>
           <GlobalPageLoader />
           <GlobalDragDropPrevention />

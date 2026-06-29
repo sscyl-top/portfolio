@@ -43,7 +43,7 @@ export async function SiteHeader({
   const avatarHref = user ? "/admin" : "/resume";
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 w-screen border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
+    <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <nav className="relative mx-auto h-12 max-w-[1420px] px-2 sm:h-14 sm:px-3 md:h-24 md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:px-8">
         {/* 左侧 Logo */}
         <Link
