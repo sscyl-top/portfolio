@@ -29,7 +29,7 @@ export function MobileNavRight({
       return (
         <Link
           href={avatarHref}
-          className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge sm:hidden"
+          className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge sm:hidden"
           aria-label={userLoggedIn ? "进入后台" : "查看简历"}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -45,7 +45,7 @@ export function MobileNavRight({
     return (
       <Link
         href={avatarHref}
-        className="flex h-9 w-16 shrink-0 items-center justify-end sm:hidden"
+        className="flex h-11 w-20 shrink-0 items-center justify-end sm:hidden"
         aria-label={userLoggedIn ? "进入后台" : "查看简历"}
       >
         <Image
@@ -53,7 +53,7 @@ export function MobileNavRight({
           alt="无限进步"
           width={120}
           height={30}
-          className="h-auto w-[4rem] shrink-0"
+          className="h-auto w-[4.5rem] shrink-0"
           priority
           style={{ filter: "var(--png-filter)" }}
         />
