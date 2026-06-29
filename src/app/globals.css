@@ -244,7 +244,7 @@ button {
   }
 
   to {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-25%, 0, 0);
   }
 }
 
@@ -484,7 +484,7 @@ button {
 }
 
 .ticker-track {
-  animation: ticker 30s linear infinite;
+  animation: ticker 45s linear infinite;
   will-change: transform;
 }
 

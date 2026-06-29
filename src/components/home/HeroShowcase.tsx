@@ -441,25 +441,13 @@ function HeroTicker({
       ? textOverrides.tickerItems
       : resume.highlights;
 
-  // 构建带分隔符的 items 数组（在每个元素之间插入 "·"）
-  const itemsWithDots: string[] = [];
-  tickerItems.forEach((item, i) => {
-    itemsWithDots.push(item);
-    if (i < tickerItems.length - 1) {
-      itemsWithDots.push("·");
-    }
-  });
-
   return (
-    <div className="absolute inset-x-0 top-16 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-2.5 md:top-24 md:py-3">
-      <div className="ticker-track flex w-max min-w-[200%] items-center font-mono text-xs text-white/40">
-        {[0, 1].map((group) => (
-          <div key={group} className="ticker-group flex shrink-0 items-center gap-8 whitespace-nowrap pr-8">
-            {itemsWithDots.map((item, index) => (
-              <span
-                key={`${group}-${index}`}
-                className={item === "·" ? "text-copper" : ""}
-              >
+    <div className="absolute inset-x-0 top-16 z-10 overflow-hidden border-y border-white/10 bg-white/[0.025] py-3.5 md:top-24 md:py-4">
+      <div className="ticker-track flex w-max items-center font-mono text-sm text-white/45 md:text-base">
+        {[0, 1, 2, 3].map((group) => (
+          <div key={group} className="ticker-group flex shrink-0 items-center gap-10 whitespace-nowrap px-5">
+            {tickerItems.map((item, index) => (
+              <span key={`${group}-${index}`}>
                 {item}
               </span>
             ))}
