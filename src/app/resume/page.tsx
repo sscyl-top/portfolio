@@ -69,20 +69,20 @@ export default async function ResumePage() {
           </div>
 
           <div className="py-10 md:-translate-y-14">
-            <p className="font-mono text-xs uppercase text-copper md:text-sm">
+            <p className="font-mono text-sm uppercase text-copper">
               HI, I&apos;M {resume.name}
             </p>
-            <h1 className="mt-4 max-w-5xl text-5xl font-semibold leading-[0.88] text-ink sm:text-6xl md:text-8xl lg:text-9xl">
+            <h1 className="mt-4 max-w-5xl text-7xl font-semibold leading-[0.88] text-ink md:text-8xl lg:text-9xl">
               BRAND
               <span className="block text-transparent [-webkit-text-stroke:1px_var(--ink-3)]">
                 VISUAL
               </span>
             </h1>
-            <div className="mt-5 flex max-w-4xl flex-wrap gap-1.5 md:mt-8 md:gap-2">
+            <div className="mt-5 flex max-w-4xl flex-wrap gap-2">
               {resume.highlights.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-edge-2 bg-surface-3 px-3 py-1.5 font-mono text-[11px] text-ink-2 md:px-4 md:py-2 md:text-xs"
+                  className="rounded-full border border-edge-2 bg-surface-3 px-3.5 py-2 font-mono text-xs text-ink-2 md:px-4 md:py-2 md:text-xs"
                 >
                   {item}
                 </span>
@@ -96,20 +96,20 @@ export default async function ResumePage() {
             </p>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <a
-                href={resume.downloads.pdf}
+                href={resume.downloads.jpg}
                 download
                 className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-page-bg transition hover:bg-copper md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
-                下载简历 PDF
+                下载简历 JPG
               </a>
               <a
-                href={resume.downloads.jpg}
+                href={resume.downloads.pdf}
                 download
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-edge px-4 py-2.5 text-[13px] text-ink-2 transition hover:border-edge hover:text-ink md:px-5 md:py-3 md:text-sm"
               >
                 <Download aria-hidden="true" className="h-4 w-4" />
-                下载简历 JPG
+                下载简历 PDF
               </a>
             </div>
           </div>
