@@ -4,8 +4,8 @@ import { useEffect } from "react";
 
 const SECTION_TITLES: Record<string, string> = {
   "section-featured": "sscyl.top-代表作",
-  "section-works": "sscyl.top-全部作品",
-  "section-composite": "sscyl.top-复合设计",
+  "section-works": "sscyl.top-分类作品",
+  "section-composite": "sscyl.top-早期作品",
 };
 
 export function SectionTitleObserver() {

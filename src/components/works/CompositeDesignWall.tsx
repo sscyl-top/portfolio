@@ -97,7 +97,7 @@ export function CompositeDesignWall({
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        setScrollShift(window.scrollY * 0.035);
+        setScrollShift(window.scrollY * 0.05);
       });
     };
 
@@ -138,10 +138,10 @@ export function CompositeDesignWall({
       <div className="relative mx-auto max-w-7xl">
         <div className="mb-16 text-center md:mb-28">
           <p className="font-mono text-xs uppercase text-copper" data-text-key="works.compositeKicker">
-            {textOverrides.compositeKicker || "Composite Design / Visual Flow"}
+            {textOverrides.compositeKicker || "Early Works / Archive"}
           </p>
           <h2 className="mt-3 text-4xl font-semibold text-ink md:text-7xl" data-text-key="works.compositeTitle">
-            {textOverrides.compositeTitle || "复合设计"}
+            {textOverrides.compositeTitle || "早期作品"}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink-2 md:text-base md:leading-8" data-text-key="works.compositeDescription">
             {textOverrides.compositeDescription ||
@@ -153,10 +153,10 @@ export function CompositeDesignWall({
           {displayWorks.map((work, index) => {
             const column = index % 4;
             const direction = column % 2 === 0 ? -1 : 1;
-            const yOffset = direction * ((scrollShift + column * 10) % 34);
+            const yOffset = direction * ((scrollShift + column * 12) % 56);
             const mobileColumn = index % 2;
             const mobileDirection = mobileColumn % 2 === 0 ? -1 : 1;
-            const mobileYOffset = mobileDirection * ((scrollShift * 0.4 + mobileColumn * 8) % 16);
+            const mobileYOffset = mobileDirection * ((scrollShift * 0.8 + mobileColumn * 12) % 32);
 
             return (
               <Link
@@ -246,33 +246,31 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-24 z-40 flex justify-center md:top-28">
-            {ctaCenterLogoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={ctaCenterLogoUrl}
-                alt="中心Logo"
-                className={`cta-logo-image h-auto w-[min(360px,64vw)] ${ctaVisible ? "is-visible" : ""}`}
-                style={{
-                  transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
-                  transformOrigin: "center center",
-                }}
-              />
-            ) : (
-              <Image
-                src={infiniteProgressLogo}
-                alt="无限进步"
-                width={360}
-                height={90}
-                className={`cta-logo-image h-auto w-[min(360px,64vw)] ${
-                  ctaVisible ? "is-visible" : ""
-                }`}
-                style={{
-                  transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
-                  transformOrigin: "center center",
-                }}
-              />
-            )}
+          <div className="pointer-events-none absolute inset-x-0 top-28 z-40 flex justify-center md:top-28">
+            <div
+              className={`cta-logo-fade ${ctaVisible ? "is-visible" : ""}`}
+              style={{
+                transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
+                transformOrigin: "center center",
+              }}
+            >
+              {ctaCenterLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={ctaCenterLogoUrl}
+                  alt="中心Logo"
+                  className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                />
+              ) : (
+                <Image
+                  src={infiniteProgressLogo}
+                  alt="无限进步"
+                  width={360}
+                  height={90}
+                  className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                />
+              )}
+            </div>
           </div>
 
           <div
@@ -320,7 +318,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-24 left-1/2 z-30 h-[320px] w-[min(400px,72vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[380px] w-[min(420px,78vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {ctaFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -338,30 +336,30 @@ export function CompositeDesignWall({
           </div>
 
           <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-4 md:pb-2">
-            <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-3 px-4 sm:w-auto sm:flex-row sm:gap-9 md:px-8 md:gap-9">
+            <div className="flex w-full max-w-2xl flex-row items-center justify-center gap-1.5 px-3 md:gap-6 md:px-8">
               <Link
                 href="/resume"
-                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-edge bg-glass-strong px-6 text-sm text-ink backdrop-blur transition hover:border-edge hover:text-ink sm:w-48"
+                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-2 text-[11px] text-ink backdrop-blur transition hover:border-edge hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaResume"
               >
-                <FileText className="h-4 w-4" aria-hidden="true" />
-                {textOverrides.ctaResume || "查看简历"}
+                <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
+                <span className="truncate">{textOverrides.ctaResume || "查看简历"}</span>
               </Link>
               <Link
                 href="/resume#hiring-contact"
-                className="group inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full bg-ink px-6 text-sm font-semibold text-page-bg transition hover:bg-cyan sm:w-52"
+                className="group inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full bg-ink px-2 text-[11px] font-semibold text-page-bg transition hover:bg-cyan md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
                 data-text-key="works.ctaHiring"
               >
-                <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
-                {textOverrides.ctaHiring || "聘用联系"}
+                <BriefcaseBusiness className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
+                <span className="truncate">{textOverrides.ctaHiring || "聘用联系"}</span>
               </Link>
               <Link
                 href="/resume#commercial-contact"
-                className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-edge bg-glass-strong px-6 text-sm text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink sm:w-48"
+                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-2 text-[11px] text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaCommercial"
               >
-                <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-                {textOverrides.ctaCommercial || "商业咨询"}
+                <MessagesSquare className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
+                <span className="truncate">{textOverrides.ctaCommercial || "商业咨询"}</span>
               </Link>
             </div>
           </div>

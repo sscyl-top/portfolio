@@ -70,10 +70,10 @@ export function WorksExplorer({
       <div className="relative mx-auto max-w-[1500px]">
         <div className="mb-10 text-center">
           <p className="font-mono text-xs uppercase text-copper">
-            Projects / Works Archive
+            Categories / Design Archive
           </p>
           <h2 className="mt-4 text-4xl font-semibold leading-tight text-ink md:text-7xl" data-text-key="works.allWorksTitle">
-            全部作品
+            分类作品
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink-2 md:mt-6 md:text-lg md:leading-8" data-text-key="works.allWorksDescription">
             按视觉设计、品牌全案、概念设计、包装设计、电商设计和工作案例切换。后续接入后台后，每个分类会自动读取你发布的作品数量。

@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
 
 const FROM_TITLES: Record<string, string> = {
   featured: "sscyl.top-代表作",
-  works: "sscyl.top-全部作品",
-  composite: "sscyl.top-复合设计",
+  works: "sscyl.top-分类作品",
+  composite: "sscyl.top-早期作品",
 };
 
 export async function generateMetadata({
@@ -26,7 +26,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const { from } = await searchParams;
   const fromKey = Array.isArray(from) ? from[0] : from;
-  const pageTitle = FROM_TITLES[fromKey ?? ""] ?? "sscyl.top-全部作品";
+  const pageTitle = FROM_TITLES[fromKey ?? ""] ?? "sscyl.top-分类作品";
 
   const repository = await createServerCmsRepository();
   const work = await repository.getWorkBySlug(slug);

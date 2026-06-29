@@ -269,12 +269,12 @@ button {
 @keyframes cta-logo-cut-in {
   0% {
     opacity: 0;
-    transform: translateY(-24px) scale(0.92) skewX(-6deg);
+    transform: translate(var(--logo-offset-x, 0), calc(var(--logo-offset-y, 0) - 24px)) scale(calc(var(--logo-scale, 1) * 0.92)) skewX(-6deg);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1) skewX(0);
+    transform: translate(var(--logo-offset-x, 0), var(--logo-offset-y, 0)) scale(var(--logo-scale, 1)) skewX(0);
   }
 }
 
@@ -474,18 +474,105 @@ button {
   will-change: transform;
 }
 
-.cta-logo-image {
+.cta-logo-fade {
   opacity: 0;
-  transform: translateY(-24px) scale(0.92) skewX(-6deg);
+  animation: cta-logo-fade-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-play-state: paused;
 }
 
-.cta-logo-image.is-visible {
-  animation: cta-logo-cut-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+.cta-logo-fade.is-visible {
+  animation-play-state: running;
+}
+
+@keyframes cta-logo-fade-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
 }
 
 .ticker-track {
   animation: ticker 10s linear infinite;
   will-change: transform;
+}
+
+.light .portfolio-cta-panel {
+  background: linear-gradient(180deg, transparent 0%, rgba(166, 124, 82, 0.06) 30%, rgba(166, 124, 82, 0.12) 100%);
+}
+
+.light .portfolio-cta-panel .cta-card-upload-slot {
+  border-color: rgba(26, 35, 48, 0.12);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(166, 124, 82, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
+  box-shadow: 0 20px 60px rgba(10, 25, 50, 0.08);
+}
+
+.light .portfolio-cta-panel .cta-logo-img {
+  filter: brightness(0) invert(0.25) sepia(0.3) saturate(2) hue-rotate(330deg);
+}
+
+.light .portfolio-cta-panel .cta-logo-ticker img {
+  filter: invert(0.25) sepia(0.15) saturate(1.5) hue-rotate(330deg) brightness(0.9);
+  mix-blend-mode: normal !important;
+  opacity: 0.55 !important;
+}
+
+.light .portfolio-cta-panel .cta-card-image {
+  filter: saturate(0.25) brightness(1.08) hue-rotate(-30deg) sepia(0.28) contrast(0.92);
+  opacity: 0.85;
+}
+
+.light .portfolio-cta-panel a[href*="hiring-contact"] {
+  background: var(--copper) !important;
+  color: #ffffff !important;
+}
+
+.light .portfolio-cta-panel a[href*="hiring-contact"]:hover {
+  background: var(--cyan) !important;
+  color: #ffffff !important;
+}
+
+.light .portfolio-cta-panel a:not([href*="hiring-contact"]) {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(26, 35, 48, 0.15) !important;
+  color: rgba(26, 35, 48, 0.85) !important;
+  backdrop-filter: blur(12px);
+}
+
+.light .portfolio-cta-panel a:not([href*="hiring-contact"]):hover {
+  border-color: var(--copper) !important;
+  color: rgba(26, 35, 48, 1) !important;
+}
+
+@media (max-width: 767px) {
+  .portfolio-cta-panel {
+    min-height: 620px;
+    padding-bottom: 80px;
+  }
+
+  .portfolio-cta-panel .cta-logo-ticker {
+    bottom: 240px;
+  }
+
+  .portfolio-cta-panel > div:last-child {
+    background: linear-gradient(to top, rgba(12, 15, 19, 0.95), rgba(12, 15, 19, 0.5), transparent 60%);
+    padding-top: 80px;
+  }
+
+  .portfolio-cta-panel > div:last-child .cta-figure-upload-slot {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .light .portfolio-cta-panel > div:last-child {
+    background: linear-gradient(to top, rgba(247, 251, 253, 0.95), rgba(247, 251, 253, 0.7), transparent);
+  }
 }
 
 .resume-contact-marquee-track {

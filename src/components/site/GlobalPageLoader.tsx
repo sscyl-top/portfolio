@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
  */
 
 // 导航延迟阈值：超过这个时间还没完成导航，才显示 loader
-const NAVIGATION_DELAY_MS = 300;
+const NAVIGATION_DELAY_MS = 400;
 
 function isMainPage(pathname: string): boolean {
   if (pathname === "/") return true;
@@ -47,6 +47,8 @@ export function GlobalPageLoader() {
   const navDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 记录是否正在等待导航
   const pendingNavRef = useRef<string | null>(null);
+  // 记录是否已经启动过首次动画（防止重复启动）
+  const initialAnimationStarted = useRef(false);
 
   const startAnimation = () => {
     cancelAnimationFrame(animationRef.current);
@@ -77,9 +79,14 @@ export function GlobalPageLoader() {
       isFirstMount.current = false;
       return;
     }
-    // 使用 requestAnimationFrame 延迟启动动画，避免在 effect 中直接调用 setState
+
+    // 延迟到下一帧启动动画，确保组件完全挂载
     const frameId = requestAnimationFrame(() => {
-      startAnimation();
+      // 只在首次挂载时启动动画，后续 pathname 变化不重复启动
+      if (!initialAnimationStarted.current) {
+        startAnimation();
+        initialAnimationStarted.current = true;
+      }
     });
     isFirstMount.current = false;
 
