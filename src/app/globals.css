@@ -403,7 +403,7 @@ button {
 .works-route-blob-b {
   left: 0;
   top: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(110, 250, 245, 0.95), rgba(90, 240, 235, 0.58) 30%, rgba(70, 225, 220, 0.22) 58%, transparent 75%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 255, 250, 1), rgba(0, 245, 248, 0.75) 30%, rgba(0, 220, 235, 0.40) 58%, transparent 75%);
   animation: works-route-blob-b 26s ease-in-out infinite reverse;
 }
 
