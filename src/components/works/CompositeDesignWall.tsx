@@ -197,23 +197,23 @@ export function CompositeDesignWall({
                     />
                   )}
                   <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--surface-3),transparent_40%,var(--overlay-2))]" />
-                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-ink-3 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
+                  <div className="absolute inset-x-2.5 top-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-slate-600 md:inset-x-3 md:top-3 md:text-[10px] md:tracking-[0.16em]">
                     <span>{String(work.displayIndex + 1).padStart(2, "0")}</span>
                     <span>{work.year}</span>
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-white/30 bg-white/28 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_0_20px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-xl md:bottom-3 md:left-3 md:right-3 md:p-3">
+                  <div className="absolute bottom-2 left-2 right-2 rounded-md border border-slate-300/50 bg-white/70 p-2 shadow-[0_4px_20px_rgba(0,0,0,0.12),inset_0_0_20px_rgba(255,255,255,0.5),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl md:bottom-3 md:left-3 md:right-3 md:p-3">
                     <div className="flex items-start justify-between gap-2 md:gap-3">
                       <div>
-                        <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-copper md:text-[10px] md:tracking-[0.16em]">
+                        <p className="font-mono text-[8px] uppercase tracking-[0.13em] text-amber-700 md:text-[10px] md:tracking-[0.16em]">
                           {work.tags[0] ?? "Composite"}
                         </p>
-                        <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-ink md:mt-1.5 md:text-lg md:leading-tight">
+                        <h3 className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-slate-900 md:mt-1.5 md:text-lg md:leading-tight">
                           {work.title}
                         </h3>
                       </div>
                       <ArrowUpRight
                         aria-hidden="true"
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink md:mt-1 md:h-4 md:w-4"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-slate-900 md:mt-1 md:h-4 md:w-4"
                       />
                     </div>
                   </div>

@@ -72,27 +72,27 @@ const RepresentativeCard = memo(function RepresentativeCard({
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
         <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,var(--surface-3),transparent_20%),linear-gradient(to_bottom,transparent_42%,var(--overlay))]" />
-        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
+        <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-slate-600">
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
-        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/30 bg-white/28 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_0_24px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-xl transition duration-300 group-hover:border-white/38 group-hover:bg-white/32">
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-slate-300/50 bg-white/70 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.15),inset_0_0_24px_rgba(255,255,255,0.5),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl transition duration-300 group-hover:border-slate-400/60 group-hover:bg-white/80">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>
-              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-ink">{work.title}</h2>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-700">{work.category}</p>
+              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-slate-900">{work.title}</h2>
             </div>
             <ArrowUpRight
               aria-hidden="true"
-              className="mt-1 h-5 w-5 flex-none text-ink-3 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink"
+              className="mt-1 h-5 w-5 flex-none text-slate-500 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-slate-900"
             />
           </div>
-          <p className="mt-2 line-clamp-1 text-xs leading-5 text-ink-2">{work.subtitle}</p>
+          <p className="mt-2 line-clamp-1 text-xs leading-5 text-slate-700">{work.subtitle}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {work.tags.slice(0, 1).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-edge-2 bg-surface px-2.5 py-1 font-mono text-[10px] text-ink-2"
+                className="rounded-full border border-slate-200 bg-slate-100/80 px-2.5 py-1 font-mono text-[10px] text-slate-600"
               >
                 {tag}
               </span>
