@@ -11,11 +11,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_COS_CDN_DOMAIN: process.env.COS_CDN_DOMAIN || "",
   },
   images: {
-    // 启用现代图片格式（AVIF 优先，其次 WebP），显著减小图片体积
-    formats: ["image/avif", "image/webp"],
-    // 图片缓存 TTL：媒体文件使用 UUID 命名不会更改，设为1年，避免 Vercel 反复从 COS 拉取原图
-    minimumCacheTTL: 31536000,
-    qualities: [75, 85, 90],
+    unoptimized: true,
     remotePatterns: [
       {
         hostname: "127.0.0.1",
