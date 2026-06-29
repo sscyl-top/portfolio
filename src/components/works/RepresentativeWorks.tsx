@@ -76,18 +76,18 @@ const RepresentativeCard = memo(function RepresentativeCard({
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
-        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/30 bg-white/28 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_0_24px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-xl transition duration-300 group-hover:border-white/38 group-hover:bg-white/32">
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/10 bg-black/40 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-xl transition duration-300 group-hover:border-white/16 group-hover:bg-black/35">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>
-              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-ink">{work.title}</h2>
+              <h2 className="mt-1.5 text-lg font-semibold leading-tight text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{work.title}</h2>
             </div>
             <ArrowUpRight
               aria-hidden="true"
-              className="mt-1 h-5 w-5 flex-none text-ink-3 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink"
+              className="mt-1 h-5 w-5 flex-none text-white/70 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
             />
           </div>
-          <p className="mt-2 line-clamp-1 text-xs leading-5 text-ink-2">{work.subtitle}</p>
+          <p className="mt-2 line-clamp-1 text-xs leading-5 text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">{work.subtitle}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {work.tags.slice(0, 1).map((tag) => (
               <span
