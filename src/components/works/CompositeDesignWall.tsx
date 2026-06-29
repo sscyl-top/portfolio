@@ -267,6 +267,10 @@ export function CompositeDesignWall({
                 className={`cta-logo-image h-auto w-[min(360px,64vw)] ${
                   ctaVisible ? "is-visible" : ""
                 }`}
+                style={{
+                  transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
+                  transformOrigin: "center center",
+                }}
               />
             )}
           </div>
@@ -316,7 +320,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[440px] w-[min(560px,84vw)] -translate-x-1/2">
+          <div className="absolute bottom-24 left-1/2 z-30 h-[320px] w-[min(400px,72vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {ctaFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -333,8 +337,8 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-2 md:pb-2">
-            <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-5 px-4 sm:w-auto sm:flex-row sm:gap-9 md:px-8">
+          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-4 md:pb-2">
+            <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-3 px-4 sm:w-auto sm:flex-row sm:gap-9 md:px-8 md:gap-9">
               <Link
                 href="/resume"
                 className="inline-flex min-h-12 w-full flex-row-reverse items-center justify-between rounded-full border border-edge bg-glass-strong px-6 text-sm text-ink backdrop-blur transition hover:border-edge hover:text-ink sm:w-48"
