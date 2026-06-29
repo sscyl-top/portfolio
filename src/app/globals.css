@@ -676,6 +676,12 @@ button {
 
   .meteor {
     right: -320px !important;
+    top: 8% !important;
+  }
+
+  .meteor.meteor-secondary {
+    right: -250px !important;
+    top: 15% !important;
   }
 
   .meteor.is-animating {
