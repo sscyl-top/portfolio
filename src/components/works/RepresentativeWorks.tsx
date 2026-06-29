@@ -76,7 +76,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{work.year}</span>
         </div>
-        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/20 bg-white/16 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0_20px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-xl transition duration-300 group-hover:border-white/28 group-hover:bg-white/20">
+        <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/30 bg-white/28 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_0_24px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-xl transition duration-300 group-hover:border-white/38 group-hover:bg-white/32">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-copper">{work.category}</p>
