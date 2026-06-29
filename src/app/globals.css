@@ -476,8 +476,10 @@ button {
 
 .cta-logo-fade {
   opacity: 0;
-  animation: cta-logo-fade-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  transform: translateY(40px) scale(0.85);
+  animation: cta-logo-fade-in 1400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-play-state: paused;
+  will-change: transform, opacity, filter;
 }
 
 .cta-logo-fade.is-visible {
@@ -487,11 +489,17 @@ button {
 @keyframes cta-logo-fade-in {
   0% {
     opacity: 0;
-    filter: blur(8px);
+    filter: blur(16px);
+    transform: translateY(40px) scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
   }
   100% {
     opacity: 1;
     filter: blur(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -528,13 +536,14 @@ button {
 }
 
 .light .portfolio-cta-panel a[href*="hiring-contact"] {
-  background: var(--copper) !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
 .light .portfolio-cta-panel a[href*="hiring-contact"]:hover {
-  background: var(--cyan) !important;
-  color: #ffffff !important;
+  background: #f5f5f5 !important;
+  color: #000000 !important;
 }
 
 .light .portfolio-cta-panel a:not([href*="hiring-contact"]) {

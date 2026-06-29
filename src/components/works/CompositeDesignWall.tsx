@@ -248,28 +248,29 @@ export function CompositeDesignWall({
 
           <div className="pointer-events-none absolute inset-x-0 top-28 z-40 flex justify-center md:top-28">
             <div
-              className={`cta-logo-fade ${ctaVisible ? "is-visible" : ""}`}
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
                 transformOrigin: "center center",
               }}
             >
-              {ctaCenterLogoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={ctaCenterLogoUrl}
-                  alt="中心Logo"
-                  className="cta-logo-img h-auto w-[min(360px,64vw)]"
-                />
-              ) : (
-                <Image
-                  src={infiniteProgressLogo}
-                  alt="无限进步"
-                  width={360}
-                  height={90}
-                  className="cta-logo-img h-auto w-[min(360px,64vw)]"
-                />
-              )}
+              <div className={`cta-logo-fade ${ctaVisible ? "is-visible" : ""}`}>
+                {ctaCenterLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={ctaCenterLogoUrl}
+                    alt="中心Logo"
+                    className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                  />
+                ) : (
+                  <Image
+                    src={infiniteProgressLogo}
+                    alt="无限进步"
+                    width={360}
+                    height={90}
+                    className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                  />
+                )}
+              </div>
             </div>
           </div>
 
@@ -347,7 +348,7 @@ export function CompositeDesignWall({
               </Link>
               <Link
                 href="/resume#hiring-contact"
-                className="group inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full bg-ink px-2 text-[11px] font-semibold text-page-bg transition hover:bg-cyan md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
+                className="group inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full bg-white px-2 text-[11px] font-semibold text-black shadow-sm transition hover:bg-gray-100 md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
                 data-text-key="works.ctaHiring"
               >
                 <BriefcaseBusiness className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
