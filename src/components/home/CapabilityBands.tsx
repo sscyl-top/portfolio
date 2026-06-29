@@ -164,13 +164,13 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
   const entryProgressRef = useRef(0);
 
   useEffect(() => {
+    const section = sectionRef.current;
+
+    if (!section) {
+      return;
+    }
+
     const update = () => {
-      const section = sectionRef.current;
-
-      if (!section) {
-        return;
-      }
-
       const panels = Array.from(
         section.querySelectorAll<HTMLElement>("[data-strength-panel]"),
       );
@@ -207,17 +207,11 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
       }
     };
 
-    // 用 rAF 延迟首次检测，确保 dynamic({ ssr:false }) 加载完成 + Canvas 初始化后 DOM 已 commit
-    const rafId = requestAnimationFrame(() => {
-      update();
-      // 第二帧再检测一次，覆盖 Canvas 初始化导致 ref 滞后的边缘情况
-      requestAnimationFrame(update);
-    });
+    update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
 
     return () => {
-      cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };

@@ -106,7 +106,7 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 justify-self-end">
+        <div className="flex items-center gap-3 md:gap-6 justify-self-end">
           <ThemeToggle />
           {siteSettings.avatarMediaUrl ? (
           <Link
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="grid h-10 w-20 place-items-center sm:h-12 sm:w-28 md:h-16 md:w-40"
+            className="grid h-10 w-16 place-items-center place-self-end sm:h-12 sm:w-20 md:h-16 md:w-28"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
@@ -133,7 +133,7 @@ export async function SiteHeader({
               alt="无限进步"
               width={120}
               height={30}
-              className="h-auto w-[4.5rem] sm:w-28 md:w-32"
+              className="h-auto w-[4rem] sm:w-24 md:w-36"
               priority
               style={{ filter: "var(--png-filter)" }}
             />
