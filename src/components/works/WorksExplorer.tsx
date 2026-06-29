@@ -92,7 +92,7 @@ export function WorksExplorer({
                 onClick={() => setActiveCategory(category)}
                 className={`rounded-full border px-3.5 py-2 text-[13px] font-medium transition duration-300 md:px-5 md:py-2.5 md:text-sm ${
                   isActive
-                    ? "border-[color:var(--cyan)]/60 bg-[color:var(--cyan)]/10 text-ink shadow-[0_0_20px_rgba(92,224,242,0.25),0_0_40px_rgba(92,224,242,0.1)] [.light_&]:border-[color:var(--cyan)]/50 [.light_&]:bg-[color:var(--cyan)]/12 [.light_&]:shadow-[0_0_18px_rgba(42,168,192,0.2)]"
+                    ? "border-ink/80 bg-ink/[0.06] text-ink shadow-[0_0_18px_rgba(255,255,255,0.15)] [.light_&]:shadow-[0_0_16px_rgba(0,0,0,0.1)]"
                     : "border-edge-2 bg-surface-2 text-ink-2 hover:border-edge hover:bg-surface hover:text-ink"
                 }`}
               >
