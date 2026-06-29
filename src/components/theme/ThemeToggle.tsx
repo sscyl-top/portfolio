@@ -21,7 +21,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={`group grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:text-white [.light_&]:border-black/10 [.light_&]:bg-black/[0.04] [.light_&]:text-black/70 [.light_&]:hover:border-black/25 [.light_&]:hover:text-black shrink-0 ${className}`}
+      className={`group grid h-9 w-9 place-items-center rounded-lg border border-white/15 bg-white/[0.06] text-white transition hover:border-white/30 hover:bg-white/[0.08] [.light_&]:border-black/15 [.light_&]:bg-black/[0.06] [.light_&]:text-black [.light_&]:hover:border-black/30 [.light_&]:hover:bg-black/[0.08] shrink-0 ${className}`}
       aria-label={isDark ? "切换到浅色模式" : "切换到深色模式"}
       title={isDark ? "切换到浅色模式" : "切换到深色模式"}
     >
@@ -37,7 +37,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
           cy="24"
           r="22.5"
           stroke="currentColor"
-          strokeOpacity="0.3"
+          strokeOpacity="0.5"
           strokeWidth="1"
         />
         {/* 阳半（活跃）：currentColor 随主题反转 —— 深色模式显浅、浅色模式显深 */}
