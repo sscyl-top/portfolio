@@ -11,6 +11,7 @@ import {
 import type { CapabilityTextOverrides } from "@/components/home/CapabilityBands";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 
+// 注：Supabase server client 读取 cookies（用于主题/会话），保持 dynamic
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {

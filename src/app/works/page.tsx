@@ -7,6 +7,7 @@ import { WorksPageShell } from "@/components/works/WorksPageShell";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
 
+// 注：Supabase server client 读取 cookies，保持 dynamic
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {

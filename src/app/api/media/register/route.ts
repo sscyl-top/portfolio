@@ -4,7 +4,8 @@ import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
-import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+import { buildPublicMediaUrl, isR2StorageKey } from "@/lib/cms/media-url";
+import { getR2Object } from "@/lib/r2/client";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,21 @@ async function downloadFileHead(
   service: ReturnType<typeof createSupabaseServiceClient>,
   storageKey: string,
 ): Promise<Uint8Array | null> {
+  // R2 文件：直接通过 R2 SDK 拉取，不经过自身代理路由（避免递归调用与三倍带宽）
+  if (isR2StorageKey(storageKey)) {
+    try {
+      const obj = await getR2Object(storageKey);
+      if (obj && obj.body) {
+        const buf = Buffer.isBuffer(obj.body) ? obj.body : Buffer.from(obj.body);
+        return new Uint8Array(buf.slice(0, 4096));
+      }
+    } catch {
+      // best-effort
+    }
+    return null;
+  }
+
+  // 非 R2 文件：先尝试 Supabase 直读（注意：会下载完整文件，应仅用于小图）
   try {
     const { data } = await service.storage.from("portfolio-media").download(storageKey);
     if (data) {
@@ -21,6 +37,7 @@ async function downloadFileHead(
     // fall through to public URL
   }
 
+  // 最后兜底：通过 Supabase 公开 URL 拉取头部（不经过自身代理路由）
   try {
     const publicUrl = buildPublicMediaUrl(storageKey);
     const res = await fetch(publicUrl);

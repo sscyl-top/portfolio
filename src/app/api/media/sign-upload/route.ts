@@ -6,6 +6,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildStorageKey } from "@/lib/cms/admin-model";
 import { runBucketSizeLimitMigration } from "@/lib/cms/migrations";
 import { isCosConfigured, createCosSignedUploadUrl } from "@/lib/cos/client";
+import { isR2Configured, createR2SignedUploadUrl } from "@/lib/r2/client";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,23 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const storageKey = buildStorageKey(filename, id);
 
+    // 优先 R2（直传，避免 Vercel 函数带宽消耗）
+    if (isR2Configured()) {
+      // 确保 storageKey 以 r2/ 前缀开头，标记为 R2 存储
+      const r2StorageKey = storageKey.startsWith("r2/") ? storageKey : `r2/${storageKey}`;
+      const result = await createR2SignedUploadUrl(
+        r2StorageKey,
+        contentType || "application/octet-stream",
+      );
+
+      return Response.json({
+        signedUrl: result.signedUrl,
+        id: result.id,
+        storageKey: result.storageKey,
+      });
+    }
+
+    // 次选 COS（仍支持，但已被 R2 取代）
     if (isCosConfigured()) {
       const result = await createCosSignedUploadUrl(
         storageKey,
@@ -52,6 +70,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // 最后降级到 Supabase Storage
     await runBucketSizeLimitMigration().catch(() => {});
 
     const service = createSupabaseServiceClient();

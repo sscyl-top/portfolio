@@ -7,6 +7,7 @@ import {
 } from "@/lib/cms/repository";
 import { WorkDetailContent } from "@/components/works/WorkDetailContent";
 
+// 注：使用 searchParams（from/preview）必须保持 dynamic，无法启用 ISR 缓存
 export const dynamic = 'force-dynamic';
 
 const FROM_TITLES: Record<string, string> = {

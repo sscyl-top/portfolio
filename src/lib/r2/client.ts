@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getR2Config, getR2Endpoint } from "./config";
 
 export type { R2Config } from "./config";
@@ -54,6 +55,42 @@ export async function deleteR2Object(storageKey: string): Promise<void> {
       Key: storageKey,
     }),
   );
+}
+
+export type R2SignedUploadResult = {
+  signedUrl: string;
+  storageKey: string;
+  id: string;
+};
+
+/**
+ * 生成 R2 预签名上传 URL，让浏览器直接 PUT 到 R2，
+ * 避免文件经过 Vercel 函数导致带宽消耗。
+ */
+export async function createR2SignedUploadUrl(
+  storageKey: string,
+  contentType: string,
+): Promise<R2SignedUploadResult> {
+  const config = getR2Config();
+  const client = getR2Client();
+  const { randomUUID } = await import("node:crypto");
+  const id = randomUUID();
+
+  const command = new PutObjectCommand({
+    Bucket: config.bucket,
+    Key: storageKey,
+    ContentType: contentType || "application/octet-stream",
+  });
+
+  const signedUrl = await getSignedUrl(client, command, {
+    expiresIn: 3600,
+  });
+
+  return {
+    signedUrl,
+    storageKey,
+    id,
+  };
 }
 
 export type R2ObjectResult = {

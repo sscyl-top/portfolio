@@ -5,8 +5,8 @@ import { isCosPublicConfigured } from "@/lib/cos/config";
  * R2 上传的文件 storage_key 以 "r2/" 前缀标记。
  * 通过前缀自动判断文件存储在后端，无需数据库额外字段。
  *
- * R2 文件统一通过应用域名下的代理路由 /api/media/file/ 访问，
- * 避免 r2.dev 开发域名的严格速率限制。
+ * R2 文件直连 CDN URL 访问（默认 r2.dev 开发域，生产建议配置 R2_PUBLIC_URL
+ * 自定义域名）。这样不经过 Vercel 代理，避免双倍带宽消耗。
  */
 const R2_PREFIX = "r2/";
 const R2_PROXY_BASE = "/api/media/file";
@@ -15,9 +15,31 @@ export function isR2StorageKey(storageKey: string): boolean {
   return storageKey.startsWith(R2_PREFIX);
 }
 
+/**
+ * 构建 R2 直连 URL（客户端 + 服务端通用）。
+ * 优先使用 NEXT_PUBLIC_R2_PUBLIC_URL（自定义域名）；
+ * 否则使用 NEXT_PUBLIC_R2_BUCKET.NEXT_PUBLIC_R2_ACCOUNT_ID.r2.dev；
+ * 如果两者都未配置（本地开发无 R2），降级走 Vercel 代理。
+ */
+function buildR2DirectUrl(storageKey: string): string {
+  const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+  if (publicUrl) {
+    return `${publicUrl.replace(/\/$/, "")}/${storageKey}`;
+  }
+
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET;
+  const accountId = process.env.NEXT_PUBLIC_R2_ACCOUNT_ID;
+  if (bucket && accountId) {
+    return `https://${bucket}.${accountId}.r2.dev/${storageKey}`;
+  }
+
+  // 本地开发或未配置 R2 直连时，降级走代理（生产不应触发）
+  return `${R2_PROXY_BASE}/${storageKey}`;
+}
+
 export function buildPublicMediaUrl(storageKey: string): string {
   if (isR2StorageKey(storageKey)) {
-    return `${R2_PROXY_BASE}/${storageKey}`;
+    return buildR2DirectUrl(storageKey);
   }
 
   const { url } = getSupabasePublicConfig();
@@ -37,7 +59,7 @@ export function buildOptimizedMediaUrl(
 ) {
   const baseUrl = buildPublicMediaUrl(storageKey);
 
-  // R2 通过代理访问时直接返回原文件（R2 不支持变换参数）
+  // R2 通过直连访问时直接返回原文件（R2 不支持变换参数）
   if (isR2StorageKey(storageKey)) {
     return baseUrl;
   }
@@ -71,7 +93,7 @@ export function buildOptimizedMediaUrl(
     params.set("format", options.format);
   }
   if (options.quality && Number.isFinite(options.quality)) {
-    params.set("quality", String(options.quality));
+    params.set("quality", String(Math.round(options.quality)));
   }
 
   const query = params.toString();

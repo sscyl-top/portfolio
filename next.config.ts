@@ -6,9 +6,10 @@ const nextConfig: NextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
   env: {
-    NEXT_PUBLIC_COS_BUCKET: process.env.COS_BUCKET || "",
-    NEXT_PUBLIC_COS_REGION: process.env.COS_REGION || "",
-    NEXT_PUBLIC_COS_CDN_DOMAIN: process.env.COS_CDN_DOMAIN || "",
+    // 暴露 R2 直连 URL 配置到客户端（避免通过 Vercel 代理造成双倍带宽）
+    NEXT_PUBLIC_R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || "",
+    NEXT_PUBLIC_R2_BUCKET: process.env.R2_BUCKET || "",
+    NEXT_PUBLIC_R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID || "",
   },
   images: {
     unoptimized: true,
@@ -33,6 +34,11 @@ const nextConfig: NextConfig = {
       {
         hostname: "*.supabase.in",
         pathname: "/storage/v1/object/public/portfolio-media/**",
+        protocol: "https",
+      },
+      // R2 直连域名（r2.dev 开发域 + 用户自定义域名）
+      {
+        hostname: "*.r2.dev",
         protocol: "https",
       },
       {

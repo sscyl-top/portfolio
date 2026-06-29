@@ -281,7 +281,7 @@ export function SmartVideo({
       src={src}
       loop
       playsInline
-      preload="auto"
+      preload="metadata"
       controls={isLoaded && controls}
       className={`absolute inset-0 h-full w-full bg-surface-2 transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"}`}
       {...rest}
