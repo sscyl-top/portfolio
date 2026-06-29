@@ -35,6 +35,7 @@ export default async function WorksPage() {
   let siteSettings: any = {
     ctaCardMediaUrl: null,
     ctaFigureMediaUrl: null,
+    ctaFigureLightMediaUrl: null,
     ctaTickerLogoMediaUrl: null,
     ctaTickerLogoMediaUrls: [],
     ctaCenterLogoMediaUrl: null,
@@ -87,6 +88,7 @@ export default async function WorksPage() {
         textOverrides={textOverrides}
         ctaCardUrl={siteSettings.ctaCardMediaUrl}
         ctaFigureUrl={siteSettings.ctaFigureMediaUrl}
+        ctaFigureLightUrl={siteSettings.ctaFigureLightMediaUrl}
         ctaTickerLogoUrls={siteSettings.ctaTickerLogoMediaUrls}
         ctaCenterLogoUrl={siteSettings.ctaCenterLogoMediaUrl}
         ctaCardScale={siteSettings.ctaCardScale}

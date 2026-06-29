@@ -14,7 +14,7 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration, runNameMediaMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -28,6 +28,7 @@ export type PublicSiteSettings = {
   avatarMediaUrl?: string;
   ctaCardMediaUrl?: string;
   ctaFigureMediaUrl?: string;
+  ctaFigureLightMediaUrl?: string;
   ctaTickerLogoMediaUrl?: string;
   ctaTickerLogoMediaUrls: string[];
   ctaTickerLogoScale: number;
@@ -82,6 +83,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   await runWorkTablesMigration().catch(() => {});
   await runRepresentativeCoverMigration().catch(() => {});
   await runNameMediaMigration().catch(() => {});
+  await runCtaFigureLightMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -211,6 +213,7 @@ function buildSiteSettingsFromRow(
     avatarMediaUrl: getUrlForId(allIds.avatar_media_id as string | null),
     ctaCardMediaUrl: getUrlForId(allIds.cta_card_media_id as string | null),
     ctaFigureMediaUrl: getUrlForId(allIds.cta_figure_media_id as string | null),
+    ctaFigureLightMediaUrl: getUrlForId(allIds.cta_figure_light_media_id as string | null),
     ctaTickerLogoMediaUrl: getUrlForId(allIds.cta_ticker_logo_media_id as string | null),
     ctaTickerLogoMediaUrls: tickerLogoUrls,
     ctaTickerLogoScale: ctaTransform.cta_ticker_logo_scale,
@@ -360,6 +363,7 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
         "share_media_id",
         "cta_card_media_id",
         "cta_figure_media_id",
+        "cta_figure_light_media_id",
         "cta_ticker_logo_media_id",
         "cta_center_logo_media_id",
         "hero_main_video_media_id",
@@ -625,6 +629,7 @@ export async function createServerCmsRepository() {
         "share_media_id",
         "cta_card_media_id",
         "cta_figure_media_id",
+        "cta_figure_light_media_id",
         "cta_ticker_logo_media_id",
         "cta_center_logo_media_id",
         "hero_main_video_media_id",

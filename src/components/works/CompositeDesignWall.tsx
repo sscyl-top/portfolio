@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, BriefcaseBusiness, FileText, MessagesSquare } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 
 import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
@@ -36,6 +37,7 @@ type CompositeDesignWallProps = {
   textOverrides?: CompositeTextOverrides;
   ctaCardUrl?: string;
   ctaFigureUrl?: string;
+  ctaFigureLightUrl?: string;
   ctaTickerLogoUrls?: string[];
   ctaCenterLogoUrl?: string;
   ctaCardScale?: number;
@@ -57,6 +59,7 @@ export function CompositeDesignWall({
   textOverrides = {},
   ctaCardUrl = "",
   ctaFigureUrl = "",
+  ctaFigureLightUrl = "",
   ctaTickerLogoUrls = [],
   ctaCenterLogoUrl = "",
   ctaCardScale = 1,
@@ -74,7 +77,14 @@ export function CompositeDesignWall({
 }: CompositeDesignWallProps) {
   const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
   const ctaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  const isLight = mounted && resolvedTheme === "light";
+  const activeFigureUrl = isLight && ctaFigureLightUrl ? ctaFigureLightUrl : ctaFigureUrl;
 
   const displayWorks = useMemo(() => {
     if (works.length === 0) {
@@ -320,12 +330,12 @@ export function CompositeDesignWall({
           </div>
 
           <div className="absolute bottom-0 left-1/2 z-30 h-[380px] w-[min(420px,78vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
-            {ctaFigureUrl ? (
+            {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={ctaFigureUrl}
+                src={activeFigureUrl}
                 alt=""
-                className="h-full w-full object-contain object-bottom"
+                className="h-full w-full object-contain object-bottom transition-opacity duration-300"
                 style={{
                   transform: `translate(${ctaFigureOffsetX}px, ${ctaFigureOffsetY}px) scale(${ctaFigureScale})`,
                   transformOrigin: "center bottom",

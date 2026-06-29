@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -103,6 +103,7 @@ export async function saveSiteSettings(formData: FormData) {
   await runCtaTransformMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
   await runNameMediaMigration().catch(() => {});
+  await runCtaFigureLightMigration().catch(() => {});
 
   await wait(1500);
 
@@ -136,6 +137,7 @@ export async function saveSiteSettings(formData: FormData) {
     "share_media_id",
     "cta_card_media_id",
     "cta_figure_media_id",
+    "cta_figure_light_media_id",
     "cta_ticker_logo_media_id",
     "cta_center_logo_media_id",
     "hero_main_video_media_id",

@@ -4,7 +4,7 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -24,6 +24,7 @@ type SettingsRow = {
   share_media_id: string | null;
   cta_card_media_id: string | null;
   cta_figure_media_id: string | null;
+  cta_figure_light_media_id: string | null;
   cta_ticker_logo_media_id: string | null;
   cta_center_logo_media_id: string | null;
   cta_ticker_logo_media_ids: string;
@@ -64,6 +65,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runCtaTransformMigration().catch(() => {});
   await runCenterLogoMigration().catch(() => {});
   await runNameMediaMigration().catch(() => {});
+  await runCtaFigureLightMigration().catch(() => {});
 
   await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -151,6 +153,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         share_media_id: (row.share_media_id as string | null) ?? null,
         cta_card_media_id: (row.cta_card_media_id as string | null) ?? null,
         cta_figure_media_id: (row.cta_figure_media_id as string | null) ?? null,
+        cta_figure_light_media_id: (row.cta_figure_light_media_id as string | null) ?? null,
         cta_ticker_logo_media_id: (row.cta_ticker_logo_media_id as string | null) ?? null,
         cta_center_logo_media_id: ctaCenterLogoId,
         cta_ticker_logo_media_ids: tickerLogoIdsRaw,
@@ -183,6 +186,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     share_media_id: null,
     cta_card_media_id: null,
     cta_figure_media_id: null,
+    cta_figure_light_media_id: null,
     cta_ticker_logo_media_id: null,
     cta_center_logo_media_id: null,
     cta_ticker_logo_media_ids: "",
@@ -300,7 +304,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
         <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
           <h3 className="text-sm font-medium text-white/70">作品终场图片（复合设计板块底部CTA区域）</h3>
-          <p className="mt-1 text-xs text-white/40">两张不同层级的图片：背景卡在下层，人物图在上层叠加。支持 PNG 透明底 / JPG / GIF 动图 / WEBP。可分别调整缩放和 X/Y 轴位移来微调图片位置和大小。</p>
+          <p className="mt-1 text-xs text-white/40">两张不同层级的图片：背景卡在下层，人物图在上层叠加。支持 PNG 透明底 / JPG / GIF 动图 / WEBP。可分别调整缩放和 X/Y 轴位移来微调图片位置和大小。人物图支持深色 / 浅色模式分别上传，浅色模式不上传时默认复用深色模式图片。</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="grid gap-3">
               <SettingsMediaField
@@ -318,17 +322,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             </div>
             <div className="grid gap-3">
               <SettingsMediaField
-                label="终场人物图（上层）"
+                label="终场人物图 · 深色模式（上层，默认）"
                 name="cta_figure_media_id"
                 assets={mediaAssets}
                 defaultValue={settings.cta_figure_media_id ?? ""}
-                hint="上层人物/主体图，建议 PNG 透明底"
+                hint="深色模式下显示的上层人物/主体图，建议 PNG 透明底"
               />
               <div className="grid grid-cols-3 gap-2">
                 <NumberField label="缩放" name="cta_figure_scale" defaultValue={settings.cta_figure_scale} step="0.05" min="0.1" max="5" />
                 <NumberField label="X 偏移(px)" name="cta_figure_offset_x" defaultValue={settings.cta_figure_offset_x} step="1" min="-500" max="500" />
                 <NumberField label="Y 偏移(px)" name="cta_figure_offset_y" defaultValue={settings.cta_figure_offset_y} step="1" min="-500" max="500" />
               </div>
+              <SettingsMediaField
+                label="终场人物图 · 浅色模式（上层）"
+                name="cta_figure_light_media_id"
+                assets={mediaAssets}
+                defaultValue={settings.cta_figure_light_media_id ?? ""}
+                hint="浅色模式下显示的人物图，建议 PNG 透明底；不上传则复用深色模式图片"
+              />
             </div>
           </div>
           <div className="mt-4">

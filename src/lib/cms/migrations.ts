@@ -11,6 +11,7 @@ let workTablesMigrationDone = false;
 let mediaBackendMigrationDone = false;
 let representativeCoverMigrationDone = false;
 let nameMediaMigrationDone = false;
+let ctaFigureLightMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -402,6 +403,24 @@ export async function runNameMediaMigration(): Promise<boolean> {
     nameMediaMigrationDone = true;
   } else {
     console.warn("[DB Migration] name media migration could not run (need DATABASE_URL or exec_ddl RPC)");
+  }
+  return ok;
+}
+
+export async function runCtaFigureLightMigration(): Promise<boolean> {
+  if (ctaFigureLightMigrationDone) return true;
+
+  const ddlSql = `
+    ALTER TABLE public.site_settings
+      ADD COLUMN IF NOT EXISTS cta_figure_light_media_id uuid REFERENCES public.media_assets(id);
+  `;
+
+  const ok = await runDdl(ddlSql);
+  if (ok) {
+    console.log("[DB Migration] site_settings.cta_figure_light_media_id column added successfully");
+    ctaFigureLightMigrationDone = true;
+  } else {
+    console.warn("[DB Migration] cta figure light migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
   return ok;
 }
