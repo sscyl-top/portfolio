@@ -106,7 +106,7 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-6 justify-self-end">
+        <div className="flex items-center gap-4 sm:gap-6 md:gap-8 justify-self-end">
           <ThemeToggle />
           {siteSettings.avatarMediaUrl ? (
           <Link
