@@ -43,12 +43,12 @@ export async function SiteHeader({
   const avatarHref = user ? "/admin" : "/resume";
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="relative mx-auto h-12 max-w-[1420px] px-2 sm:h-14 sm:px-3 md:h-24 md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:px-8">
+    <header className="fixed left-0 right-0 top-0 z-40 w-screen border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
+      <nav className="relative mx-auto h-12 max-w-[1420px] px-2 sm:h-14 sm:px-3 md:h-24 md:px-8">
         {/* 左侧 Logo */}
         <Link
           href="/"
-          className="absolute left-2 top-1/2 flex h-full -translate-y-1/2 items-center gap-2 sm:left-3 md:static md:translate-y-0 md:shrink-0 md:gap-4"
+          className="absolute left-2 top-1/2 flex h-full -translate-y-1/2 items-center gap-2 sm:left-3 md:left-0 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
           <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-8 sm:w-8 md:h-12 md:w-12">
@@ -93,24 +93,22 @@ export async function SiteHeader({
           </span>
         </Link>
 
-        {/* 中间导航 - 手机端绝对居中，桌面端Grid居中 */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0 md:flex md:justify-center">
-          <div className="flex items-center">
-            {siteSettings.navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={true}
-                className="relative whitespace-nowrap px-2 py-1.5 text-[13px] text-ink-2 transition after:absolute after:inset-x-2 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-sm md:px-5 md:py-3 md:text-base"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+        {/* 中间导航 - 始终绝对居中，不受左右内容宽度影响 */}
+        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center">
+          {siteSettings.navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={true}
+              className="relative whitespace-nowrap px-2 py-1.5 text-[13px] text-ink-2 transition after:absolute after:inset-x-2 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-sm md:px-5 md:py-3 md:text-base"
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
 
         {/* 右侧按钮 */}
-        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-end sm:right-3 md:static md:translate-y-0 md:gap-5">
+        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-end sm:right-3 md:right-0 md:gap-5">
           <MobileNavRight
             avatarMediaUrl={siteSettings.avatarMediaUrl}
             avatarHref={avatarHref}
