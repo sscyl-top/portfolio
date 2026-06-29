@@ -44,7 +44,7 @@ export async function SiteHeader({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
-      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-3 items-center px-2 sm:h-14 sm:px-3 md:flex md:items-center md:justify-between md:px-8">
+      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-3 items-center px-2 sm:h-14 sm:px-3 md:h-24 md:flex md:items-center md:justify-between md:px-8">
         {/* 左侧 Logo */}
         <Link
           href="/"

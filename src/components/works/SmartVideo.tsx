@@ -206,6 +206,8 @@ type SmartVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "ref" |
   containerClassName?: string;
   showContainer?: boolean;
   controls?: boolean;
+  poster?: string;
+  lazyLoad?: boolean;
 };
 
 export function SmartVideo({
@@ -214,6 +216,8 @@ export function SmartVideo({
   className,
   src,
   controls = true,
+  poster,
+  lazyLoad = true,
   ...rest
 }: SmartVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -221,6 +225,7 @@ export function SmartVideo({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasMetadata, setHasMetadata] = useState(false);
+  const [inViewport, setInViewport] = useState(!lazyLoad);
 
   const togglePlay = useCallback(() => {
     const el = videoRef.current;
@@ -246,25 +251,51 @@ export function SmartVideo({
   }, []);
 
   useEffect(() => {
+    if (!lazyLoad) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setInViewport(true);
+          }
+        }
+      },
+      { threshold: 0.1, rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [lazyLoad]);
+
+  useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     setIsLoaded(false);
     setHasMetadata(false);
+
     const onLoadedMeta = () => {
       setHasMetadata(true);
-      // metadata 加载完成即认为可显示：避免 preload="metadata" 下
-      // loadeddata/canplay 不触发导致 video 永久 opacity-0 不可见
       setIsLoaded(true);
       if (el.videoWidth && el.videoHeight && wrapperRef.current) {
         wrapperRef.current.style.aspectRatio = `${el.videoWidth} / ${el.videoHeight}`;
       }
     };
+
     if (el.readyState >= 1) {
       onLoadedMeta();
     }
     el.addEventListener("loadedmetadata", onLoadedMeta);
+
+    const timeout = setTimeout(() => {
+      if (!isLoaded) {
+        setIsLoaded(true);
+      }
+    }, 3000);
+
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMeta);
+      clearTimeout(timeout);
     };
   }, [src]);
 
@@ -276,9 +307,10 @@ export function SmartVideo({
       src={src}
       loop
       playsInline
-      preload="metadata"
+      preload={inViewport ? (controls ? "auto" : "metadata") : "none"}
       controls={isLoaded && controls}
-      className={`absolute inset-0 h-full w-full bg-surface-2 transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+      poster={poster}
+      className={`relative block w-full h-auto transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"} ${className ?? ""}`}
       {...rest}
     />
   );
@@ -332,7 +364,7 @@ export function SmartVideo({
   }
 
   return (
-    <div ref={wrapperRef} style={wrapperStyle} className={wrapperBaseClass}>
+    <div ref={wrapperRef} style={wrapperStyle} className={`${wrapperBaseClass} relative`}>
       {videoElement}
       {loadingOverlay}
       {showBigButton && isLoaded && (
