@@ -330,60 +330,6 @@ button {
   }
 }
 
-/* 首页 aurora 极光球：大尺度模糊渐变，营造氛围光斑 */
-@keyframes home-aurora-drift-a {
-  0%,
-  100% {
-    transform: translate3d(calc(50vw - 50%), -25%, 0) scale(1, 1.05);
-    opacity: 0.7;
-  }
-
-  50% {
-    transform: translate3d(calc(50vw - 50% + 60px), -20%, 0) scale(1.1, 1.15);
-    opacity: 0.85;
-  }
-}
-
-@keyframes home-aurora-drift-b {
-  0%,
-  100% {
-    transform: translate3d(calc(50vw - 50% - 40px), -15%, 0) scale(0.7, 0.95);
-    opacity: 0.3;
-  }
-
-  50% {
-    transform: translate3d(calc(50vw - 50% + 20px), -10%, 0) scale(0.8, 1);
-    opacity: 0.45;
-  }
-}
-
-.home-aurora {
-  border-radius: 50%;
-  filter: blur(100px) saturate(1.1);
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
-}
-
-.home-aurora-a {
-  left: 0;
-  top: 0;
-  width: 60vw;
-  height: 130vh;
-  min-width: 520px;
-  background: radial-gradient(ellipse 50% 70% at 50% 12%, rgba(0, 224, 255, 0.65), rgba(0, 170, 255, 0.32) 42%, transparent 72%);
-  animation: home-aurora-drift-a 16s ease-in-out infinite;
-}
-
-.home-aurora-b {
-  left: 0;
-  top: 0;
-  width: 45vw;
-  height: 110vh;
-  min-width: 380px;
-  background: radial-gradient(ellipse 60% 75% at 50% 8%, rgba(60, 240, 220, 0.38), rgba(0, 200, 255, 0.18) 45%, transparent 75%);
-  animation: home-aurora-drift-b 20s ease-in-out infinite;
-}
-
 @keyframes works-route-blob-a {
   0%,
   100% {
