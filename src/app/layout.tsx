@@ -20,7 +20,6 @@ import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
 import { GlobalPageLoader } from "@/components/site/GlobalPageLoader";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { GlobalDragDropPrevention } from "@/components/GlobalDragDropPrevention";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
 import "./globals.css";
@@ -95,19 +94,17 @@ export default async function RootLayout({
   settings.navigation = applyNavTextOverrides(settings.navigation, navTexts);
 
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className="min-h-screen text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
-        <ThemeProvider>
-          <GlobalPageLoader />
-          <GlobalDragDropPrevention />
-          <SiteHeader siteSettings={settings} />
-          {children}
-          {modal}
-          <FloatingMusicBall />
-          <AnalyticsTracker />
-          <Analytics />
-          <SpeedInsights />
-        </ThemeProvider>
+    <html lang="zh-CN">
+      <body className="min-h-screen bg-[#050505] text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
+        <GlobalPageLoader />
+        <GlobalDragDropPrevention />
+        <SiteHeader siteSettings={settings} />
+        {children}
+        {modal}
+        <FloatingMusicBall />
+        <AnalyticsTracker />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
