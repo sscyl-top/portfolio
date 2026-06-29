@@ -42,7 +42,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
     <section className="relative z-10 overflow-hidden border-t border-edge-2 pb-8 pt-14 md:pt-20 md:pb-10">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div>
-          <p className="font-mono text-xs uppercase text-copper">
+          <p className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium">
             Design service / Contact
           </p>
           <h2 className="mt-3 text-3xl font-semibold text-ink md:text-6xl">
@@ -54,7 +54,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
           <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center sm:border-r lg:border-b-0">
             <Phone aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-ink-4 md:text-xs md:font-medium">
+              <span className="block font-mono text-[11px] uppercase text-ink-3 md:text-xs md:font-medium">
                 Phone
               </span>
               <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">{phone}</span>
@@ -63,7 +63,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
           <div className="group flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center lg:border-b-0 lg:border-r">
             <Mail aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-ink-4 md:text-xs md:font-medium">
+              <span className="block font-mono text-[11px] uppercase text-ink-3 md:text-xs md:font-medium">
                 Email
               </span>
               <span className="mt-1.5 block break-all text-sm font-medium text-ink md:text-lg">{email}</span>
@@ -72,7 +72,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
           <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 border-b border-edge-2 px-5 text-center sm:border-r sm:border-b-0">
             <MapPin aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-ink-4 md:text-xs md:font-medium">
+              <span className="block font-mono text-[11px] uppercase text-ink-3 md:text-xs md:font-medium">
                 Location
               </span>
               <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">
@@ -83,7 +83,7 @@ export function ContactFinale({ email, phone, location, marqueeItems }: ContactF
           <div className="flex min-h-[5.5rem] md:min-h-28 flex-col items-center justify-center gap-3 px-5 text-center">
             <MessageCircle aria-hidden="true" className="h-5 w-5 text-copper" />
             <span>
-              <span className="block font-mono text-[11px] uppercase text-ink-4 md:text-xs md:font-medium">
+              <span className="block font-mono text-[11px] uppercase text-ink-3 md:text-xs md:font-medium">
                 WeChat
               </span>
               <span className="mt-1.5 block text-sm font-medium text-ink md:text-lg">

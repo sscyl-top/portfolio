@@ -69,7 +69,7 @@ export default async function ResumePage() {
           </div>
 
           <div className="py-10 md:-translate-y-14">
-            <p className="font-mono text-sm uppercase text-copper">
+            <p className="font-mono text-sm uppercase tracking-wide text-copper md:text-base md:font-medium">
               HI, I&apos;M {resume.name}
             </p>
             <h1 className="mt-4 max-w-5xl text-7xl font-semibold leading-[0.88] text-ink md:text-8xl lg:text-9xl">
@@ -195,7 +195,7 @@ export default async function ResumePage() {
                 className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4 md:items-start"
               >
                 <div>
-                  <p className="font-mono text-xs uppercase text-ink-4 md:text-sm md:font-medium">
+                  <p className="font-mono text-xs uppercase text-ink-3 md:text-sm md:font-medium">
                     {resume.education.schoolEnglish}
                   </p>
                   <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
@@ -203,7 +203,7 @@ export default async function ResumePage() {
                   </h3>
                 </div>
                 <div>
-                  <p className="font-mono text-xs text-ink-4 md:text-sm md:font-medium">
+                  <p className="font-mono text-xs uppercase text-ink-3 md:text-sm md:font-medium">
                     {resume.education.majorEnglish}
                   </p>
                   <h3 className="mt-1.5 text-xl font-semibold text-ink md:text-2xl">
@@ -226,7 +226,7 @@ export default async function ResumePage() {
                     className="flex min-h-[72px] flex-col justify-between rounded-lg border border-edge-2 bg-surface-2 p-2 md:h-20 md:p-3 lg:h-24 lg:p-3.5"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] uppercase text-ink-4 md:text-xs md:font-medium">
+                      <span className="font-mono text-[10px] uppercase text-ink-3 md:text-xs md:font-medium">
                         {achievement.label}
                       </span>
                       {index === 0 ? (
@@ -252,7 +252,7 @@ export default async function ResumePage() {
                         {achievement.value}
                       </p>
                       {achievement.detail ? (
-                        <p className="mt-0.5 text-[11px] text-ink-3 md:text-xs">
+                        <p className="mt-0.5 text-[11px] text-ink-3 md:text-xs md:font-medium md:text-ink-2">
                           {achievement.detail}
                         </p>
                       ) : null}
@@ -281,7 +281,7 @@ export default async function ResumePage() {
                   <h3 className="text-sm font-medium text-ink md:text-base">
                     {activity.title}
                   </h3>
-                  <p className="text-sm leading-6 text-ink-3 md:text-base md:leading-7">
+                  <p className="text-sm leading-6 text-ink-2 md:text-base md:leading-8">
                     {activity.description}
                   </p>
                 </article>
@@ -319,7 +319,7 @@ function ResumeSection({
       className="grid gap-5 rounded-lg border border-edge-2 bg-surface-3 p-4 md:grid-cols-[0.35fr_1fr] md:gap-8 md:p-8"
     >
       <div>
-        <p className="font-mono text-xs uppercase text-copper">{subtitle}</p>
+        <p className="font-mono text-xs uppercase tracking-wide text-copper md:text-sm md:font-medium">{subtitle}</p>
         <h2 className="mt-2 text-2xl font-semibold text-ink md:text-3xl">{title}</h2>
       </div>
       <div>{children}</div>
