@@ -163,18 +163,18 @@ html {
 }
 
 .light .works-route-blob {
-  opacity: 0.85;
+  opacity: 0.92;
   mix-blend-mode: normal;
-  filter: blur(78px) saturate(1.2);
+  filter: blur(68px) saturate(1.25);
 }
 
 .light .works-route-blob-a {
-  background: radial-gradient(circle at 50% 50%, rgba(1, 183, 242, 0.78), rgba(1, 183, 242, 0.46) 32%, rgba(1, 183, 242, 0.16) 60%, transparent 78%);
+  background: radial-gradient(circle at 50% 50%, rgba(1, 183, 242, 0.88), rgba(1, 183, 242, 0.56) 32%, rgba(1, 183, 242, 0.2) 60%, transparent 78%);
 }
 
 .light .works-route-blob-b {
-  background: radial-gradient(circle at 50% 50%, rgba(56, 234, 230, 0.72), rgba(56, 234, 230, 0.42) 34%, rgba(56, 234, 230, 0.15) 62%, transparent 78%);
-  opacity: 0.82;
+  background: radial-gradient(circle at 50% 50%, rgba(56, 234, 230, 0.82), rgba(56, 234, 230, 0.5) 34%, rgba(56, 234, 230, 0.18) 62%, transparent 78%);
+  opacity: 0.9;
 }
 
 .featured-glow {
