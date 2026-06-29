@@ -49,14 +49,13 @@ export async function SiteHeader({
           className="group flex min-w-0 items-center gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-edge bg-surface-2 md:h-12 md:w-12">
+          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={siteSettings.logoMediaUrl}
                 alt=""
                 className="h-full w-full object-contain md:h-12 md:w-12"
-                style={{ filter: "var(--png-filter)" }}
               />
             ) : (
               <span
@@ -136,6 +135,7 @@ export async function SiteHeader({
               height={30}
               className="h-auto w-[4.5rem] sm:w-28 md:w-32"
               priority
+              style={{ filter: "var(--png-filter)" }}
             />
           </Link>
         )}

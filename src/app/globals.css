@@ -79,7 +79,7 @@
   --music-glow-medium: rgba(42, 168, 192, 0.24);
   --music-glow-strong: rgba(42, 168, 192, 0.30);
   --music-active-text: #0a1420;
-  --png-filter: invert(1);
+  --png-filter: invert(0.75);
 }
 
 /* 首页固定深色：无论全局主题如何，首页始终使用深色变量 */
