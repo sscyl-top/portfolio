@@ -42,14 +42,14 @@ export async function SiteHeader({
   const avatarHref = user ? "/admin" : "/resume";
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-lg [-webkit-backdrop-filter:blur(16px)]">
-      <nav className="mx-auto grid h-14 max-w-[1420px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 md:h-24 md:grid-cols-[1fr_auto_1fr] md:px-8">
+    <header className="fixed left-0 right-0 top-0 z-40 border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
+      <nav className="mx-auto grid h-12 max-w-[1420px] grid-cols-[auto_1fr_auto] items-center gap-1 px-2 sm:h-14 sm:gap-2 sm:px-3 md:h-24 md:grid-cols-[1fr_auto_1fr] md:gap-2 md:px-8">
         <Link
           href="/"
-          className="group flex min-w-0 items-center gap-2 md:gap-4"
+          className="group flex min-w-0 items-center gap-2 sm:gap-2 md:gap-4"
           aria-label={`${siteSettings.name} 首页`}
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-9 sm:w-9 md:h-12 md:w-12">
+          <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg sm:h-8 sm:w-8 md:h-12 md:w-12">
             {siteSettings.logoMediaUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -60,11 +60,11 @@ export async function SiteHeader({
             ) : (
               <span
                 aria-hidden="true"
-                className="nav-logo-placeholder h-6 w-6 rounded-md md:h-7 md:w-7"
+                className="nav-logo-placeholder h-5 w-5 rounded-md sm:h-6 sm:w-6 md:h-7 md:w-7"
               />
             )}
           </span>
-          <span className="relative hidden h-8 min-w-0 sm:flex sm:h-9 md:h-12">
+          <span className="relative hidden h-8 min-w-0 sm:flex md:h-12">
             {siteSettings.nameMediaUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -98,7 +98,7 @@ export async function SiteHeader({
                 key={item.href}
                 href={item.href}
                 prefetch={true}
-                className="relative px-2 py-2 text-xs text-ink-2 transition after:absolute after:inset-x-3 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-3 sm:text-sm md:px-5 md:py-3 md:text-base"
+                className="relative px-1.5 py-1.5 text-[11px] text-ink-2 transition after:absolute after:inset-x-2 after:bottom-0 after:h-px after:origin-center after:scale-x-0 after:bg-ink after:transition-transform hover:text-ink hover:after:scale-x-100 sm:px-2 sm:py-2 sm:text-xs md:px-5 md:py-3 md:text-base"
               >
                 {item.label}
               </Link>
@@ -106,12 +106,12 @@ export async function SiteHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 justify-self-end sm:gap-3 md:gap-5">
+        <div className="flex items-center gap-1.5 justify-self-end sm:gap-2 md:gap-5">
           <ThemeToggle className="shrink-0" />
           {siteSettings.avatarMediaUrl ? (
           <Link
             href={avatarHref}
-            className="hidden grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-8 w-8 shrink-0 sm:h-9 sm:w-9 md:h-12 md:w-12 sm:grid"
+            className="hidden grid place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge h-7 w-7 shrink-0 sm:h-8 sm:w-8 sm:grid md:h-12 md:w-12"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +125,7 @@ export async function SiteHeader({
         ) : (
           <Link
             href={avatarHref}
-            className="hidden h-8 w-12 place-items-center justify-end shrink-0 sm:grid sm:h-9 sm:w-14 md:h-16 md:w-28"
+            className="hidden h-7 w-10 place-items-center justify-end shrink-0 sm:grid sm:h-8 sm:w-12 md:h-16 md:w-28"
             aria-label={user ? "进入后台" : "查看简历"}
           >
             <Image
@@ -133,7 +133,7 @@ export async function SiteHeader({
               alt="无限进步"
               width={120}
               height={30}
-              className="h-auto w-[2.5rem] shrink-0 sm:w-[3rem] md:w-36"
+              className="h-auto w-[2rem] shrink-0 sm:w-[2.5rem] md:w-36"
               priority
               style={{ filter: "var(--png-filter)" }}
             />
