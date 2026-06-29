@@ -173,7 +173,7 @@ html {
 }
 
 .light .works-route-blob-b {
-  background: radial-gradient(ellipse 55% 60% at 50% 50%, rgba(0, 230, 160, 0.72), rgba(0, 210, 140, 0.42) 28%, rgba(0, 180, 120, 0.15) 55%, transparent 74%);
+  background: radial-gradient(ellipse 55% 60% at 50% 50%, rgba(0, 235, 195, 0.75), rgba(0, 215, 185, 0.45) 28%, rgba(0, 185, 165, 0.16) 55%, transparent 74%);
   opacity: 0.65;
 }
 
@@ -403,7 +403,7 @@ button {
 .works-route-blob-b {
   left: 0;
   top: 0;
-  background: radial-gradient(ellipse 55% 60% at 50% 50%, rgba(0, 255, 170, 0.95), rgba(0, 240, 150, 0.72) 25%, rgba(0, 210, 130, 0.28) 52%, transparent 72%);
+  background: radial-gradient(ellipse 55% 60% at 50% 50%, rgba(0, 255, 200, 0.95), rgba(0, 238, 190, 0.72) 25%, rgba(0, 210, 170, 0.28) 52%, transparent 72%);
   animation: works-route-blob-b 26s ease-in-out infinite reverse;
 }
 
