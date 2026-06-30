@@ -317,7 +317,7 @@ function MediaBlock({
                 </SmartGifBoundary>
               ) : media.mimeType?.startsWith("image/") ? (
                 <img
-                  src={media.url}
+                  src={media.largeUrl ?? media.url}
                   alt={media.alt ?? ""}
                   className="block w-full h-auto"
                   style={
@@ -358,7 +358,7 @@ function MediaBlock({
               ) : media.mimeType?.startsWith("image/") ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={media.url}
+                  src={media.largeUrl ?? media.url}
                   alt={media.alt ?? ""}
                   className="block w-full h-auto"
                 />

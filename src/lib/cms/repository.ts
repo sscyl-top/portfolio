@@ -297,12 +297,31 @@ async function fetchRepresentativeCovers(
   const coverMap = new Map<string, CmsMediaRow>();
   if (workIds.length === 0) return coverMap;
 
+  const selectFull = "id,representative_cover_media:media_assets!works_representative_cover_media_id_fkey(storage_key,mime_type,alt_text,thumb_storage_key,large_storage_key)";
+  const selectBase = "id,representative_cover_media:media_assets!works_representative_cover_media_id_fkey(storage_key,mime_type,alt_text)";
+
   try {
-    const { data, error } = await client
+    let data: unknown = null;
+    let error: unknown = null;
+
+    const full = await client
       .from("works")
-      .select("id,representative_cover_media:media_assets!works_representative_cover_media_id_fkey(storage_key,mime_type,alt_text)")
+      .select(selectFull)
       .in("id", workIds)
       .is("deleted_at", null);
+    data = full.data;
+    error = full.error;
+
+    // 迁移未执行时降级到 base select（不含 thumb/large 列）
+    if (isColumnNotExistError(error)) {
+      const base = await client
+        .from("works")
+        .select(selectBase)
+        .in("id", workIds)
+        .is("deleted_at", null);
+      data = base.data;
+      error = base.error;
+    }
 
     if (!error && data) {
       for (const row of data as Array<{ id: string; representative_cover_media: CmsMediaRow | CmsMediaRow[] | null }>) {
@@ -313,7 +332,7 @@ async function fetchRepresentativeCovers(
       }
     }
   } catch {
-    // column may not exist yet, silently ignore
+    // 其他错误静默忽略，代表作封面为空（页面仍可用）
   }
 
   return coverMap;
@@ -322,16 +341,15 @@ async function fetchRepresentativeCovers(
 function createSupabaseBackedRepository(client: ReturnType<typeof createSupabaseServiceClient>) {
   return createCmsRepository({
     async listPublishedWorks() {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .is("deleted_at", null)
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listPublishedWorks");
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .is("deleted_at", null)
+          .order("sort_order", { ascending: false }),
+      );
+      return enrichWorksWithMediaNoGap(client, rows, "listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -346,18 +364,16 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
       return data ?? [];
     },
     async listFeaturedWorks(): Promise<Work[]> {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .eq("is_representative", true)
-        .is("deleted_at", null)
-        .order("representative_order", { ascending: false, nullsFirst: false })
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      const rows = ((data ?? []) as unknown as CmsWorkRow[]);
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .eq("is_representative", true)
+          .is("deleted_at", null)
+          .order("representative_order", { ascending: false, nullsFirst: false })
+          .order("sort_order", { ascending: false }),
+      );
       const workIds = rows.map((r) => r.id);
       const repCoverMap = await fetchRepresentativeCovers(client, workIds);
 
@@ -371,18 +387,17 @@ function createSupabaseBackedRepository(client: ReturnType<typeof createSupabase
       return enrichWorksWithMediaNoGap(client, rows, "listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .eq("is_composite", true)
-        .is("deleted_at", null)
-        .order("composite_order", { ascending: false, nullsFirst: false })
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "listCompositeWorks");
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .eq("is_composite", true)
+          .is("deleted_at", null)
+          .order("composite_order", { ascending: false, nullsFirst: false })
+          .order("sort_order", { ascending: false }),
+      );
+      return enrichWorksWithMediaNoGap(client, rows, "listCompositeWorks");
     },
     async getSiteSettings() {
       const result = await safeQuerySiteSettings(client);
@@ -485,6 +500,19 @@ type CmsWorkRow = {
 const publicWorkSelect = `
   id,slug,title,subtitle,summary,year,status,palette,is_representative,
   representative_order,is_composite,composite_order,sort_order,
+  cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text,thumb_storage_key,large_storage_key),
+  hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text,thumb_storage_key,large_storage_key),
+  share_media:media_assets!works_share_media_id_fkey(storage_key,mime_type,alt_text,thumb_storage_key,large_storage_key),
+  work_categories(categories(name)),
+  work_tags(tags(name)),
+  work_blocks(block_type,sort_order,is_visible,payload)
+`;
+
+// 迁移未执行时的降级 select：不包含 thumb_storage_key/large_storage_key 列
+// toPublicMedia 在 thumb/large 为 undefined 时会自动回退到原 url，保证页面可用
+const publicWorkSelectBase = `
+  id,slug,title,subtitle,summary,year,status,palette,is_representative,
+  representative_order,is_composite,composite_order,sort_order,
   cover_media:media_assets!works_cover_media_id_fkey(storage_key,mime_type,alt_text),
   hover_media:media_assets!works_hover_media_id_fkey(storage_key,mime_type,alt_text),
   share_media:media_assets!works_share_media_id_fkey(storage_key,mime_type,alt_text),
@@ -493,10 +521,40 @@ const publicWorkSelect = `
   work_blocks(block_type,sort_order,is_visible,payload)
 `;
 
+/**
+ * 判断是否为 "列不存在" 错误（迁移未执行时的典型错误）
+ * 在 image_variants 迁移执行前，包含 thumb_storage_key/large_storage_key 的查询会触发此错误
+ */
+function isColumnNotExistError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: string; message?: string };
+  return err.code === "42703" || /does not exist/i.test(err.message ?? "");
+}
+
+/**
+ * 运行 works 查询，若因 thumb_storage_key/large_storage_key 列缺失导致错误，自动降级到 base select 重试
+ * 保证迁移未执行时页面仍能正常显示作品数据（仅失去多尺寸优化，回退到原图 URL）
+ */
+async function runWorkQueryWithFallback(
+  applyFilters: (select: string) => PromiseLike<{ data: unknown; error: unknown }>,
+): Promise<CmsWorkRow[]> {
+  const full = await applyFilters(publicWorkSelect);
+  if (!full.error) return (full.data ?? []) as CmsWorkRow[];
+
+  if (isColumnNotExistError(full.error)) {
+    const base = await applyFilters(publicWorkSelectBase);
+    if (!base.error) return (base.data ?? []) as CmsWorkRow[];
+    throw base.error;
+  }
+  throw full.error;
+}
+
 type CmsMediaRow = {
   alt_text: string;
   mime_type: string;
   storage_key: string;
+  thumb_storage_key?: string | null;
+  large_storage_key?: string | null;
 };
 
 export function createCmsRepository(source: CmsReadSource | null) {
@@ -588,16 +646,15 @@ export async function createServerCmsRepository() {
 
   return createCmsRepository({
     async listPublishedWorks() {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .is("deleted_at", null)
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listPublishedWorks");
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .is("deleted_at", null)
+          .order("sort_order", { ascending: false }),
+      );
+      return enrichWorksWithMediaNoGap(client, rows, "server:listPublishedWorks");
     },
     async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
       const { data, error } = await client
@@ -612,18 +669,16 @@ export async function createServerCmsRepository() {
       return data ?? [];
     },
     async listFeaturedWorks(): Promise<Work[]> {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .eq("is_representative", true)
-        .is("deleted_at", null)
-        .order("representative_order", { ascending: false, nullsFirst: false })
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      const rows = ((data ?? []) as unknown as CmsWorkRow[]);
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .eq("is_representative", true)
+          .is("deleted_at", null)
+          .order("representative_order", { ascending: false, nullsFirst: false })
+          .order("sort_order", { ascending: false }),
+      );
       const workIds = rows.map((r) => r.id);
       const repCoverMap = await fetchRepresentativeCovers(client, workIds);
 
@@ -637,18 +692,17 @@ export async function createServerCmsRepository() {
       return enrichWorksWithMediaNoGap(client, rows, "server:listFeaturedWorks");
     },
     async listCompositeWorks(): Promise<Work[]> {
-      const { data, error } = await client
-        .from("works")
-        .select(publicWorkSelect)
-        .eq("status", "published")
-        .eq("is_composite", true)
-        .is("deleted_at", null)
-        .order("composite_order", { ascending: false, nullsFirst: false })
-        .order("sort_order", { ascending: false });
-
-      if (error) throw error;
-
-      return enrichWorksWithMediaNoGap(client, ((data ?? []) as unknown as CmsWorkRow[]), "server:listCompositeWorks");
+      const rows = await runWorkQueryWithFallback((select) =>
+        client
+          .from("works")
+          .select(select)
+          .eq("status", "published")
+          .eq("is_composite", true)
+          .is("deleted_at", null)
+          .order("composite_order", { ascending: false, nullsFirst: false })
+          .order("sort_order", { ascending: false }),
+      );
+      return enrichWorksWithMediaNoGap(client, rows, "server:listCompositeWorks");
     },
     async getSiteSettings() {
       const result = await safeQuerySiteSettings(client);
@@ -712,17 +766,26 @@ export async function getPrivatePreviewWorkBySlug(slug: string, token: string) {
   if (!isSupabaseConfigured()) return null;
 
   const client = createSupabaseServiceClient();
-  const { data, error } = await client
-    .from("works")
-    .select(`private_token_hash,${publicWorkSelect}`)
-    .eq("slug", slug)
-    .eq("status", "private")
-    .is("deleted_at", null)
-    .single();
+  // 优先用完整 select（含 thumb/large 列）；若迁移未执行则降级到 base select
+  const buildQuery = (select: string) =>
+    client
+      .from("works")
+      .select(`private_token_hash,${select}`)
+      .eq("slug", slug)
+      .eq("status", "private")
+      .is("deleted_at", null)
+      .single();
+
+  let data: unknown = null;
+  let error: unknown = null;
+  ({ data, error } = await buildQuery(publicWorkSelect));
+  if (isColumnNotExistError(error)) {
+    ({ data, error } = await buildQuery(publicWorkSelectBase));
+  }
 
   if (error || !data) return null;
 
-  const row = data as unknown as CmsWorkRow;
+  const row = data as CmsWorkRow;
   if (!isPrivatePreviewTokenValid(token, row.private_token_hash ?? null)) {
     return null;
   }
@@ -1000,10 +1063,18 @@ function toPublicMedia(value: CmsWorkRow["cover_media"]): Work["coverMedia"] {
   const media = Array.isArray(value) ? value[0] : value;
   if (!media?.storage_key) return undefined;
 
+  const url = buildMediaUrl(media.storage_key);
   return {
     alt: media.alt_text,
     mimeType: media.mime_type,
-    url: buildMediaUrl(media.storage_key),
+    url,
+    // 优先使用多尺寸 URL，回退到原图
+    thumbUrl: media.thumb_storage_key
+      ? buildPublicMediaUrl(media.thumb_storage_key)
+      : url,
+    largeUrl: media.large_storage_key
+      ? buildPublicMediaUrl(media.large_storage_key)
+      : url,
   };
 }
 

@@ -7,6 +7,7 @@ import { buildStorageKey } from "@/lib/cms/admin-model";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
 import { isR2Configured, uploadR2Object, deleteR2Object } from "@/lib/r2/client";
 import { isCosConfigured, uploadCosObject, deleteCosObject } from "@/lib/cos/client";
+import { generateImageVariants, isOptimizableImage, buildVariantStorageKey } from "@/lib/cms/image-variants";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -134,6 +135,28 @@ export async function POST(request: Request) {
       }
     }
 
+    // 生成多尺寸图片（thumb + large），用于前台不同场景
+    // 仅对可优化的图片生成（排除 GIF、SVG）
+    let thumbStorageKey: string | null = null;
+    let largeStorageKey: string | null = null;
+    if (isOptimizableImage(mimeType) && backend === "r2") {
+      try {
+        const variants = await generateImageVariants(buffer, mimeType);
+        thumbStorageKey = buildVariantStorageKey(storageKey, "thumb");
+        largeStorageKey = buildVariantStorageKey(storageKey, "large");
+        // 并行上传 thumb 和 large 到 R2
+        await Promise.all([
+          uploadR2Object(thumbStorageKey, variants.thumb, variants.thumbContentType),
+          uploadR2Object(largeStorageKey, variants.large, variants.largeContentType),
+        ]);
+      } catch (err) {
+        // 多尺寸生成失败不阻断主流程，回退到原图
+        console.warn("[Media Upload] image variants generation failed:", (err as Error).message);
+        thumbStorageKey = null;
+        largeStorageKey = null;
+      }
+    }
+
     const insertData: Record<string, unknown> = {
       id,
       storage_key: storageKey,
@@ -144,9 +167,15 @@ export async function POST(request: Request) {
       height,
       alt_text: altText || file.name,
     };
-    // 仅在 content_hash 列存在时才写入，避免列不存在导致 insert 失败
+    // 仅在列存在时才写入，避免列不存在导致 insert 失败
     if (hasContentHashColumn) {
       insertData.content_hash = contentHash;
+    }
+    if (thumbStorageKey) {
+      insertData.thumb_storage_key = thumbStorageKey;
+    }
+    if (largeStorageKey) {
+      insertData.large_storage_key = largeStorageKey;
     }
 
     const { error: dbError } = await service
@@ -158,6 +187,8 @@ export async function POST(request: Request) {
     if (dbError) {
       if (backend === "r2") {
         await deleteR2Object(storageKey).catch(() => {});
+        if (thumbStorageKey) await deleteR2Object(thumbStorageKey).catch(() => {});
+        if (largeStorageKey) await deleteR2Object(largeStorageKey).catch(() => {});
       } else if (backend === "cos") {
         await deleteCosObject(storageKey).catch(() => {});
       } else {

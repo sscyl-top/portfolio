@@ -79,6 +79,9 @@ export function WorkMediaFrame({
     }
   }, [inViewport, isVideo]);
 
+  // 图片优先使用 thumbUrl（多尺寸优化），回退到 url
+  const imageUrl = media?.thumbUrl ?? media?.url;
+
   return (
     <>
       {/* 底层 toneClass 渐变（设计风格保留） */}
@@ -126,7 +129,7 @@ export function WorkMediaFrame({
           onLoad={() => setMediaLoaded(true)}
           style={positionStyle}
         />
-      ) : isStaticImage ? (
+      ) : isStaticImage && media ? (
         <Image
           alt={media.alt}
           className={`object-cover ${className} ${hoverClass}`}
@@ -134,7 +137,7 @@ export function WorkMediaFrame({
           loading={priority ? "eager" : "lazy"}
           quality={90}
           sizes="(max-width: 768px) 100vw, 50vw"
-          src={media.url}
+          src={imageUrl ?? media.url}
           style={positionStyle}
           priority={priority}
           onLoad={() => setMediaLoaded(true)}

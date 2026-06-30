@@ -46,6 +46,28 @@ export function buildPublicMediaUrl(storageKey: string): string {
   return `${url}/storage/v1/object/public/portfolio-media/${storageKey}`;
 }
 
+/**
+ * 构建 thumb 尺寸图片 URL（卡片展示用）。
+ * 如果没有 thumb_storage_key，回退到原图 URL。
+ */
+export function buildThumbMediaUrl(thumbStorageKey: string | null | undefined, originalStorageKey: string): string {
+  if (thumbStorageKey) {
+    return buildPublicMediaUrl(thumbStorageKey);
+  }
+  return buildPublicMediaUrl(originalStorageKey);
+}
+
+/**
+ * 构建 large 尺寸图片 URL（详情页展示用）。
+ * 如果没有 large_storage_key，回退到原图 URL。
+ */
+export function buildLargeMediaUrl(largeStorageKey: string | null | undefined, originalStorageKey: string): string {
+  if (largeStorageKey) {
+    return buildPublicMediaUrl(largeStorageKey);
+  }
+  return buildPublicMediaUrl(originalStorageKey);
+}
+
 export type OptimizedMediaOptions = {
   width?: number;
   height?: number;

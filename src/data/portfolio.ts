@@ -148,6 +148,10 @@ export type WorkMedia = {
   url: string;
   id?: string;
   storage_key?: string;
+  /** 缩略图 URL（卡片展示用，800px 宽） */
+  thumbUrl?: string;
+  /** 大图 URL（详情页展示用，1920px 宽） */
+  largeUrl?: string;
 };
 
 export const siteSettings = {

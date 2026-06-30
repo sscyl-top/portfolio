@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration, runCtaFigureLightTransformMigration, runMediaContentHashMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration, runCtaFigureLightTransformMigration, runMediaContentHashMigration, runImageVariantsMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -185,6 +185,7 @@ export async function saveSiteSettings(formData: FormData) {
         runCtaFigureLightMigration().catch(() => {}),
         runCtaFigureLightTransformMigration().catch(() => {}),
         runMediaContentHashMigration().catch(() => {}),
+        runImageVariantsMigration().catch(() => {}),
       ]);
       await wait(1000); // 从2.5秒减少到1秒
       continue;

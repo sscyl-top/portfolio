@@ -14,6 +14,7 @@ let nameMediaMigrationDone = false;
 let ctaFigureLightMigrationDone = false;
 let ctaFigureLightTransformMigrationDone = false;
 let mediaContentHashMigrationDone = false;
+let imageVariantsMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -469,6 +470,31 @@ export async function runMediaContentHashMigration(): Promise<boolean> {
     mediaContentHashMigrationDone = true;
   } else {
     console.warn("[DB Migration] media content hash migration could not run (need DATABASE_URL or exec_ddl RPC)");
+  }
+  return ok;
+}
+
+/**
+ * 为 media_assets 表添加 thumb_storage_key 和 large_storage_key 列，
+ * 用于存储 sharp 生成的多尺寸图片的 R2 key。
+ * - thumb:  800px 宽，适合卡片展示
+ * - large:  1920px 宽，适合详情页展示
+ */
+export async function runImageVariantsMigration(): Promise<boolean> {
+  if (imageVariantsMigrationDone) return true;
+
+  const ddlSql = `
+    ALTER TABLE public.media_assets
+      ADD COLUMN IF NOT EXISTS thumb_storage_key text,
+      ADD COLUMN IF NOT EXISTS large_storage_key text;
+  `;
+
+  const ok = await runDdl(ddlSql);
+  if (ok) {
+    console.log("[DB Migration] media_assets.thumb_storage_key and large_storage_key columns added successfully");
+    imageVariantsMigrationDone = true;
+  } else {
+    console.warn("[DB Migration] image variants migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
   return ok;
 }
