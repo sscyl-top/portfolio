@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID, createHash } from "crypto";
 import { revalidatePath } from "next/cache";
@@ -71,7 +71,8 @@ export async function uploadMediaAsset(formData: FormData) {
   const contentHash = createHash("sha256").update(buffer).digest("hex");
 
   // 查重：已存在相同 content_hash 的记录则直接复用，不再上传
-  const { data: existing } = await client
+  // 容错：如果 content_hash 列尚未迁移，查询会失败，此时跳过查重正常上传
+  const { data: existing, error: dedupError } = await client
     .from("media_assets")
     .select("id, storage_key")
     .eq("content_hash", contentHash)
@@ -79,10 +80,11 @@ export async function uploadMediaAsset(formData: FormData) {
     .limit(1)
     .maybeSingle();
 
-  if (existing) {
+  if (existing && !dedupError) {
     revalidatePath("/admin/media");
     return;
   }
+  const hasContentHashColumn = !dedupError;
 
   const id = randomUUID();
   let storageKey = buildStorageKey(file.name, id);
@@ -126,7 +128,7 @@ export async function uploadMediaAsset(formData: FormData) {
     }
   }
 
-  const { error: dbError } = await client.from("media_assets").insert({
+  const insertData: Record<string, unknown> = {
     id,
     storage_key: storageKey,
     mime_type: mimeType,
@@ -136,8 +138,13 @@ export async function uploadMediaAsset(formData: FormData) {
     height,
     duration_ms: durationMs,
     alt_text: altText || file.name,
-    content_hash: contentHash,
-  });
+  };
+  // 仅在 content_hash 列存在时才写入，避免列不存在导致 insert 失败
+  if (hasContentHashColumn) {
+    insertData.content_hash = contentHash;
+  }
+
+  const { error: dbError } = await client.from("media_assets").insert(insertData);
 
   if (dbError) {
     if (isR2Configured()) {

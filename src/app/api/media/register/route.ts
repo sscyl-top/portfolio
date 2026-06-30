@@ -124,6 +124,7 @@ export async function POST(request: Request) {
 
     // 直传场景查重：文件较小时下载完整内容计算哈希，大文件跳过查重
     let contentHash: string | null = null;
+    let hasContentHashColumn = true; // 假设列存在，查重失败时设为 false
     const sizeNum = Number(byte_size) || 0;
     if (sizeNum > 0 && sizeNum <= DEDUP_MAX_BYTES) {
       try {
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
     }
 
     if (contentHash) {
-      const { data: existing } = await service
+      const { data: existing, error: dedupError } = await service
         .from("media_assets")
         .select("id, storage_key, mime_type, original_name, byte_size")
         .eq("content_hash", contentHash)
@@ -145,7 +146,10 @@ export async function POST(request: Request) {
         .limit(1)
         .maybeSingle();
 
-      if (existing) {
+      if (dedupError) {
+        // content_hash 列可能尚未迁移，跳过查重
+        hasContentHashColumn = false;
+      } else if (existing) {
         return Response.json({
           ok: true,
           id: existing.id,
@@ -175,19 +179,24 @@ export async function POST(request: Request) {
       }
     }
 
+    const insertData: Record<string, unknown> = {
+      id,
+      storage_key,
+      mime_type: mime_type || "application/octet-stream",
+      original_name,
+      byte_size: byte_size || 0,
+      width,
+      height,
+      alt_text: alt_text || original_name,
+    };
+    // 仅在 content_hash 列存在时才写入，避免列不存在导致 insert 失败
+    if (hasContentHashColumn && contentHash) {
+      insertData.content_hash = contentHash;
+    }
+
     const { error: dbError } = await service
       .from("media_assets")
-      .insert({
-        id,
-        storage_key,
-        mime_type: mime_type || "application/octet-stream",
-        original_name,
-        byte_size: byte_size || 0,
-        width,
-        height,
-        alt_text: alt_text || original_name,
-        content_hash: contentHash,
-      })
+      .insert(insertData)
       .select("id, storage_key, original_name")
       .single();
 

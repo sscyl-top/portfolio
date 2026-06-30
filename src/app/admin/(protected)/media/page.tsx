@@ -18,7 +18,7 @@ type MediaAssetRow = {
   width: number | null;
   height: number | null;
   created_at: string;
-  content_hash: string | null;
+  content_hash?: string | null;
 };
 
 // site_settings 中引用 media_assets 的列名
@@ -93,10 +93,11 @@ export default async function AdminMediaPage({
   const supabase = await createSupabaseServerClient();
 
   // 并行查询：媒体列表 + 作品引用的 media_id（前台）+ 设置引用的 media_id（后台）
+  // 注意：只 select 已确定存在的列，避免 content_hash 列尚未迁移时整个查询失败
   let mediaQuery = supabase
     .from("media_assets")
     .select(
-      "id,storage_key,mime_type,original_name,byte_size,alt_text,width,height,created_at,content_hash",
+      "id,storage_key,mime_type,original_name,byte_size,alt_text,width,height,created_at",
     )
     .is("deleted_at", null);
 

@@ -54,7 +54,8 @@ export async function POST(request: Request) {
     const contentHash = createHash("sha256").update(buffer).digest("hex");
 
     // 查重：如果已存在相同 content_hash 且未删除的记录，直接复用，不再上传存储
-    const { data: existing } = await service
+    // 容错：如果 content_hash 列尚未迁移，查询会失败，此时跳过查重正常上传
+    const { data: existing, error: dedupError } = await service
       .from("media_assets")
       .select("id, storage_key, mime_type, original_name, byte_size")
       .eq("content_hash", contentHash)
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle();
 
-    if (existing) {
+    if (existing && !dedupError) {
       return Response.json({
         ok: true,
         id: existing.id,
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
         deduplicated: true,
       });
     }
+    const hasContentHashColumn = !dedupError;
 
     const id = randomUUID();
     const baseKey = buildStorageKey(file.name, id);
@@ -132,19 +134,24 @@ export async function POST(request: Request) {
       }
     }
 
+    const insertData: Record<string, unknown> = {
+      id,
+      storage_key: storageKey,
+      mime_type: mimeType,
+      original_name: file.name,
+      byte_size: file.size,
+      width,
+      height,
+      alt_text: altText || file.name,
+    };
+    // 仅在 content_hash 列存在时才写入，避免列不存在导致 insert 失败
+    if (hasContentHashColumn) {
+      insertData.content_hash = contentHash;
+    }
+
     const { error: dbError } = await service
       .from("media_assets")
-      .insert({
-        id,
-        storage_key: storageKey,
-        mime_type: mimeType,
-        original_name: file.name,
-        byte_size: file.size,
-        width,
-        height,
-        alt_text: altText || file.name,
-        content_hash: contentHash,
-      })
+      .insert(insertData)
       .select("id, storage_key, original_name")
       .single();
 
