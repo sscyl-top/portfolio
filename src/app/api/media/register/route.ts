@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { detectImageDimensions } from "@/lib/cms/media-metadata";
 import { buildPublicMediaUrl, isR2StorageKey } from "@/lib/cms/media-url";
-import { getR2Object } from "@/lib/r2/client";
+import { getR2Object, deleteR2Object } from "@/lib/r2/client";
 
 export const runtime = "nodejs";
 
@@ -138,11 +138,12 @@ export async function POST(request: Request) {
     }
 
     if (contentHash) {
+      // 直传查重：与 upload route 对齐，不去过滤 deleted_at
+      // 命中软删记录时复活（清空 deleted_at），并清理刚直传到 R2 的新文件，避免存储泄漏
       const { data: existing, error: dedupError } = await service
         .from("media_assets")
-        .select("id, storage_key, mime_type, original_name, byte_size")
+        .select("id, storage_key, mime_type, original_name, byte_size, deleted_at")
         .eq("content_hash", contentHash)
-        .is("deleted_at", null)
         .limit(1)
         .maybeSingle();
 
@@ -150,9 +151,24 @@ export async function POST(request: Request) {
         // content_hash 列可能尚未迁移，跳过查重
         hasContentHashColumn = false;
       } else if (existing) {
+        // 命中软删记录：复活 + 清理刚直传的新文件
+        if (existing.deleted_at) {
+          await service
+            .from("media_assets")
+            .update({ deleted_at: null })
+            .eq("id", existing.id);
+          // 清理刚直传到 R2 的新文件（旧文件仍在原 storage_key）
+          if (isR2StorageKey(storage_key)) {
+            await deleteR2Object(storage_key).catch(() => {});
+          }
+        }
         return Response.json({
           ok: true,
           id: existing.id,
+          storage_key: existing.storage_key,
+          mime_type: existing.mime_type,
+          original_name: existing.original_name,
+          byte_size: existing.byte_size,
           name: existing.original_name,
           size: existing.byte_size,
           deduplicated: true,

@@ -1,9 +1,10 @@
 /**
  * 客户端媒体上传工具函数
- * 使用服务端中转上传，避免COS/Supabase直传的CORS和签名问题
+ * 使用 R2 预签名 URL 直传，避免 Vercel 函数 4.5MB 请求体限制
+ * 流程：sign-upload（拿预签名 URL）→ 浏览器 PUT 直传 R2 → register（写库 + 查重）
  */
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10GB（R2 单次 PUT 上限）
 
 export type UploadProgress = Record<string, number>;
 
@@ -15,75 +16,116 @@ export type UploadResult = {
   byte_size: number;
 };
 
+async function signUpload(
+  filename: string,
+  contentType: string,
+  byteSize: number,
+): Promise<{ signedUrl: string; id: string; storageKey: string }> {
+  const res = await fetch("/api/media/sign-upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename, contentType, fileSize: byteSize }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`生成上传URL失败 (HTTP ${res.status}): ${text.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  if (!data.signedUrl) {
+    throw new Error(data.error || "生成上传URL失败：响应缺少 signedUrl");
+  }
+  return {
+    signedUrl: data.signedUrl,
+    id: data.id,
+    storageKey: data.storageKey,
+  };
+}
+
+async function putToR2(
+  signedUrl: string,
+  file: File,
+  onProgress: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+        resolve();
+      } else {
+        reject(new Error(`R2 直传失败 (HTTP ${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("R2 直传网络失败，请检查网络"));
+    xhr.open("PUT", signedUrl);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.send(file);
+  });
+}
+
+async function registerAsset(
+  storageKey: string,
+  file: File,
+): Promise<UploadResult> {
+  const res = await fetch("/api/media/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      storage_key: storageKey,
+      original_name: file.name,
+      mime_type: file.type || "application/octet-stream",
+      byte_size: file.size,
+      alt_text: file.name,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`注册媒体记录失败 (HTTP ${res.status}): ${text.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  if (!data.ok) {
+    throw new Error(data.error || "注册媒体记录失败");
+  }
+  return {
+    id: data.id,
+    storage_key: data.storage_key || data.storageKey || "",
+    mime_type: data.mime_type || file.type || "application/octet-stream",
+    original_name: data.original_name || data.name || file.name,
+    byte_size: data.byte_size || data.size || file.size,
+  };
+}
+
 async function uploadSingleFile(
   file: File,
   onProgress: (filename: string, pct: number) => void,
 ): Promise<UploadResult> {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      `「${file.name}」超过 ${MAX_FILE_SIZE / (1024 * 1024)}MB 单文件限制（${(file.size / 1024 / 1024).toFixed(2)}MB）`,
+      `「${file.name}」超过 ${MAX_FILE_SIZE / (1024 * 1024 * 1024)}GB 单文件限制（${(file.size / 1024 / 1024).toFixed(2)}MB）`,
     );
   }
 
   onProgress(file.name, 0);
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("alt_text", file.name);
+  // 步骤1：拿预签名 URL
+  const { signedUrl, storageKey } = await signUpload(
+    file.name,
+    file.type || "application/octet-stream",
+    file.size,
+  );
 
-  return new Promise<UploadResult>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+  // 步骤2：浏览器直传 R2
+  await putToR2(signedUrl, file, (pct) => onProgress(file.name, pct));
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const pct = Math.round((event.loaded / event.total) * 100);
-        onProgress(file.name, pct);
-      }
-    };
+  // 步骤3：注册到数据库（含查重：命中已存在/软删记录则复活，不重复存储）
+  const result = await registerAsset(storageKey, file);
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          if (data.ok) {
-            onProgress(file.name, 100);
-            resolve({
-              id: data.id,
-              storage_key: data.storage_key,
-              mime_type: data.mime_type || file.type,
-              original_name: data.original_name || file.name,
-              byte_size: data.byte_size || file.size,
-            });
-          } else {
-            reject(new Error(data.error || "上传失败"));
-          }
-        } catch {
-          reject(new Error("上传响应解析失败"));
-        }
-      } else {
-        let errorMsg = `文件上传失败 (HTTP ${xhr.status})`;
-        try {
-          const responseText = xhr.responseText;
-          if (responseText) {
-            const parsed = JSON.parse(responseText);
-            if (parsed.error || parsed.message) {
-              errorMsg = `文件上传失败: ${parsed.error || parsed.message}`;
-            } else if (responseText.length < 200) {
-              errorMsg = `文件上传失败 (HTTP ${xhr.status}): ${responseText}`;
-            }
-          }
-        } catch {
-          // ignore
-        }
-        reject(new Error(errorMsg));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error("网络连接失败，请检查网络"));
-
-    xhr.open("POST", "/api/media/upload");
-    xhr.send(formData);
-  });
+  return result;
 }
 
 export async function uploadMediaBlob(
