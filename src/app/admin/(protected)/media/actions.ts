@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID, createHash } from "crypto";
 import { revalidatePath } from "next/cache";
@@ -202,6 +202,29 @@ export async function deleteMediaAsset(formData: FormData) {
     .from("media_assets")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", parsed.data.id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/media");
+}
+
+// 批量软删：ids 为逗号分隔的 UUID 字符串
+export async function batchDeleteMediaAssets(formData: FormData) {
+  const raw = String(formData.get("ids") ?? "");
+  const ids = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .filter((s) => z.string().uuid().safeParse(s).success);
+
+  if (ids.length === 0) return;
+
+  const { client } = await requireAdmin();
+
+  const { error } = await client
+    .from("media_assets")
+    .update({ deleted_at: new Date().toISOString() })
+    .in("id", ids);
 
   if (error) throw new Error(error.message);
 
