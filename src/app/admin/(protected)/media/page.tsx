@@ -2,7 +2,6 @@ import { Save, Search, Trash2, X, Film, FileText } from "lucide-react";
 
 import { SaveButton } from "@/components/admin/SaveButton";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runMediaContentHashMigration } from "@/lib/cms/migrations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { deleteMediaAsset, updateMediaAltText } from "./actions";
@@ -87,9 +86,8 @@ export default async function AdminMediaPage({
     category = "",
   } = await searchParams;
 
-  // 确保 content_hash 列存在（进程级 flag 短路，只执行一次）
-  await runMediaContentHashMigration().catch(() => {});
-
+  // 迁移在 actions.ts 保存失败重试逻辑中处理，不在页面加载时执行
+  // （每次访问都执行 DDL 迁移是性能瓶颈根源）
   const supabase = await createSupabaseServerClient();
 
   // 并行查询：媒体列表 + 作品引用的 media_id（前台）+ 设置引用的 media_id（后台）

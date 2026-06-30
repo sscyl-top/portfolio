@@ -70,7 +70,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
       style={cardStyle}
     >
       <article className="relative h-[clamp(370px,35vw,486px)] overflow-hidden rounded-[28px]">
-        <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover />
+        <WorkMediaFrame media={work.representativeCoverMedia || work.coverMedia} tone={work.coverTone} hover priority />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,var(--surface-3),transparent_20%),linear-gradient(to_bottom,transparent_42%,var(--overlay))]" />
         <div className="absolute inset-x-4 top-4 flex items-center justify-between font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_0_6px_rgba(0,0,0,0.35)]">
           <span>{String(index + 1).padStart(2, "0")}</span>

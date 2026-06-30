@@ -89,7 +89,9 @@ export default async function AdminWorksPage({
     supabase
       .from("media_assets")
       .select("id,storage_key,mime_type")
-      .is("deleted_at", null),
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(200),
     supabase
       .from("work_categories")
       .select("work_id,categories(name)")

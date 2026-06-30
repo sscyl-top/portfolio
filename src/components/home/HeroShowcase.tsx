@@ -300,17 +300,30 @@ function HeroMainCard({
 
       {/* Background video (when configured via CMS) */}
       {videos.main ? (
-        <video
-          ref={mainVideoRef}
-          data-testid="hero-main-video"
-          src={videos.main}
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
+        <>
+          {/* 骨架占位：视频加载前显示脉冲动画，避免黑背景 */}
+          <div
+            className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent"
+            data-hero-skeleton
+            aria-hidden="true"
+          />
+          <video
+            ref={mainVideoRef}
+            data-testid="hero-main-video"
+            src={videos.main}
+            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onLoadedData={(e) => {
+              e.currentTarget.classList.remove("opacity-0");
+              const skeleton = (e.currentTarget.parentElement?.querySelector('[data-hero-skeleton]') as HTMLElement | null);
+              if (skeleton) skeleton.style.opacity = "0";
+            }}
+          />
+        </>
       ) : null}
 
       {/* Dark overlay for text readability when video is present */}
@@ -502,16 +515,29 @@ export function FloatingImageCard({
       className={`group absolute overflow-hidden rounded-lg ${toneClass(tone)} ${className}`}
     >
       {videoSrc ? (
-        <video
-          ref={videoRef}
-          data-testid="hero-floating-media-video"
-          src={videoSrc}
-          className="absolute inset-0 h-full w-full object-cover grayscale transition duration-500 group-hover:grayscale-0"
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
+        <>
+          {/* 骨架占位 */}
+          <div
+            className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent"
+            data-float-skeleton
+            aria-hidden="true"
+          />
+          <video
+            ref={videoRef}
+            data-testid="hero-floating-media-video"
+            src={videoSrc}
+            className="absolute inset-0 h-full w-full object-cover opacity-0 grayscale transition duration-500 group-hover:grayscale-0"
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onLoadedData={(e) => {
+              e.currentTarget.classList.remove("opacity-0");
+              const skeleton = (e.currentTarget.parentElement?.querySelector('[data-float-skeleton]') as HTMLElement | null);
+              if (skeleton) skeleton.style.opacity = "0";
+            }}
+          />
+        </>
       ) : null}
     </div>
   );

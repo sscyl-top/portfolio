@@ -125,6 +125,7 @@ export function WorksExplorer({
                         media={work.coverMedia}
                         tone={coverTone}
                         hover
+                        priority={index < 4}
                       />
                     ) : null}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_30%,var(--edge-3),transparent_22%),linear-gradient(120deg,var(--surface-3),transparent_34%),linear-gradient(to_bottom,transparent_56%,var(--overlay-2))]" />

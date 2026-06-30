@@ -33,7 +33,7 @@ export function AdminNav() {
         <Link
           key={href}
           href={href}
-          prefetch
+          prefetch={false}
           className="inline-flex min-h-10 items-center gap-3 rounded-md px-3 text-sm text-white/62 outline-none transition hover:bg-white/[0.06] hover:text-white focus-visible:ring-2 focus-visible:ring-cyan"
         >
           <Icon aria-hidden="true" className="h-4 w-4" />

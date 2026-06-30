@@ -20,7 +20,7 @@ export function AutoSaveForm({
   children,
   action,
   className,
-  debounceMs = 1200,
+  debounceMs = 400,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

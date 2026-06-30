@@ -49,6 +49,37 @@ async function upsertTextContent(
   }
 }
 
+/**
+ * 批量 upsert text_content：将多条记录合并为一次数据库往返
+ * 把 29 次并行 upsert 压缩为 1 次批量操作，大幅降低保存延迟
+ */
+async function batchUpsertTextContent(
+  serviceClient: ReturnType<typeof createSupabaseServiceClient>,
+  entries: Array<{ key: string; content: string }>,
+) {
+  if (entries.length === 0) return;
+  const now = new Date().toISOString();
+  const rows = entries.map(({ key, content }) => ({
+    key,
+    content,
+    page: "site_settings",
+    section: "settings",
+    sort_order: 0,
+    is_active: true,
+    deleted_at: null,
+    updated_at: now,
+  }));
+
+  const { error } = await serviceClient
+    .from("text_content")
+    .upsert(rows, { onConflict: "key" });
+
+  if (error) {
+    console.error("[Settings] batch upsert text_content failed:", error.message);
+    throw error;
+  }
+}
+
 export async function saveSiteSettings(formData: FormData) {
   await requireAdmin();
 
@@ -168,25 +199,23 @@ export async function saveSiteSettings(formData: FormData) {
 
   // 将所有 media_id 字段同时写入 text_content 作为后备存储
   // 这样即使 site_settings 的 schema cache 丢弃某些列，也能从 text_content 恢复
-  const mediaIdTextEntries: Array<[string, string]> = [];
+  const mediaIdTextEntries: Array<{ key: string; content: string }> = [];
   for (const field of mediaIdFields) {
     const val = uuidOrNull(formData.get(field));
-    mediaIdTextEntries.push([field, val ?? ""]);
+    mediaIdTextEntries.push({ key: field, content: val ?? "" });
   }
 
   try {
-    // 并行写入所有 text_content 记录
-    const ctaFigureLightMediaId = uuidOrNull(formData.get("cta_figure_light_media_id"));
-    await Promise.all([
-      ...Object.entries(ctaTransformValues).map(([key, value]) =>
-        upsertTextContent(serviceClient, key, String(value))
-      ),
-      upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds),
-      // 所有 media_id 字段都写入 text_content 作为后备
-      ...mediaIdTextEntries.map(([key, value]) =>
-        upsertTextContent(serviceClient, key, value)
-      ),
-    ]);
+    // 批量写入所有 text_content 记录（1 次数据库往返替代原来 29 次并行 upsert）
+    const allEntries: Array<{ key: string; content: string }> = [
+      ...Object.entries(ctaTransformValues).map(([key, value]) => ({
+        key,
+        content: String(value),
+      })),
+      { key: "cta_ticker_logo_media_ids", content: ctaTickerLogoMediaIds },
+      ...mediaIdTextEntries,
+    ];
+    await batchUpsertTextContent(serviceClient, allEntries);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[Settings] text_content save failed:", errMsg);

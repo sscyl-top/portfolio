@@ -480,24 +480,20 @@ export async function deleteWork(formData: FormData) {
 
   const { client } = await requireAdmin();
 
-  // 查询 slug 用于清理公开缓存
-  const { data: workRow } = await client
-    .from("works")
-    .select("slug")
-    .eq("id", id.data)
-    .single();
-
-  const { error } = await client
+  // 一次性 update + returning slug，避免先 select 再 update 的两次往返
+  const { data: deleted, error } = await client
     .from("works")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id.data);
+    .eq("id", id.data)
+    .select("slug")
+    .single();
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/works");
   revalidatePath("/works");
-  if (workRow?.slug) {
-    revalidatePath(`/works/${workRow.slug}`);
+  if (deleted?.slug) {
+    revalidatePath(`/works/${deleted.slug}`);
   }
 
   redirect("/admin/works");

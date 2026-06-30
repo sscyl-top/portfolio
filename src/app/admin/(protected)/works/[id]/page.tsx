@@ -142,7 +142,8 @@ export default async function AdminWorkEditorPage({
         .from("media_assets")
         .select("id,storage_key,mime_type,original_name,alt_text")
         .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false })
+        .limit(200),
       supabase.from("work_categories").select("category_id").eq("work_id", id),
       supabase.from("work_tags").select("tag_id").eq("work_id", id),
       supabase
