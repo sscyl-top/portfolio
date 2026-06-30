@@ -1,11 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { siteSettings as staticSiteSettings } from "@/data/portfolio";
 import type { PublicSiteSettings } from "@/lib/cms/repository";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileNavRight } from "@/components/site/MobileNavRight";
+import { AvatarLink } from "@/components/site/AvatarLink";
+import { UserStatusSync } from "@/components/site/UserStatusSync";
 
 const defaultSiteSettings: PublicSiteSettings = {
   ctaCardScale: 1,
@@ -34,17 +34,17 @@ const defaultSiteSettings: PublicSiteSettings = {
   title: staticSiteSettings.title,
 };
 
-export async function SiteHeader({
+/**
+ * SiteHeader（服务端组件，不依赖 cookies）
+ *
+ * 移除了 supabase.auth.getUser() 调用，让前台页面可被 ISR 缓存
+ * user 状态检测移到客户端组件 UserStatusSync（水合后切换 avatar href）
+ */
+export function SiteHeader({
   siteSettings = defaultSiteSettings,
 }: {
   siteSettings?: PublicSiteSettings;
 }) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const avatarHref = user ? "/admin" : "/resume";
-
   return (
     <header className="fixed left-0 right-0 top-0 z-40 w-screen border-b border-edge-2 bg-[var(--glass-nav)] backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <nav className="relative mx-auto h-12 max-w-[1420px] px-2 sm:h-14 sm:px-3 md:h-24 md:px-8">
@@ -114,46 +114,22 @@ export async function SiteHeader({
 
         {/* 右侧按钮 */}
         <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-end sm:right-3 md:right-0 md:gap-5">
-          <MobileNavRight
-            avatarMediaUrl={siteSettings.avatarMediaUrl}
-            avatarHref={avatarHref}
-            userLoggedIn={!!user}
-          />
-          <div className="hidden items-center gap-2 sm:flex sm:gap-2 md:gap-5">
-            <ThemeToggle className="shrink-0" />
-            {siteSettings.avatarMediaUrl ? (
-              <Link
-                href={avatarHref}
-                className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge md:h-12 md:w-12"
-                aria-label={user ? "进入后台" : "查看简历"}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={siteSettings.avatarMediaUrl}
-                  alt=""
-                  fetchPriority="high"
-                  className="h-full w-full object-cover"
-                  style={{ filter: "var(--png-filter)" }}
-                />
-              </Link>
-            ) : (
-              <Link
-                href={avatarHref}
-                className="grid h-8 w-12 shrink-0 place-items-center justify-end md:h-16 md:w-28"
-                aria-label={user ? "进入后台" : "查看简历"}
-              >
-                <Image
-                  src="/brand/infinite-progress-logo.svg"
-                  alt="无限进步"
-                  width={120}
-                  height={30}
-                  className="h-auto w-[2.5rem] shrink-0 md:w-36"
-                  priority
-                  style={{ filter: "var(--png-filter)" }}
-                />
-              </Link>
-            )}
-          </div>
+          {/* UserStatusSync 是客户端 Provider：水合后切换 avatar href */}
+          <UserStatusSync
+            defaultHref="/resume"
+            adminHref="/admin"
+            defaultLabel="查看简历"
+            adminLabel="进入后台"
+          >
+            <MobileNavRight avatarMediaUrl={siteSettings.avatarMediaUrl} />
+            <div className="hidden items-center gap-2 sm:flex sm:gap-2 md:gap-5">
+              <ThemeToggle className="shrink-0" />
+              <AvatarLink
+                avatarMediaUrl={siteSettings.avatarMediaUrl}
+                variant="desktop"
+              />
+            </div>
+          </UserStatusSync>
         </div>
       </nav>
     </header>

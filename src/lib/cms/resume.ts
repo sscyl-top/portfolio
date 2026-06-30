@@ -1,5 +1,5 @@
 import { resume as staticResume } from "@/data/portfolio";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getBackendReadiness } from "@/lib/supabase/config";
 
 export type ResumeExperience = {
@@ -119,7 +119,7 @@ export async function getResumeData(): Promise<ResumeData> {
     const readiness = getBackendReadiness();
     if (!readiness.cms) throw new Error("CMS not available");
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseServiceClient();
     const { data } = await supabase
       .from("resumes")
       .select(

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
+import { revalidatePath } from "next/cache";
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -29,6 +30,14 @@ export async function GET(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // 定时发布后需要刷新前台作品列表/详情 + 后台作品管理
+  // 兜底：即使本次没有作品发布（data 为空），revalidatePath 也是幂等的
+  revalidatePath("/works", "page");
+  revalidatePath("/admin/works", "page");
+  (data ?? []).forEach((w: { slug: string }) => {
+    revalidatePath(`/works/${w.slug}`, "page");
+  });
 
   return NextResponse.json({
     published: (data ?? []).length,

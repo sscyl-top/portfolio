@@ -3,7 +3,7 @@ import { HeroShowcase, type HeroData, type HeroTextOverrides } from "@/component
 import { CapabilityBands } from "@/components/home/CapabilityBands.client";
 import { resume as staticResume } from "@/data/portfolio";
 import { getBackendReadiness } from "@/lib/supabase/config";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   getTextContentsByKeys,
   parseTextContentArray,
@@ -11,8 +11,7 @@ import {
 import type { CapabilityTextOverrides } from "@/components/home/CapabilityBands";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 
-export const dynamic = 'force-dynamic';
-
+// ISR：revalidate=60 兜底（root layout 已设），后台修改通过 revalidatePath 立即刷新
 export const metadata: Metadata = {
   title: "sscyl.top-首页",
 };
@@ -92,7 +91,7 @@ async function getHomeData() {
     if (!readiness.supabase) throw new Error("Supabase not configured");
 
     const repo = await createServerCmsRepository();
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseServiceClient();
 
     const [resumeResult, siteSettings, texts] = await Promise.all([
       supabase

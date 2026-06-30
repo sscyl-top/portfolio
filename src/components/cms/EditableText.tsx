@@ -1,8 +1,51 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
 import { Check, X, Type, Palette, Bold, Save } from 'lucide-react'
 import { FONT_FAMILIES, FONT_SIZES, FONT_WEIGHTS } from '@/lib/fonts'
+
+/**
+ * Context：用于页面级批量预取 text_content 数据 + 共享 admin 状态
+ *
+ * 消除 N+1：一个页面上 N 个 EditableText 不再各自发请求，
+ * 而是从 Context 一次性读取预取数据。
+ * 没有 Provider 时，EditableText 自动回退到独立 fetch（向后兼容）。
+ */
+type EditableTextContextValue = {
+  texts: Record<string, { content: string; styles: Record<string, string> }>
+  isAdmin: boolean | null // null = 未知（还在检查），true/false = 已确认
+}
+
+const EditableTextContext = createContext<EditableTextContextValue | null>(null)
+
+/**
+ * EditableTextProvider：在页面顶层包裹，传入服务端预取的 texts
+ * 内部只发一次 /api/admin/check，所有 EditableText 共享结果
+ */
+export function EditableTextProvider({
+  texts,
+  children,
+}: {
+  texts: Record<string, { content: string; styles: Record<string, string> }>
+  children: React.ReactNode
+}) {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then((res) => res.json())
+      .then((data) => setIsAdmin(Boolean(data.isAdmin)))
+      .catch(() => setIsAdmin(false))
+  }, [])
+
+  const value = { texts, isAdmin }
+
+  return (
+    <EditableTextContext.Provider value={value}>
+      {children}
+    </EditableTextContext.Provider>
+  )
+}
 
 type EditableTextProps = {
   textKey: string
@@ -29,10 +72,14 @@ export function EditableText({
   page,
   section,
 }: EditableTextProps) {
-  const [content, setContent] = useState(initialContent ?? fallback)
-  const [styles, setStyles] = useState<Record<string, string>>(initialStyles ?? {})
-  const [isLoading, setIsLoading] = useState(!initialContent)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const ctx = useContext(EditableTextContext)
+  const ctxData = ctx?.texts[textKey]
+
+  // 优先级：initialContent prop > Context 预取数据 > fallback
+  const [content, setContent] = useState(initialContent ?? ctxData?.content ?? fallback)
+  const [styles, setStyles] = useState<Record<string, string>>(initialStyles ?? ctxData?.styles ?? {})
+  const [isLoading, setIsLoading] = useState(!(initialContent ?? ctxData))
+  const [isAdmin, setIsAdmin] = useState(ctx?.isAdmin ?? false)
   const [isEditing, setIsEditing] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -42,8 +89,11 @@ export function EditableText({
   const panelRef = useRef<HTMLDivElement>(null)
   const isSavingRef = useRef(false)
 
+  // text-content 获取：有 initialContent 或 Context 数据时跳过 fetch
   useEffect(() => {
     if (initialContent != null) return
+    if (ctxData) return
+
     fetch(`/api/text-content?key=${encodeURIComponent(textKey)}`)
       .then((res) => res.json())
       .then((data) => {
@@ -54,6 +104,16 @@ export function EditableText({
         setIsLoading(false)
       })
       .catch(() => setIsLoading(false))
+  }, [textKey, initialContent, ctxData])
+
+  // admin 检查：有 Provider 时共享 Context 结果，无 Provider 时独立 fetch
+  useEffect(() => {
+    if (ctx?.isAdmin != null) {
+      setIsAdmin(ctx.isAdmin)
+      return
+    }
+    // 有 Provider 但 admin 还在检查中 → 等待，不重复 fetch
+    if (ctx != null) return
 
     fetch('/api/admin/check')
       .then((res) => res.json())
@@ -61,7 +121,7 @@ export function EditableText({
         setIsAdmin(Boolean(data.isAdmin))
       })
       .catch(() => setIsAdmin(false))
-  }, [textKey, initialContent])
+  }, [ctx?.isAdmin, ctx])
 
   const updatePanelPosition = useCallback(() => {
     const el = elementRef.current

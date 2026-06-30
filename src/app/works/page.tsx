@@ -7,8 +7,8 @@ import { WorksPageShell } from "@/components/works/WorksPageShell";
 import { createServerCmsRepository } from "@/lib/cms/repository";
 import { getTextContentsByKeys } from "@/lib/cms/text-content";
 
-// 注：Supabase server client 读取 cookies，保持 dynamic
-export const dynamic = 'force-dynamic';
+// ISR：revalidate=60 兜底（root layout 已设），后台修改通过 revalidatePath 立即刷新
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "sscyl.top-代表作",

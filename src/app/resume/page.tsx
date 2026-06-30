@@ -9,11 +9,42 @@ import {
 import type { Metadata } from "next";
 
 import { ContactFinale } from "@/components/resume/ContactFinale";
-import { EditableText } from "@/components/cms/EditableText";
+import { EditableText, EditableTextProvider } from "@/components/cms/EditableText";
 import { getResumeData } from "@/lib/cms/resume";
 import { getTextContentsByKeys, parseTextContentArray } from "@/lib/cms/text-content";
 
-const RESUME_TEXT_KEYS = ["resume.contact.marquee"];
+// 简历页所有 EditableText 实例的 key（服务端一次性批量预取，消除客户端 N+1 请求）
+const RESUME_TEXT_KEYS = [
+  // hero 区
+  "resume.hero.yearLabel",
+  "resume.hero.greeting",
+  "resume.hero.intro",
+  "resume.hero.downloadJpg",
+  "resume.hero.downloadPdf",
+  // 5 个 section 的 title + subtitle
+  "resume.section.strengths.title",
+  "resume.section.strengths.subtitle",
+  "resume.section.experience.title",
+  "resume.section.experience.subtitle",
+  "resume.section.campus.title",
+  "resume.section.campus.subtitle",
+  "resume.section.education.title",
+  "resume.section.education.subtitle",
+  "resume.section.activities.title",
+  "resume.section.activities.subtitle",
+  // contact 区
+  "resume.contact.title",
+  "resume.contact.subtitle",
+  // 两个表单（hiring + commercial）各 3 个字段
+  "resume.contact.hiring.kicker",
+  "resume.contact.hiring.title",
+  "resume.contact.hiring.description",
+  "resume.contact.commercial.kicker",
+  "resume.contact.commercial.title",
+  "resume.contact.commercial.description",
+  // marquee（已有）
+  "resume.contact.marquee",
+];
 
 export const metadata: Metadata = {
   title: "sscyl.top-简历",
@@ -38,7 +69,13 @@ export default async function ResumePage() {
       ? parseTextContentArray(marqueeContent)
       : undefined;
 
+  // 过滤未命中的 key（content === key 表示 DB 中无此记录，回退到 fallback）
+  const editableTexts = Object.fromEntries(
+    Object.entries(texts).filter(([key, v]) => v.content !== key),
+  );
+
   return (
+    <EditableTextProvider texts={editableTexts}>
     <main className="relative isolate overflow-hidden bg-page-bg">
       <div className="works-route-blob works-route-blob-a pointer-events-none fixed z-0 h-[980px] w-[980px] rounded-full opacity-62" />
       <div className="works-route-blob works-route-blob-b pointer-events-none fixed z-0 h-[900px] w-[900px] rounded-full opacity-56" />
@@ -348,6 +385,7 @@ export default async function ResumePage() {
         marqueeItems={marqueeItems}
       />
     </main>
+    </EditableTextProvider>
   );
 }
 

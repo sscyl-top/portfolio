@@ -1,22 +1,25 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
+import { AvatarLink } from "@/components/site/AvatarLink";
+
 interface MobileNavRightProps {
   avatarMediaUrl?: string;
-  avatarHref: string;
-  userLoggedIn: boolean;
+  // 兼容旧调用方：保留 props 但忽略（实际状态由 AvatarLink 内部 useUserStatus 获取）
+  avatarHref?: string;
+  userLoggedIn?: boolean;
 }
 
+/**
+ * 移动端右上角控件：首页时显示头像链接，其他页面显示主题切换按钮
+ */
 export function MobileNavRight({
   avatarMediaUrl,
-  avatarHref,
-  userLoggedIn,
-}: MobileNavRightProps) {
+}: // avatarHref / userLoggedIn 不再使用（来自旧实现）
+MobileNavRightProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const { resolvedTheme, setTheme } = useTheme();
@@ -25,41 +28,7 @@ export function MobileNavRight({
   useEffect(() => setMounted(true), []);
 
   if (isHome) {
-    if (avatarMediaUrl) {
-      return (
-        <Link
-          href={avatarHref}
-          className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-2 bg-surface-2 transition hover:border-edge sm:hidden"
-          aria-label={userLoggedIn ? "进入后台" : "查看简历"}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatarMediaUrl}
-            alt=""
-            fetchPriority="high"
-            className="h-full w-full object-cover"
-            style={{ filter: "var(--png-filter)" }}
-          />
-        </Link>
-      );
-    }
-    return (
-      <Link
-        href={avatarHref}
-        className="flex h-11 w-20 shrink-0 items-center justify-end sm:hidden"
-        aria-label={userLoggedIn ? "进入后台" : "查看简历"}
-      >
-        <Image
-          src="/brand/infinite-progress-logo.svg"
-          alt="无限进步"
-          width={120}
-          height={30}
-          className="h-auto w-[4.5rem] shrink-0"
-          priority
-          style={{ filter: "var(--png-filter)" }}
-        />
-      </Link>
-    );
+    return <AvatarLink avatarMediaUrl={avatarMediaUrl} variant="mobile" />;
   }
 
   const isDark = resolvedTheme === "dark";

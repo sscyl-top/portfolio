@@ -1,10 +1,30 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-export const dynamic = 'force-dynamic';
+// 自托管 Geist 字体：构建时下载，浏览器零 Google Fonts 请求
+// 用 CSS variable 模式注入，由 globals.css 中的 --font-sans / --font-mono 引用
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+  display: "swap",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+  fallback: ["ui-monospace", "monospace"],
+});
+
+// ISR 策略：默认页面可被静态生成 + 按需 revalidate
+// 后台所有写入操作（Server Actions + API）通过 revalidatePath 触发刷新
+// 数据高度动态的页面（如 /admin）在子布局中单独设 dynamic='force-dynamic'
+export const revalidate = 60; // 兜底：60 秒后台自动重新生成，避免 revalidatePath 漏掉时永久缓存
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -95,12 +115,13 @@ export default async function RootLayout({
   settings.navigation = applyNavTextOverrides(settings.navigation, navTexts);
 
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-screen bg-background text-foreground antialiased [-webkit-tap-highlight-color:transparent]">
         <ThemeProvider>
           <GlobalPageLoader />
           <GlobalDragDropPrevention />
           <SiteHeader siteSettings={settings} />
+
           {children}
           {modal}
           <FloatingMusicBall />

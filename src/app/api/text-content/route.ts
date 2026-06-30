@@ -2,6 +2,56 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getBackendReadiness } from '@/lib/supabase/config'
 import { requireAdmin } from '@/lib/admin-session'
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 根据 text_content 的 key 前缀推断其影响的页面，调用对应 revalidatePath
+ *
+ * key 命名约定（与 src/data/portfolio.ts / 各页面 EditableText 一致）：
+ * - hero.* 或 home.* → 影响首页
+ * - global.nav.* → 影响所有页面（导航栏）
+ * - works.* → 影响作品列表/详情
+ * - resume.* → 影响简历页
+ * - admin.login.* → 影响后台登录页
+ *
+ * 兜底：未知前缀时 revalidate 全部前台主要路由，确保用户立即看到修改
+ */
+function revalidateTextContentPaths(key: string, page?: string | null) {
+  const pageStr = (page ?? key.split('.')[0] ?? '').toLowerCase()
+
+  // 全局导航 key 同时影响多个页面
+  if (key.startsWith('global.nav.')) {
+    revalidatePath('/', 'page')
+    revalidatePath('/works', 'page')
+    revalidatePath('/resume', 'page')
+    return
+  }
+
+  if (pageStr === 'hero' || pageStr === 'home' || key.startsWith('hero.')) {
+    revalidatePath('/', 'page')
+    return
+  }
+
+  if (pageStr === 'works' || key.startsWith('works.')) {
+    revalidatePath('/works', 'page')
+    return
+  }
+
+  if (pageStr === 'resume' || key.startsWith('resume.')) {
+    revalidatePath('/resume', 'page')
+    return
+  }
+
+  if (pageStr === 'admin' || key.startsWith('admin.login.')) {
+    revalidatePath('/admin/login', 'page')
+    return
+  }
+
+  // 兜底：未知 page 时刷新所有前台路由
+  revalidatePath('/', 'page')
+  revalidatePath('/works', 'page')
+  revalidatePath('/resume', 'page')
+}
 
 // GET /api/text-content?key=home.hero.title
 export async function GET(request: NextRequest) {
@@ -204,6 +254,9 @@ export async function PATCH(request: NextRequest) {
         )
       }
 
+      // 触发前台 ISR 重新生成（写入已落地，路径按 key 前缀精准刷新）
+      revalidateTextContentPaths(key, page ?? inferredPage)
+
       return NextResponse.json({
         success: true,
         content: data.content,
@@ -246,6 +299,9 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         )
       }
+
+      // 触发前台 ISR 重新生成（新建记录同样需要刷新前台）
+      revalidateTextContentPaths(key, page ?? inferredPage)
 
       return NextResponse.json({
         success: true,

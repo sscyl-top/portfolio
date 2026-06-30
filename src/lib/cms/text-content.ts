@@ -1,5 +1,9 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServiceClient } from '@/lib/supabase/service'
 import { getBackendReadiness } from '@/lib/supabase/config'
+
+// 注：使用 service client（不依赖 cookies）以允许页面被 ISR 缓存
+// text_content 表的所有查询都通过 .eq('is_active', true).is('deleted_at', null) 显式过滤，
+// 不需要 RLS（行级安全）。改为 server client 会让所有调用此函数的页面强制 dynamic。
 
 export type TextContentItem = {
   id: string
@@ -26,7 +30,7 @@ export async function getTextContentByKey(
       return { content: fallback || key, styles: {} }
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = createSupabaseServiceClient()
 
     const { data, error } = await supabase
       .from('text_content')
@@ -69,7 +73,7 @@ export async function getTextContentsByKeys(
       return result
     }
 
-    const supabase = await createSupabaseServerClient()
+    const supabase = createSupabaseServiceClient()
 
     const { data, error } = await supabase
       .from('text_content')
