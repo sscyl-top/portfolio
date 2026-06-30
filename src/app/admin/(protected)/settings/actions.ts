@@ -169,10 +169,26 @@ export async function saveSiteSettings(formData: FormData) {
   // 将 CTA transform 值合并进 saveData，让 site_settings 列真正生效（不再只写 text_content）
   Object.assign(saveData, ctaTransformValues);
 
+  // 查询 site_settings 表的实际列，过滤掉不存在的列，避免 upsert 报错
+  // （DATABASE_URL 和 exec_ddl RPC 都不可用时，迁移无法执行，某些列可能尚未添加）
+  // 不存在的列仍会写入 text_content 作为后备
+  const { data: schemaRow } = await serviceClient
+    .from("site_settings")
+    .select("*")
+    .limit(1)
+    .maybeSingle();
+  const existingColumns = schemaRow ? new Set(Object.keys(schemaRow)) : null;
+  const filteredSaveData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(saveData)) {
+    if (!existingColumns || existingColumns.has(key)) {
+      filteredSaveData[key] = value;
+    }
+  }
+
   let saveError: string | null = null;
   // 重试次数减少到2次（原来8次导致30秒+），迁移并行化
   for (let attempt = 0; attempt < 3; attempt++) {
-    const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
+    const { error } = await serviceClient.from("site_settings").upsert(filteredSaveData, { onConflict: "id" });
     if (!error) {
       console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
       saveError = null;

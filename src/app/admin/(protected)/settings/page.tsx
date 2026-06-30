@@ -116,6 +116,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       .limit(200),
   ]);
 
+  const rawMedia = mediaResult.data;
+  const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
+  // 构建 media_id 集合，用于校验 site_settings 值是否指向有效记录（避免指向被软删的记录）
+  const mediaIdSet = new Set(mediaAssets.map((a) => a.id));
+
   let data: SettingsRow | null = null;
 
   try {
@@ -170,11 +175,14 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         }
       }
 
-      // 辅助函数：优先用 site_settings 值，为空则用 text_content 后备
+      // 辅助函数：优先用 site_settings 值，但必须确认该值在媒体列表中（避免指向被软删的记录）
+      // site_settings 值无效时，用 text_content 后备值
       const getMediaId = (rowKey: string, fallbackKey: string): string | null => {
         const rowVal = (row[rowKey] as string | null) ?? null;
-        if (rowVal) return rowVal;
-        return mediaIdFallbacks[fallbackKey] ?? null;
+        if (rowVal && mediaIdSet.has(rowVal)) return rowVal;
+        const fallback = mediaIdFallbacks[fallbackKey] ?? null;
+        if (fallback && mediaIdSet.has(fallback)) return fallback;
+        return null;
       };
 
       data = {
@@ -208,9 +216,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     console.error("[Admin Settings] Failed to fetch settings:", err);
   }
 
-  const rawMedia = mediaResult.data;
-
-  const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {
     name: siteSettings.name,
     nickname: siteSettings.logo,
