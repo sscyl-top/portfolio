@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -47,14 +47,39 @@ export async function POST(request: Request) {
       );
     }
 
+    const mimeType = file.type || "application/octet-stream";
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    // 计算文件内容 SHA-256 哈希，用于去重
+    const contentHash = createHash("sha256").update(buffer).digest("hex");
+
+    // 查重：如果已存在相同 content_hash 且未删除的记录，直接复用，不再上传存储
+    const { data: existing } = await service
+      .from("media_assets")
+      .select("id, storage_key, mime_type, original_name, byte_size")
+      .eq("content_hash", contentHash)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      return Response.json({
+        ok: true,
+        id: existing.id,
+        storage_key: existing.storage_key,
+        mime_type: existing.mime_type,
+        original_name: existing.original_name,
+        byte_size: existing.byte_size,
+        name: existing.original_name,
+        size: existing.byte_size,
+        deduplicated: true,
+      });
+    }
+
     const id = randomUUID();
     const baseKey = buildStorageKey(file.name, id);
     // R2上传的文件storage_key加 "r2/" 前缀，用于URL构建时区分存储后端
     const storageKey = backend === "r2" ? `r2/${baseKey}` : baseKey;
-    const mimeType = file.type || "application/octet-stream";
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     if (backend === "r2") {
       try {
@@ -118,6 +143,7 @@ export async function POST(request: Request) {
         width,
         height,
         alt_text: altText || file.name,
+        content_hash: contentHash,
       })
       .select("id, storage_key, original_name")
       .single();

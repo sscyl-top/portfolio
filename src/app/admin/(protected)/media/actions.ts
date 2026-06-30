@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
 
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,8 +15,7 @@ import { writeFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-async function detectVideoDuration(file: File): Promise<number | null> {
-  const buffer = Buffer.from(await file.arrayBuffer());
+async function detectVideoDuration(buffer: Buffer): Promise<number | null> {
   const tempPath = join(tmpdir(), `codex-media-${randomUUID()}.tmp`);
   try {
     await writeFile(tempPath, buffer);
@@ -66,16 +65,33 @@ export async function uploadMediaAsset(formData: FormData) {
   }
 
   const { client } = await requireAdmin();
+
+  // 提前读取文件内容，用于计算 content_hash、上传和元数据检测
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const contentHash = createHash("sha256").update(buffer).digest("hex");
+
+  // 查重：已存在相同 content_hash 的记录则直接复用，不再上传
+  const { data: existing } = await client
+    .from("media_assets")
+    .select("id, storage_key")
+    .eq("content_hash", contentHash)
+    .is("deleted_at", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    revalidatePath("/admin/media");
+    return;
+  }
+
   const id = randomUUID();
   let storageKey = buildStorageKey(file.name, id);
   const mimeType = file.type || "application/octet-stream";
 
   if (isR2Configured()) {
-    const buffer = Buffer.from(await file.arrayBuffer());
     storageKey = `r2/${storageKey}`;
     await uploadR2Object(storageKey, buffer, mimeType);
   } else if (isCosConfigured()) {
-    const buffer = Buffer.from(await file.arrayBuffer());
     await uploadCosObject(storageKey, buffer, mimeType);
   } else {
     const { error: uploadError } = await client.storage
@@ -88,15 +104,11 @@ export async function uploadMediaAsset(formData: FormData) {
     if (uploadError) throw new Error(uploadError.message);
   }
 
-  // Read the first 2 KiB for image dimension detection. Sharp is not
-  // required; PNG/JPEG/GIF/WebP headers are parsed in pure JS.
+  // 从已读取的 buffer 中取头部进行图片尺寸检测
   let width: number | null = null;
   let height: number | null = null;
   if (mimeType.startsWith("image/")) {
-    const head = Buffer.from(await file.arrayBuffer().then((ab) => {
-      const view = new Uint8Array(ab, 0, Math.min(2048, ab.byteLength));
-      return view;
-    }));
+    const head = buffer.subarray(0, Math.min(2048, buffer.length));
     const dims = detectImageDimensions(mimeType, head);
     if (dims) {
       width = dims.width;
@@ -104,11 +116,11 @@ export async function uploadMediaAsset(formData: FormData) {
     }
   }
 
-  // Detect video duration via ffprobe when available, skipping on failure.
+  // 通过 ffprobe 检测视频时长（不可用时跳过）
   let durationMs: number | null = null;
   if (mimeType.startsWith("video/")) {
     try {
-      durationMs = await detectVideoDuration(file);
+      durationMs = await detectVideoDuration(buffer);
     } catch {
       // ffprobe unavailable or file corrupt — skip silently.
     }
@@ -124,6 +136,7 @@ export async function uploadMediaAsset(formData: FormData) {
     height,
     duration_ms: durationMs,
     alt_text: altText || file.name,
+    content_hash: contentHash,
   });
 
   if (dbError) {

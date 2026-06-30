@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 
 import { getAuthorizedAdmin } from "@/lib/admin-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -8,6 +8,9 @@ import { buildPublicMediaUrl, isR2StorageKey } from "@/lib/cms/media-url";
 import { getR2Object } from "@/lib/r2/client";
 
 export const runtime = "nodejs";
+
+// 直传场景下载完整文件计算哈希的大小阈值，超过则跳过查重
+const DEDUP_MAX_BYTES = 50 * 1024 * 1024;
 
 async function downloadFileHead(
   service: ReturnType<typeof createSupabaseServiceClient>,
@@ -69,6 +72,39 @@ async function downloadFileHead(
   return null;
 }
 
+/**
+ * 下载完整文件内容用于计算 content_hash。
+ * 仅对小于 DEDUP_MAX_BYTES 的文件调用，避免大文件下载开销。
+ */
+async function downloadFullFile(
+  service: ReturnType<typeof createSupabaseServiceClient>,
+  storageKey: string,
+): Promise<Buffer | null> {
+  // R2 文件：通过 R2 SDK 拉取完整内容
+  if (isR2StorageKey(storageKey)) {
+    try {
+      const obj = await getR2Object(storageKey);
+      if (obj && obj.body) {
+        return Buffer.isBuffer(obj.body) ? obj.body : Buffer.from(obj.body);
+      }
+    } catch {
+      // best-effort
+    }
+    return null;
+  }
+
+  // 非 R2 文件：通过 Supabase Storage 下载完整文件
+  try {
+    const { data } = await service.storage.from("portfolio-media").download(storageKey);
+    if (data) {
+      return Buffer.from(await data.arrayBuffer());
+    }
+  } catch {
+    // best-effort
+  }
+  return null;
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
   const user = await getAuthorizedAdmin(supabase);
@@ -84,6 +120,40 @@ export async function POST(request: Request) {
 
     if (!storage_key || !original_name) {
       return Response.json({ error: "缺少必要参数" }, { status: 400 });
+    }
+
+    // 直传场景查重：文件较小时下载完整内容计算哈希，大文件跳过查重
+    let contentHash: string | null = null;
+    const sizeNum = Number(byte_size) || 0;
+    if (sizeNum > 0 && sizeNum <= DEDUP_MAX_BYTES) {
+      try {
+        const fullBuffer = await downloadFullFile(service, storage_key);
+        if (fullBuffer) {
+          contentHash = createHash("sha256").update(fullBuffer).digest("hex");
+        }
+      } catch {
+        // best-effort，查重失败不阻塞注册
+      }
+    }
+
+    if (contentHash) {
+      const { data: existing } = await service
+        .from("media_assets")
+        .select("id, storage_key, mime_type, original_name, byte_size")
+        .eq("content_hash", contentHash)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        return Response.json({
+          ok: true,
+          id: existing.id,
+          name: existing.original_name,
+          size: existing.byte_size,
+          deduplicated: true,
+        });
+      }
     }
 
     const id = randomUUID();
@@ -116,6 +186,7 @@ export async function POST(request: Request) {
         width,
         height,
         alt_text: alt_text || original_name,
+        content_hash: contentHash,
       })
       .select("id, storage_key, original_name")
       .single();
