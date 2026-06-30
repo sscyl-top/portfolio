@@ -34,24 +34,48 @@
 | 6 | 前台主题切换 | ✅ 通过 | 首页不显切换按钮（符合设计），/works 切换 light→dark 成功，按钮 aria-label 正确反转 |
 | 7 | 后台 CTA transform 保存 | ✅ 通过 | cta_card_scale 1.2→1.5 保存持久化成功，刷新确认，已恢复1.2 |
 | 8 | 后台作品管理 | ✅ 通过 | 17个作品，编辑页字段（title/subtitle/summary/cover）全部正常 |
+| 9 | **新上传视频完整流程** | ✅ 通过 | 用 Playwright 上传真实视频（1.14MB）→media_id更新→保存持久化→刷新确认→前台显示新视频→已恢复原值 |
+| 10 | **媒体库垃圾清理** | ✅ 完成 | 删除8个测试垃圾（4个mp4 + 4个txt）：__upload_test/__preview_test/__verify_test/__migration_test/upload-test/verify-test-v3/v2-dup/v2 |
 
 ### 重要发现（修正之前的误判）
 - **site_settings 表的 cta_*_scale/offset 列实际是存在的**（CTA transform 值保存测试通过，值持久化成功）
 - 之前会话判断"缺失列"可能是误判，或豆包在期间补充了迁移
 - 但 `cta_figure_light_media_id` 列仍可能缺失（未单独测试），保留列过滤逻辑作为安全网
 
-### 待解决的问题（需要用户操作）
+### 待解决的问题
 1. **site_settings 表 schema 确认**
    - 之前判断 cta_*_scale 等列缺失，但测试发现实际存在
    - 建议：在 Supabase Dashboard 执行 `SELECT column_name FROM information_schema.columns WHERE table_name = 'site_settings'` 确认完整列清单
    - 如果 `cta_figure_light_media_id` 缺失，需要手动 ALTER TABLE 添加
 
-2. **媒体库测试垃圾文件**
-   - `__migration_test.mp4`、`__verify_test.mp4`、`__preview_test.mp4` 需要清理
+2. **新上传视频完整流程已测通** ✅
+   - 用 Playwright upload_file 上传真实视频，全链路正常
+   - 测试垃圾已清理
 
-3. **新上传视频完整流程未测**
-   - 缺少本地测试视频文件，未做"上传新视频→保存→刷新"测试
-   - 已通过"清空→保存→恢复"测试验证 hidden input 提交链路正常
+3. **媒体库测试垃圾已清理** ✅
+   - 8个测试文件全部软删（deleted_at 已设置）
+
+## AI 协作分工（建议）
+
+> 用户要求两个 AI（Trae Walk code 模式 + Trae IDE solo 模式）明确分工。
+
+### 分工原则
+- **豆包（Trae IDE solo 模式）→ 视觉/UI 优化**
+  - 擅长界面调整、布局优化、所见即所得预览调试
+  - 负责后台 UI 优化（用户提到后台 UI 还有问题）
+  - solo 模式有完整 IDE 视觉反馈，适合 UI 迭代
+  - 注意：豆包只能用 MCP，不能用内置浏览器
+
+- **我（Trae Walk code 模式）→ bug 排查/测试/数据层**
+  - 本次系统性测试、保存链路排查、数据库 schema 验证
+  - 能用内置浏览器（Playwright）做端到端测试
+  - 负责跨层 bug 排查、数据修复、测试垃圾清理
+
+### 协作规则补充
+- **修改前先拉取最新代码**：`git pull` 避免冲突
+- **不修改对方正在处理的文件**：通过本文件协调
+- **测试产生的垃圾必须清理**：本次清理了8个历史测试文件
+- **Server Action 表单提交注意**：React 受控表单必须用 `form.requestSubmit()` 不能用 `form.submit()`，否则会报 "A React form was unexpectedly submitted"
 
 ### 备份分支
 - `backup/hero-side2-fix-20260630`：本次修复前的状态
