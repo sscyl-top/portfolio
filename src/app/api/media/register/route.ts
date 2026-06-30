@@ -129,14 +129,12 @@ export async function POST(request: Request) {
     // 直传场景查重：文件较小时下载完整内容计算哈希，大文件跳过查重
     let contentHash: string | null = null;
     let hasContentHashColumn = true; // 假设列存在，查重失败时设为 false
-    let debugDownloadOk = false; // 临时调试：标记下载是否成功
     const sizeNum = Number(byte_size) || 0;
     if (sizeNum > 0 && sizeNum <= DEDUP_MAX_BYTES) {
       try {
         const fullBuffer = await downloadFullFile(service, storage_key);
         if (fullBuffer) {
           contentHash = createHash("sha256").update(fullBuffer).digest("hex");
-          debugDownloadOk = true;
         }
       } catch {
         // best-effort，查重失败不阻塞注册
@@ -234,13 +232,6 @@ export async function POST(request: Request) {
       id,
       name: original_name,
       size: byte_size,
-      // 临时调试：诊断查重为何没命中（确认后删除）
-      _debug: {
-        sizeNum,
-        debugDownloadOk,
-        contentHash: contentHash ? contentHash.slice(0, 16) : null,
-        hasContentHashColumn,
-      },
     });
   } catch (error) {
     return Response.json(
