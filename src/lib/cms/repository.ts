@@ -75,6 +75,7 @@ const SETTINGS_TEXT_KEYS = [
   "cta_center_logo_scale",
   "cta_center_logo_offset_x",
   "cta_center_logo_offset_y",
+  "cta_figure_light_media_id",
 ] as const;
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
@@ -138,6 +139,7 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_center_logo_offset_y: 0,
   };
   let tickerLogoIdsRaw = "";
+  let figureLightMediaIdFallback: string | null = null;
   try {
     const { data: textData, error: textError } = await client
       .from("text_content")
@@ -149,6 +151,9 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
       for (const item of textData) {
         if (item.key === "cta_ticker_logo_media_ids") {
           tickerLogoIdsRaw = item.content ?? "";
+        } else if (item.key === "cta_figure_light_media_id") {
+          const val = (item.content ?? "").trim();
+          figureLightMediaIdFallback = val.length > 0 ? val : null;
         } else {
           const num = Number(item.content);
           if (!isNaN(num) && item.key in ctaTransform) {
@@ -165,6 +170,8 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     ...baseData,
     ...heroIds,
     cta_center_logo_media_id: ctaCenterLogoId,
+    // 后备：如果 site_settings 表中没有 cta_figure_light_media_id（schema cache 未刷新），使用 text_content 中的值
+    cta_figure_light_media_id: (baseData.cta_figure_light_media_id as string | null) ?? figureLightMediaIdFallback,
   } as Record<string, unknown>;
 
   return { allIds, ctaTransform, tickerLogoIdsRaw };

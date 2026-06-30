@@ -188,6 +188,11 @@ export async function saveSiteSettings(formData: FormData) {
     }
 
     await upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds);
+
+    // 后备：将 cta_figure_light_media_id 也存入 text_content，防止 PostgREST schema cache 未刷新导致列丢失
+    const ctaFigureLightMediaId = uuidOrNull(formData.get("cta_figure_light_media_id"));
+    await upsertTextContent(serviceClient, "cta_figure_light_media_id", ctaFigureLightMediaId ?? "");
+
     console.log("[Settings] text_content saved successfully, tickerLogoIds:", ctaTickerLogoMediaIds);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
