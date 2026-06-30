@@ -46,6 +46,9 @@ type CompositeDesignWallProps = {
   ctaFigureScale?: number;
   ctaFigureOffsetX?: number;
   ctaFigureOffsetY?: number;
+  ctaFigureLightScale?: number;
+  ctaFigureLightOffsetX?: number;
+  ctaFigureLightOffsetY?: number;
   ctaTickerLogoScale?: number;
   ctaTickerLogoOffsetX?: number;
   ctaTickerLogoOffsetY?: number;
@@ -68,6 +71,9 @@ export function CompositeDesignWall({
   ctaFigureScale = 1,
   ctaFigureOffsetX = 0,
   ctaFigureOffsetY = 0,
+  ctaFigureLightScale,
+  ctaFigureLightOffsetX,
+  ctaFigureLightOffsetY,
   ctaTickerLogoScale = 1,
   ctaTickerLogoOffsetX = 0,
   ctaTickerLogoOffsetY = 0,
@@ -85,6 +91,9 @@ export function CompositeDesignWall({
 
   const isLight = mounted && resolvedTheme === "light";
   const activeFigureUrl = isLight && ctaFigureLightUrl ? ctaFigureLightUrl : ctaFigureUrl;
+  const activeFigureScale = isLight && ctaFigureLightUrl && ctaFigureLightScale !== undefined ? ctaFigureLightScale : ctaFigureScale;
+  const activeFigureOffsetX = isLight && ctaFigureLightUrl && ctaFigureLightOffsetX !== undefined ? ctaFigureLightOffsetX : ctaFigureOffsetX;
+  const activeFigureOffsetY = isLight && ctaFigureLightUrl && ctaFigureLightOffsetY !== undefined ? ctaFigureLightOffsetY : ctaFigureOffsetY;
 
   const displayWorks = useMemo(() => {
     if (works.length === 0) {
@@ -337,7 +346,7 @@ export function CompositeDesignWall({
                 alt=""
                 className="h-full w-full object-contain object-bottom transition-opacity duration-300"
                 style={{
-                  transform: `translate(${ctaFigureOffsetX}px, ${ctaFigureOffsetY}px) scale(${ctaFigureScale})`,
+                  transform: `translate(${activeFigureOffsetX}px, ${activeFigureOffsetY}px) scale(${activeFigureScale})`,
                   transformOrigin: "center bottom",
                 }}
               />

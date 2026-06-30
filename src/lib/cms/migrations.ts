@@ -12,6 +12,8 @@ let mediaBackendMigrationDone = false;
 let representativeCoverMigrationDone = false;
 let nameMediaMigrationDone = false;
 let ctaFigureLightMigrationDone = false;
+let ctaFigureLightTransformMigrationDone = false;
+let mediaContentHashMigrationDone = false;
 
 function getDbConnectionString(): string | null {
   return (
@@ -421,6 +423,52 @@ export async function runCtaFigureLightMigration(): Promise<boolean> {
     ctaFigureLightMigrationDone = true;
   } else {
     console.warn("[DB Migration] cta figure light migration could not run (need DATABASE_URL or exec_ddl RPC)");
+  }
+  return ok;
+}
+
+export async function runCtaFigureLightTransformMigration(): Promise<boolean> {
+  if (ctaFigureLightTransformMigrationDone) return true;
+
+  const ddlSql = `
+    ALTER TABLE public.site_settings
+      ADD COLUMN IF NOT EXISTS cta_figure_light_scale numeric NOT NULL DEFAULT 1.0,
+      ADD COLUMN IF NOT EXISTS cta_figure_light_offset_x numeric NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS cta_figure_light_offset_y numeric NOT NULL DEFAULT 0;
+  `;
+
+  const ok = await runDdl(ddlSql);
+  if (ok) {
+    console.log("[DB Migration] site_settings.cta_figure_light transform columns added successfully");
+    ctaFigureLightTransformMigrationDone = true;
+  } else {
+    console.warn("[DB Migration] cta figure light transform migration could not run (need DATABASE_URL or exec_ddl RPC)");
+  }
+  return ok;
+}
+
+/**
+ * 为 media_assets 表添加 content_hash 列并建立索引，用于媒体库去重。
+ * content_hash 为文件内容 SHA-256 哈希，允许为空（旧数据无哈希）。
+ */
+export async function runMediaContentHashMigration(): Promise<boolean> {
+  if (mediaContentHashMigrationDone) return true;
+
+  const ddlSql = `
+    ALTER TABLE public.media_assets
+      ADD COLUMN IF NOT EXISTS content_hash text;
+
+    CREATE INDEX IF NOT EXISTS media_assets_content_hash_idx
+      ON public.media_assets(content_hash)
+      WHERE content_hash IS NOT NULL AND deleted_at IS NULL;
+  `;
+
+  const ok = await runDdl(ddlSql);
+  if (ok) {
+    console.log("[DB Migration] media_assets.content_hash column and index added successfully");
+    mediaContentHashMigrationDone = true;
+  } else {
+    console.warn("[DB Migration] media content hash migration could not run (need DATABASE_URL or exec_ddl RPC)");
   }
   return ok;
 }

@@ -45,6 +45,9 @@ export default async function WorksPage() {
     ctaFigureScale: 1,
     ctaFigureOffsetX: 0,
     ctaFigureOffsetY: 0,
+    ctaFigureLightScale: 1,
+    ctaFigureLightOffsetX: 0,
+    ctaFigureLightOffsetY: 0,
     ctaTickerLogoScale: 1,
     ctaTickerLogoOffsetX: 0,
     ctaTickerLogoOffsetY: 0,
@@ -97,6 +100,9 @@ export default async function WorksPage() {
         ctaFigureScale={siteSettings.ctaFigureScale}
         ctaFigureOffsetX={siteSettings.ctaFigureOffsetX}
         ctaFigureOffsetY={siteSettings.ctaFigureOffsetY}
+        ctaFigureLightScale={siteSettings.ctaFigureLightScale}
+        ctaFigureLightOffsetX={siteSettings.ctaFigureLightOffsetX}
+        ctaFigureLightOffsetY={siteSettings.ctaFigureLightOffsetY}
         ctaTickerLogoScale={siteSettings.ctaTickerLogoScale}
         ctaTickerLogoOffsetX={siteSettings.ctaTickerLogoOffsetX}
         ctaTickerLogoOffsetY={siteSettings.ctaTickerLogoOffsetY}

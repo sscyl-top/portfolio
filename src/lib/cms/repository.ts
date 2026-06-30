@@ -43,6 +43,9 @@ export type PublicSiteSettings = {
   ctaFigureScale: number;
   ctaFigureOffsetX: number;
   ctaFigureOffsetY: number;
+  ctaFigureLightScale: number;
+  ctaFigureLightOffsetX: number;
+  ctaFigureLightOffsetY: number;
   description: string;
   heroMainVideoUrl?: string;
   heroSide1VideoUrl?: string;
@@ -75,6 +78,9 @@ const SETTINGS_TEXT_KEYS = [
   "cta_center_logo_offset_x",
   "cta_center_logo_offset_y",
   "cta_figure_light_media_id",
+  "cta_figure_light_scale",
+  "cta_figure_light_offset_x",
+  "cta_figure_light_offset_y",
   // 所有 media_id 字段都存入 text_content 作为后备
   "logo_media_id",
   "name_media_id",
@@ -121,6 +127,9 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_figure_scale: number;
     cta_figure_offset_x: number;
     cta_figure_offset_y: number;
+    cta_figure_light_scale: number;
+    cta_figure_light_offset_x: number;
+    cta_figure_light_offset_y: number;
     cta_ticker_logo_scale: number;
     cta_ticker_logo_offset_x: number;
     cta_ticker_logo_offset_y: number;
@@ -134,6 +143,9 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_figure_scale: 1.0,
     cta_figure_offset_x: 0,
     cta_figure_offset_y: 0,
+    cta_figure_light_scale: 1.0,
+    cta_figure_light_offset_x: 0,
+    cta_figure_light_offset_y: 0,
     cta_ticker_logo_scale: 1.0,
     cta_ticker_logo_offset_x: 0,
     cta_ticker_logo_offset_y: 0,
@@ -199,6 +211,9 @@ function buildSiteSettingsFromRow(
     cta_figure_scale: number;
     cta_figure_offset_x: number;
     cta_figure_offset_y: number;
+    cta_figure_light_scale: number;
+    cta_figure_light_offset_x: number;
+    cta_figure_light_offset_y: number;
     cta_ticker_logo_scale: number;
     cta_ticker_logo_offset_x: number;
     cta_ticker_logo_offset_y: number;
@@ -249,6 +264,9 @@ function buildSiteSettingsFromRow(
     ctaFigureScale: ctaTransform.cta_figure_scale,
     ctaFigureOffsetX: ctaTransform.cta_figure_offset_x,
     ctaFigureOffsetY: ctaTransform.cta_figure_offset_y,
+    ctaFigureLightScale: ctaTransform.cta_figure_light_scale,
+    ctaFigureLightOffsetX: ctaTransform.cta_figure_light_offset_x,
+    ctaFigureLightOffsetY: ctaTransform.cta_figure_light_offset_y,
     description: (allIds.seo_description as string) || settings.description,
     heroMainVideoUrl: getUrlForId(allIds.hero_main_video_media_id as string | null),
     heroSide1VideoUrl: getUrlForId(allIds.hero_side1_video_media_id as string | null),
@@ -729,6 +747,9 @@ function getStaticPublicSiteSettings(): PublicSiteSettings {
     ctaFigureScale: 1,
     ctaFigureOffsetX: 0,
     ctaFigureOffsetY: 0,
+    ctaFigureLightScale: 1,
+    ctaFigureLightOffsetX: 0,
+    ctaFigureLightOffsetY: 0,
     ctaTickerLogoMediaUrls: [],
     description: settings.description,
     name: settings.name,

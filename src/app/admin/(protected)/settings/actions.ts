@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-session";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
+import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration, runCtaFigureLightTransformMigration, runMediaContentHashMigration } from "@/lib/cms/migrations";
 
 const uuidOrNull = (val: FormDataEntryValue | null) => {
   if (!val) return null;
@@ -64,6 +64,9 @@ export async function saveSiteSettings(formData: FormData) {
   const cta_figure_scale = Number(formData.get("cta_figure_scale") ?? 1);
   const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") ?? 0);
   const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
+  const cta_figure_light_scale = Number(formData.get("cta_figure_light_scale") ?? 1);
+  const cta_figure_light_offset_x = Number(formData.get("cta_figure_light_offset_x") ?? 0);
+  const cta_figure_light_offset_y = Number(formData.get("cta_figure_light_offset_y") ?? 0);
   const cta_ticker_logo_scale = Number(formData.get("cta_ticker_logo_scale") ?? 1);
   const cta_ticker_logo_offset_x = Number(formData.get("cta_ticker_logo_offset_x") ?? 0);
   const cta_ticker_logo_offset_y = Number(formData.get("cta_ticker_logo_offset_y") ?? 0);
@@ -119,6 +122,9 @@ export async function saveSiteSettings(formData: FormData) {
     cta_figure_scale: isNaN(cta_figure_scale) ? 1 : Math.min(5, Math.max(0.1, cta_figure_scale)),
     cta_figure_offset_x: isNaN(cta_figure_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_x)),
     cta_figure_offset_y: isNaN(cta_figure_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_offset_y)),
+    cta_figure_light_scale: isNaN(cta_figure_light_scale) ? 1 : Math.min(5, Math.max(0.1, cta_figure_light_scale)),
+    cta_figure_light_offset_x: isNaN(cta_figure_light_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_figure_light_offset_x)),
+    cta_figure_light_offset_y: isNaN(cta_figure_light_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_figure_light_offset_y)),
     cta_ticker_logo_scale: isNaN(cta_ticker_logo_scale) ? 1 : Math.min(5, Math.max(0.1, cta_ticker_logo_scale)),
     cta_ticker_logo_offset_x: isNaN(cta_ticker_logo_offset_x) ? 0 : Math.min(500, Math.max(-500, cta_ticker_logo_offset_x)),
     cta_ticker_logo_offset_y: isNaN(cta_ticker_logo_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_ticker_logo_offset_y)),
@@ -146,6 +152,8 @@ export async function saveSiteSettings(formData: FormData) {
         runCenterLogoMigration().catch(() => {}),
         runNameMediaMigration().catch(() => {}),
         runCtaFigureLightMigration().catch(() => {}),
+        runCtaFigureLightTransformMigration().catch(() => {}),
+        runMediaContentHashMigration().catch(() => {}),
       ]);
       await wait(1000); // 从2.5秒减少到1秒
       continue;

@@ -33,6 +33,9 @@ type SettingsRow = {
   cta_figure_scale: number;
   cta_figure_offset_x: number;
   cta_figure_offset_y: number;
+  cta_figure_light_scale: number;
+  cta_figure_light_offset_x: number;
+  cta_figure_light_offset_y: number;
   cta_ticker_logo_scale: number;
   cta_ticker_logo_offset_x: number;
   cta_ticker_logo_offset_y: number;
@@ -70,6 +73,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_figure_scale",
     "cta_figure_offset_x",
     "cta_figure_offset_y",
+    "cta_figure_light_scale",
+    "cta_figure_light_offset_x",
+    "cta_figure_light_offset_y",
     "cta_ticker_logo_scale",
     "cta_ticker_logo_offset_x",
     "cta_ticker_logo_offset_y",
@@ -132,6 +138,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_figure_scale: 1,
         cta_figure_offset_x: 0,
         cta_figure_offset_y: 0,
+        cta_figure_light_scale: 1,
+        cta_figure_light_offset_x: 0,
+        cta_figure_light_offset_y: 0,
         cta_ticker_logo_scale: 1,
         cta_ticker_logo_offset_x: 0,
         cta_ticker_logo_offset_y: 0,
@@ -221,6 +230,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     cta_figure_scale: 1,
     cta_figure_offset_x: 0,
     cta_figure_offset_y: 0,
+    cta_figure_light_scale: 1,
+    cta_figure_light_offset_x: 0,
+    cta_figure_light_offset_y: 0,
     cta_ticker_logo_scale: 1,
     cta_ticker_logo_offset_x: 0,
     cta_ticker_logo_offset_y: 0,
@@ -370,6 +382,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 defaultValue={settings.cta_figure_light_media_id ?? ""}
                 hint="浅色模式人物，不上传复用深色"
               />
+              <div className="flex items-end gap-1.5">
+                <NumberField label="缩放" name="cta_figure_light_scale" defaultValue={settings.cta_figure_light_scale} step="0.05" min="0.1" max="5" />
+                <NumberField label="X" name="cta_figure_light_offset_x" defaultValue={settings.cta_figure_light_offset_x} step="1" min="-500" max="500" />
+                <NumberField label="Y" name="cta_figure_light_offset_y" defaultValue={settings.cta_figure_light_offset_y} step="1" min="-500" max="500" />
+              </div>
             </div>
           </div>
 
