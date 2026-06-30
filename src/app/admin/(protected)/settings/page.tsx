@@ -67,8 +67,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   await runNameMediaMigration().catch(() => {});
   await runCtaFigureLightMigration().catch(() => {});
 
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
   const SETTINGS_TEXT_KEYS = [
     "cta_card_scale",
     "cta_card_offset_x",
@@ -175,7 +173,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     .from("media_assets")
     .select("id,storage_key,mime_type,original_name,alt_text")
     .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(200);
 
   const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {
@@ -394,40 +393,38 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             desc="第一屏 4 个卡片的背景视频。支持拖拽上传或从媒体库选择，MP4/WEBM/OGG/MOV。不上传显示渐变占位色。"
             noMargin
           />
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
             <SettingsVideoField
-              label="主卡片视频（大卡片 · 16:9）"
+              label="主卡片视频（大卡片）"
               name="hero_main_video_media_id"
               assets={mediaAssets}
               defaultValue={settings.hero_main_video_media_id ?? ""}
               hint="大卡片背景视频，第一屏最显眼的位置"
               aspectRatio="video"
             />
-            <div className="grid gap-3 md:grid-cols-2">
-              <SettingsVideoField
-                label="小卡片 1 · 左上（1:1）"
-                name="hero_side1_video_media_id"
-                assets={mediaAssets}
-                defaultValue={settings.hero_side1_video_media_id ?? ""}
-                hint="左上浮动小卡片"
-                aspectRatio="square"
-              />
-              <SettingsVideoField
-                label="小卡片 2 · 左侧（1:1）"
-                name="hero_side2_video_media_id"
-                assets={mediaAssets}
-                defaultValue={settings.hero_side2_video_media_id ?? ""}
-                hint="左侧浮动小卡片"
-                aspectRatio="square"
-              />
-            </div>
             <SettingsVideoField
-              label="小卡片 3 · 右下宽卡（2:1）"
+              label="左上浮动小卡片"
+              name="hero_side1_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_side1_video_media_id ?? ""}
+              hint="左上浮动小卡片"
+              aspectRatio="video"
+            />
+            <SettingsVideoField
+              label="左侧浮动小卡片"
+              name="hero_side2_video_media_id"
+              assets={mediaAssets}
+              defaultValue={settings.hero_side2_video_media_id ?? ""}
+              hint="左侧浮动小卡片"
+              aspectRatio="video"
+            />
+            <SettingsVideoField
+              label="右下浮动宽卡片"
               name="hero_side3_video_media_id"
               assets={mediaAssets}
               defaultValue={settings.hero_side3_video_media_id ?? ""}
               hint="右下浮动宽卡片"
-              aspectRatio="wide"
+              aspectRatio="video"
             />
           </div>
         </div>

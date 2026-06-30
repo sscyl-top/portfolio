@@ -86,8 +86,6 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   await runNameMediaMigration().catch(() => {});
   await runCtaFigureLightMigration().catch(() => {});
 
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
   let baseData: Record<string, unknown> | null = null;
   try {
     const { data, error } = await client.from("site_settings").select("*").single();
@@ -628,7 +626,6 @@ export async function createServerCmsRepository() {
       }
 
       const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
-      console.log("[getSiteSettings] ctaTransform:", JSON.stringify(ctaTransform));
 
       const mediaIdFields = [
         "logo_media_id",

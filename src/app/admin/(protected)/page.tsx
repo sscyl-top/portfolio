@@ -46,13 +46,23 @@ export default async function AdminDashboardPage() {
       .is("deleted_at", null),
   ]);
 
-  // --- recent works ---
-  const { data: recentWorks } = await supabase
-    .from("works")
-    .select("slug,title,status,updated_at")
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false })
-    .limit(4);
+  // --- recent works & messages (parallel) ---
+  const [
+    { data: recentWorks },
+    { data: recentMessages },
+  ] = await Promise.all([
+    supabase
+      .from("works")
+      .select("slug,title,status,updated_at")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("contact_messages")
+      .select("id,name,email,subject,status,created_at")
+      .order("created_at", { ascending: false })
+      .limit(3),
+  ]);
 
   const recent = (recentWorks ?? []) as Array<{
     slug: string;
@@ -60,13 +70,6 @@ export default async function AdminDashboardPage() {
     status: string;
     updated_at: string;
   }>;
-
-  // --- recent messages ---
-  const { data: recentMessages } = await supabase
-    .from("contact_messages")
-    .select("id,name,email,subject,status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(3);
 
   return (
     <div>

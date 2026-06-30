@@ -117,14 +117,15 @@ function StrengthsList({ defaultItems }: { defaultItems: string[] }) {
   const [items, setItems] = useState<string[]>(defaultItems.length > 0 ? defaultItems : [""]);
 
   return (
-    <ListSection title="优势陈述" addLabel="添加优势" cols={2}>
+    <ListSection title="优势陈述" addLabel="添加优势" cols={1}>
       {items.map((item, i) => (
         <ListRow key={i} onRemove={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}>
-          <input
+          <textarea
             name="strength"
             defaultValue={item}
             placeholder={`第 ${i + 1} 条优势陈述`}
-            className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+            rows={2}
+            className="self-start min-h-[4.5rem] flex-1 resize-y rounded-md border border-white/10 bg-black/20 px-2.5 py-2 text-xs outline-none focus:border-cyan"
           />
         </ListRow>
       ))}
@@ -212,14 +213,14 @@ function ExpertiseList({ defaultItems }: { defaultItems: ResumeExpertise[] }) {
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
-          <div className="mt-2 space-y-1.5">
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
             {(expertise.items.length > 0 ? expertise.items : [""]).map((item, j) => (
               <div key={j} className="flex items-center gap-1.5">
                 <input
                   name={`expertise_items_${i}`}
                   defaultValue={item}
                   placeholder={`第 ${j + 1} 项`}
-                  className="h-9 flex-1 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
+                  className="h-9 min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
                 />
                 <button
                   type="button"
@@ -232,7 +233,7 @@ function ExpertiseList({ defaultItems }: { defaultItems: ResumeExpertise[] }) {
                       ),
                     )
                   }
-                  className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-white/30 hover:text-white/70"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -602,12 +603,12 @@ function ListRow({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <GripVertical className="h-3.5 w-3.5 text-white/20" />
+      <GripVertical className="h-3.5 w-3.5 text-white/20 shrink-0" />
       {children}
       <button
         type="button"
         onClick={onRemove}
-        className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-white/30 hover:text-white/70"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>

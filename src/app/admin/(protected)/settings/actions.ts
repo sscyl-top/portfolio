@@ -99,12 +99,6 @@ export async function saveSiteSettings(formData: FormData) {
     .filter((s) => s.length > 0)
     .join(",");
 
-  await runHeroVideosMigration().catch(() => {});
-  await runCtaTransformMigration().catch(() => {});
-  await runCenterLogoMigration().catch(() => {});
-  await runNameMediaMigration().catch(() => {});
-  await runCtaFigureLightMigration().catch(() => {});
-
   const serviceClient = createSupabaseServiceClient();
 
   const saveData: Record<string, unknown> = {
@@ -183,17 +177,15 @@ export async function saveSiteSettings(formData: FormData) {
   }
 
   try {
-    for (const [key, value] of Object.entries(ctaTransformValues)) {
-      await upsertTextContent(serviceClient, key, String(value));
-    }
-
-    await upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds);
-
-    // 后备：将 cta_figure_light_media_id 也存入 text_content，防止 PostgREST schema cache 未刷新导致列丢失
+    // 并行写入所有 text_content 记录
     const ctaFigureLightMediaId = uuidOrNull(formData.get("cta_figure_light_media_id"));
-    await upsertTextContent(serviceClient, "cta_figure_light_media_id", ctaFigureLightMediaId ?? "");
-
-    console.log("[Settings] text_content saved successfully, tickerLogoIds:", ctaTickerLogoMediaIds);
+    await Promise.all([
+      ...Object.entries(ctaTransformValues).map(([key, value]) =>
+        upsertTextContent(serviceClient, key, String(value))
+      ),
+      upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds),
+      upsertTextContent(serviceClient, "cta_figure_light_media_id", ctaFigureLightMediaId ?? ""),
+    ]);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[Settings] text_content save failed:", errMsg);
@@ -203,6 +195,5 @@ export async function saveSiteSettings(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/settings");
   revalidatePath("/works");
-  const timestamp = Date.now();
-  redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}&t=${timestamp}&cache_bust=${Math.random().toString(36).substr(2, 9)}`);
+  redirect(`/admin/settings?toast=${encodeURIComponent("设置保存成功")}`);
 }
