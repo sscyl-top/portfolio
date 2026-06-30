@@ -1,9 +1,10 @@
 import { DEFAULT_MUSIC_SETTINGS, type MusicSettings } from "@/app/admin/(protected)/music/types";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+// ISR：revalidate=300（5分钟）。后台修改音乐时 actions.ts 已调用 revalidatePath("/api/music") 立即刷新
+export const revalidate = 300;
 
 type CategoryRow = {
   id: string;
@@ -42,7 +43,7 @@ const MUSIC_SETTING_KEYS = [
 
 export async function GET() {
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseServiceClient();
 
     // 第一步：并行获取 categories、tracks、textEntries
     // 不再全表扫描 media_assets——改为第二步仅查询 tracks 引用到的 media

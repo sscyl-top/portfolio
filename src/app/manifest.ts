@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getStaticSiteSettings } from "@/data/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
+
+// ISR：revalidate=3600（1小时）。站点设置/logo 极少变更，后台修改时已有 revalidatePath
+export const revalidate = 3600;
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const staticSettings = getStaticSiteSettings();
@@ -15,7 +18,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   let iconMimeType: string = "image/png";
 
   if (isSupabaseConfigured()) {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from("site_settings")
       .select(
