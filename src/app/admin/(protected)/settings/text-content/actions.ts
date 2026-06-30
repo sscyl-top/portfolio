@@ -87,6 +87,10 @@ export async function updateTextContent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/settings/text-content");
+  revalidatePath("/");
+  revalidatePath("/works");
+  revalidatePath("/resume");
+  revalidatePath("/api/music");
   redirect(`/admin/settings/text-content?toast=saved&id=${encodeURIComponent(parsed.data.id)}`);
 }
 

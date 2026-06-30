@@ -15,6 +15,7 @@ const WORK_SNAPSHOT_FIELDS = [
   "cover_media_id",
   "hover_media_id",
   "share_media_id",
+  "representative_cover_media_id",
   "palette",
   "is_representative",
   "representative_order",
@@ -24,6 +25,7 @@ const WORK_SNAPSHOT_FIELDS = [
   "seo_title",
   "seo_description",
   "published_at",
+  "scheduled_publish_at",
 ] as const;
 
 export type WorkVersionBlock = {

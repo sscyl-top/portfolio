@@ -10,13 +10,14 @@ describe("ContactFinale", () => {
         email="3624457672@qq.com"
         phone="19276690901"
         location="广东-深圳"
+        wechatId="TestWechat123"
       />,
     );
 
     expect(screen.getByText("3624457672@qq.com")).toBeInTheDocument();
     expect(screen.getByText("19276690901")).toBeInTheDocument();
     expect(screen.getByText("广东-深圳")).toBeInTheDocument();
-    expect(screen.getByText("CTT522423")).toBeInTheDocument();
+    expect(screen.getByText("TestWechat123")).toBeInTheDocument();
     expect(
       screen.queryByRole("img", { name: "微信二维码" }),
     ).not.toBeInTheDocument();

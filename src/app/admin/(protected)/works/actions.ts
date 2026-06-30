@@ -177,6 +177,8 @@ export async function generatePrivatePreviewLink(formData: FormData) {
 
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${work_id}`);
+  revalidatePath("/works");
+  revalidatePath(`/works/${work_slug}`);
   redirect(
     `/admin/works/${work_id}?privatePreview=${encodeURIComponent(
       `/works/${work_slug}?preview=${token}`,
@@ -1829,7 +1831,7 @@ export async function batchUpdateWorkStatus(formData: FormData) {
     // 查询已有 published_at，仅对未发布过的作品设置当前时间
     const { data: existingWorks } = await client
       .from("works")
-      .select("id,published_at")
+      .select("id,slug,published_at")
       .in("id", parsed.data.work_ids);
 
     const now = new Date().toISOString();
@@ -1860,9 +1862,20 @@ export async function batchUpdateWorkStatus(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  // 查询所有受影响作品的 slug 用于刷新公开页缓存
+  const { data: affectedWorks } = await client
+    .from("works")
+    .select("id,slug")
+    .in("id", parsed.data.work_ids);
+  const slugMap = new Map((affectedWorks ?? []).map((w) => [w.id, w.slug]));
+
   revalidatePath("/admin/works");
   revalidatePath("/works");
-  parsed.data.work_ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+  parsed.data.work_ids.forEach((id) => {
+    revalidatePath(`/admin/works/${id}`);
+    const slug = slugMap.get(id);
+    if (slug) revalidatePath(`/works/${slug}`);
+  });
 }
 
 /**

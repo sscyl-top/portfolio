@@ -261,6 +261,8 @@ export async function updateTrackTitle(formData: FormData) {
       .eq("id", parsed.data.trackId);
 
     revalidatePath("/admin/music");
+    revalidatePath("/");
+    revalidatePath("/api/music");
   } catch (e) {
     console.error("updateTrackTitle error:", e);
   }

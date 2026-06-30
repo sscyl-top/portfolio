@@ -426,7 +426,7 @@ function MediaForm({
         {!isComposite && (
           <input type="hidden" name="hover_media_id" value="" />
         )}
-        <input type="hidden" name="share_media_id" value="" />
+        <input type="hidden" name="share_media_id" value={work.share_media_id ?? ""} />
       </div>
     </form>
   );

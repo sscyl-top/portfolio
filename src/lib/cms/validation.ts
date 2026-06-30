@@ -52,6 +52,10 @@ export const mediaAssetSchema = z.object({
   height: z.number().int().positive().nullable(),
   duration_ms: z.number().int().nonnegative().nullable(),
   alt_text: z.string(),
+  storage_backend: z.string().optional(),
+  content_hash: z.string().nullable().optional(),
+  thumb_storage_key: z.string().nullable().optional(),
+  large_storage_key: z.string().nullable().optional(),
 });
 
 export const workBlockSchema = z.object({
