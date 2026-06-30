@@ -130,19 +130,26 @@ export function GlobalPageLoader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // pathname 变化：导航完成，清除延迟定时器
+  // pathname 变化：导航完成，清除延迟定时器；若 loader 已在显示则快速收尾淡出
   useEffect(() => {
     if (isFirstMount.current) return;
 
+    const wasPending = pendingNavRef.current !== null;
     // 清除导航延迟定时器（如果 pathname 在阈值内变化，不显示 loader）
     if (navDelayRef.current) {
       clearTimeout(navDelayRef.current);
       navDelayRef.current = null;
     }
     pendingNavRef.current = null;
-    // 如果 loader 已经在显示（说明导航超过了阈值），让它跑完动画再淡出
-    // 如果 loader 没在显示，什么都不做
-  }, [pathname]);
+
+    // 如果是导航触发的 loader（wasPending 为 true）且正在显示，立刻跳到 100% 快速淡出
+    // 避免页面已经出来了，loader 还在慢悠悠跑进度条
+    if (wasPending && active && progress < 100) {
+      cancelAnimationFrame(animationRef.current);
+      setProgress(100);
+      timeoutRef.current = window.setTimeout(() => setHidden(true), 80);
+    }
+  }, [pathname, active, progress]);
 
   // 淡出后移除 DOM
   useEffect(() => {
