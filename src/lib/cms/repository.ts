@@ -628,6 +628,7 @@ export async function createServerCmsRepository() {
       }
 
       const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
+      console.log("[getSiteSettings] ctaTransform:", JSON.stringify(ctaTransform));
 
       const mediaIdFields = [
         "logo_media_id",
