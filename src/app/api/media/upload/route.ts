@@ -8,6 +8,7 @@ import { detectImageDimensions } from "@/lib/cms/media-metadata";
 import { isR2Configured, uploadR2Object, deleteR2Object } from "@/lib/r2/client";
 import { isCosConfigured, uploadCosObject, deleteCosObject } from "@/lib/cos/client";
 import { generateImageVariants, isOptimizableImage, buildVariantStorageKey } from "@/lib/cms/image-variants";
+import { runImageVariantsMigration } from "@/lib/cms/migrations";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -178,11 +179,29 @@ export async function POST(request: Request) {
       insertData.large_storage_key = largeStorageKey;
     }
 
-    const { error: dbError } = await service
+    // 确保 thumb_storage_key/large_storage_key 列存在（迁移幂等，有进程级 flag，仅冷启动首次执行）
+    // 在 insert 前调用，给 PostgREST schema cache 刷新留出时间（R2 上传+变体生成期间）
+    await runImageVariantsMigration().catch(() => {});
+
+    let { error: dbError } = await service
       .from("media_assets")
       .insert(insertData)
       .select("id, storage_key, original_name")
       .single();
+
+    // 容错：若列仍不存在（schema cache 未刷新），去掉 thumb/large 字段重试
+    // 变体文件已在 R2，只是暂未关联到 DB 记录（不影响主流程，后续迁移后新上传会正常关联）
+    if (dbError && /does not exist/i.test(dbError.message ?? "")) {
+      const fallbackData = { ...insertData };
+      delete fallbackData.thumb_storage_key;
+      delete fallbackData.large_storage_key;
+      const retry = await service
+        .from("media_assets")
+        .insert(fallbackData)
+        .select("id, storage_key, original_name")
+        .single();
+      dbError = retry.error;
+    }
 
     if (dbError) {
       if (backend === "r2") {

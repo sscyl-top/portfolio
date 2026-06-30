@@ -478,7 +478,7 @@ export async function runMediaContentHashMigration(): Promise<boolean> {
  * 为 media_assets 表添加 thumb_storage_key 和 large_storage_key 列，
  * 用于存储 sharp 生成的多尺寸图片的 R2 key。
  * - thumb:  800px 宽，适合卡片展示
- * - large:  1920px 宽，适合详情页展示
+ * - large:  2400px 宽，适合详情页大图展示（保留质感不压太狠）
  */
 export async function runImageVariantsMigration(): Promise<boolean> {
   if (imageVariantsMigrationDone) return true;
