@@ -41,7 +41,11 @@ export async function createCategory(formData: FormData) {
     is_visible: formData.get("is_visible") === "on",
   });
 
-  if (!parsed.success) return;
+  // M5 修复：校验失败时 redirect 带 toast，不再静默 return
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join("；");
+    redirect(`/admin/categories?toast=${encodeURIComponent(`校验失败：${msg}`)}`);
+  }
 
   const { client } = await requireAdmin();
   const { error } = await client.from("categories").insert(parsed.data);
@@ -61,7 +65,13 @@ export async function updateCategory(formData: FormData) {
     is_visible: formData.get("is_visible") === "on",
   });
 
-  if (!parsed.success || !parsed.data.id) return;
+  // M5 修复：校验失败时 redirect 带 toast，不再静默 return
+  if (!parsed.success || !parsed.data.id) {
+    const msg = parsed.success
+      ? "缺少分类 ID"
+      : parsed.error.issues.map((i) => i.message).join("；");
+    redirect(`/admin/categories?toast=${encodeURIComponent(`校验失败：${msg}`)}`);
+  }
 
   const { id, ...values } = parsed.data;
   const { client } = await requireAdmin();
@@ -96,7 +106,11 @@ export async function createTag(formData: FormData) {
     slug: formData.get("slug") || createStableSlug(name, "tag"),
   });
 
-  if (!parsed.success) return;
+  // M5 修复：校验失败时 redirect 带 toast，不再静默 return
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join("；");
+    redirect(`/admin/categories?toast=${encodeURIComponent(`校验失败：${msg}`)}`);
+  }
 
   const { client } = await requireAdmin();
   const { error } = await client.from("tags").insert(parsed.data);
@@ -114,7 +128,13 @@ export async function updateTag(formData: FormData) {
     slug: formData.get("slug"),
   });
 
-  if (!parsed.success || !parsed.data.id) return;
+  // M5 修复：校验失败时 redirect 带 toast，不再静默 return
+  if (!parsed.success || !parsed.data.id) {
+    const msg = parsed.success
+      ? "缺少标签 ID"
+      : parsed.error.issues.map((i) => i.message).join("；");
+    redirect(`/admin/categories?toast=${encodeURIComponent(`校验失败：${msg}`)}`);
+  }
 
   const { id, ...values } = parsed.data;
   const { client } = await requireAdmin();

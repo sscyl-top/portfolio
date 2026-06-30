@@ -184,6 +184,8 @@ export async function addMusicTrack(formData: FormData) {
     if (error) return { error: error.message };
 
     revalidatePath("/admin/music");
+    revalidatePath("/");
+    revalidatePath("/api/music");
     return { success: true };
   } catch (e) {
     return { error: (e as Error).message };
@@ -194,12 +196,12 @@ export async function deleteMusicTrack(formData: FormData) {
   try {
     const supabase = await createSupabaseServerClient();
     const user = await getAuthorizedAdmin(supabase);
-    if (!user) return;
+    if (!user) return { error: "未授权" };
 
     const parsed = trackIdSchema.safeParse({
       trackId: formData.get("trackId"),
     });
-    if (!parsed.success) return;
+    if (!parsed.success) return { error: "参数无效" };
 
     const service = createSupabaseServiceClient();
 
@@ -209,10 +211,14 @@ export async function deleteMusicTrack(formData: FormData) {
       .eq("id", parsed.data.trackId)
       .single();
 
-    if (!track) return;
+    if (!track) return { error: "曲目不存在" };
 
     await service.from("music_tracks").delete().eq("id", parsed.data.trackId);
 
+    // 软删 media_assets（设 deleted_at），不硬删存储对象
+    // 原因：media_assets 可能被 works 表的 cover_media_id/hover_media_id/share_media_id 引用，
+    // 硬删会导致作品媒体悬空；且原代码用 Supabase Storage API 删 R2 对象无效（R2 不在该 bucket）。
+    // 软删后媒体库查询会过滤 deleted_at，前台作品引用仍可正常渲染。
     const { data: otherUsage } = await service
       .from("music_tracks")
       .select("id")
@@ -220,21 +226,21 @@ export async function deleteMusicTrack(formData: FormData) {
       .limit(1);
 
     if (!otherUsage || otherUsage.length === 0) {
-      const { data: mediaRow } = await service
+      // 仅当无其他音乐曲目引用时才软删 media_assets
+      // 注意：works 表的引用无法在此高效检查，软删是安全选择（存储对象保留，作品不悬空）
+      await service
         .from("media_assets")
-        .select("storage_key")
-        .eq("id", track.media_id)
-        .single();
-
-      if (mediaRow) {
-        await service.storage.from("portfolio-media").remove([mediaRow.storage_key]);
-        await service.from("media_assets").delete().eq("id", track.media_id);
-      }
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", track.media_id);
     }
 
     revalidatePath("/admin/music");
+    revalidatePath("/");
+    revalidatePath("/api/music");
+    return { success: true };
   } catch (e) {
     console.error("deleteMusicTrack error:", e);
+    return { error: (e as Error).message };
   }
 }
 
@@ -304,6 +310,7 @@ export async function updateCategory(formData: FormData) {
     await upsertMusicTextEntry(service, getCategoryEmojiKey(parsed.data.categoryKey), emoji);
 
     revalidatePath("/admin/music");
+    revalidatePath("/");
     revalidatePath("/api/music");
     return { success: true };
   } catch (e) {

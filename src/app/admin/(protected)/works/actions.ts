@@ -385,15 +385,16 @@ export async function updateWork(formData: FormData) {
     if (Number.isInteger(n)) updates.sort_order = n;
   }
 
+  // C1 修复：checkbox 用 getAll().includes("on") 判断（CheckField 有 hidden 兜底，未勾选时值为 "off"）
   if (formData.has("is_representative")) {
-    updates.is_representative = formData.get("is_representative") === "on";
+    updates.is_representative = formData.getAll("is_representative").includes("on");
   }
   if (formData.has("representative_order")) {
     const v = formData.get("representative_order");
     updates.representative_order = v ? Number(v) : null;
   }
   if (formData.has("is_composite")) {
-    updates.is_composite = formData.get("is_composite") === "on";
+    updates.is_composite = formData.getAll("is_composite").includes("on");
   }
   if (formData.has("composite_order")) {
     const v = formData.get("composite_order");
@@ -427,7 +428,8 @@ export async function updateWork(formData: FormData) {
   if (error) throw new Error(error.message);
 
   if (formData.has("media_no_gap")) {
-    const mediaNoGap = formData.get("media_no_gap") === "on";
+    // C1 修复：checkbox 用 getAll().includes("on") 判断
+    const mediaNoGap = formData.getAll("media_no_gap").includes("on");
     const gapKey = `work_media_no_gap_${workId}`;
     try {
       const { data: existing } = await client
@@ -469,11 +471,14 @@ export async function updateWork(formData: FormData) {
     }
   }
 
-  const workSlug = (currentWork as { slug: string }).slug;
+  // M3 修复：slug 修改后需同时 revalidate 新旧两个路径
+  const oldSlug = (currentWork as { slug: string }).slug;
+  const newSlug = (updates.slug as string | undefined) ?? oldSlug;
   revalidatePath("/admin/works");
   revalidatePath(`/admin/works/${workId}`);
   revalidatePath("/works");
-  revalidatePath(`/works/${workSlug}`);
+  revalidatePath(`/works/${oldSlug}`);
+  if (newSlug !== oldSlug) revalidatePath(`/works/${newSlug}`);
 }
 
 export async function deleteWork(formData: FormData) {
@@ -548,12 +553,21 @@ export async function updateTextBlock(formData: FormData) {
   const { client, user } = await requireAdmin();
   const { block_id, work_id, work_slug, heading, body, sort_order, is_visible } =
     parsed.data;
+
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
-      payload: { heading, body },
+      payload: { ...currentPayload, heading, body },
     })
     .eq("id", block_id);
 
@@ -707,12 +721,20 @@ export async function updateMediaBlock(formData: FormData) {
     ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
     : null;
 
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
-      payload: { media_id, caption, media_ref },
+      payload: { ...currentPayload, media_id, caption, media_ref },
     })
     .eq("id", block_id);
 
@@ -827,9 +849,17 @@ export async function updateVideoBlock(formData: FormData) {
     ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
     : null;
 
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
-    .update({ sort_order, is_visible, payload: { media_id, caption, media_ref } })
+    .update({ sort_order, is_visible, payload: { ...currentPayload, media_id, caption, media_ref } })
     .eq("id", block_id);
 
   if (error) throw new Error(error.message);
@@ -911,9 +941,17 @@ export async function updatePdfBlock(formData: FormData) {
     ? { id: asset.id, storage_key: asset.storage_key, mime_type: asset.mime_type, alt_text: asset.alt_text }
     : null;
 
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
-    .update({ sort_order, is_visible, payload: { media_id, caption, media_ref } })
+    .update({ sort_order, is_visible, payload: { ...currentPayload, media_id, caption, media_ref } })
     .eq("id", block_id);
 
   if (error) throw new Error(error.message);
@@ -1007,12 +1045,21 @@ export async function updateBeforeAfterBlock(formData: FormData) {
     return a ? { id: a.id, storage_key: a.storage_key, mime_type: a.mime_type, alt_text: a.alt_text } : null;
   };
 
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
       payload: {
+        ...currentPayload,
         before_media_id, after_media_id, caption,
         before_media_ref: mediaRef(before_media_id),
         after_media_ref: mediaRef(after_media_id),
@@ -1414,12 +1461,20 @@ export async function updateGalleryBlock(formData: FormData) {
     }),
   );
 
+  // H7 修复：先获取当前 payload，合并新字段，避免丢失 layout/focal_point 等
+  const { data: currentBlock } = await client
+    .from("work_blocks")
+    .select("payload")
+    .eq("id", block_id)
+    .single();
+  const currentPayload = (currentBlock?.payload as Record<string, unknown>) ?? {};
+
   const { error } = await client
     .from("work_blocks")
     .update({
       sort_order,
       is_visible,
-      payload: { media_ids: rawIds, caption, media_refs: refs },
+      payload: { ...currentPayload, media_ids: rawIds, caption, media_refs: refs },
     })
     .eq("id", block_id);
 
@@ -1903,8 +1958,14 @@ export async function publishScheduledWorks() {
 
   if (updateError) throw new Error(updateError.message);
 
+  // M4 修复：定时发布后需 revalidate 公开页（首页、作品列表、作品详情）
   revalidatePath("/admin/works");
+  revalidatePath("/works");
+  revalidatePath("/");
   ids.forEach((id) => revalidatePath(`/admin/works/${id}`));
+  (dueWorks as Array<{ id: string; slug: string }>).forEach((w) => {
+    revalidatePath(`/works/${w.slug}`);
+  });
 }
 
 /**

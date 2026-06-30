@@ -39,6 +39,10 @@ export type WorkVersionBlock = {
 export type WorkVersionSnapshot = {
   work: Record<string, unknown>;
   blocks: WorkVersionBlock[];
+  // 关联数据：分类/标签/media_no_gap——回滚时需一并还原，否则版本回滚不完整
+  categories?: string[]; // work_categories.category_id 列表
+  tags?: string[]; // work_tags.tag_id 列表
+  mediaNoGap?: boolean; // text_content 中 work_media_no_gap_{id} 的值
   meta?: {
     source: "auto" | "manual";
     label?: string;
@@ -58,30 +62,92 @@ export type WorkVersionListItem = {
 
 // ── 内部辅助 ───────────────────────────────────────────────
 
-/** 采集当前作品的完整快照 */
+/** 判断是否为 PostgREST 列不存在错误（42703） */
+function isColumnNotExistError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: string; message?: string };
+  return err.code === "42703" || /does not exist/i.test(err.message ?? "");
+}
+
+/** 不含可能未迁移列的回退字段列表（representative_cover_media_id / scheduled_publish_at） */
+const WORK_SNAPSHOT_FIELDS_BASE = WORK_SNAPSHOT_FIELDS.filter(
+  (f) => f !== "representative_cover_media_id" && f !== "scheduled_publish_at",
+);
+
+/**
+ * 采集当前作品的完整快照。
+ * 包含作品字段、内容块、分类关联、标签关联、media_no_gap 设置，
+ * 确保版本回滚能完整还原所有用户可编辑状态。
+ */
 async function captureWorkSnapshot(
   client: SupabaseClient,
   workId: string,
 ): Promise<WorkVersionSnapshot | null> {
-  const [{ data: work }, { data: blocks }] = await Promise.all([
-    client
+  // works 查询：含可能未迁移列时降级到 base 字段（L8）
+  const workQuery = client
+    .from("works")
+    .select(WORK_SNAPSHOT_FIELDS.join(","))
+    .eq("id", workId)
+    .is("deleted_at", null)
+    .single();
+  let { data: work, error: workErr } = await workQuery;
+  if (workErr && isColumnNotExistError(workErr)) {
+    const fallback = await client
       .from("works")
-      .select(WORK_SNAPSHOT_FIELDS.join(","))
+      .select(WORK_SNAPSHOT_FIELDS_BASE.join(","))
       .eq("id", workId)
       .is("deleted_at", null)
-      .single(),
+      .single();
+    work = fallback.data;
+    workErr = fallback.error;
+  }
+  if (workErr || !work) return null;
+
+  // 并行采集内容块、分类、标签、media_no_gap
+  const [
+    { data: blocks },
+    { data: categoryRows },
+    { data: tagRows },
+    { data: mediaNoGapRow },
+  ] = await Promise.all([
     client
       .from("work_blocks")
       .select("id,block_type,sort_order,is_visible,payload")
       .eq("work_id", workId)
       .order("sort_order", { ascending: true }),
+    // 分类关联：容错（表或列不存在时返回空）
+    client
+      .from("work_categories")
+      .select("category_id")
+      .eq("work_id", workId)
+      .then((r) => r, () => ({ data: null, error: null })),
+    client
+      .from("work_tags")
+      .select("tag_id")
+      .eq("work_id", workId)
+      .then((r) => r, () => ({ data: null, error: null })),
+    // media_no_gap 存在 text_content 表，key 为 work_media_no_gap_{workId}
+    client
+      .from("text_content")
+      .select("content")
+      .eq("key", `work_media_no_gap_${workId}`)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .maybeSingle()
+      .then((r) => r, () => ({ data: null, error: null })),
   ]);
 
-  if (!work) return null;
+  const categories = (categoryRows ?? []).map((r) => String((r as { category_id: string }).category_id));
+  const tags = (tagRows ?? []).map((r) => String((r as { tag_id: string }).tag_id));
+  const mediaNoGapRaw = (mediaNoGapRow as { content?: string } | null)?.content;
+  const mediaNoGap = mediaNoGapRaw === "true";
 
   return {
     work: work as unknown as Record<string, unknown>,
     blocks: (blocks ?? []) as WorkVersionBlock[],
+    categories,
+    tags,
+    mediaNoGap,
   };
 }
 
@@ -126,7 +192,13 @@ function snapshotsEqual(
   a: WorkVersionSnapshot,
   b: WorkVersionSnapshot,
 ): boolean {
-  return deepEqual(a.work, b.work) && deepEqual(a.blocks, b.blocks);
+  return (
+    deepEqual(a.work, b.work) &&
+    deepEqual(a.blocks, b.blocks) &&
+    deepEqual(a.categories ?? [], b.categories ?? []) &&
+    deepEqual(a.tags ?? [], b.tags ?? []) &&
+    (a.mediaNoGap ?? false) === (b.mediaNoGap ?? false)
+  );
 }
 
 export async function writeAuditLog(
@@ -313,13 +385,13 @@ export async function rollbackWorkVersion(
   );
   if (!targetSnapshot) throw new Error("目标版本不存在");
 
-  // 1. 备份当前状态
+  // 1. 备份当前状态（用 manual 绕过 5 分钟节流，确保连续回滚也能成功备份）
   const savedVersion = await archiveWorkVersion(
     client,
     workId,
     adminUserId,
     `回滚前自动备份（目标 v${targetVersionNumber}）`,
-    "auto",
+    "manual",
   );
   if (!savedVersion) throw new Error("无法备份当前作品状态");
 
@@ -360,6 +432,64 @@ export async function rollbackWorkVersion(
       .insert(blockRows);
 
     if (insertError) throw new Error(insertError.message);
+  }
+
+  // 4. 还原分类关联（先删现有，再按快照插入）—— 容错：表不存在时跳过
+  if (Array.isArray(targetSnapshot.categories)) {
+    await client.from("work_categories").delete().eq("work_id", workId).then(
+      () => {},
+      () => {},
+    );
+    if (targetSnapshot.categories.length > 0) {
+      const catRows = targetSnapshot.categories.map((cid) => ({
+        work_id: workId,
+        category_id: cid,
+      }));
+      await client.from("work_categories").insert(catRows).then(
+        () => {},
+        () => {},
+      );
+    }
+  }
+
+  // 5. 还原标签关联（先删现有，再按快照插入）—— 容错：表不存在时跳过
+  if (Array.isArray(targetSnapshot.tags)) {
+    await client.from("work_tags").delete().eq("work_id", workId).then(
+      () => {},
+      () => {},
+    );
+    if (targetSnapshot.tags.length > 0) {
+      const tagRows = targetSnapshot.tags.map((tid) => ({
+        work_id: workId,
+        tag_id: tid,
+      }));
+      await client.from("work_tags").insert(tagRows).then(
+        () => {},
+        () => {},
+      );
+    }
+  }
+
+  // 6. 还原 media_no_gap（text_content 中 work_media_no_gap_{id}）—— 容错：失败时跳过
+  if (typeof targetSnapshot.mediaNoGap === "boolean") {
+    const key = `work_media_no_gap_${workId}`;
+    const content = targetSnapshot.mediaNoGap ? "true" : "false";
+    await client
+      .from("text_content")
+      .upsert(
+        {
+          key,
+          content,
+          page: "work",
+          section: "settings",
+          sort_order: 0,
+          is_active: true,
+          deleted_at: null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      )
+      .then(() => {}, () => {});
   }
 
   await writeAuditLog(client, {

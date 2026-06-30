@@ -127,8 +127,10 @@ function CategoryPanel({ categories, toast, savedId }: { categories: CategoryRow
 function CategoryRow({ category, saved }: { category: CategoryRow; saved?: boolean }) {
   const formId = `cat-${category.id}`;
   return (
-    <form id={formId} action={updateCategory} className="flex flex-wrap items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.02] px-2 py-1.5 transition hover:border-white/18 hover:bg-white/[0.04]">
-      <input type="hidden" name="id" value={category.id} />
+    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.02] px-2 py-1.5 transition hover:border-white/18 hover:bg-white/[0.04]">
+      {/* M6 修复：外层改为 div，独立空 form 关联字段，避免 DeleteButton 的 form 嵌套 */}
+      <form id={formId} action={updateCategory} className="hidden" aria-hidden />
+      <input type="hidden" name="id" value={category.id} form={formId} />
       <input
         name="sort_order" type="number" defaultValue={category.sort_order}
         className="h-8 w-12 rounded border border-white/10 bg-black/25 px-1.5 text-center font-mono text-xs outline-none focus:border-cyan"
@@ -149,7 +151,7 @@ function CategoryRow({ category, saved }: { category: CategoryRow; saved?: boole
       {saved ? <span className="rounded bg-green-400/90 px-1.5 py-0.5 text-[10px] font-medium text-black">已保存</span> : null}
       <SaveButton variant="outline" size="sm" form={formId} saved={saved} className="h-8 px-2 text-[11px]"><Save aria-hidden="true" className="h-3 w-3" />保存</SaveButton>
       <DeleteButton action={deleteCategory} id={category.id} />
-    </form>
+    </div>
   );
 }
 

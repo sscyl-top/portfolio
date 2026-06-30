@@ -42,12 +42,13 @@ const activitySchema = z.object({
   description: z.string().trim().min(1).max(1000),
 });
 
+// M1 修复：去掉 school/major/period 的 min(1)，允许清空后保存（否则整个简历保存失败）
 const educationSchema = z.object({
-  school: z.string().trim().min(1).max(120),
+  school: z.string().trim().max(120),
   schoolEnglish: z.string().trim().max(120),
-  major: z.string().trim().min(1).max(120),
+  major: z.string().trim().max(120),
   majorEnglish: z.string().trim().max(120),
-  period: z.string().trim().min(1).max(80),
+  period: z.string().trim().max(80),
   note: z.string().trim().max(500),
   achievements: z.array(achievementSchema).default([]),
   activities: z.array(activitySchema).default([]),
@@ -133,17 +134,23 @@ export async function saveResume(formData: FormData) {
     experiencePointsGroups.push(items);
   }
 
+  // M2 修复：不完整条目不再静默丢弃——统计被跳过数量，返回 warning 让前端可提示
   const experienceRaw = experienceCompanies
     .map((company, i) => ({
       company,
       title: experienceTitles[i] ?? "",
       period: experiencePeriods[i] ?? "",
       points: experiencePointsGroups[i] ?? [],
-    }))
-    .filter((item) => item.company.trim() && item.title.trim());
+    }));
+  const experienceDropped = experienceRaw.filter(
+    (item) => !item.company.trim() || !item.title.trim(),
+  ).length;
+  const experienceValid = experienceRaw.filter(
+    (item) => item.company.trim() && item.title.trim(),
+  );
 
   // safeParse — 不再抛出未捕获异常
-  const experience = experienceRaw
+  const experience = experienceValid
     .map((item) => experienceSchema.safeParse(item))
     .filter((r) => r.success)
     .map((r) => r.data);
@@ -158,10 +165,15 @@ export async function saveResume(formData: FormData) {
       title: campusTitles[i] ?? "",
       period: campusPeriods[i] ?? "",
       description: campusDescriptions[i] ?? "",
-    }))
-    .filter((item) => item.company.trim() && item.title.trim());
+    }));
+  const campusDropped = campusRaw.filter(
+    (item) => !item.company.trim() || !item.title.trim(),
+  ).length;
+  const campusValid = campusRaw.filter(
+    (item) => item.company.trim() && item.title.trim(),
+  );
 
-  const campus = campusRaw
+  const campus = campusValid
     .map((item) => campusSchema.safeParse(item))
     .filter((r) => r.success)
     .map((r) => r.data);
@@ -182,10 +194,15 @@ export async function saveResume(formData: FormData) {
     .map((title, i) => ({
       title,
       items: expertiseItemsGroups[i] ?? [],
-    }))
-    .filter((item) => item.title.trim());
+    }));
+  const expertiseDropped = expertiseRaw.filter(
+    (item) => !item.title.trim(),
+  ).length;
+  const expertiseValid = expertiseRaw.filter(
+    (item) => item.title.trim(),
+  );
 
-  const expertise = expertiseRaw
+  const expertise = expertiseValid
     .map((item) => expertiseSchema.safeParse(item))
     .filter((r) => r.success)
     .map((r) => r.data);
@@ -276,5 +293,11 @@ export async function saveResume(formData: FormData) {
   revalidatePath("/resume");
   revalidatePath("/admin/resume");
 
-  return { success: true };
+  // M2 修复：返回被跳过的不完整条目数，前端可据此提示用户
+  const warnings: string[] = [];
+  if (experienceDropped > 0) warnings.push(`工作经历有 ${experienceDropped} 条不完整被跳过`);
+  if (campusDropped > 0) warnings.push(`校园经历有 ${campusDropped} 条不完整被跳过`);
+  if (expertiseDropped > 0) warnings.push(`专长有 ${expertiseDropped} 条不完整被跳过`);
+
+  return { success: true, warnings: warnings.length > 0 ? warnings : undefined };
 }

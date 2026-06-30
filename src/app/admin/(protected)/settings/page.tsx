@@ -196,7 +196,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_center_logo_media_id: getMediaId("cta_center_logo_media_id", "cta_center_logo_media_id"),
         cta_ticker_logo_media_ids: tickerLogoIdsRaw,
         ...ctaTransform,
-        ...heroIds,
+        // H1 修复：hero 视频字段也用 getMediaId 做 text_content 后备，避免 site_settings 列为空时表单 defaultValue 丢失
+        hero_main_video_media_id: getMediaId("hero_main_video_media_id", "hero_main_video_media_id"),
+        hero_side1_video_media_id: getMediaId("hero_side1_video_media_id", "hero_side1_video_media_id"),
+        hero_side2_video_media_id: getMediaId("hero_side2_video_media_id", "hero_side2_video_media_id"),
+        hero_side3_video_media_id: getMediaId("hero_side3_video_media_id", "hero_side3_video_media_id"),
         social_links: (row.social_links as SettingsRow["social_links"]) ?? [],
       } as SettingsRow;
     }

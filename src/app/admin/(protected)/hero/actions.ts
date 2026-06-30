@@ -39,19 +39,19 @@ export async function saveHeroVideos(formData: FormData) {
 
   if (!parsed.success) {
     console.error("Hero video validation failed:", parsed.error);
-    return;
+    redirect(`/admin/hero?toast=${encodeURIComponent("Hero配置校验失败：media id 非法")}`);
   }
 
-  const { client } = await requireAdmin();
+  await requireAdmin();
   const serviceClient = createSupabaseServiceClient();
 
-  // 写入 site_settings 表（前台读取的数据源）
+  // 写入 site_settings 表（前台读取的数据源）— 使用 serviceClient 绕过 RLS
   const siteSettingsUpdate: Record<string, string | null> = {};
   for (const [formKey, column] of Object.entries(HERO_VIDEO_COLUMNS)) {
     siteSettingsUpdate[column] = parsed.data[formKey as keyof HeroVideoSettings];
   }
 
-  const { error: settingsError } = await client
+  const { error: settingsError } = await serviceClient
     .from("site_settings")
     .upsert(
       { id: true, ...siteSettingsUpdate },
@@ -100,36 +100,29 @@ export async function getHeroVideoConfig(): Promise<HeroVideoSettings | null> {
       .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
       .single();
 
-    if (settingsData) {
-      return {
-        mainVideoMediaId: settingsData.hero_main_video_media_id ?? null,
-        sideCard1MediaId: settingsData.hero_side1_video_media_id ?? null,
-        sideCard2MediaId: settingsData.hero_side2_video_media_id ?? null,
-        sideCard3MediaId: settingsData.hero_side3_video_media_id ?? null,
-      };
-    }
-
-    // 后备：从 text_content 读取
+    // 逐字段回退：site_settings 值为空时从 text_content 补齐
+    // 避免 site_settings 行存在但列全 null 时直接返回空，导致 text_content 新值被忽略
+    const textMap = new Map<string, string>();
     const { data: textData } = await supabase
       .from("text_content")
       .select("key,content")
       .in("key", Object.values(HERO_VIDEO_COLUMNS))
       .eq("is_active", true)
       .is("deleted_at", null);
-
-    if (!textData || textData.length === 0) return null;
-
-    const textMap = new Map(textData.map((item) => [item.key, item.content]));
-    const getValue = (column: string): string | null => {
-      const val = (textMap.get(column) ?? "").trim();
-      return val || null;
+    (textData ?? []).forEach((item: { key: string; content: string }) => {
+      textMap.set(item.key, item.content);
+    });
+    const getValue = (column: string, rowVal: string | null): string | null => {
+      if (rowVal && rowVal.trim()) return rowVal.trim();
+      const fallback = (textMap.get(column) ?? "").trim();
+      return fallback || null;
     };
 
     return {
-      mainVideoMediaId: getValue(HERO_VIDEO_COLUMNS.mainVideoMediaId),
-      sideCard1MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard1MediaId),
-      sideCard2MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard2MediaId),
-      sideCard3MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard3MediaId),
+      mainVideoMediaId: getValue(HERO_VIDEO_COLUMNS.mainVideoMediaId, settingsData?.hero_main_video_media_id ?? null),
+      sideCard1MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard1MediaId, settingsData?.hero_side1_video_media_id ?? null),
+      sideCard2MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard2MediaId, settingsData?.hero_side2_video_media_id ?? null),
+      sideCard3MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard3MediaId, settingsData?.hero_side3_video_media_id ?? null),
     };
   } catch {
     return null;

@@ -24,16 +24,17 @@ function getStorageBackend(): StorageBackend {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const user = await getAuthorizedAdmin(supabase);
-  if (!user) {
-    return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
-  }
-
-  const service = createSupabaseServiceClient();
-  const backend = getStorageBackend();
-
+  // 认证与初始化移入 try，避免 Supabase 连接/Cookie 异常时返回 HTML 错误页导致客户端 JSON 解析失败
   try {
+    const supabase = await createSupabaseServerClient();
+    const user = await getAuthorizedAdmin(supabase);
+    if (!user) {
+      return Response.json({ error: "未授权，请重新登录" }, { status: 401 });
+    }
+
+    const service = createSupabaseServiceClient();
+    const backend = getStorageBackend();
+
     const formData = await request.formData();
     const file = formData.get("file");
     const altText = String(formData.get("alt_text") ?? "").trim();
@@ -55,17 +56,25 @@ export async function POST(request: Request) {
     // 计算文件内容 SHA-256 哈希，用于去重
     const contentHash = createHash("sha256").update(buffer).digest("hex");
 
-    // 查重：如果已存在相同 content_hash 且未删除的记录，直接复用，不再上传存储
+    // 查重：如果已存在相同 content_hash 的记录，直接复用，不再上传存储
     // 容错：如果 content_hash 列尚未迁移，查询会失败，此时跳过查重正常上传
+    // 注意：不去过滤 deleted_at——若命中软删记录，复活该记录（清空 deleted_at）而非新建，
+    // 避免相同内容文件被重复上传到 R2 造成存储泄漏
     const { data: existing, error: dedupError } = await service
       .from("media_assets")
-      .select("id, storage_key, mime_type, original_name, byte_size")
+      .select("id, storage_key, mime_type, original_name, byte_size, deleted_at")
       .eq("content_hash", contentHash)
-      .is("deleted_at", null)
       .limit(1)
       .maybeSingle();
 
     if (existing && !dedupError) {
+      // 命中软删记录时复活（清空 deleted_at），让媒体库重新显示
+      if (existing.deleted_at) {
+        await service
+          .from("media_assets")
+          .update({ deleted_at: null })
+          .eq("id", existing.id);
+      }
       return Response.json({
         ok: true,
         id: existing.id,

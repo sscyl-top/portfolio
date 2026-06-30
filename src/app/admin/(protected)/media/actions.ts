@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿"use server";
 
 import { randomUUID, createHash } from "crypto";
 import { revalidatePath } from "next/cache";
@@ -47,7 +47,8 @@ async function detectVideoDuration(buffer: Buffer): Promise<number | null> {
   }
 }
 
-const maxUploadBytes = 25 * 1024 * 1024;
+// 上传大小限制：R2 单次上传上限远高于此，统一为 100MB（与 API route、客户端 upload-media.ts 一致）
+const maxUploadBytes = 100 * 1024 * 1024;
 
 const idSchema = z.object({ id: z.string().uuid() });
 
@@ -72,15 +73,23 @@ export async function uploadMediaAsset(formData: FormData) {
 
   // 查重：已存在相同 content_hash 的记录则直接复用，不再上传
   // 容错：如果 content_hash 列尚未迁移，查询会失败，此时跳过查重正常上传
+  // 注意：不去过滤 deleted_at——若命中软删记录，复活该记录（清空 deleted_at）而非新建，
+  // 避免相同内容文件被重复上传到 R2 造成存储泄漏
   const { data: existing, error: dedupError } = await client
     .from("media_assets")
-    .select("id, storage_key")
+    .select("id, storage_key, deleted_at")
     .eq("content_hash", contentHash)
-    .is("deleted_at", null)
     .limit(1)
     .maybeSingle();
 
   if (existing && !dedupError) {
+    // 命中软删记录时复活（清空 deleted_at），让媒体库重新显示
+    if (existing.deleted_at) {
+      await client
+        .from("media_assets")
+        .update({ deleted_at: null })
+        .eq("id", existing.id);
+    }
     revalidatePath("/admin/media");
     return;
   }

@@ -89,21 +89,23 @@ export async function saveSiteSettings(formData: FormData) {
     .map((label, index) => ({ label: label.trim(), url: (urls[index] ?? "").trim() }))
     .filter((link) => link.label && link.url);
 
-  const cta_card_scale = Number(formData.get("cta_card_scale") ?? 1);
-  const cta_card_offset_x = Number(formData.get("cta_card_offset_x") ?? 0);
-  const cta_card_offset_y = Number(formData.get("cta_card_offset_y") ?? 0);
-  const cta_figure_scale = Number(formData.get("cta_figure_scale") ?? 1);
-  const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") ?? 0);
-  const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") ?? 0);
-  const cta_figure_light_scale = Number(formData.get("cta_figure_light_scale") ?? 1);
-  const cta_figure_light_offset_x = Number(formData.get("cta_figure_light_offset_x") ?? 0);
-  const cta_figure_light_offset_y = Number(formData.get("cta_figure_light_offset_y") ?? 0);
-  const cta_ticker_logo_scale = Number(formData.get("cta_ticker_logo_scale") ?? 1);
-  const cta_ticker_logo_offset_x = Number(formData.get("cta_ticker_logo_offset_x") ?? 0);
-  const cta_ticker_logo_offset_y = Number(formData.get("cta_ticker_logo_offset_y") ?? 0);
-  const cta_center_logo_scale = Number(formData.get("cta_center_logo_scale") ?? 1);
-  const cta_center_logo_offset_x = Number(formData.get("cta_center_logo_offset_x") ?? 0);
-  const cta_center_logo_offset_y = Number(formData.get("cta_center_logo_offset_y") ?? 0);
+  // 注意：scale 默认值 1，清空输入框（空字符串）时应回到 1，而非 Number("")=0
+  // 空字符串是 falsy，用 `|| 1` 确保 scale 清空时回到 1；offset 清空回到 0 用 `|| 0`
+  const cta_card_scale = Number(formData.get("cta_card_scale") || 1);
+  const cta_card_offset_x = Number(formData.get("cta_card_offset_x") || 0);
+  const cta_card_offset_y = Number(formData.get("cta_card_offset_y") || 0);
+  const cta_figure_scale = Number(formData.get("cta_figure_scale") || 1);
+  const cta_figure_offset_x = Number(formData.get("cta_figure_offset_x") || 0);
+  const cta_figure_offset_y = Number(formData.get("cta_figure_offset_y") || 0);
+  const cta_figure_light_scale = Number(formData.get("cta_figure_light_scale") || 1);
+  const cta_figure_light_offset_x = Number(formData.get("cta_figure_light_offset_x") || 0);
+  const cta_figure_light_offset_y = Number(formData.get("cta_figure_light_offset_y") || 0);
+  const cta_ticker_logo_scale = Number(formData.get("cta_ticker_logo_scale") || 1);
+  const cta_ticker_logo_offset_x = Number(formData.get("cta_ticker_logo_offset_x") || 0);
+  const cta_ticker_logo_offset_y = Number(formData.get("cta_ticker_logo_offset_y") || 0);
+  const cta_center_logo_scale = Number(formData.get("cta_center_logo_scale") || 1);
+  const cta_center_logo_offset_x = Number(formData.get("cta_center_logo_offset_x") || 0);
+  const cta_center_logo_offset_y = Number(formData.get("cta_center_logo_offset_y") || 0);
 
   const tickerLogoIdsRaw = String(formData.get("cta_ticker_logo_media_ids") ?? "").trim();
   const ctaTickerLogoMediaIds = tickerLogoIdsRaw
@@ -118,7 +120,7 @@ export async function saveSiteSettings(formData: FormData) {
     id: true,
     name: String(formData.get("name") ?? "").trim(),
     nickname: String(formData.get("nickname") ?? "").trim(),
-    default_theme: formData.get("default_theme"),
+    default_theme: String(formData.get("default_theme") ?? "dark"),
     font_preset: String(formData.get("font_preset") ?? "default").trim(),
     seo_title: String(formData.get("seo_title") ?? "").trim(),
     seo_description: String(formData.get("seo_description") ?? "").trim(),

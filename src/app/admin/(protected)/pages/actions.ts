@@ -61,8 +61,10 @@ export async function savePageSettings(formData: FormData) {
  */
 export async function saveHomeSectionOrder(formData: FormData) {
   const rawOrder = formData.getAll("section_order").map(String).filter(Boolean);
-  const validSections = ["hero", "capabilities"];
-  const order = rawOrder.filter((s) => validSections.includes(s));
+  // M7 修复：去掉硬编码白名单 ["hero", "capabilities"]，改为格式验证
+  // 原因：白名单会过滤掉首页其他有效板块（如 featured_works、composite_works 等）
+  const sectionNameSchema = z.string().regex(/^[a-z0-9_-]+$/);
+  const order = rawOrder.filter((s) => sectionNameSchema.safeParse(s).success);
 
   if (order.length === 0) return;
 

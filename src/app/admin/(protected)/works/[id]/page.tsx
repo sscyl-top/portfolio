@@ -625,6 +625,8 @@ function CheckField({
         className={`accent-cyan flex-shrink-0 ${compact ? "h-3 w-3" : "h-4 w-4"}`}
       />
       <span className="truncate">{label}</span>
+      {/* C1 修复：hidden 兜底，未勾选时 FormData 也包含此字段（值为 "off"），避免 Server Action 无法区分"未勾选"和"字段不存在" */}
+      <input type="hidden" name={name} value="off" />
     </label>
   );
 }
