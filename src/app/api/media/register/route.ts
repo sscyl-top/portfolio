@@ -230,6 +230,10 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       id,
+      storage_key,
+      mime_type: mime_type || "application/octet-stream",
+      original_name,
+      byte_size: byte_size || 0,
       name: original_name,
       size: byte_size,
     });
