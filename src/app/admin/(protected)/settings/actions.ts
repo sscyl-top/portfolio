@@ -128,7 +128,8 @@ export async function saveSiteSettings(formData: FormData) {
   };
 
   let saveError: string | null = null;
-  for (let attempt = 0; attempt < 8; attempt++) {
+  // 重试次数减少到2次（原来8次导致30秒+），迁移并行化
+  for (let attempt = 0; attempt < 3; attempt++) {
     const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
     if (!error) {
       console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
@@ -137,14 +138,16 @@ export async function saveSiteSettings(formData: FormData) {
     }
     saveError = error.message;
     console.warn(`[Settings] site_settings save attempt ${attempt + 1} failed:`, error.message);
-    if (isSchemaCacheError(error.message) && attempt < 7) {
-      // 遇到 schema cache 错误时，重新执行 migrations（确保新列已创建），等待更久后重试
-      await runHeroVideosMigration().catch(() => {});
-      await runCtaTransformMigration().catch(() => {});
-      await runCenterLogoMigration().catch(() => {});
-      await runNameMediaMigration().catch(() => {});
-      await runCtaFigureLightMigration().catch(() => {});
-      await wait(2500);
+    if (isSchemaCacheError(error.message) && attempt < 2) {
+      // 并行执行所有迁移（原来是串行，导致30秒+）
+      await Promise.all([
+        runHeroVideosMigration().catch(() => {}),
+        runCtaTransformMigration().catch(() => {}),
+        runCenterLogoMigration().catch(() => {}),
+        runNameMediaMigration().catch(() => {}),
+        runCtaFigureLightMigration().catch(() => {}),
+      ]);
+      await wait(1000); // 从2.5秒减少到1秒
       continue;
     }
     break;
@@ -152,7 +155,15 @@ export async function saveSiteSettings(formData: FormData) {
 
   if (saveError) {
     console.error("[Settings] site_settings save failed after retries:", saveError);
-    redirect(`/admin/settings?toast=${encodeURIComponent(`保存失败: ${saveError}`)}`);
+    // 不再直接 redirect，继续保存到 text_content 作为后备
+  }
+
+  // 将所有 media_id 字段同时写入 text_content 作为后备存储
+  // 这样即使 site_settings 的 schema cache 丢弃某些列，也能从 text_content 恢复
+  const mediaIdTextEntries: Array<[string, string]> = [];
+  for (const field of mediaIdFields) {
+    const val = uuidOrNull(formData.get(field));
+    mediaIdTextEntries.push([field, val ?? ""]);
   }
 
   try {
@@ -163,7 +174,10 @@ export async function saveSiteSettings(formData: FormData) {
         upsertTextContent(serviceClient, key, String(value))
       ),
       upsertTextContent(serviceClient, "cta_ticker_logo_media_ids", ctaTickerLogoMediaIds),
-      upsertTextContent(serviceClient, "cta_figure_light_media_id", ctaFigureLightMediaId ?? ""),
+      // 所有 media_id 字段都写入 text_content 作为后备
+      ...mediaIdTextEntries.map(([key, value]) =>
+        upsertTextContent(serviceClient, key, value)
+      ),
     ]);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);

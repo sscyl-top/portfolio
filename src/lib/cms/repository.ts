@@ -75,6 +75,19 @@ const SETTINGS_TEXT_KEYS = [
   "cta_center_logo_offset_x",
   "cta_center_logo_offset_y",
   "cta_figure_light_media_id",
+  // 所有 media_id 字段都存入 text_content 作为后备
+  "logo_media_id",
+  "name_media_id",
+  "avatar_media_id",
+  "share_media_id",
+  "cta_card_media_id",
+  "cta_figure_media_id",
+  "cta_ticker_logo_media_id",
+  "cta_center_logo_media_id",
+  "hero_main_video_media_id",
+  "hero_side1_video_media_id",
+  "hero_side2_video_media_id",
+  "hero_side3_video_media_id",
 ] as const;
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
@@ -100,14 +113,6 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   baseData = settingsResult.data as Record<string, unknown>;
 
   if (!baseData) return null;
-
-  const heroIds = {
-    hero_main_video_media_id: (baseData.hero_main_video_media_id as string | null) ?? null,
-    hero_side1_video_media_id: (baseData.hero_side1_video_media_id as string | null) ?? null,
-    hero_side2_video_media_id: (baseData.hero_side2_video_media_id as string | null) ?? null,
-    hero_side3_video_media_id: (baseData.hero_side3_video_media_id as string | null) ?? null,
-  };
-  const ctaCenterLogoId = (baseData.cta_center_logo_media_id as string | null) ?? null;
 
   const ctaTransform: {
     cta_card_scale: number;
@@ -137,15 +142,17 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     cta_center_logo_offset_y: 0,
   };
   let tickerLogoIdsRaw = "";
-  let figureLightMediaIdFallback: string | null = null;
+  // 所有 media_id 字段的后备存储
+  const mediaIdFallbacks: Record<string, string | null> = {};
   const textData = textResult.data;
   if (!textResult.error && textData) {
     for (const item of textData) {
       if (item.key === "cta_ticker_logo_media_ids") {
         tickerLogoIdsRaw = item.content ?? "";
-      } else if (item.key === "cta_figure_light_media_id") {
+      } else if (item.key.endsWith("_media_id") || item.key.endsWith("_video_media_id")) {
+        // media_id 字段存入后备
         const val = (item.content ?? "").trim();
-        figureLightMediaIdFallback = val.length > 0 ? val : null;
+        mediaIdFallbacks[item.key] = val.length > 0 ? val : null;
       } else {
         const num = Number(item.content);
         if (!isNaN(num) && item.key in ctaTransform) {
@@ -155,12 +162,29 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
     }
   }
 
+  // 辅助函数：优先用 site_settings 值，为空则用 text_content 后备
+  const getMediaIdWithFallback = (rowKey: string): string | null => {
+    const rowVal = (baseData[rowKey] as string | null) ?? null;
+    if (rowVal) return rowVal;
+    return mediaIdFallbacks[rowKey] ?? null;
+  };
+
   const allIds = {
     ...baseData,
-    ...heroIds,
-    cta_center_logo_media_id: ctaCenterLogoId,
-    // 后备：如果 site_settings 表中没有 cta_figure_light_media_id（schema cache 未刷新），使用 text_content 中的值
-    cta_figure_light_media_id: (baseData.cta_figure_light_media_id as string | null) ?? figureLightMediaIdFallback,
+    // 所有 media_id 字段都用后备逻辑
+    logo_media_id: getMediaIdWithFallback("logo_media_id"),
+    name_media_id: getMediaIdWithFallback("name_media_id"),
+    avatar_media_id: getMediaIdWithFallback("avatar_media_id"),
+    share_media_id: getMediaIdWithFallback("share_media_id"),
+    cta_card_media_id: getMediaIdWithFallback("cta_card_media_id"),
+    cta_figure_media_id: getMediaIdWithFallback("cta_figure_media_id"),
+    cta_figure_light_media_id: getMediaIdWithFallback("cta_figure_light_media_id"),
+    cta_ticker_logo_media_id: getMediaIdWithFallback("cta_ticker_logo_media_id"),
+    cta_center_logo_media_id: getMediaIdWithFallback("cta_center_logo_media_id"),
+    hero_main_video_media_id: getMediaIdWithFallback("hero_main_video_media_id"),
+    hero_side1_video_media_id: getMediaIdWithFallback("hero_side1_video_media_id"),
+    hero_side2_video_media_id: getMediaIdWithFallback("hero_side2_video_media_id"),
+    hero_side3_video_media_id: getMediaIdWithFallback("hero_side3_video_media_id"),
   } as Record<string, unknown>;
 
   return { allIds, ctaTransform, tickerLogoIdsRaw };

@@ -78,6 +78,19 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_center_logo_offset_x",
     "cta_center_logo_offset_y",
     "cta_figure_light_media_id",
+    // 所有 media_id 字段都存入 text_content 作为后备
+    "logo_media_id",
+    "name_media_id",
+    "avatar_media_id",
+    "share_media_id",
+    "cta_card_media_id",
+    "cta_figure_media_id",
+    "cta_ticker_logo_media_id",
+    "cta_center_logo_media_id",
+    "hero_main_video_media_id",
+    "hero_side1_video_media_id",
+    "hero_side2_video_media_id",
+    "hero_side3_video_media_id",
   ] as const;
 
   // 并行查询 site_settings、text_content、media_assets
@@ -111,7 +124,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         hero_side2_video_media_id: (row.hero_side2_video_media_id as string | null) ?? null,
         hero_side3_video_media_id: (row.hero_side3_video_media_id as string | null) ?? null,
       };
-      const ctaCenterLogoId = (row.cta_center_logo_media_id as string | null) ?? null;
 
       const ctaTransform = {
         cta_card_scale: 1,
@@ -128,16 +140,18 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         cta_center_logo_offset_y: 0,
       };
       let tickerLogoIdsRaw = "";
-      let figureLightMediaIdFallback: string | null = null;
+      // 所有 media_id 字段的后备存储
+      const mediaIdFallbacks: Record<string, string | null> = {};
 
       const textData = textResult.data;
       if (!textResult.error && textData) {
         for (const item of textData) {
           if (item.key === "cta_ticker_logo_media_ids") {
             tickerLogoIdsRaw = item.content ?? "";
-          } else if (item.key === "cta_figure_light_media_id") {
+          } else if (item.key.endsWith("_media_id") || item.key.endsWith("_video_media_id")) {
+            // media_id 字段存入后备
             const val = (item.content ?? "").trim();
-            figureLightMediaIdFallback = val.length > 0 ? val : null;
+            mediaIdFallbacks[item.key] = val.length > 0 ? val : null;
           } else {
             const num = Number(item.content);
             if (!isNaN(num)) {
@@ -147,6 +161,13 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         }
       }
 
+      // 辅助函数：优先用 site_settings 值，为空则用 text_content 后备
+      const getMediaId = (rowKey: string, fallbackKey: string): string | null => {
+        const rowVal = (row[rowKey] as string | null) ?? null;
+        if (rowVal) return rowVal;
+        return mediaIdFallbacks[fallbackKey] ?? null;
+      };
+
       data = {
         name: (row.name as string) ?? "",
         nickname: (row.nickname as string) ?? "",
@@ -154,15 +175,16 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         font_preset: (row.font_preset as string) ?? "default",
         seo_title: (row.seo_title as string) ?? "",
         seo_description: (row.seo_description as string) ?? "",
-        logo_media_id: (row.logo_media_id as string | null) ?? null,
-        name_media_id: (row.name_media_id as string | null) ?? null,
-        avatar_media_id: (row.avatar_media_id as string | null) ?? null,
-        share_media_id: (row.share_media_id as string | null) ?? null,
-        cta_card_media_id: (row.cta_card_media_id as string | null) ?? null,
-        cta_figure_media_id: (row.cta_figure_media_id as string | null) ?? null,
-        cta_figure_light_media_id: (row.cta_figure_light_media_id as string | null) ?? figureLightMediaIdFallback,
-        cta_ticker_logo_media_id: (row.cta_ticker_logo_media_id as string | null) ?? null,
-        cta_center_logo_media_id: ctaCenterLogoId,
+        // 所有 media_id 字段优先用 site_settings，为空则用 text_content 后备
+        logo_media_id: getMediaId("logo_media_id", "logo_media_id"),
+        name_media_id: getMediaId("name_media_id", "name_media_id"),
+        avatar_media_id: getMediaId("avatar_media_id", "avatar_media_id"),
+        share_media_id: getMediaId("share_media_id", "share_media_id"),
+        cta_card_media_id: getMediaId("cta_card_media_id", "cta_card_media_id"),
+        cta_figure_media_id: getMediaId("cta_figure_media_id", "cta_figure_media_id"),
+        cta_figure_light_media_id: getMediaId("cta_figure_light_media_id", "cta_figure_light_media_id"),
+        cta_ticker_logo_media_id: getMediaId("cta_ticker_logo_media_id", "cta_ticker_logo_media_id"),
+        cta_center_logo_media_id: getMediaId("cta_center_logo_media_id", "cta_center_logo_media_id"),
         cta_ticker_logo_media_ids: tickerLogoIdsRaw,
         ...ctaTransform,
         ...heroIds,
