@@ -297,7 +297,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-[80px] z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-[64px] z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
@@ -326,7 +326,7 @@ export function CompositeDesignWall({
           </div>
 
           <div
-            className="cta-logo-ticker absolute inset-x-0 bottom-[64px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            className="cta-logo-ticker absolute inset-x-0 bottom-[110px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
             style={{
               transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
               transformOrigin: "center center",
@@ -370,7 +370,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[268px] w-[min(290px,64vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[270px] w-[min(300px,66vw)] -translate-x-1/2 -translate-y-[48px] md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)] md:translate-y-0">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
