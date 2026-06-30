@@ -55,7 +55,7 @@ export function SettingsVideoField({
   const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
   const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
 
-  const ctrlH = compact ? "h-8" : "h-9";
+  const ctrlH = "h-8";
 
   const triggerFileSelect = useCallback(() => {
     hiddenInputRef.current?.click();
@@ -158,8 +158,6 @@ export function SettingsVideoField({
     }
   };
 
-  const videoW = compact ? "w-28" : "w-32";
-
   return (
     <div className="grid gap-1.5">
       <span className="text-xs font-medium text-white/58">{label}</span>
@@ -167,69 +165,87 @@ export function SettingsVideoField({
       <div
         ref={dropZoneRef}
         data-media-upload-zone
-        className={`relative rounded-md border transition-all ${
+        className={`overflow-hidden rounded-md border transition-all ${
           isDragging
             ? "border-cyan bg-cyan/10 z-[60]"
             : "border-white/10 bg-white/[0.035]"
         }`}
       >
-        {previewUrl ? (
-          <button
-            type="button"
-            onClick={triggerFileSelect}
-            className="block w-full cursor-pointer p-2.5 text-left transition hover:bg-white/[0.03]"
-          >
-            <div className="flex items-start gap-2.5">
-              <div
-                className={`relative shrink-0 ${videoW} ${ASPECT_CLASS[aspectRatio]} overflow-hidden rounded border border-white/20 bg-black/30`}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              >
-                <video
-                  ref={videoRef}
-                  src={previewUrl}
-                  muted
-                  playsInline
-                  loop
-                  preload="metadata"
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 grid place-items-center bg-black/20 transition pointer-events-none">
-                  <Play className="h-5 w-5 text-white/70 fill-white/40" />
+        <button
+          type="button"
+          onClick={triggerFileSelect}
+          className="relative block w-full cursor-pointer overflow-hidden bg-black/30 transition hover:brightness-110"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {previewUrl ? (
+            <div className={`w-full ${ASPECT_CLASS[aspectRatio]} p-0`}>
+              <video
+                ref={videoRef}
+                src={previewUrl}
+                muted
+                playsInline
+                loop
+                preload="metadata"
+                className="h-full w-full object-cover"
+              />
+              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/20 transition">
+                <Play className="h-7 w-7 text-white/80 fill-white/50" />
+              </div>
+            </div>
+          ) : (
+            <div className={`w-full ${ASPECT_CLASS[aspectRatio]} grid place-items-center`}>
+              {isUploading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-cyan" />
+              ) : (
+                <div className="text-center">
+                  <div className="mx-auto grid h-9 w-9 place-items-center rounded-full bg-white/10">
+                    <Film className="h-4 w-4 text-white/40" />
+                  </div>
+                  <p className="mt-1.5 text-xs text-white/45">点击或拖拽上传视频</p>
+                  <p className="mt-0.5 text-[10px] text-white/25">MP4 / WEBM / OGG / MOV</p>
                 </div>
-              </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="truncate text-xs text-white/60">{previewName}</p>
-                <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
-                <p className="mt-1 text-[10px] text-white/25">
-                  悬停预览 · 点击替换
-                </p>
-              </div>
+              )}
             </div>
-          </button>
-        ) : (
+          )}
+        </button>
+
+        <div className={`flex items-center gap-1 border-t border-white/8 bg-black/20 px-2 py-1.5`}>
+          <select
+            value={value}
+            onChange={(e) => { setValue(e.target.value); setUploadedPreview(null); }}
+            className={`${ctrlH} min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-2 text-[11px] outline-none focus:border-cyan`}
+          >
+            <option value="">从媒体库选择</option>
+            {assets
+              .filter((a) => a.mime_type.startsWith("video/"))
+              .map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.original_name}
+                </option>
+              ))}
+          </select>
+
           <button
             type="button"
             onClick={triggerFileSelect}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 p-3 transition hover:bg-white/[0.06]"
+            disabled={isUploading}
+            className={`inline-flex ${ctrlH} shrink-0 items-center gap-1 rounded border border-white/10 bg-black/30 px-2 text-[11px] text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40`}
           >
-            {isUploading ? (
-              <Loader2 className="h-10 w-10 animate-spin text-cyan" />
-            ) : (
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
-                <Film className="h-5 w-5 text-white/40" />
-              </div>
-            )}
-            <div className="text-left">
-              <p className="text-xs text-white/50">
-                {isUploading ? "上传中..." : "点击或拖拽上传视频"}
-              </p>
-              <p className="mt-0.5 text-[10px] text-white/25">
-                MP4 / WEBM / OGG / MOV
-              </p>
-            </div>
+            {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
+            上传
           </button>
-        )}
+
+          {value ? (
+            <button
+              type="button"
+              onClick={() => { setValue(""); setUploadedPreview(null); }}
+              className={`${ctrlH} shrink-0 rounded border border-white/10 bg-black/30 px-1.5 text-white/40 transition hover:border-red-300/30 hover:text-red-300`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <input type="hidden" name={name} value={value} />
@@ -243,43 +259,6 @@ export function SettingsVideoField({
           e.target.value = "";
         }}
       />
-
-      <div className="flex items-center gap-1.5">
-        <select
-          value={value}
-          onChange={(e) => { setValue(e.target.value); setUploadedPreview(null); }}
-          className={`${ctrlH} min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2 text-xs outline-none focus:border-cyan`}
-        >
-          <option value="">从媒体库选择</option>
-          {assets
-            .filter((a) => a.mime_type.startsWith("video/"))
-            .map((asset) => (
-              <option key={asset.id} value={asset.id}>
-                {asset.original_name}
-              </option>
-            ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={triggerFileSelect}
-          disabled={isUploading}
-          className={`inline-flex ${ctrlH} shrink-0 items-center gap-1 rounded-md border border-white/10 bg-black/20 px-2 text-[11px] text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40`}
-        >
-          {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
-          上传
-        </button>
-
-        {value ? (
-          <button
-            type="button"
-            onClick={() => { setValue(""); setUploadedPreview(null); }}
-            className={`${ctrlH} shrink-0 rounded-md border border-white/10 bg-black/20 px-2 text-white/40 transition hover:border-red-300/30 hover:text-red-300`}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        ) : null}
-      </div>
 
       {hint ? <p className="text-[10px] leading-tight text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}

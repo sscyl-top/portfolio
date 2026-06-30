@@ -252,7 +252,7 @@ function MediaThumb({
         src={publicUrl}
         alt={alt}
         loading="lazy"
-        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+        className="h-full w-full object-contain p-2 transition duration-200 group-hover:scale-[1.03]"
       />
     );
   }

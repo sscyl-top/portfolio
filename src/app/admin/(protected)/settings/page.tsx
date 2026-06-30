@@ -251,31 +251,30 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         className="mt-5 grid gap-4 rounded-lg border border-white/10 bg-white/[0.025] p-4"
       >
         <SectionHeader title="基础信息" desc="站点名称、主题、字体等显示在前台头部的核心信息。" />
-        <div className="grid gap-3 md:grid-cols-2">
-          <Field label="站点名称" name="name" defaultValue={settings.name} />
-          <Field label="简称" name="nickname" defaultValue={settings.nickname} />
-        </div>
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+        <div className="grid gap-3 md:grid-cols-[1.1fr_1fr]">
           <SettingsMediaField
             label="站点名称图片（可选）"
             name="name_media_id"
             assets={mediaAssets}
             defaultValue={settings.name_media_id ?? ""}
             hint="导航栏左侧名称图片，上传后替换文字显示"
-            compact
           />
-          <label className="grid gap-1.5">
-            <span className="text-xs font-medium text-white/58">默认主题</span>
-            <select
-              name="default_theme"
-              defaultValue={settings.default_theme}
-              className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
-            >
-              <option value="dark">深色</option>
-              <option value="light">浅色</option>
-            </select>
-          </label>
-          <Field label="字体预设" name="font_preset" defaultValue={settings.font_preset} compact />
+          <div className="grid gap-3 md:grid-cols-2 content-start">
+            <Field label="站点名称" name="name" defaultValue={settings.name} />
+            <Field label="简称" name="nickname" defaultValue={settings.nickname} short />
+            <label className="grid gap-1.5">
+              <span className="text-xs font-medium text-white/58">默认主题</span>
+              <select
+                name="default_theme"
+                defaultValue={settings.default_theme}
+                className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
+              >
+                <option value="dark">深色</option>
+                <option value="light">浅色</option>
+              </select>
+            </label>
+            <Field label="字体预设" name="font_preset" defaultValue={settings.font_preset} short />
+          </div>
         </div>
 
         <SectionDivider />
@@ -288,7 +287,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             assets={mediaAssets}
             defaultValue={settings.logo_media_id ?? ""}
             hint="导航栏左侧图标"
-            compact
           />
           <SettingsMediaField
             label="头像（导航栏右侧）"
@@ -297,7 +295,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             defaultValue={settings.avatar_media_id ?? ""}
             circular
             hint="导航栏右侧圆形头像"
-            compact
           />
           <SettingsMediaField
             label="分享缩略图"
@@ -305,7 +302,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             assets={mediaAssets}
             defaultValue={settings.share_media_id ?? ""}
             hint="社交分享卡片，建议 1200×630"
-            compact
           />
         </div>
 
@@ -325,9 +321,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 assets={mediaAssets}
                 defaultValue={settings.cta_card_media_id ?? ""}
                 hint="底层卡片/背景图"
-                compact
               />
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="flex items-end gap-1.5">
                 <NumberField label="缩放" name="cta_card_scale" defaultValue={settings.cta_card_scale} step="0.05" min="0.1" max="5" />
                 <NumberField label="X" name="cta_card_offset_x" defaultValue={settings.cta_card_offset_x} step="1" min="-500" max="500" />
                 <NumberField label="Y" name="cta_card_offset_y" defaultValue={settings.cta_card_offset_y} step="1" min="-500" max="500" />
@@ -340,9 +335,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 assets={mediaAssets}
                 defaultValue={settings.cta_figure_media_id ?? ""}
                 hint="深色模式上层人物，PNG 透明底"
-                compact
               />
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="flex items-end gap-1.5">
                 <NumberField label="缩放" name="cta_figure_scale" defaultValue={settings.cta_figure_scale} step="0.05" min="0.1" max="5" />
                 <NumberField label="X" name="cta_figure_offset_x" defaultValue={settings.cta_figure_offset_x} step="1" min="-500" max="500" />
                 <NumberField label="Y" name="cta_figure_offset_y" defaultValue={settings.cta_figure_offset_y} step="1" min="-500" max="500" />
@@ -355,7 +349,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 assets={mediaAssets}
                 defaultValue={settings.cta_figure_light_media_id ?? ""}
                 hint="浅色模式人物，不上传复用深色"
-                compact
               />
             </div>
           </div>
@@ -367,28 +360,30 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
               assets={mediaAssets}
               defaultValue={settings.cta_ticker_logo_media_ids ?? ""}
               hint="横向滚动条幅中重复出现的 logo/图案，建议 PNG 透明底，可多选"
-              compact
             />
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="flex items-end gap-1.5">
               <NumberField label="缩放" name="cta_ticker_logo_scale" defaultValue={settings.cta_ticker_logo_scale} step="0.05" min="0.1" max="5" />
               <NumberField label="X" name="cta_ticker_logo_offset_x" defaultValue={settings.cta_ticker_logo_offset_x} step="1" min="-500" max="500" />
               <NumberField label="Y" name="cta_ticker_logo_offset_y" defaultValue={settings.cta_ticker_logo_offset_y} step="1" min="-500" max="500" />
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2">
+          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1.3fr)_1fr]">
             <SettingsMediaField
               label="终场中心 Logo"
               name="cta_center_logo_media_id"
               assets={mediaAssets}
               defaultValue={settings.cta_center_logo_media_id ?? ""}
               hint="居中显示的大 Logo，替换默认「无限进步」"
-              compact
             />
-            <div className="grid grid-cols-3 gap-1.5">
-              <NumberField label="缩放" name="cta_center_logo_scale" defaultValue={settings.cta_center_logo_scale} step="0.01" min="0.1" max="3" />
-              <NumberField label="X" name="cta_center_logo_offset_x" defaultValue={settings.cta_center_logo_offset_x} step="1" min="-200" max="200" />
-              <NumberField label="Y" name="cta_center_logo_offset_y" defaultValue={settings.cta_center_logo_offset_y} step="1" min="-200" max="200" />
+            <div className="grid content-start gap-2">
+              <p className="text-[11px] font-medium text-white/50">位置调整</p>
+              <div className="flex items-end gap-1.5">
+                <NumberField label="缩放" name="cta_center_logo_scale" defaultValue={settings.cta_center_logo_scale} step="0.01" min="0.1" max="3" />
+                <NumberField label="X" name="cta_center_logo_offset_x" defaultValue={settings.cta_center_logo_offset_x} step="1" min="-200" max="200" />
+                <NumberField label="Y" name="cta_center_logo_offset_y" defaultValue={settings.cta_center_logo_offset_y} step="1" min="-200" max="200" />
+              </div>
+              <p className="text-[10px] leading-tight text-white/30">X/Y 为相对中心的偏移量，单位像素</p>
             </div>
           </div>
         </div>
@@ -399,44 +394,40 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             desc="第一屏 4 个卡片的背景视频。支持拖拽上传或从媒体库选择，MP4/WEBM/OGG/MOV。不上传显示渐变占位色。"
             noMargin
           />
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="mt-4 grid gap-3">
             <SettingsVideoField
-              label="主卡片视频（大卡片）"
+              label="主卡片视频（大卡片 · 16:9）"
               name="hero_main_video_media_id"
               assets={mediaAssets}
               defaultValue={settings.hero_main_video_media_id ?? ""}
-              hint="大卡片背景视频，16:9 比例"
+              hint="大卡片背景视频，第一屏最显眼的位置"
               aspectRatio="video"
-              compact
             />
-            <div className="grid gap-3 md:grid-cols-2 content-start">
+            <div className="grid gap-3 md:grid-cols-2">
               <SettingsVideoField
-                label="小卡片 1（左上）"
+                label="小卡片 1 · 左上（1:1）"
                 name="hero_side1_video_media_id"
                 assets={mediaAssets}
                 defaultValue={settings.hero_side1_video_media_id ?? ""}
-                hint="左上浮动小卡片，1:1"
+                hint="左上浮动小卡片"
                 aspectRatio="square"
-                compact
               />
               <SettingsVideoField
-                label="小卡片 2（左侧）"
+                label="小卡片 2 · 左侧（1:1）"
                 name="hero_side2_video_media_id"
                 assets={mediaAssets}
                 defaultValue={settings.hero_side2_video_media_id ?? ""}
-                hint="左侧浮动小卡片，1:1"
+                hint="左侧浮动小卡片"
                 aspectRatio="square"
-                compact
               />
             </div>
             <SettingsVideoField
-              label="小卡片 3（右下）"
+              label="小卡片 3 · 右下宽卡（2:1）"
               name="hero_side3_video_media_id"
               assets={mediaAssets}
               defaultValue={settings.hero_side3_video_media_id ?? ""}
-              hint="右下浮动宽卡片，2:1"
+              hint="右下浮动宽卡片"
               aspectRatio="wide"
-              compact
             />
           </div>
         </div>
@@ -445,8 +436,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
         <SectionHeader title="SEO 与社交" desc="页面元信息和社交链接。" />
         <div className="grid gap-3 md:grid-cols-2">
-          <Field label="SEO 标题" name="seo_title" defaultValue={settings.seo_title} compact />
-          <Field label="SEO 描述" name="seo_description" defaultValue={settings.seo_description} compact />
+          <Field label="SEO 标题" name="seo_title" defaultValue={settings.seo_title} />
+          <Field label="SEO 描述" name="seo_description" defaultValue={settings.seo_description} />
         </div>
 
         <section className="rounded-lg border border-white/10 bg-black/20 p-4">
@@ -490,18 +481,18 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider">社交链接</h3>
           <div className="mt-3 grid gap-2">
             {socialLinks.concat([{ label: "", url: "" }]).map((link, index) => (
-              <div key={index} className="grid gap-2 md:grid-cols-[0.4fr_1fr]">
+              <div key={index} className="flex items-center gap-2">
                 <input
                   name="social_label"
                   defaultValue={link.label}
                   placeholder="名称"
-                  className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
+                  className="h-9 w-28 shrink-0 rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
                 />
                 <input
                   name="social_url"
                   defaultValue={link.url}
                   placeholder="https://..."
-                  className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
+                  className="h-9 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan"
                 />
               </div>
             ))}
@@ -520,12 +511,12 @@ function Field({
   label,
   name,
   defaultValue,
-  compact = false,
+  short = false,
 }: {
   label: string;
   name: string;
   defaultValue: string;
-  compact?: boolean;
+  short?: boolean;
 }) {
   return (
     <label className="grid gap-1.5">
@@ -534,7 +525,7 @@ function Field({
         name={name}
         defaultValue={defaultValue}
         required
-        className={`${compact ? "h-9" : "h-10"} w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan`}
+        className={`${short ? "" : ""} h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan`}
       />
     </label>
   );
@@ -565,7 +556,7 @@ function NumberField({
         step={step}
         min={min}
         max={max}
-        className="h-8 w-full rounded-md border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-cyan"
+        className="h-8 w-20 rounded-md border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-cyan"
       />
     </label>
   );

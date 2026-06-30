@@ -88,16 +88,20 @@ export function ResumeEditor({ resume }: Props) {
 
 function BasicFields({ resume }: { resume: ResumeData }) {
   return (
-    <section className="grid gap-4 md:grid-cols-2">
+    <section className="grid gap-3 md:grid-cols-4">
       <Field label="姓名" name="name" defaultValue={resume.name} required />
       <Field label="英文名" name="alias" defaultValue={resume.alias} />
       <Field label="职位" name="role" defaultValue={resume.role} />
       <Field label="地点" name="location" defaultValue={resume.location} />
-      <Field label="邮箱" name="email" defaultValue={resume.contact.email} required />
+      <div className="md:col-span-2">
+        <Field label="邮箱" name="email" defaultValue={resume.contact.email} required />
+      </div>
       <Field label="电话" name="phone" defaultValue={resume.contact.phone} />
-      <Field label="Zcool URL" name="zcool_url" defaultValue={resume.contact.zcool} />
       <Field label="微信号" name="wechat_id" defaultValue="" />
       <div className="md:col-span-2">
+        <Field label="Zcool URL" name="zcool_url" defaultValue={resume.contact.zcool} />
+      </div>
+      <div className="md:col-span-4">
         <TextArea
           label="定位描述"
           name="positioning"
@@ -113,7 +117,7 @@ function StrengthsList({ defaultItems }: { defaultItems: string[] }) {
   const [items, setItems] = useState<string[]>(defaultItems.length > 0 ? defaultItems : [""]);
 
   return (
-    <ListSection title="优势陈述" addLabel="添加优势">
+    <ListSection title="优势陈述" addLabel="添加优势" cols={2}>
       {items.map((item, i) => (
         <ListRow key={i} onRemove={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}>
           <input
@@ -133,7 +137,7 @@ function HighlightsList({ defaultItems }: { defaultItems: string[] }) {
   const [items, setItems] = useState<string[]>(defaultItems.length > 0 ? defaultItems : [""]);
 
   return (
-    <ListSection title="高光标签" addLabel="添加标签">
+    <ListSection title="高光标签" addLabel="添加标签" cols={3}>
       {items.map((item, i) => (
         <ListRow key={i} onRemove={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}>
           <input
@@ -153,7 +157,7 @@ function ServicesList({ defaultItems }: { defaultItems: string[] }) {
   const [items, setItems] = useState<string[]>(defaultItems.length > 0 ? defaultItems : [""]);
 
   return (
-    <ListSection title="服务范围" addLabel="添加服务">
+    <ListSection title="服务范围" addLabel="添加服务" cols={2}>
       {items.map((item, i) => (
         <ListRow key={i} onRemove={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}>
           <input
@@ -279,7 +283,7 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
     <ListSection title="工作经验" addLabel="添加经历">
       {items.map((exp, i) => (
         <div key={i} className="rounded-md border border-white/10 bg-black/20 p-3">
-          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_8rem_auto_auto]">
             <input
               name="experience_company"
               defaultValue={exp.company}
@@ -290,6 +294,12 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
               name="experience_title"
               defaultValue={exp.title}
               placeholder="职位"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
+            />
+            <input
+              name="experience_period"
+              defaultValue={exp.period}
+              placeholder="时间段"
               className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <div className="flex items-start gap-1">
@@ -320,12 +330,6 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
               </button>
             </div>
           </div>
-          <input
-            name="experience_period"
-            defaultValue={exp.period}
-            placeholder="时间段"
-            className="mt-2 h-9 w-full rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
-          />
           <div className="mt-2 space-y-1.5">
             {(exp.points.length > 0 ? exp.points : [""]).map((point, j) => (
               <div key={j} className="flex items-start gap-1.5">
@@ -397,7 +401,7 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
     <ListSection title="校园经历" addLabel="添加经历">
       {items.map((item, i) => (
         <div key={i} className="rounded-md border border-white/10 bg-black/20 p-3">
-          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_8rem_auto_auto]">
             <input
               name="campus_company"
               defaultValue={item.company}
@@ -408,6 +412,12 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
               name="campus_title"
               defaultValue={item.title}
               placeholder="职位"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
+            />
+            <input
+              name="campus_period"
+              defaultValue={item.period}
+              placeholder="时间段"
               className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <div className="flex items-start gap-1">
@@ -438,12 +448,6 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
               </button>
             </div>
           </div>
-          <input
-            name="campus_period"
-            defaultValue={item.period}
-            placeholder="时间段"
-            className="mt-2 h-9 w-full rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
-          />
           <TextArea
             name="campus_description"
             defaultValue={item.description}
@@ -474,7 +478,7 @@ function EducationSection({ education }: { education: ResumeEducation }) {
   return (
     <section>
       <h3 className="text-xs font-medium text-white/80">教育背景</h3>
-      <div className="mt-2 grid gap-3 md:grid-cols-2">
+      <div className="mt-2 grid gap-3 md:grid-cols-4">
         <Field label="学校" name="education_school" defaultValue={education.school} />
         <Field label="学校英文" name="education_schoolEnglish" defaultValue={education.schoolEnglish} />
         <Field label="专业" name="education_major" defaultValue={education.major} />
@@ -573,15 +577,18 @@ function ListSection({
   title,
   addLabel,
   children,
+  cols = 1,
 }: {
   title: string;
   addLabel: string;
   children: React.ReactNode;
+  cols?: 1 | 2 | 3;
 }) {
+  const gridCols = cols === 3 ? "md:grid-cols-3" : cols === 2 ? "md:grid-cols-2" : "";
   return (
     <section>
       <h3 className="text-xs font-medium text-white/80">{title}</h3>
-      <div className="mt-2 space-y-2">{children}</div>
+      <div className={`mt-2 grid gap-2 ${gridCols}`}>{children}</div>
     </section>
   );
 }

@@ -60,7 +60,7 @@ export function TickerLogosField({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  const thumbSize = compact ? "h-16 w-20" : "h-20 w-24";
+  const thumbSize = compact ? "h-16 w-20" : "h-24 w-28";
   const p = compact ? "p-3" : "p-4";
   const emptyP = compact ? "p-5" : "p-8";
 
