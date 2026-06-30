@@ -20,18 +20,38 @@
    - 正常上传成功路径返回值缺少 `storage_key`、`mime_type`、`original_name`、`byte_size`，导致前端无预览
    - 已补全返回字段
 
+### 系统性功能测试结果（2026-06-30 完整测试，全部通过）
+
+> 本次测试用 Playwright 自动化执行，覆盖前台+后台+数据库全链路。
+
+| # | 测试项 | 结果 | 说明 |
+|---|--------|------|------|
+| 1 | 前台首页 hero 视频显示 | ✅ 通过 | 4个视频全部加载成功（readyState=4），主视频正在播放，图片正常 |
+| 2 | 视频字段清空→保存→恢复 | ✅ 通过 | hero_side3 清空→保存持久化→刷新确认为空→恢复原值→保存持久化，全链路正常 |
+| 3 | 作品列表页 /works | ✅ 通过 | 31个作品卡片，图片全部加载，无破损 |
+| 4 | 作品详情页 | ✅ 通过 | 标题/H1/3图全部正常，无破损图 |
+| 5 | 媒体库页面 | ✅ 通过 | 324文件，虚拟滚动+懒加载正常工作，滚动后图片渐次加载（非破损） |
+| 6 | 前台主题切换 | ✅ 通过 | 首页不显切换按钮（符合设计），/works 切换 light→dark 成功，按钮 aria-label 正确反转 |
+| 7 | 后台 CTA transform 保存 | ✅ 通过 | cta_card_scale 1.2→1.5 保存持久化成功，刷新确认，已恢复1.2 |
+| 8 | 后台作品管理 | ✅ 通过 | 17个作品，编辑页字段（title/subtitle/summary/cover）全部正常 |
+
+### 重要发现（修正之前的误判）
+- **site_settings 表的 cta_*_scale/offset 列实际是存在的**（CTA transform 值保存测试通过，值持久化成功）
+- 之前会话判断"缺失列"可能是误判，或豆包在期间补充了迁移
+- 但 `cta_figure_light_media_id` 列仍可能缺失（未单独测试），保留列过滤逻辑作为安全网
+
 ### 待解决的问题（需要用户操作）
-1. **site_settings 表缺失多个列**（根本问题）
-   - 缺失列：`cta_figure_light_media_id`、`cta_card_scale`、`cta_card_offset_x/y`、`cta_figure_scale`、`cta_figure_offset_x/y`、`cta_figure_light_scale`、`cta_figure_light_offset_x/y`、`cta_ticker_logo_scale`、`cta_ticker_logo_offset_x/y`、`cta_center_logo_scale`、`cta_center_logo_offset_x/y`
-   - 原因：`DATABASE_URL` 环境变量未设置，`exec_ddl` RPC 函数不存在，迁移无法执行
-   - 影响：CTA transform 值只能写入 `text_content` 后备，不能直接用 `site_settings` 列
-   - 解决方案（任选其一）：
-     - a. 在 Supabase Dashboard → SQL Editor 手动执行 ALTER TABLE 添加列
-     - b. 在 Vercel 环境变量设置 `DATABASE_URL`（Supabase → Project Settings → Database → Connection string）
-     - c. 在 Supabase 创建 `exec_ddl` RPC 函数（见 `migrations.ts` 注释）
+1. **site_settings 表 schema 确认**
+   - 之前判断 cta_*_scale 等列缺失，但测试发现实际存在
+   - 建议：在 Supabase Dashboard 执行 `SELECT column_name FROM information_schema.columns WHERE table_name = 'site_settings'` 确认完整列清单
+   - 如果 `cta_figure_light_media_id` 缺失，需要手动 ALTER TABLE 添加
 
 2. **媒体库测试垃圾文件**
    - `__migration_test.mp4`、`__verify_test.mp4`、`__preview_test.mp4` 需要清理
+
+3. **新上传视频完整流程未测**
+   - 缺少本地测试视频文件，未做"上传新视频→保存→刷新"测试
+   - 已通过"清空→保存→恢复"测试验证 hidden input 提交链路正常
 
 ### 备份分支
 - `backup/hero-side2-fix-20260630`：本次修复前的状态
