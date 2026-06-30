@@ -1,0 +1,8 @@
+feat: resume page inline editable text + double-click editing
+
+- EditableText now accepts page/section props and shows a tooltip hint for admins
+- PATCH /api/text-content now upserts: creates new record when key missing, auto-infers page from key prefix
+- Resume page hero (greeting, year label, intro paragraph, download buttons) wrapped in EditableText
+- All 5 resume section titles/subtitles are now editable
+- ContactFinale title/subtitle + ContactForm kicker/title/description for both cards are editable
+- Admins see a dashed cyan outline on hover; double-click to edit, Ctrl+S to save, Esc to cancel

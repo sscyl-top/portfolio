@@ -105,18 +105,7 @@ export async function saveSiteSettings(formData: FormData) {
   await runNameMediaMigration().catch(() => {});
   await runCtaFigureLightMigration().catch(() => {});
 
-  await wait(1500);
-
   const serviceClient = createSupabaseServiceClient();
-
-  // 先查询数据库已有的列，避免 upsert 包含不存在的列导致失败
-  const { data: existingRow } = await serviceClient
-    .from("site_settings")
-    .select("*")
-    .single();
-  const existingColumns = new Set(
-    existingRow ? Object.keys(existingRow) : []
-  );
 
   const saveData: Record<string, unknown> = {
     id: true,
@@ -129,7 +118,8 @@ export async function saveSiteSettings(formData: FormData) {
     social_links,
   };
 
-  // 只保存数据库中实际存在的 media_id 列
+  // 写入所有已知的 media_id 字段；如果列在 PostgREST schema cache 中还不可见，
+  // 下面的 upsert 会报 schema cache 错误，重试逻辑会等待并再次执行 migration 后重试。
   const mediaIdFields = [
     "logo_media_id",
     "name_media_id",
@@ -146,9 +136,7 @@ export async function saveSiteSettings(formData: FormData) {
     "hero_side3_video_media_id",
   ];
   for (const field of mediaIdFields) {
-    if (existingColumns.has(field)) {
-      saveData[field] = uuidOrNull(formData.get(field));
-    }
+    saveData[field] = uuidOrNull(formData.get(field));
   }
 
   const ctaTransformValues: Record<string, number> = {
@@ -167,7 +155,7 @@ export async function saveSiteSettings(formData: FormData) {
   };
 
   let saveError: string | null = null;
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const { error } = await serviceClient.from("site_settings").upsert(saveData, { onConflict: "id" });
     if (!error) {
       console.log(`[Settings] site_settings saved successfully (attempt ${attempt + 1})`);
@@ -176,8 +164,14 @@ export async function saveSiteSettings(formData: FormData) {
     }
     saveError = error.message;
     console.warn(`[Settings] site_settings save attempt ${attempt + 1} failed:`, error.message);
-    if (isSchemaCacheError(error.message) && attempt < 5) {
-      await wait(2000);
+    if (isSchemaCacheError(error.message) && attempt < 7) {
+      // 遇到 schema cache 错误时，重新执行 migrations（确保新列已创建），等待更久后重试
+      await runHeroVideosMigration().catch(() => {});
+      await runCtaTransformMigration().catch(() => {});
+      await runCenterLogoMigration().catch(() => {});
+      await runNameMediaMigration().catch(() => {});
+      await runCtaFigureLightMigration().catch(() => {});
+      await wait(2500);
       continue;
     }
     break;
