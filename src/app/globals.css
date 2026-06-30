@@ -569,26 +569,6 @@ button {
 }
 
 @media (max-width: 767px) {
-  .portfolio-cta-panel {
-    min-height: 620px;
-    padding-bottom: 80px;
-  }
-
-  .portfolio-cta-panel .cta-logo-ticker {
-    bottom: 240px;
-  }
-
-  .portfolio-cta-panel > div:last-child {
-    background: linear-gradient(to top, rgba(12, 15, 19, 0.95), rgba(12, 15, 19, 0.5), transparent 60%);
-    padding-top: 80px;
-  }
-
-  .portfolio-cta-panel > div:last-child .cta-figure-upload-slot {
-    margin-bottom: 0;
-  }
-}
-
-@media (max-width: 767px) {
   .light .portfolio-cta-panel > div:last-child {
     background: linear-gradient(to top, rgba(247, 251, 253, 0.95), rgba(247, 251, 253, 0.7), transparent);
   }

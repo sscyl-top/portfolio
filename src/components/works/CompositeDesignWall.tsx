@@ -254,7 +254,7 @@ export function CompositeDesignWall({
               <img
                 src={ctaCardUrl}
                 alt=""
-                className="cta-card-image h-full w-full object-contain object-center"
+                className="cta-card-image h-full w-full object-cover object-top md:object-contain md:object-center"
                 style={{
                   transform: `translate(${ctaCardOffsetX}px, ${ctaCardOffsetY}px) scale(${ctaCardScale})`,
                   transformOrigin: "center center",
@@ -265,7 +265,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-16 z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
