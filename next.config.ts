@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
   productionBrowserSourceMaps: false,
+  serverExternalPackages: ["pg"],
   env: {
     // 暴露 R2 直连 URL 配置到客户端（避免通过 Vercel 代理造成双倍带宽）
     NEXT_PUBLIC_R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || "",
