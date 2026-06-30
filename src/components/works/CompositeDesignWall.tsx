@@ -276,11 +276,11 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-10 min-h-[420px] px-0 pb-2 pt-2 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
+          className="portfolio-cta-panel relative mt-6 min-h-[360px] px-0 pb-1 pt-0 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
-          <div className="absolute inset-x-[4%] bottom-2 top-0 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
+          <div className="absolute inset-x-[4%] bottom-1 top-0 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -297,7 +297,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-[72px] z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
@@ -310,7 +310,7 @@ export function CompositeDesignWall({
                   <img
                     src={ctaCenterLogoUrl}
                     alt="中心Logo"
-                    className="cta-logo-img h-auto w-[min(220px,48vw)] md:w-[min(360px,64vw)]"
+                    className="cta-logo-img h-auto w-[min(200px,44vw)] md:w-[min(360px,64vw)]"
                   />
                 ) : (
                   <Image
@@ -318,7 +318,7 @@ export function CompositeDesignWall({
                     alt="无限进步"
                     width={360}
                     height={90}
-                    className="cta-logo-img h-auto w-[min(220px,48vw)] md:w-[min(360px,64vw)]"
+                    className="cta-logo-img h-auto w-[min(200px,44vw)] md:w-[min(360px,64vw)]"
                   />
                 )}
               </div>
@@ -326,7 +326,7 @@ export function CompositeDesignWall({
           </div>
 
           <div
-            className="cta-logo-ticker absolute inset-x-0 bottom-[56px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            className="cta-logo-ticker absolute inset-x-0 bottom-[70px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
             style={{
               transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
               transformOrigin: "center center",
@@ -370,7 +370,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[260px] w-[min(290px,64vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[220px] w-[min(260px,60vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
