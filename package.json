@@ -36,7 +36,6 @@
     "react-image-crop": "^11.1.2",
     "sharp": "^0.35.2",
     "three": "^0.184.0",
-    "yet-another-react-lightbox": "^3.32.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

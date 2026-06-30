@@ -170,41 +170,46 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
       return;
     }
 
-    const update = () => {
-      const panels = Array.from(
-        section.querySelectorAll<HTMLElement>("[data-strength-panel]"),
-      );
-      const firstPanelRect = panels[0]?.getBoundingClientRect();
-      const secondPanelRect = panels[1]?.getBoundingClientRect();
-      const panelStep =
-        firstPanelRect && secondPanelRect
-          ? secondPanelRect.top - firstPanelRect.top
-          : window.innerHeight;
-      const panelTravel = firstPanelRect
-        ? Math.min(
-            slides.length - 1,
-            Math.max(0, -firstPanelRect.top / Math.max(panelStep, 1)),
-          )
-        : 0;
-      scrollProgressRef.current = panelTravel / (slides.length - 1);
-      entryProgressRef.current = firstPanelRect
-        ? Math.min(
-            1,
-            Math.max(
-              0,
-              (window.innerHeight - firstPanelRect.top) /
-                Math.max(window.innerHeight * 0.84, 1),
-            ),
-          )
-        : 0;
-      const next = findActivePanelIndex(
-        panels.map((panel) => panel.getBoundingClientRect()),
-        window.innerHeight,
-      );
+    let frame = 0;
 
-      if (next >= 0) {
-        setActiveIndex(next);
-      }
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const panels = Array.from(
+          section.querySelectorAll<HTMLElement>("[data-strength-panel]"),
+        );
+        const firstPanelRect = panels[0]?.getBoundingClientRect();
+        const secondPanelRect = panels[1]?.getBoundingClientRect();
+        const panelStep =
+          firstPanelRect && secondPanelRect
+            ? secondPanelRect.top - firstPanelRect.top
+            : window.innerHeight;
+        const panelTravel = firstPanelRect
+          ? Math.min(
+              slides.length - 1,
+              Math.max(0, -firstPanelRect.top / Math.max(panelStep, 1)),
+            )
+          : 0;
+        scrollProgressRef.current = panelTravel / (slides.length - 1);
+        entryProgressRef.current = firstPanelRect
+          ? Math.min(
+              1,
+              Math.max(
+                0,
+                (window.innerHeight - firstPanelRect.top) /
+                  Math.max(window.innerHeight * 0.84, 1),
+              ),
+            )
+          : 0;
+        const next = findActivePanelIndex(
+          panels.map((panel) => panel.getBoundingClientRect()),
+          window.innerHeight,
+        );
+
+        if (next >= 0) {
+          setActiveIndex(next);
+        }
+      });
     };
 
     update();
@@ -212,6 +217,7 @@ export function CapabilityBands({ strengths, textOverrides }: CapabilityBandsPro
     window.addEventListener("resize", update);
 
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };

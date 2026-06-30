@@ -36,6 +36,7 @@ export function MobileNavRight({
           <img
             src={avatarMediaUrl}
             alt=""
+            fetchPriority="high"
             className="h-full w-full object-cover"
             style={{ filter: "var(--png-filter)" }}
           />

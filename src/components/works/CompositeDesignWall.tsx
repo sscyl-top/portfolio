@@ -81,13 +81,23 @@ export function CompositeDesignWall({
   ctaCenterLogoOffsetX = 0,
   ctaCenterLogoOffsetY = 0,
 }: CompositeDesignWallProps) {
-  const [scrollShift, setScrollShift] = useState(0);
   const [ctaVisible, setCtaVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const { resolvedTheme } = useTheme();
   const ctaRef = useRef<HTMLDivElement>(null);
+  // 卡片元素 ref 数组：scroll handler 直接更新 DOM transform，避免每帧 setState 导致 16 张卡片重渲染
+  const cardRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => setMounted(true), []);
+
+  // 追踪视口宽度，替代 render 中直接读取 window.innerWidth（SSR hazard）
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop, { passive: true });
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const isLight = mounted && resolvedTheme === "light";
   const activeFigureUrl = isLight && ctaFigureLightUrl ? ctaFigureLightUrl : ctaFigureUrl;
@@ -110,13 +120,34 @@ export function CompositeDesignWall({
     });
   }, [works]);
 
+  // Scroll handler: 直接通过 ref 更新每张卡片的 transform，不触发 React re-render
+  // 旧实现用 setScrollShift + render 计算 transform，每帧重渲染 16 张卡片，CPU 开销大
   useEffect(() => {
+    if (displayWorks.length === 0) return;
+
     let frame = 0;
 
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        setScrollShift(window.scrollY * 0.05);
+        const shift = window.scrollY * 0.05;
+        const desktop = window.innerWidth >= 1024;
+        const cards = cardRefs.current;
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          if (!card) continue;
+          const column = i % 4;
+          const direction = column % 2 === 0 ? -1 : 1;
+          const mobileColumn = i % 2;
+          const mobileDirection = mobileColumn % 2 === 0 ? -1 : 1;
+          if (desktop) {
+            const yOffset = direction * ((shift + column * 12) % 56);
+            card.style.transform = `translateY(${yOffset}px)`;
+          } else {
+            const mobileYOffset = mobileDirection * ((shift * 0.8 + mobileColumn * 12) % 32);
+            card.style.transform = `translateY(${mobileYOffset}px)`;
+          }
+        }
       });
     };
 
@@ -127,7 +158,7 @@ export function CompositeDesignWall({
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [displayWorks]);
 
   useEffect(() => {
     const element = ctaRef.current;
@@ -172,18 +203,19 @@ export function CompositeDesignWall({
           {displayWorks.map((work, index) => {
             const column = index % 4;
             const direction = column % 2 === 0 ? -1 : 1;
-            const yOffset = direction * ((scrollShift + column * 12) % 56);
+            const yOffset = direction * ((column * 12) % 56);
             const mobileColumn = index % 2;
             const mobileDirection = mobileColumn % 2 === 0 ? -1 : 1;
-            const mobileYOffset = mobileDirection * ((scrollShift * 0.8 + mobileColumn * 12) % 32);
+            const mobileYOffset = mobileDirection * ((mobileColumn * 12) % 32);
 
             return (
               <Link
                 key={`${work.slug}-${index}`}
+                ref={(el) => { cardRefs.current[index] = el; }}
                 href={`/works/${work.slug}?from=composite`}
                 className="group block overflow-hidden rounded-lg border border-white/15 bg-surface/40 p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.25),inset_0_0_20px_rgba(255,255,255,0.02)] backdrop-blur-md transition duration-500 hover:-translate-y-2 hover:border-white/25 hover:bg-surface/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_0_30px_rgba(255,255,255,0.04)] md:p-2"
                 style={{
-                  transform: window.innerWidth >= 1024 ? `translateY(${yOffset}px)` : `translateY(${mobileYOffset}px)`,
+                  transform: isDesktop ? `translateY(${yOffset}px)` : `translateY(${mobileYOffset}px)`,
                   transition:
                     "transform 420ms cubic-bezier(.2,.8,.2,1), border-color 300ms ease, background-color 300ms ease",
                 }}

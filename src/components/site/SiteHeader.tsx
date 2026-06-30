@@ -60,6 +60,7 @@ export async function SiteHeader({
               <img
                 src={siteSettings.logoMediaUrl}
                 alt=""
+                fetchPriority="high"
                 className="h-full w-full object-contain md:h-12 md:w-12"
               />
             ) : (
@@ -76,6 +77,7 @@ export async function SiteHeader({
                 <img
                   src={siteSettings.nameMediaUrl}
                   alt={siteSettings.name}
+                  fetchPriority="high"
                   className="absolute left-0 top-0 block h-4 w-auto max-w-[100px] object-contain object-left-top sm:h-5 sm:max-w-[130px] md:h-6 md:max-w-[160px]"
                   style={{ filter: "var(--png-filter)" }}
                 />
@@ -129,6 +131,7 @@ export async function SiteHeader({
                 <img
                   src={siteSettings.avatarMediaUrl}
                   alt=""
+                  fetchPriority="high"
                   className="h-full w-full object-cover"
                   style={{ filter: "var(--png-filter)" }}
                 />

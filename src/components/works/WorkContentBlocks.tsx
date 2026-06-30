@@ -1,16 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import type { ContentBlock, BlockLayout } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
 import { SmartVideo, SmartGifBoundary } from "./SmartVideo";
-import { PdfBlockRenderer } from "./PdfBlockRenderer";
 import { CodeBlock } from "./blocks/CodeBlock";
 import { QuoteBlock } from "./blocks/QuoteBlock";
 import { EmbedBlock } from "./blocks/EmbedBlock";
 import { DividerBlock } from "./blocks/DividerBlock";
 import { CalloutBlock } from "./blocks/CalloutBlock";
 import { StatsBlock } from "./blocks/StatsBlock";
+
+// PDF 渲染器懒加载：pdfjs-dist 约 500KB，大多数作品没有 PDF block，
+// 同步导入会让每个作品详情页都加载这 500KB。改为按需加载，仅在有 PDF block 时才下载。
+const PdfBlockRenderer = dynamic(
+  () => import("./PdfBlockRenderer").then((m) => ({ default: m.PdfBlockRenderer })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-12 text-sm text-ink-3">
+        PDF 加载中…
+      </div>
+    ),
+  },
+);
 
 type Props = {
   blocks: ContentBlock[];

@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import {
   getCompositeWorks,
   getFeaturedWorks,
@@ -601,11 +603,11 @@ export function createCmsRepository(source: CmsReadSource | null) {
       return works.find((work) => work.slug === slug) ?? getWorkBySlug(slug);
     },
     async getRelatedWorks(slug: string): Promise<Work[]> {
-      const current = await this.getWorkBySlug(slug);
-
+      // 直接复用已缓存的 listPublishedWorks()，避免再调 getWorkBySlug（虽然 cache 后开销低，但减少一次 find）
+      const works = await this.listPublishedWorks();
+      const current = works.find((work) => work.slug === slug);
       if (!current) return [];
 
-      const works = await this.listPublishedWorks();
       const related = works
         .filter(
           (work) => work.slug !== slug && work.category === current.category,
@@ -637,128 +639,174 @@ export function createCmsRepository(source: CmsReadSource | null) {
   };
 }
 
+// === 模块级 cache() 数据获取函数 ===
+// React cache() 在单个请求内去重：当 layout + page + metadata 都需要同一份数据时，
+// 只查询一次数据库，其余直接返回缓存结果。跨请求自动清空。
+// Supabase client 在函数内部创建（创建成本低，真正的瓶颈是网络/DB查询，由 cache 避免重复）。
+
+const fetchPublishedWorksCached = cache(async (): Promise<Work[]> => {
+  const client = createSupabaseServiceClient();
+  const rows = await runWorkQueryWithFallback((select) =>
+    client
+      .from("works")
+      .select(select)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: false }),
+  );
+  return enrichWorksWithMediaNoGap(client, rows, "cache:listPublishedWorks");
+});
+
+const fetchFeaturedWorksCached = cache(async (): Promise<Work[]> => {
+  const client = createSupabaseServiceClient();
+  const rows = await runWorkQueryWithFallback((select) =>
+    client
+      .from("works")
+      .select(select)
+      .eq("status", "published")
+      .eq("is_representative", true)
+      .is("deleted_at", null)
+      .order("representative_order", { ascending: false, nullsFirst: false })
+      .order("sort_order", { ascending: false }),
+  );
+  const workIds = rows.map((r) => r.id);
+  const repCoverMap = await fetchRepresentativeCovers(client, workIds);
+
+  for (const row of rows) {
+    const repCover = repCoverMap.get(row.id);
+    if (repCover) {
+      row.representative_cover_media = repCover;
+    }
+  }
+
+  return enrichWorksWithMediaNoGap(client, rows, "cache:listFeaturedWorks");
+});
+
+const fetchCompositeWorksCached = cache(async (): Promise<Work[]> => {
+  const client = createSupabaseServiceClient();
+  const rows = await runWorkQueryWithFallback((select) =>
+    client
+      .from("works")
+      .select(select)
+      .eq("status", "published")
+      .eq("is_composite", true)
+      .is("deleted_at", null)
+      .order("composite_order", { ascending: false, nullsFirst: false })
+      .order("sort_order", { ascending: false }),
+  );
+  return enrichWorksWithMediaNoGap(client, rows, "cache:listCompositeWorks");
+});
+
+const fetchVisibleCategoriesCached = cache(async (): Promise<Array<{ name: string; sort_order: number }>> => {
+  const client = createSupabaseServiceClient();
+  const { data, error } = await client
+    .from("categories")
+    .select("name,sort_order")
+    .eq("is_visible", true)
+    .is("deleted_at", null)
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+
+  return data ?? [];
+});
+
+const fetchSiteSettingsCached = cache(async (): Promise<PublicSiteSettings> => {
+  const client = createSupabaseServiceClient();
+  const result = await safeQuerySiteSettings(client);
+  if (!result) {
+    return getStaticPublicSiteSettings();
+  }
+
+  const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
+
+  const mediaIdFields = [
+    "logo_media_id",
+    "name_media_id",
+    "avatar_media_id",
+    "share_media_id",
+    "cta_card_media_id",
+    "cta_figure_media_id",
+    "cta_figure_light_media_id",
+    "cta_ticker_logo_media_id",
+    "cta_center_logo_media_id",
+    "hero_main_video_media_id",
+    "hero_side1_video_media_id",
+    "hero_side2_video_media_id",
+    "hero_side3_video_media_id",
+  ] as const;
+
+  const tickerLogoIds = tickerLogoIdsRaw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
+    tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
+  }
+
+  const singleMediaIdsToFetch = mediaIdFields
+    .map((field) => allIds[field] as string | null)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+  const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
+
+  const mediaMap = new Map<string, { storage_key: string }>();
+  if (mediaIdsToFetch.length > 0) {
+    const { data: mediaList } = await client
+      .from("media_assets")
+      .select("id,storage_key")
+      .is("deleted_at", null)
+      .in("id", mediaIdsToFetch);
+
+    if (mediaList) {
+      for (const m of mediaList) {
+        mediaMap.set(m.id, { storage_key: m.storage_key });
+      }
+    }
+  }
+
+  return buildSiteSettingsFromRow(allIds, ctaTransform, tickerLogoIdsRaw, mediaMap);
+});
+
+// 轻量级 slug 列表查询：仅供 sitemap 等只需 slug 的场景使用
+// 避免加载完整的 work_blocks JSON、media 关联、变体查询等开销
+const fetchPublishedWorkSlugsCached = cache(async (): Promise<Array<{ slug: string }>> => {
+  const client = createSupabaseServiceClient();
+  const { data, error } = await client
+    .from("works")
+    .select("slug")
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .order("sort_order", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((row: { slug: string }) => ({ slug: row.slug }));
+});
+
+export async function listPublishedWorkSlugs(): Promise<Array<{ slug: string }>> {
+  if (!isSupabaseConfigured()) {
+    return getPublishedWorks().map((w) => ({ slug: w.slug }));
+  }
+  try {
+    return await fetchPublishedWorkSlugsCached();
+  } catch (error) {
+    console.error("[listPublishedWorkSlugs] 查询失败，回退到静态数据:", error);
+    return getPublishedWorks().map((w) => ({ slug: w.slug }));
+  }
+}
+
 export async function createServerCmsRepository() {
   if (!isSupabaseConfigured()) {
     return createCmsRepository(null);
   }
 
-  const client = createSupabaseServiceClient();
-
+  // 使用 cache() 包裹的函数，确保同一请求内多次调用 createServerCmsRepository（layout + page + metadata）
+  // 不会重复查询数据库
   return createCmsRepository({
-    async listPublishedWorks() {
-      const rows = await runWorkQueryWithFallback((select) =>
-        client
-          .from("works")
-          .select(select)
-          .eq("status", "published")
-          .is("deleted_at", null)
-          .order("sort_order", { ascending: false }),
-      );
-      return enrichWorksWithMediaNoGap(client, rows, "server:listPublishedWorks");
-    },
-    async listVisibleCategories(): Promise<Array<{ name: string; sort_order: number }>> {
-      const { data, error } = await client
-        .from("categories")
-        .select("name,sort_order")
-        .eq("is_visible", true)
-        .is("deleted_at", null)
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-
-      return data ?? [];
-    },
-    async listFeaturedWorks(): Promise<Work[]> {
-      const rows = await runWorkQueryWithFallback((select) =>
-        client
-          .from("works")
-          .select(select)
-          .eq("status", "published")
-          .eq("is_representative", true)
-          .is("deleted_at", null)
-          .order("representative_order", { ascending: false, nullsFirst: false })
-          .order("sort_order", { ascending: false }),
-      );
-      const workIds = rows.map((r) => r.id);
-      const repCoverMap = await fetchRepresentativeCovers(client, workIds);
-
-      for (const row of rows) {
-        const repCover = repCoverMap.get(row.id);
-        if (repCover) {
-          row.representative_cover_media = repCover;
-        }
-      }
-
-      return enrichWorksWithMediaNoGap(client, rows, "server:listFeaturedWorks");
-    },
-    async listCompositeWorks(): Promise<Work[]> {
-      const rows = await runWorkQueryWithFallback((select) =>
-        client
-          .from("works")
-          .select(select)
-          .eq("status", "published")
-          .eq("is_composite", true)
-          .is("deleted_at", null)
-          .order("composite_order", { ascending: false, nullsFirst: false })
-          .order("sort_order", { ascending: false }),
-      );
-      return enrichWorksWithMediaNoGap(client, rows, "server:listCompositeWorks");
-    },
-    async getSiteSettings() {
-      const result = await safeQuerySiteSettings(client);
-      if (!result) {
-        return getStaticPublicSiteSettings();
-      }
-
-      const { allIds, ctaTransform, tickerLogoIdsRaw } = result;
-
-      const mediaIdFields = [
-        "logo_media_id",
-        "name_media_id",
-        "avatar_media_id",
-        "share_media_id",
-        "cta_card_media_id",
-        "cta_figure_media_id",
-        "cta_figure_light_media_id",
-        "cta_ticker_logo_media_id",
-        "cta_center_logo_media_id",
-        "hero_main_video_media_id",
-        "hero_side1_video_media_id",
-        "hero_side2_video_media_id",
-        "hero_side3_video_media_id",
-      ] as const;
-
-      const tickerLogoIds = tickerLogoIdsRaw
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-      if (tickerLogoIds.length === 0 && allIds.cta_ticker_logo_media_id) {
-        tickerLogoIds.push(allIds.cta_ticker_logo_media_id as string);
-      }
-
-      const singleMediaIdsToFetch = mediaIdFields
-        .map((field) => allIds[field] as string | null)
-        .filter((id): id is string => typeof id === "string" && id.length > 0);
-
-      const mediaIdsToFetch = Array.from(new Set([...singleMediaIdsToFetch, ...tickerLogoIds]));
-
-      const mediaMap = new Map<string, { storage_key: string }>();
-      if (mediaIdsToFetch.length > 0) {
-        const { data: mediaList } = await client
-          .from("media_assets")
-          .select("id,storage_key")
-          .is("deleted_at", null)
-          .in("id", mediaIdsToFetch);
-
-        if (mediaList) {
-          for (const m of mediaList) {
-            mediaMap.set(m.id, { storage_key: m.storage_key });
-          }
-        }
-      }
-
-      return buildSiteSettingsFromRow(allIds, ctaTransform, tickerLogoIdsRaw, mediaMap);
-    },
+    listPublishedWorks: fetchPublishedWorksCached,
+    listFeaturedWorks: fetchFeaturedWorksCached,
+    listCompositeWorks: fetchCompositeWorksCached,
+    listVisibleCategories: fetchVisibleCategoriesCached,
+    getSiteSettings: fetchSiteSettingsCached,
   });
 }
 
@@ -790,8 +838,12 @@ export async function getPrivatePreviewWorkBySlug(slug: string, token: string) {
     return null;
   }
 
-  const gapMap = await fetchWorksMediaNoGapMap(client, [row.id]);
-  return toPublicWork(row, gapMap.get(row.id) ?? false);
+  // 并行查询：media_no_gap 设置 + block 媒体变体 key
+  const [gapMap, variantMap] = await Promise.all([
+    fetchWorksMediaNoGapMap(client, [row.id]),
+    fetchBlockMediaVariants(client, [row]),
+  ]);
+  return toPublicWork(row, gapMap.get(row.id) ?? false, variantMap);
 }
 
 function getStaticPublicSiteSettings(): PublicSiteSettings {
@@ -868,12 +920,16 @@ async function enrichWorksWithMediaNoGap(
 ): Promise<Work[]> {
   const works: Work[] = [];
   const workIds = rows.map((r) => r.id);
-  const idGapMap = await fetchWorksMediaNoGapMap(client, workIds);
+  // 并行查询：media_no_gap 设置 + block 媒体变体 key
+  const [idGapMap, variantMap] = await Promise.all([
+    fetchWorksMediaNoGapMap(client, workIds),
+    fetchBlockMediaVariants(client, rows),
+  ]);
 
   for (const row of rows) {
     try {
       const mediaNoGap = idGapMap.get(row.id) ?? false;
-      works.push(toPublicWork(row, mediaNoGap));
+      works.push(toPublicWork(row, mediaNoGap, variantMap));
     } catch (err) {
       console.error(`[safeMapWorks] 作品转换失败 (${context}), slug=${row.slug}, title=${row.title}:`, err);
     }
@@ -881,7 +937,11 @@ async function enrichWorksWithMediaNoGap(
   return works;
 }
 
-function toPublicWork(row: CmsWorkRow, mediaNoGap: boolean = false): Work {
+function toPublicWork(
+  row: CmsWorkRow,
+  mediaNoGap: boolean = false,
+  variantMap?: Map<string, { thumb_storage_key?: string | null; large_storage_key?: string | null }>,
+): Work {
   const category =
     getJoinedName(row.work_categories?.[0]?.categories) ??
     getStaticVisibleCategories()[0].name;
@@ -910,7 +970,7 @@ function toPublicWork(row: CmsWorkRow, mediaNoGap: boolean = false): Work {
     representativeCoverMedia: toPublicMedia(row.representative_cover_media),
     hoverMedia: toPublicMedia(row.hover_media),
     shareMedia: toPublicMedia(row.share_media),
-    blocks: toPublicBlocks(row.work_blocks ?? []),
+    blocks: toPublicBlocks(row.work_blocks ?? [], variantMap),
     mediaNoGap,
   };
 }
@@ -944,6 +1004,9 @@ type MediaRef = {
   storage_key: string;
   mime_type: string;
   alt_text: string;
+  // 多尺寸变体 key（由 fetchBlockMediaVariants 注入；旧数据可能缺失）
+  thumb_storage_key?: string | null;
+  large_storage_key?: string | null;
 };
 
 function toRefs(raw: unknown): MediaRef[] {
@@ -952,13 +1015,96 @@ function toRefs(raw: unknown): MediaRef[] {
   return [];
 }
 
-function toPublicBlocks(blocks: CmsWorkRow["work_blocks"] = []): Work["blocks"] {
-  const toMedia = (ref: MediaRef) => ({
-    alt: ref.alt_text ?? "",
-    mimeType: ref.mime_type ?? "",
-    url: buildMediaUrl(ref.storage_key),
-    storage_key: ref.storage_key,
-  });
+/** 从 work_blocks.payload 中收集所有 media_ref 的 id（用于批量查询多尺寸变体） */
+function collectBlockMediaRefIds(blocks: CmsWorkRow["work_blocks"] = []): string[] {
+  const ids: string[] = [];
+  for (const block of blocks ?? []) {
+    const payload = block.payload ?? {};
+    const refs = toRefs(payload.media_refs ?? payload.media_ref);
+    for (const ref of refs) {
+      if (ref?.id) ids.push(ref.id);
+    }
+    const beforeRef = payload.before_media_ref as MediaRef | null;
+    const afterRef = payload.after_media_ref as MediaRef | null;
+    if (beforeRef?.id) ids.push(beforeRef.id);
+    if (afterRef?.id) ids.push(afterRef.id);
+  }
+  return ids;
+}
+
+/**
+ * 批量查询作品 block 中所有 media_ref 的多尺寸变体 key（thumb_storage_key/large_storage_key）。
+ * 作品 block 的 media_ref 存储在 JSONB payload 中，不通过外键关联，因此查询 works 时不会自动带上变体列。
+ * 这里一次性查询所有 block 引用到的 media_assets，避免详情页加载原尺寸大图。
+ *
+ * 容错：若 thumb_storage_key/large_storage_key 列尚未迁移，返回空 Map（回退到原图 URL）。
+ */
+async function fetchBlockMediaVariants(
+  client: ReturnType<typeof createSupabaseServiceClient>,
+  rows: CmsWorkRow[],
+): Promise<Map<string, { thumb_storage_key?: string | null; large_storage_key?: string | null }>> {
+  const variantMap = new Map<string, { thumb_storage_key?: string | null; large_storage_key?: string | null }>();
+  const allIds = Array.from(new Set(rows.flatMap((r) => collectBlockMediaRefIds(r.work_blocks))));
+  if (allIds.length === 0) return variantMap;
+
+  // 优先查询含变体列的完整字段；列不存在时降级（迁移未执行）
+  const selectFull = "id,thumb_storage_key,large_storage_key";
+  const selectBase = "id";
+
+  try {
+    let data: unknown = null;
+    let error: unknown = null;
+    const full = await client
+      .from("media_assets")
+      .select(selectFull)
+      .in("id", allIds)
+      .is("deleted_at", null);
+    data = full.data;
+    error = full.error;
+
+    if (isColumnNotExistError(error)) {
+      const base = await client
+        .from("media_assets")
+        .select(selectBase)
+        .in("id", allIds)
+        .is("deleted_at", null);
+      data = base.data;
+      error = base.error;
+    }
+
+    if (!error && data) {
+      for (const row of data as Array<{ id: string; thumb_storage_key?: string | null; large_storage_key?: string | null }>) {
+        variantMap.set(row.id, {
+          thumb_storage_key: row.thumb_storage_key ?? null,
+          large_storage_key: row.large_storage_key ?? null,
+        });
+      }
+    }
+  } catch {
+    // 静默忽略，回退到原图 URL
+  }
+  return variantMap;
+}
+
+function toPublicBlocks(
+  blocks: CmsWorkRow["work_blocks"] = [],
+  variantMap?: Map<string, { thumb_storage_key?: string | null; large_storage_key?: string | null }>,
+): Work["blocks"] {
+  const toMedia = (ref: MediaRef) => {
+    const url = buildMediaUrl(ref.storage_key);
+    // 优先用注入的变体 key；否则回退到原图
+    const variant = variantMap?.get(ref.id);
+    const thumbKey = ref.thumb_storage_key ?? variant?.thumb_storage_key ?? null;
+    const largeKey = ref.large_storage_key ?? variant?.large_storage_key ?? null;
+    return {
+      alt: ref.alt_text ?? "",
+      mimeType: ref.mime_type ?? "",
+      url,
+      storage_key: ref.storage_key,
+      thumbUrl: thumbKey ? buildPublicMediaUrl(thumbKey) : url,
+      largeUrl: largeKey ? buildPublicMediaUrl(largeKey) : url,
+    };
+  };
 
   const toItems = (refs: MediaRef[]) => refs.map(toMedia);
 

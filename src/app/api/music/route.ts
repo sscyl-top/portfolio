@@ -44,7 +44,9 @@ export async function GET() {
   try {
     const supabase = await createSupabaseServerClient();
 
-    const [{ data: categories }, { data: tracks }, { data: medias }, { data: textEntries }] =
+    // 第一步：并行获取 categories、tracks、textEntries
+    // 不再全表扫描 media_assets——改为第二步仅查询 tracks 引用到的 media
+    const [{ data: categories }, { data: tracks }, { data: textEntries }] =
       await Promise.all([
         supabase
           .from("music_categories")
@@ -53,10 +55,6 @@ export async function GET() {
         supabase
           .from("music_tracks")
           .select("id,category_id,title,media_id"),
-        supabase
-          .from("media_assets")
-          .select("id,storage_key,mime_type")
-          .is("deleted_at", null),
         supabase
           .from("text_content")
           .select("key,content")
@@ -97,6 +95,19 @@ export async function GET() {
         return DEFAULT_MUSIC_SETTINGS.tip_messages;
       })(),
     };
+
+    // 第二步：仅查询 tracks 实际引用到的 media_assets（通常只有几条，而非全表扫描）
+    const trackMediaIds = ((tracks ?? []) as TrackRow[])
+      .map((t) => t.media_id)
+      .filter(Boolean);
+    const trackMediaUniqueIds = Array.from(new Set(trackMediaIds));
+    const { data: medias } = trackMediaUniqueIds.length > 0
+      ? await supabase
+          .from("media_assets")
+          .select("id,storage_key,mime_type")
+          .in("id", trackMediaUniqueIds)
+          .is("deleted_at", null)
+      : { data: [] as MediaRow[] | null };
 
     const mediaMap = new Map<string, MediaRow>();
     (medias ?? []).forEach((m: MediaRow) => mediaMap.set(m.id, m));

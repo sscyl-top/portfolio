@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createServerCmsRepository } from "@/lib/cms/repository";
+import { listPublishedWorkSlugs } from "@/lib/cms/repository";
 import { getBackendReadiness } from "@/lib/supabase/config";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sscyl.top";
@@ -12,15 +12,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/resume`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   ];
 
-  // dynamic works (from CMS if available, fallback to static)
+  // dynamic works — 仅查询 slug，不加载完整 work_blocks/media 数据
   try {
     const readiness = getBackendReadiness();
     if (readiness.cms) {
-      const repository = await createServerCmsRepository();
-      const works = await repository.listPublishedWorks();
-      for (const work of works) {
+      const slugs = await listPublishedWorkSlugs();
+      for (const { slug } of slugs) {
         entries.push({
-          url: `${BASE_URL}/works/${work.slug}`,
+          url: `${BASE_URL}/works/${slug}`,
           lastModified: new Date(),
           changeFrequency: "monthly" as const,
           priority: 0.8,

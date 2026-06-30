@@ -16,7 +16,7 @@ const ACCEPTED_TYPES = [
   "application/pdf",
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB（与服务端 /api/media/upload 限制一致）
 
 export function WorkQuickUploader() {
   const [title, setTitle] = useState("");
@@ -57,7 +57,7 @@ export function WorkQuickUploader() {
     }
 
     if (oversizeNames.length > 0) {
-      setError(`以下文件超过 10GB 限制：${oversizeNames.join("、")}`);
+      setError(`以下文件超过 100MB 限制：${oversizeNames.join("、")}`);
       return;
     }
 
@@ -130,7 +130,7 @@ export function WorkQuickUploader() {
             {isUploading ? "正在上传…" : "拖拽文件到此处，或点击选择"}
           </span>
           <span className="text-[10px] text-white/30">
-            支持 JPG / PNG / GIF / WEBP / MP4 / WEBM / PDF，可多选，单文件最大 10GB
+            支持 JPG / PNG / GIF / WEBP / MP4 / WEBM / PDF，可多选，单文件最大 100MB
           </span>
           <input
             type="file"
