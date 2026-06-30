@@ -4,7 +4,6 @@ import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCtaTransformMigration, runCenterLogoMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
@@ -61,11 +60,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   const { toast } = await searchParams;
   const serviceSupabase = createSupabaseServiceClient();
 
-  await runHeroVideosMigration().catch(() => {});
-  await runCtaTransformMigration().catch(() => {});
-  await runCenterLogoMigration().catch(() => {});
-  await runNameMediaMigration().catch(() => {});
-  await runCtaFigureLightMigration().catch(() => {});
+  // 注意：迁移已在 actions.ts 保存失败重试逻辑中处理，不在页面加载时执行
+  // （每次访问都执行 DDL 迁移是性能瓶颈根源）
 
   const SETTINGS_TEXT_KEYS = [
     "cta_card_scale",
@@ -84,13 +80,28 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     "cta_figure_light_media_id",
   ] as const;
 
+  // 并行查询 site_settings、text_content、media_assets
+  const [settingsResult, textResult, mediaResult] = await Promise.all([
+    serviceSupabase.from("site_settings").select("*").single(),
+    serviceSupabase
+      .from("text_content")
+      .select("key,content")
+      .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
+      .eq("is_active", true)
+      .is("deleted_at", null),
+    serviceSupabase
+      .from("media_assets")
+      .select("id,storage_key,mime_type,original_name,alt_text")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(200),
+  ]);
+
   let data: SettingsRow | null = null;
 
   try {
-    const { data: baseData, error } = await serviceSupabase
-      .from("site_settings")
-      .select("*")
-      .single();
+    const baseData = settingsResult.data;
+    const error = settingsResult.error;
 
     if (!error && baseData) {
       const row = baseData as Record<string, unknown>;
@@ -119,25 +130,18 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       let tickerLogoIdsRaw = "";
       let figureLightMediaIdFallback: string | null = null;
 
-      {
-        const { data: textData, error: textErr } = await serviceSupabase
-          .from("text_content")
-          .select("key,content")
-          .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
-          .eq("is_active", true)
-          .is("deleted_at", null);
-        if (!textErr && textData) {
-          for (const item of textData) {
-            if (item.key === "cta_ticker_logo_media_ids") {
-              tickerLogoIdsRaw = item.content ?? "";
-            } else if (item.key === "cta_figure_light_media_id") {
-              const val = (item.content ?? "").trim();
-              figureLightMediaIdFallback = val.length > 0 ? val : null;
-            } else {
-              const num = Number(item.content);
-              if (!isNaN(num)) {
-                (ctaTransform as Record<string, number>)[item.key] = num;
-              }
+      const textData = textResult.data;
+      if (!textResult.error && textData) {
+        for (const item of textData) {
+          if (item.key === "cta_ticker_logo_media_ids") {
+            tickerLogoIdsRaw = item.content ?? "";
+          } else if (item.key === "cta_figure_light_media_id") {
+            const val = (item.content ?? "").trim();
+            figureLightMediaIdFallback = val.length > 0 ? val : null;
+          } else {
+            const num = Number(item.content);
+            if (!isNaN(num)) {
+              (ctaTransform as Record<string, number>)[item.key] = num;
             }
           }
         }
@@ -169,12 +173,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     console.error("[Admin Settings] Failed to fetch settings:", err);
   }
 
-  const { data: rawMedia } = await serviceSupabase
-    .from("media_assets")
-    .select("id,storage_key,mime_type,original_name,alt_text")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const rawMedia = mediaResult.data;
 
   const mediaAssets = (rawMedia ?? []) as MediaAssetRow[];
   const fallback: SettingsRow = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { memo, useMemo } from "react";
 import { usePathname } from "next/navigation";
 
 import { logoutAdmin } from "@/app/admin/actions";
@@ -17,7 +18,7 @@ type AdminShellProps = {
 
 const ADMIN_CONTENT_OFFSET = 420;
 
-function SidebarContent({ userEmail }: { userEmail: string }) {
+const SidebarContent = memo(function SidebarContent({ userEmail }: { userEmail: string }) {
   return (
     <div className="admin-scroll-area flex h-full flex-col overflow-y-auto p-4 md:p-5">
       <div className="mb-5 flex items-center justify-between gap-4 md:block">
@@ -40,58 +41,61 @@ function SidebarContent({ userEmail }: { userEmail: string }) {
       </form>
     </div>
   );
-}
+});
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
   const isWorkEditorPage = /^\/admin\/works\/[^/]+$/.test(pathname);
 
-  const content = (
-    <section
-      className={`flex h-full min-w-0 flex-col md:pt-28 ${
-        isWorkEditorPage
-          ? "overflow-hidden px-3 py-6 md:px-6"
-          : "admin-scroll-area overflow-y-auto px-5 py-6 md:px-8"
-      }`}
-    >
-      <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
-    </section>
-  );
+  const sidebar = useMemo(() => <SidebarContent userEmail={userEmail} />, [userEmail]);
+
+  const panels = useMemo(() => {
+    const content = (
+      <section
+        className={`flex h-full min-w-0 flex-col md:pt-28 ${
+          isWorkEditorPage
+            ? "overflow-hidden px-3 py-6 md:px-6"
+            : "admin-scroll-area overflow-y-auto px-5 py-6 md:px-8"
+        }`}
+      >
+        <AdminContent fillHeight={isWorkEditorPage}>{children}</AdminContent>
+      </section>
+    );
+
+    return [
+      {
+        id: "admin-sidebar",
+        storageKey: "admin-sidebar-width",
+        anchor: "left" as const,
+        offset: 0,
+        defaultWidth: 220,
+        minWidth: 172,
+        maxWidth: 420,
+        resizeEdge: "right" as const,
+        className: "border-r border-white/8 bg-[#090c0f]",
+        children: sidebar,
+      },
+      {
+        id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
+        storageKey: isWorkEditorPage
+          ? "admin-editor-stage-width-v5"
+          : "admin-primary-page-width",
+        anchor: "left" as const,
+        offset: ADMIN_CONTENT_OFFSET,
+        defaultWidth: isWorkEditorPage ? 4000 : 1420,
+        minWidth: 720,
+        maxWidth: isWorkEditorPage ? 4000 : 2200,
+        resizeEdge: isWorkEditorPage ? ("none" as const) : ("right" as const),
+        className: "h-full",
+        children: content,
+      },
+    ];
+  }, [isWorkEditorPage, userEmail, children, sidebar]);
 
   return (
     <main className="relative h-screen overflow-hidden bg-[#07090b] text-white">
       <ErrorBoundary>
-        <DetachedResizablePanels
-          gap={42}
-          panels={[
-            {
-              id: "admin-sidebar",
-              storageKey: "admin-sidebar-width",
-              anchor: "left",
-              offset: 0,
-              defaultWidth: 220,
-              minWidth: 172,
-              maxWidth: 420,
-              resizeEdge: "right",
-              className: "border-r border-white/8 bg-[#090c0f]",
-              children: <SidebarContent userEmail={userEmail} />,
-            },
-            {
-              id: isWorkEditorPage ? "admin-editor-stage" : "admin-primary-page",
-              storageKey: isWorkEditorPage
-                ? "admin-editor-stage-width-v5"
-                : "admin-primary-page-width",
-              anchor: "left",
-              offset: ADMIN_CONTENT_OFFSET,
-              defaultWidth: isWorkEditorPage ? 4000 : 1420,
-              minWidth: isWorkEditorPage ? 720 : 720,
-              maxWidth: isWorkEditorPage ? 4000 : 2200,
-              resizeEdge: isWorkEditorPage ? "none" : "right",
-              className: "h-full",
-              children: content,
-            },
-          ]}
-        />
+        <DetachedResizablePanels gap={42} panels={panels} />
       </ErrorBoundary>
     </main>
   );

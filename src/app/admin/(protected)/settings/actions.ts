@@ -26,47 +26,26 @@ async function upsertTextContent(
   key: string,
   content: string,
 ) {
-  const { data: existing, error: findErr } = await serviceClient
+  // 使用 upsert 避免 select+update/insert 的两次数据库往返
+  const { error } = await serviceClient
     .from("text_content")
-    .select("id")
-    .eq("key", key)
-    .limit(1)
-    .maybeSingle();
-
-  if (findErr) {
-    console.error(`[Settings] Failed to find text_content for ${key}:`, findErr.message);
-    throw findErr;
-  }
-
-  if (existing?.id) {
-    const { error: updErr } = await serviceClient
-      .from("text_content")
-      .update({
+    .upsert(
+      {
+        key,
         content,
         page: "site_settings",
         section: "settings",
+        sort_order: 0,
         is_active: true,
         deleted_at: null,
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-    if (updErr) {
-      console.error(`[Settings] Failed to update text_content ${key}:`, updErr.message);
-      throw updErr;
-    }
-  } else {
-    const { error: insErr } = await serviceClient.from("text_content").insert({
-      key,
-      content,
-      page: "site_settings",
-      section: "settings",
-      sort_order: 0,
-      is_active: true,
-    });
-    if (insErr) {
-      console.error(`[Settings] Failed to insert text_content ${key}:`, insErr.message);
-      throw insErr;
-    }
+      },
+      { onConflict: "key" },
+    );
+
+  if (error) {
+    console.error(`[Settings] Failed to upsert text_content ${key}:`, error.message);
+    throw error;
   }
 }
 

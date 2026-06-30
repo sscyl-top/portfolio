@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runRepresentativeCoverMigration } from "@/lib/cms/migrations";
 import { WorkBatchManager } from "@/components/admin/WorkBatchToolbar";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { RepresentativeCoverUploader } from "@/components/admin/RepresentativeCoverUploader";
@@ -27,6 +26,7 @@ type AdminWorkRow = {
   updated_at: string;
   cover_media_id: string | null;
   representative_cover_media_id?: string | null;
+  category_names: string[];
 };
 
 type CoverMediaRow = {
@@ -54,7 +54,7 @@ export default async function AdminWorksPage({
     q?: string;
   }>;
 }) {
-  const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "" } = await searchParams;
+  const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "", category = "" } = await searchParams;
   const section: Section = ["all", "representative", "composite"].includes(rawSection ?? "all")
     ? (rawSection as Section)
     : "all";
@@ -62,16 +62,18 @@ export default async function AdminWorksPage({
     ? (rawStatus as StatusFilter)
     : "all";
   const query = q.trim().toLowerCase();
+  const categoryFilter = Array.isArray(category) ? category[0] : category;
 
   const supabase = await createSupabaseServerClient();
 
-  await runRepresentativeCoverMigration().catch(() => {});
+  // 注意：representative_cover_media_id 列早已存在，迁移在 actions.ts 保存失败时重试
 
   const [
     { data, error },
     { data: categoriesData },
     { data: tagsData },
     { data: coverMediaData },
+    { data: workCategoriesData },
   ] = await Promise.all([
     supabase
       .from("works")
@@ -87,33 +89,34 @@ export default async function AdminWorksPage({
       .from("media_assets")
       .select("id,storage_key,mime_type")
       .is("deleted_at", null),
+    supabase
+      .from("work_categories")
+      .select("work_id,categories(name)")
+      .eq("categories.deleted_at", null),
   ]);
   let works = (data ?? []) as AdminWorkRow[];
   const categories = (categoriesData ?? []) as TaxonomyRow[];
   const tags = (tagsData ?? []) as TaxonomyRow[];
   const coverMedia = (coverMediaData ?? []) as CoverMediaRow[];
 
-  try {
-    const workIds = works.map((w) => w.id);
-    if (workIds.length > 0) {
-      const { data: repCoverData } = await supabase
-        .from("works")
-        .select("id,representative_cover_media_id")
-        .in("id", workIds)
-        .is("deleted_at", null);
-      if (repCoverData) {
-        const repCoverMap = new Map(
-          (repCoverData as Array<{ id: string; representative_cover_media_id: string | null }>).map((r) => [r.id, r.representative_cover_media_id]),
-        );
-        works = works.map((w) => ({
-          ...w,
-          representative_cover_media_id: repCoverMap.get(w.id) ?? null,
-        }));
+  const workCategoryMap = new Map<string, string[]>();
+  for (const wc of (workCategoriesData ?? []) as Array<{ work_id: string; categories: { name: string } | { name: string }[] | null }>) {
+    const names: string[] = [];
+    if (wc.categories) {
+      if (Array.isArray(wc.categories)) {
+        for (const c of wc.categories) names.push(c.name);
+      } else {
+        names.push(wc.categories.name);
       }
     }
-  } catch {
-    // column may not exist yet
+    if (names.length > 0) {
+      workCategoryMap.set(wc.work_id, names);
+    }
   }
+  works = works.map((w) => ({
+    ...w,
+    category_names: workCategoryMap.get(w.id) ?? [],
+  }));
 
   const coverMediaMap = new Map(coverMedia.map((m) => [m.id, m]));
 
@@ -217,7 +220,7 @@ export default async function AdminWorksPage({
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                {section === "composite" ? "上传复合设计" : "上传新作品"}
+                {section === "composite" ? "上传早期作品" : "上传新作品"}
               </button>
             </form>
           </div>
@@ -306,9 +309,9 @@ function SectionTabs({
   filteredCount: number;
 }) {
   const sections: { key: Section; label: string }[] = [
-    { key: "all", label: "全部作品" },
+    { key: "all", label: "分类作品" },
     { key: "representative", label: "代表作" },
-    { key: "composite", label: "复合设计" },
+    { key: "composite", label: "早期作品" },
   ];
 
   return (

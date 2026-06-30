@@ -14,7 +14,6 @@ import {
 import { isPrivatePreviewTokenValid } from "@/lib/cms/private-preview";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
-import { runHeroVideosMigration, runCenterLogoMigration, runWorkTablesMigration, runRepresentativeCoverMigration, runNameMediaMigration, runCtaFigureLightMigration } from "@/lib/cms/migrations";
 
 export type CmsReadSource = {
   listPublishedWorks(): Promise<Work[]>;
@@ -79,25 +78,26 @@ const SETTINGS_TEXT_KEYS = [
 ] as const;
 
 async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseServiceClient>) {
-  await runHeroVideosMigration().catch(() => {});
-  await runCenterLogoMigration().catch(() => {});
-  await runWorkTablesMigration().catch(() => {});
-  await runRepresentativeCoverMigration().catch(() => {});
-  await runNameMediaMigration().catch(() => {});
-  await runCtaFigureLightMigration().catch(() => {});
+  // 注意：迁移已在 actions.ts 保存失败重试逻辑中处理，不在页面加载时执行
+  // （这些列在数据库中早已存在，每次访问都执行 DDL 迁移是性能瓶颈根源）
+
+  // 并行查询 site_settings 和 text_content
+  const [settingsResult, textResult] = await Promise.all([
+    client.from("site_settings").select("*").single(),
+    client
+      .from("text_content")
+      .select("key,content")
+      .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
+      .eq("is_active", true)
+      .is("deleted_at", null),
+  ]);
 
   let baseData: Record<string, unknown> | null = null;
-  try {
-    const { data, error } = await client.from("site_settings").select("*").single();
-    if (error) {
-      console.error("[getSiteSettings] 基础查询失败:", error);
-      return null;
-    }
-    baseData = data as Record<string, unknown>;
-  } catch (err) {
-    console.error("[getSiteSettings] 基础查询异常:", err);
+  if (settingsResult.error) {
+    console.error("[getSiteSettings] 基础查询失败:", settingsResult.error);
     return null;
   }
+  baseData = settingsResult.data as Record<string, unknown>;
 
   if (!baseData) return null;
 
@@ -138,30 +138,21 @@ async function safeQuerySiteSettings(client: ReturnType<typeof createSupabaseSer
   };
   let tickerLogoIdsRaw = "";
   let figureLightMediaIdFallback: string | null = null;
-  try {
-    const { data: textData, error: textError } = await client
-      .from("text_content")
-      .select("key,content")
-      .in("key", SETTINGS_TEXT_KEYS as unknown as string[])
-      .eq("is_active", true)
-      .is("deleted_at", null);
-    if (!textError && textData) {
-      for (const item of textData) {
-        if (item.key === "cta_ticker_logo_media_ids") {
-          tickerLogoIdsRaw = item.content ?? "";
-        } else if (item.key === "cta_figure_light_media_id") {
-          const val = (item.content ?? "").trim();
-          figureLightMediaIdFallback = val.length > 0 ? val : null;
-        } else {
-          const num = Number(item.content);
-          if (!isNaN(num) && item.key in ctaTransform) {
-            (ctaTransform as Record<string, number>)[item.key] = num;
-          }
+  const textData = textResult.data;
+  if (!textResult.error && textData) {
+    for (const item of textData) {
+      if (item.key === "cta_ticker_logo_media_ids") {
+        tickerLogoIdsRaw = item.content ?? "";
+      } else if (item.key === "cta_figure_light_media_id") {
+        const val = (item.content ?? "").trim();
+        figureLightMediaIdFallback = val.length > 0 ? val : null;
+      } else {
+        const num = Number(item.content);
+        if (!isNaN(num) && item.key in ctaTransform) {
+          (ctaTransform as Record<string, number>)[item.key] = num;
         }
       }
     }
-  } catch {
-    // text_content query failed, use defaults
   }
 
   const allIds = {
@@ -263,8 +254,6 @@ async function fetchRepresentativeCovers(
 ): Promise<Map<string, CmsMediaRow>> {
   const coverMap = new Map<string, CmsMediaRow>();
   if (workIds.length === 0) return coverMap;
-
-  await runRepresentativeCoverMigration().catch(() => {});
 
   try {
     const { data, error } = await client

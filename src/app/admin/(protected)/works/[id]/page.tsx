@@ -5,7 +5,6 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listWorkVersions } from "@/lib/cms/versions";
 import type { WorkVersionListItem } from "@/lib/cms/versions";
-import { runWorkTablesMigration } from "@/lib/cms/migrations";
 import { VisualBlockEditor } from "@/components/admin/VisualBlockEditor";
 import { VersionHistoryPanel } from "@/components/admin/VersionHistoryPanel";
 import { Toast } from "@/components/admin/Toast";
@@ -92,7 +91,7 @@ export default async function AdminWorkEditorPage({
   const { privatePreview, toast } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
-  await runWorkTablesMigration().catch(() => {});
+  // 注意：work tables 迁移在 actions.ts 保存失败时重试
 
   let work: WorkEditorRow | null = null;
   let blocks: WorkBlockRow[] = [];
