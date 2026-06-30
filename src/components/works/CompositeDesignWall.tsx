@@ -244,7 +244,7 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-20 min-h-[580px] px-0 pb-6 pt-12 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
+          className="portfolio-cta-panel relative mt-20 min-h-[620px] px-0 pb-6 pt-20 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
@@ -265,7 +265,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-16 z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-12 z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
