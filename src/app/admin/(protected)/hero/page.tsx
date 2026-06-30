@@ -75,18 +75,18 @@ export default async function AdminHeroPage({ searchParams }: { searchParams: Pr
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Hero videos
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">首页 Hero 视频</h2>
-      <p className="mt-3 text-sm text-white/48">
+      <h2 className="mt-2 text-2xl font-semibold">首页 Hero 视频</h2>
+      <p className="mt-1.5 text-xs text-white/48">
         管理首页第一屏大卡片和浮动小卡片的背景视频。视频会以自动播放、静音、循环方式渲染。不选择则显示渐变占位色。
       </p>
 
       {videoAssets.length === 0 ? (
-        <p className="mt-6 rounded-md border border-yellow-300/20 bg-yellow-300/10 p-4 text-sm text-yellow-200">
+        <p className="mt-5 rounded-md border border-yellow-300/20 bg-yellow-300/10 p-4 text-xs text-yellow-200">
           媒体库暂无视频素材。请先到「媒体库」上传视频文件，再回到此页面选择。
         </p>
       ) : null}
 
-      <form action={saveHeroVideos} className="mt-6 grid gap-6">
+      <form action={saveHeroVideos} className="mt-5 grid gap-4">
         {slots.map((slot) => {
           const selectedAsset = videoAssets.find(
             (a) => a.id === slot.currentMediaId,
@@ -95,32 +95,31 @@ export default async function AdminHeroPage({ searchParams }: { searchParams: Pr
           return (
             <section
               key={slot.fieldName}
-              className="rounded-md border border-white/10 bg-white/[0.035] p-5"
+              className="rounded-md border border-white/10 bg-white/[0.035] p-4"
             >
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold">{slot.label}</h3>
-                  <p className="mt-1 text-xs text-white/42">
+                  <h3 className="text-sm font-semibold">{slot.label}</h3>
+                  <p className="mt-1 text-[11px] text-white/42">
                     {slot.description}
                   </p>
                 </div>
                 {selectedAsset ? (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="font-mono text-[10px] text-white/36">
                       当前: {selectedAsset.original_name}
                     </span>
-                    { }
                     <video
                       src={buildPublicMediaUrl(selectedAsset.storage_key)}
                       muted
                       playsInline
                       autoPlay
                       loop
-                      className="h-12 rounded border border-white/10 object-cover"
+                      className="h-10 rounded border border-white/10 object-cover"
                     />
                   </div>
                 ) : (
-                  <span className="rounded-md border border-dashed border-white/15 px-3 py-1.5 text-xs text-white/30">
+                  <span className="inline-flex h-9 items-center rounded-md border border-dashed border-white/15 px-3 text-[11px] text-white/30">
                     未选择（渐变占位）
                   </span>
                 )}
@@ -139,7 +138,7 @@ export default async function AdminHeroPage({ searchParams }: { searchParams: Pr
         })}
 
         <div className="flex items-center justify-end gap-2">
-          <SaveButton saved={toast === "Hero配置保存成功"}>保存 Hero 配置</SaveButton>
+          <SaveButton saved={toast === "Hero配置保存成功"} size="sm">保存 Hero 配置</SaveButton>
         </div>
       </form>
     </div>

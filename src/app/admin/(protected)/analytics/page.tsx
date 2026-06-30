@@ -36,13 +36,13 @@ export default async function AdminAnalyticsPage() {
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Analytics
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">数据分析</h2>
-      <p className="mb-6 mt-3 font-mono text-xs text-white/38">
+      <h2 className="mt-2 text-2xl font-semibold">数据分析</h2>
+      <p className="mt-1.5 text-xs text-white/48">
         网站访问、作品热度与互动数据概览
       </p>
 
       {/* 顶部数字卡片 */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="总访问" value={stats.totalVisits} icon={<Eye className="h-3.5 w-3.5" />} />
         <MetricCard label="今日 PV" value={stats.todayPageViews} accent icon={<Eye className="h-3.5 w-3.5" />} />
         <MetricCard label="独立访客" value={stats.uniqueVisitors} icon={<Users className="h-3.5 w-3.5" />} />
@@ -50,7 +50,7 @@ export default async function AdminAnalyticsPage() {
       </div>
 
       {/* 内容网格 */}
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {/* 热门作品 */}
         <Panel title="热门作品排行">
           {stats.topWorks.length > 0 ? (
@@ -375,8 +375,8 @@ function Panel({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-white/10 bg-white/[0.025] p-5 ${className}`}>
-      <h3 className="mb-3 text-sm font-semibold text-white/70">{title}</h3>
+    <div className={`rounded-lg border border-white/10 bg-white/[0.025] p-4 ${className}`}>
+      <h3 className="mb-3 text-xs font-semibold text-white/70">{title}</h3>
       {children}
     </div>
   );

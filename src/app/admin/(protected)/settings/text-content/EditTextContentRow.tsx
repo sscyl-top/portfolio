@@ -76,24 +76,24 @@ function EditForm({ item, onCancel, saved }: { item: Props["item"]; onCancel: ()
   const fontFamilies = ["", "font-sans", "font-serif", "font-mono", "font-Inter"];
 
   return (
-    <form action={updateTextContent} className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+    <form action={updateTextContent} className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
       <input type="hidden" name="id" value={item.id} />
       <div className="md:col-span-2 lg:col-span-4">
-        <label className="mb-1 block text-xs text-white/50">内容</label>
+        <label className="mb-1 block text-[11px] text-white/50">内容</label>
         <textarea
           name="content"
           defaultValue={item.content}
           required
           rows={3}
-          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          className="w-full rounded-md border border-white/10 bg-black/20 px-2.5 py-2 text-xs outline-none focus:border-cyan"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-white/50">字号</label>
+        <label className="mb-1 block text-[11px] text-white/50">字号</label>
         <select
           name="font_size"
           defaultValue={item.font_size ?? ""}
-          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           <option value="">默认</option>
           {fontSizes.filter(Boolean).map((s) => (
@@ -104,11 +104,11 @@ function EditForm({ item, onCancel, saved }: { item: Props["item"]; onCancel: ()
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs text-white/50">字体</label>
+        <label className="mb-1 block text-[11px] text-white/50">字体</label>
         <select
           name="font_family"
           defaultValue={item.font_family ?? ""}
-          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           <option value="">默认</option>
           {fontFamilies.filter(Boolean).map((f) => (
@@ -119,31 +119,31 @@ function EditForm({ item, onCancel, saved }: { item: Props["item"]; onCancel: ()
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs text-white/50">字重</label>
+        <label className="mb-1 block text-[11px] text-white/50">字重</label>
         <input
           name="font_weight"
           defaultValue={item.font_weight ?? ""}
           placeholder="如 400/700"
-          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-white/50">颜色</label>
+        <label className="mb-1 block text-[11px] text-white/50">颜色</label>
         <input
           name="color"
           defaultValue={item.color ?? ""}
           placeholder="如 #ffffff"
-          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+          className="h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         />
       </div>
       <div className="flex items-center gap-2 md:col-span-2 lg:col-span-4">
-        <SaveButton saved={saved}>保存</SaveButton>
+        <SaveButton saved={saved} size="sm">保存</SaveButton>
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex min-h-9 items-center gap-1 rounded-md border border-white/10 px-4 text-sm text-white/70 transition hover:border-white/30 hover:text-white"
+          className="inline-flex h-9 items-center gap-1 rounded-md border border-white/10 px-3 text-xs text-white/70 transition hover:border-white/30 hover:text-white"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3 w-3" />
           取消
         </button>
       </div>

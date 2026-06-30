@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Plus, Save, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Plus, Save, Trash2, FolderOpen, Tag as TagIcon } from "lucide-react";
 
 import { SaveButton } from "@/components/admin/SaveButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -48,32 +48,32 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
             Taxonomy
           </p>
-          <h2 className="mt-3 text-3xl font-semibold">分类与标签</h2>
-          <p className="mt-3 text-sm text-white/48">
+          <h2 className="mt-2 text-2xl font-semibold">分类与标签</h2>
+          <p className="mt-1.5 text-xs text-white/48">
             分类控制作品筛选和前台显示顺序；标签用于作品细分。
           </p>
         </div>
-        <div className="rounded-md border border-white/10 px-3 py-2 text-right">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-right">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/34">
             Active
           </p>
-          <p className="mt-1 text-sm text-white/64">
+          <p className="mt-0.5 text-xs text-white/64">
             {(categories ?? []).length} 分类 / {(tags ?? []).length} 标签
           </p>
         </div>
       </div>
 
       {categoryError || tagError ? (
-        <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
+        <p className="mt-4 rounded-md border border-red-300/20 bg-red-300/10 p-3 text-sm text-red-200">
           读取失败：{categoryError?.message ?? tagError?.message}
         </p>
       ) : (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)]">
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
           <CategoryPanel categories={(categories ?? []) as CategoryRow[]} toast={toast} savedId={id} />
           <TagPanel tags={(tags ?? []) as TagRow[]} toast={toast} savedId={id} />
         </div>
@@ -82,226 +82,139 @@ export default async function AdminCategoriesPage({ searchParams }: { searchPara
   );
 }
 
+const inputCls = "h-9 w-full rounded-md border border-white/10 bg-black/20 px-2.5 text-sm outline-none focus:border-cyan";
+const btnSm = "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md";
+
 function CategoryPanel({ categories, toast, savedId }: { categories: CategoryRow[]; toast?: string; savedId?: string }) {
   return (
-    <section>
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-medium text-white/80">作品分类</h3>
-        <span className="font-mono text-xs text-white/34">
-          {categories.length} items
-        </span>
+    <section className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
+      <div className="flex items-center gap-2">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-cyan/10">
+          <FolderOpen className="h-4 w-4 text-cyan" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-white/85">作品分类</h3>
+          <p className="text-[11px] text-white/40">{categories.length} 项 · 控制前台筛选与排序</p>
+        </div>
       </div>
 
-      <form
-        action={createCategory}
-        className="mt-3 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_7rem_6rem_auto]"
-      >
-        <input
-          name="name"
-          required
-          maxLength={80}
-          placeholder="分类名称"
-          className={fieldClassName}
-        />
-        <input
-          name="slug"
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          placeholder="url-slug"
-          className={`${fieldClassName} font-mono`}
-        />
-        <input
-          name="sort_order"
-          type="number"
-          defaultValue={categories.length}
-          className={fieldClassName}
-          aria-label="排序"
-        />
-        <label className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/62">
-          <input
-            name="is_visible"
-            type="checkbox"
-            defaultChecked
-            className="size-4 accent-cyan"
-          />
+      <form action={createCategory} className="mt-4 flex flex-wrap items-center gap-1.5">
+        <input name="name" required maxLength={80} placeholder="分类名称" className={`${inputCls} min-w-0 flex-1`} />
+        <input name="slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="url-slug" className={`${inputCls} w-32 font-mono text-xs`} />
+        <input name="sort_order" type="number" defaultValue={categories.length} className={`${inputCls} w-16 text-center font-mono`} aria-label="排序" />
+        <label className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs text-white/62">
+          <input name="is_visible" type="checkbox" defaultChecked className="size-3.5 accent-cyan" />
           可见
         </label>
-        <SaveButton><Plus aria-hidden="true" className="h-4 w-4" />新增</SaveButton>
+        <SaveButton className={`${btnSm} px-3`}><Plus aria-hidden="true" className="h-3.5 w-3.5" />新增</SaveButton>
       </form>
 
-      <div className="mt-4 overflow-x-auto border-y border-white/10">
+      <div className="mt-3 space-y-1.5">
         {categories.length === 0 ? (
-          <p className="grid min-h-48 place-items-center text-sm text-white/38">
-            暂无分类。可以先到作品页导入当前作品。
+          <p className="grid h-32 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/30">
+            暂无分类
           </p>
         ) : (
-          <table className="min-w-[760px] w-full text-left text-sm">
-            <thead className="font-mono text-[10px] uppercase text-white/36">
-              <tr>
-                <th className="py-3 pr-3 font-normal">Order</th>
-                <th className="px-3 py-3 font-normal">Name</th>
-                <th className="px-3 py-3 font-normal">Slug</th>
-                <th className="px-3 py-3 font-normal">Visibility</th>
-                <th className="py-3 pl-3 text-right font-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {categories.map((category) => (
-                <CategoryRowEditor key={category.id} category={category} toast={toast} savedId={savedId} />
-              ))}
-            </tbody>
-          </table>
+          categories.map((category) => (
+            <CategoryRow key={category.id} category={category} saved={toast === "category-saved" && savedId === category.id} />
+          ))
         )}
       </div>
     </section>
   );
 }
 
-function CategoryRowEditor({ category, toast, savedId }: { category: CategoryRow; toast?: string; savedId?: string }) {
+function CategoryRow({ category, saved }: { category: CategoryRow; saved?: boolean }) {
+  const formId = `cat-${category.id}`;
   return (
-    <tr className="align-middle">
-      <td className="py-3 pr-3">
-        <form id={`category-${category.id}`} action={updateCategory}>
-          <input type="hidden" name="id" value={category.id} />
-          <input
-            name="sort_order"
-            type="number"
-            defaultValue={category.sort_order}
-            className="min-h-10 w-20 rounded-md border border-white/10 bg-black/20 px-3 font-mono text-sm outline-none focus:border-cyan"
-            aria-label={`${category.name} 排序`}
-          />
-        </form>
-      </td>
-      <td className="px-3 py-3">
-        <input
-          form={`category-${category.id}`}
-          name="name"
-          required
-          maxLength={80}
-          defaultValue={category.name}
-          className={fieldClassName}
-        />
-      </td>
-      <td className="px-3 py-3">
-        <input
-          form={`category-${category.id}`}
-          name="slug"
-          required
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          defaultValue={category.slug}
-          className={`${fieldClassName} font-mono`}
-        />
-      </td>
-      <td className="px-3 py-3">
-        <label className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 text-sm text-white/62">
-          <input
-            form={`category-${category.id}`}
-            name="is_visible"
-            type="checkbox"
-            defaultChecked={category.is_visible}
-            className="size-4 accent-cyan"
-          />
-          {category.is_visible ? (
-            <Eye aria-hidden="true" className="h-4 w-4 text-cyan" />
-          ) : (
-            <EyeOff aria-hidden="true" className="h-4 w-4 text-white/36" />
-          )}
-          {category.is_visible ? "可见" : "隐藏"}
-        </label>
-      </td>
-      <td className="py-3 pl-3">
-        <div className="flex justify-end gap-2">
-          <SaveButton form={`category-${category.id}`} variant="outline" saved={toast === "category-saved" && savedId === category.id}><Save aria-hidden="true" className="h-4 w-4" />保存</SaveButton>
-          <form action={deleteCategory}>
-            <input type="hidden" name="id" value={category.id} />
-            <button className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-300/25 px-3 text-sm text-red-200 transition hover:bg-red-300/10">
-              <Trash2 aria-hidden="true" className="h-4 w-4" />
-              删除
-            </button>
-          </form>
-        </div>
-      </td>
-    </tr>
+    <form id={formId} action={updateCategory} className="flex flex-wrap items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.02] px-2 py-1.5 transition hover:border-white/18 hover:bg-white/[0.04]">
+      <input type="hidden" name="id" value={category.id} />
+      <input
+        name="sort_order" type="number" defaultValue={category.sort_order}
+        className="h-8 w-12 rounded border border-white/10 bg-black/25 px-1.5 text-center font-mono text-xs outline-none focus:border-cyan"
+        aria-label={`${category.name} 排序`} form={formId}
+      />
+      <input
+        name="name" required maxLength={80} defaultValue={category.name}
+        className={`h-8 min-w-0 flex-1 rounded border border-white/10 bg-black/25 px-2 text-sm outline-none focus:border-cyan`} form={formId}
+      />
+      <input
+        name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" defaultValue={category.slug}
+        className={`h-8 w-28 rounded border border-white/10 bg-black/25 px-2 font-mono text-xs outline-none focus:border-cyan`} form={formId}
+      />
+      <label className="inline-flex h-8 items-center gap-1 rounded border border-white/10 bg-black/25 px-2 text-[11px] text-white/60">
+        <input name="is_visible" type="checkbox" defaultChecked={category.is_visible} className="size-3.5 accent-cyan" form={formId} />
+        {category.is_visible ? <Eye className="h-3 w-3 text-cyan" /> : <EyeOff className="h-3 w-3 text-white/35" />}
+      </label>
+      {saved ? <span className="rounded bg-green-400/90 px-1.5 py-0.5 text-[10px] font-medium text-black">已保存</span> : null}
+      <SaveButton variant="outline" size="sm" form={formId} saved={saved} className="h-8 px-2 text-[11px]"><Save aria-hidden="true" className="h-3 w-3" />保存</SaveButton>
+      <DeleteButton action={deleteCategory} id={category.id} />
+    </form>
   );
 }
 
 function TagPanel({ tags, toast, savedId }: { tags: TagRow[]; toast?: string; savedId?: string }) {
   return (
-    <section>
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-medium text-white/80">标签</h3>
-        <span className="font-mono text-xs text-white/34">
-          {tags.length} items
-        </span>
+    <section className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
+      <div className="flex items-center gap-2">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-cyan/10">
+          <TagIcon className="h-4 w-4 text-cyan" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-white/85">标签</h3>
+          <p className="text-[11px] text-white/40">{tags.length} 项 · 作品细分关键词</p>
+        </div>
       </div>
 
-      <form
-        action={createTag}
-        className="mt-3 grid gap-3 rounded-md border border-white/10 bg-white/[0.035] p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-      >
-        <input
-          name="name"
-          required
-          maxLength={80}
-          placeholder="标签名称"
-          className={fieldClassName}
-        />
-        <input
-          name="slug"
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          placeholder="url-slug"
-          className={`${fieldClassName} font-mono`}
-        />
-        <SaveButton><Plus aria-hidden="true" className="h-4 w-4" />新增</SaveButton>
+      <form action={createTag} className="mt-4 flex flex-wrap items-center gap-1.5">
+        <input name="name" required maxLength={80} placeholder="标签名称" className={`${inputCls} min-w-0 flex-1`} />
+        <input name="slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="url-slug" className={`${inputCls} w-40 font-mono text-xs`} />
+        <SaveButton className={`${btnSm} px-3`}><Plus aria-hidden="true" className="h-3.5 w-3.5" />新增</SaveButton>
       </form>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {tags.length === 0 ? (
-          <p className="grid min-h-48 place-items-center border-y border-white/10 text-sm text-white/38">
-            暂无标签。
+          <p className="grid h-32 w-full place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/30">
+            暂无标签
           </p>
         ) : (
-          tags.map((tag) => <TagRowEditor key={tag.id} tag={tag} toast={toast} savedId={savedId} />)
+          tags.map((tag) => <TagChip key={tag.id} tag={tag} saved={toast === "tag-saved" && savedId === tag.id} />)
         )}
       </div>
     </section>
   );
 }
 
-function TagRowEditor({ tag, toast, savedId }: { tag: TagRow; toast?: string; savedId?: string }) {
+function TagChip({ tag, saved }: { tag: TagRow; saved?: boolean }) {
   return (
-    <article className="rounded-md border border-white/10 bg-white/[0.035] p-3">
-      <form
-        id={`tag-${tag.id}`}
-        action={updateTag}
-        className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-      >
+    <div className="inline-flex items-stretch overflow-hidden rounded-md border border-white/10 bg-white/[0.03] transition hover:border-white/20">
+      <form id={`tag-${tag.id}`} action={updateTag} className="flex items-center">
         <input type="hidden" name="id" value={tag.id} />
         <input
-          name="name"
-          required
-          maxLength={80}
-          defaultValue={tag.name}
-          className={fieldClassName}
+          name="name" required maxLength={80} defaultValue={tag.name}
+          className="h-8 min-w-0 w-[92px] border-r border-white/8 bg-transparent px-2 text-xs text-white/80 outline-none focus:bg-black/30"
+          form={`tag-${tag.id}`} title={tag.name}
         />
         <input
-          name="slug"
-          required
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          defaultValue={tag.slug}
-          className={`${fieldClassName} font-mono`}
+          name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" defaultValue={tag.slug}
+          className="h-8 w-20 min-w-0 bg-transparent px-2 font-mono text-[10px] text-white/40 outline-none focus:bg-black/30 focus:text-white/70"
+          form={`tag-${tag.id}`}
         />
-        <SaveButton variant="outline" saved={toast === "tag-saved" && savedId === tag.id}><Save aria-hidden="true" className="h-4 w-4" />保存</SaveButton>
       </form>
-      <form action={deleteTag} className="mt-2 flex justify-end">
-        <input type="hidden" name="id" value={tag.id} />
-        <button className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/25 px-3 text-xs text-red-200 transition hover:bg-red-300/10">
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除
-        </button>
-      </form>
-    </article>
+      {saved ? <span className="flex items-center bg-green-400/90 px-1.5 text-[10px] font-medium text-black">已保存</span> : null}
+      <SaveButton variant="cyan" size="sm" form={`tag-${tag.id}`} saved={saved} className="h-8 rounded-none border-l border-white/10 px-2 text-[10px] text-cyan hover:bg-cyan/10"><Save className="h-3 w-3" /></SaveButton>
+      <DeleteButton action={deleteTag} id={tag.id} />
+    </div>
   );
 }
 
-const fieldClassName =
-  "min-h-10 w-full rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan";
+function DeleteButton({ action: deleteAction, id }: { action: (formData: FormData) => void | Promise<void>; id: string }) {
+  return (
+    <form action={deleteAction}>
+      <input type="hidden" name="id" value={id} />
+      <button type="submit" className="flex h-8 w-8 items-center justify-center text-white/30 transition hover:bg-red-500/20 hover:text-red-300" title="删除">
+        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+      </button>
+    </form>
+  );
+}

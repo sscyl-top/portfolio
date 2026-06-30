@@ -57,16 +57,16 @@ export default async function AdminMessagesPage({
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
             Contact inbox
           </p>
-          <h2 className="mt-3 text-3xl font-semibold">联系消息</h2>
-          <p className="mt-3 font-mono text-xs text-white/38">
+          <h2 className="mt-2 text-2xl font-semibold">联系消息</h2>
+          <p className="mt-1.5 text-xs text-white/48">
             {allMessages.length} 条消息
             {unreadCount > 0 ? (
-              <span className="ml-2 rounded-full bg-cyan/20 px-2 py-0.5 text-cyan">
+              <span className="ml-2 inline-flex h-5 items-center rounded-full bg-cyan/20 px-2 text-[11px] text-cyan">
                 {unreadCount} 未读
               </span>
             ) : null}
@@ -75,11 +75,11 @@ export default async function AdminMessagesPage({
       </div>
 
       {/* 筛选栏 */}
-      <form className="mt-6 flex flex-wrap items-center gap-3">
+      <form className="mt-5 flex flex-wrap items-center gap-2">
         <select
           name="status"
           defaultValue={status}
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           {statusOptions.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -91,7 +91,7 @@ export default async function AdminMessagesPage({
         <select
           name="type"
           defaultValue={type}
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           {typeOptions.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -105,12 +105,12 @@ export default async function AdminMessagesPage({
           type="search"
           defaultValue={query}
           placeholder="搜索主题 / 姓名 / 邮箱 / 内容"
-          className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan sm:min-w-64"
+          className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan sm:min-w-64"
         />
 
         <button
           type="submit"
-          className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10"
+          className="inline-flex h-9 items-center rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10"
         >
           筛选
         </button>
@@ -118,7 +118,7 @@ export default async function AdminMessagesPage({
         {(status !== "all" || type !== "all" || query) && (
           <Link
             href="/admin/messages"
-            className="min-h-10 rounded-md border border-white/10 px-4 text-sm text-white/60 transition hover:text-white"
+            className="inline-flex h-9 items-center rounded-md border border-white/10 px-3 text-xs text-white/60 transition hover:text-white"
           >
             清除
           </Link>
@@ -132,11 +132,11 @@ export default async function AdminMessagesPage({
       </p>
 
       {error ? (
-        <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
+        <p className="mt-5 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-xs text-red-200">
           消息读取失败：{error.message}
         </p>
       ) : (
-        <div className="mt-6">
+        <div className="mt-5">
           <MessageList messages={messages} />
         </div>
       )}

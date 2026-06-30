@@ -1,4 +1,4 @@
-import { Save, Search, Trash2, X } from "lucide-react";
+import { Save, Search, Trash2, X, Film, FileText } from "lucide-react";
 
 import { SaveButton } from "@/components/admin/SaveButton";
 import { buildPublicMediaUrl } from "@/lib/cms/media-url";
@@ -23,7 +23,7 @@ type MediaAssetRow = {
 export default async function AdminMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; type?: string; sort?: string; toast?: string; id?: string }>;
+  searchParams: Promise<{ search?: string; type?: string; sort?: string; toast?: string; id?: string; view?: "grid" | "list" }>;
 }) {
   const { search = "", type = "", sort = "newest", toast, id } = await searchParams;
 
@@ -35,7 +35,6 @@ export default async function AdminMediaPage({
     )
     .is("deleted_at", null);
 
-  // apply ordering
   if (sort === "name") {
     query = query.order("original_name", { ascending: true });
   } else if (sort === "size") {
@@ -43,7 +42,6 @@ export default async function AdminMediaPage({
   } else if (sort === "oldest") {
     query = query.order("created_at", { ascending: true });
   } else {
-    // default: newest first
     query = query.order("created_at", { ascending: false });
   }
 
@@ -71,10 +69,9 @@ export default async function AdminMediaPage({
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Media library
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">媒体库</h2>
-      <p className="mt-3 text-sm text-white/48">
-        上传图片、视频或 PDF，文件会进入 Supabase Storage 的 portfolio-media
-        bucket。
+      <h2 className="mt-2 text-2xl font-semibold">媒体库</h2>
+      <p className="mt-1.5 text-xs text-white/48">
+        上传图片、视频或 PDF，文件会进入 Supabase Storage 的 portfolio-media bucket。拖拽文件到页面任意位置即可上传。
       </p>
 
       <UploadForm />
@@ -82,16 +79,16 @@ export default async function AdminMediaPage({
       <SearchBar search={search} type={type} sort={sort} />
 
       {error ? (
-        <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
+        <p className="mt-4 rounded-md border border-red-300/20 bg-red-300/10 p-3 text-sm text-red-200">
           媒体读取失败：{error.message}
         </p>
       ) : (
         <>
-          <p className="mt-3 text-sm text-white/38">
+          <p className="mt-3 text-xs text-white/38">
             {assets.length} / {total ?? 0} 个文件
             {(search || type) ? "（已筛选）" : ""}
           </p>
-          <MediaList assets={assets} search={search} type={type} toast={toast} savedId={id} />
+          <MediaGrid assets={assets} toast={toast} savedId={id} />
         </>
       )}
     </div>
@@ -99,24 +96,25 @@ export default async function AdminMediaPage({
 }
 
 function SearchBar({ search, type, sort }: { search: string; type: string; sort: string }) {
+  const inputH = "h-9";
   return (
     <form className="mt-4 flex flex-wrap items-center gap-2">
       <div className="relative flex-1 min-w-0 max-w-xs">
         <Search
           aria-hidden="true"
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30"
+          className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30"
         />
         <input
           name="search"
           defaultValue={search}
           placeholder="搜索文件名……"
-          className="h-10 w-full rounded-md border border-white/10 bg-black/20 pl-10 pr-3 text-sm outline-none focus:border-cyan"
+          className={`${inputH} w-full rounded-md border border-white/10 bg-black/20 pl-8 pr-2.5 text-xs outline-none focus:border-cyan`}
         />
       </div>
       <select
         name="type"
         defaultValue={type}
-        className="h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+        className={`${inputH} rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan`}
       >
         <option value="">全部类型</option>
         <option value="image">图片</option>
@@ -126,22 +124,22 @@ function SearchBar({ search, type, sort }: { search: string; type: string; sort:
       <select
         name="sort"
         defaultValue={sort}
-        className="h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+        className={`${inputH} rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan`}
       >
         <option value="newest">最新优先</option>
         <option value="oldest">最早优先</option>
         <option value="name">名称 A-Z</option>
         <option value="size">大小 ↓</option>
       </select>
-      <button className="inline-flex h-10 items-center gap-1.5 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10">
+      <button className={`inline-flex ${inputH} items-center gap-1.5 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10`}>
         筛选
       </button>
       {(search || type || sort !== "newest") ? (
         <a
           href="/admin/media"
-          className="inline-flex h-10 items-center gap-1 rounded-md px-3 text-sm text-white/45 transition hover:text-white"
+          className={`inline-flex ${inputH} items-center gap-1 rounded-md px-2 text-xs text-white/45 transition hover:text-white`}
         >
-          <X aria-hidden="true" className="h-4 w-4" />
+          <X aria-hidden="true" className="h-3.5 w-3.5" />
           清除
         </a>
       ) : null}
@@ -149,104 +147,94 @@ function SearchBar({ search, type, sort }: { search: string; type: string; sort:
   );
 }
 
-function MediaList({
+function MediaGrid({
   assets,
-  search,
-  type,
   toast,
   savedId,
 }: {
   assets: MediaAssetRow[];
-  search: string;
-  type: string;
   toast?: string;
   savedId?: string;
 }) {
   if (assets.length === 0) {
-    const hint =
-      search || type ? "没有匹配的媒体文件。" : "暂无媒体文件。";
     return (
-      <div className="mt-6 grid min-h-64 place-items-center border-y border-white/10 text-sm text-white/38">
-        {hint}
+      <div className="mt-4 grid min-h-48 place-items-center rounded-lg border border-white/10 text-sm text-white/38">
+        暂无媒体文件。
       </div>
     );
   }
 
   return (
-    <div className="mt-6 grid gap-3">
+    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {assets.map((asset) => (
-        <MediaRow key={asset.id} asset={asset} saved={toast === "alt-saved" && savedId === asset.id} />
+        <MediaCard key={asset.id} asset={asset} saved={toast === "alt-saved" && savedId === asset.id} />
       ))}
     </div>
   );
 }
 
-function MediaRow({ asset, saved }: { asset: MediaAssetRow; saved?: boolean }) {
+function MediaCard({ asset, saved }: { asset: MediaAssetRow; saved?: boolean }) {
   const isImage = asset.mime_type.startsWith("image/");
   const isVideo = asset.mime_type.startsWith("video/");
   const publicUrl = buildPublicMediaUrl(asset.storage_key);
 
   return (
-    <article className="grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[7rem_minmax(0,1fr)_auto]">
-      <MediaPreview
-        publicUrl={publicUrl}
-        isImage={isImage}
-        isVideo={isVideo}
-        alt={asset.alt_text || asset.original_name}
-      />
+    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] transition hover:border-white/20 hover:bg-white/[0.05]">
+      <div className="relative aspect-square w-full overflow-hidden bg-[repeating-conic-gradient(#1a1a1a_0%_25%,#222_0%_50%)] bg-[length:10px_10px]">
+        <MediaThumb publicUrl={publicUrl} isImage={isImage} isVideo={isVideo} alt={asset.alt_text || asset.original_name} />
+        <form action={deleteMediaAsset} className="absolute right-1.5 top-1.5 opacity-0 transition group-hover:opacity-100">
+          <input type="hidden" name="id" value={asset.id} />
+          <button
+            type="submit"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-red-200/90 backdrop-blur-sm transition hover:bg-red-500/80 hover:text-white"
+            title="删除"
+          >
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          </button>
+        </form>
+        {saved ? (
+          <span className="absolute left-1.5 top-1.5 rounded bg-green-400/90 px-1.5 py-0.5 text-[10px] font-medium text-black">
+            已保存
+          </span>
+        ) : null}
+      </div>
 
-      <div className="min-w-0">
-        <p className="truncate font-medium text-white">{asset.original_name}</p>
-        <p className="mt-1 break-all font-mono text-xs text-white/34">
-          {asset.storage_key}
+      <div className="flex flex-col gap-1.5 p-2.5">
+        <p className="truncate text-xs font-medium text-white/85" title={asset.original_name}>
+          {asset.original_name}
         </p>
-        <p className="mt-2 font-mono text-xs text-white/38">
-          {asset.mime_type}
+        <p className="font-mono text-[10px] text-white/35">
+          {isImage ? "IMG" : isVideo ? "VID" : "FILE"}
           {asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}
           {" · "}
           {formatBytes(asset.byte_size)}
         </p>
 
-        <form
-          id={`alt-${asset.id}`}
-          action={updateMediaAltText}
-          className="mt-3 flex items-center gap-2"
-        >
+        <form id={`alt-${asset.id}`} action={updateMediaAltText} className="mt-0.5 flex items-center gap-1">
           <input type="hidden" name="id" value={asset.id} />
           <input
             name="alt_text"
             defaultValue={asset.alt_text}
             maxLength={500}
-            placeholder="替代文本（用于无障碍与 SEO）"
-            className="min-h-9 w-full rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            placeholder="Alt 文本"
+            className="h-7 min-w-0 flex-1 rounded border border-white/10 bg-black/25 px-2 text-[11px] outline-none focus:border-cyan"
           />
           <SaveButton
             variant="cyan"
             size="sm"
             saved={saved}
-            className="min-h-9 shrink-0 border-cyan/30 px-3 text-xs text-cyan hover:bg-cyan/10"
+            form={`alt-${asset.id}`}
+            className="h-7 shrink-0 rounded border-cyan/30 px-1.5 text-[10px] text-cyan hover:bg-cyan/10"
           >
-            <Save aria-hidden="true" className="h-3.5 w-3.5" />
-            保存
+            <Save aria-hidden="true" className="h-3 w-3" />
           </SaveButton>
         </form>
       </div>
-
-      <form action={deleteMediaAsset} className="md:self-start">
-        <input type="hidden" name="id" value={asset.id} />
-        <button
-          type="submit"
-          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-300/25 px-3 text-xs text-red-200 transition hover:bg-red-300/10"
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-          删除
-        </button>
-      </form>
     </article>
   );
 }
 
-function MediaPreview({
+function MediaThumb({
   publicUrl,
   isImage,
   isVideo,
@@ -264,25 +252,30 @@ function MediaPreview({
         src={publicUrl}
         alt={alt}
         loading="lazy"
-        className="size-28 rounded-md border border-white/10 object-cover"
+        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
       />
     );
   }
 
   if (isVideo) {
     return (
-      <video
-        src={publicUrl}
-        muted
-        playsInline
-        className="size-28 rounded-md border border-white/10 object-cover"
-      />
+      <>
+        <video
+          src={publicUrl}
+          muted
+          playsInline
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 grid place-items-center bg-black/30">
+          <Film className="h-7 w-7 text-white/80" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="grid size-28 place-items-center rounded-md border border-white/10 bg-black/30 font-mono text-[10px] uppercase text-white/40">
-      file
+    <div className="grid h-full w-full place-items-center text-white/30">
+      <FileText className="h-8 w-8" />
     </div>
   );
 }

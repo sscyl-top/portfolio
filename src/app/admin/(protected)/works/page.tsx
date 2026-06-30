@@ -164,20 +164,20 @@ export default async function AdminWorksPage({
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
             Works
           </p>
-          <h2 className="mt-3 text-3xl font-semibold">作品</h2>
-          <p className="mt-3 text-sm text-white/48">
+          <h2 className="mt-2 text-2xl font-semibold">作品</h2>
+          <p className="mt-1.5 text-xs text-white/48">
             {works.length} 个 CMS 作品，支持从当前静态作品一键导入。
           </p>
         </div>
         <form action="/admin/works/seed" method="post">
           <button
             type="submit"
-            className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10"
           >
             导入当前作品
           </button>
@@ -185,12 +185,12 @@ export default async function AdminWorksPage({
       </div>
 
       {seeded ? (
-        <p className="mt-5 rounded-md border border-cyan/25 bg-cyan/10 p-3 text-sm text-cyan">
+        <p className="mt-4 rounded-md border border-cyan/25 bg-cyan/10 p-2.5 text-xs text-cyan">
           当前静态作品已导入 CMS。
         </p>
       ) : null}
       {seedError ? (
-        <p className="mt-5 rounded-md border border-red-300/20 bg-red-300/10 p-3 text-sm text-red-200">
+        <p className="mt-4 rounded-md border border-red-300/20 bg-red-300/10 p-2.5 text-xs text-red-200">
           导入失败：{seedError}
         </p>
       ) : null}
@@ -206,15 +206,15 @@ export default async function AdminWorksPage({
         />
       ) : (
         <>
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-4 flex items-center justify-between">
             <div />
             <form action={createEmptyWork}>
               <input type="hidden" name="section" value={section === "composite" ? "composite" : "all"} />
               <button
                 type="submit"
-                className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan px-4 text-xs font-medium text-black transition hover:bg-white"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 {section === "composite" ? "上传复合设计" : "上传新作品"}
@@ -227,7 +227,7 @@ export default async function AdminWorksPage({
             <form action={publishScheduledWorks}>
               <button
                 type="submit"
-                className="min-h-10 rounded-md border border-white/10 px-4 text-sm text-white/70 transition hover:border-cyan/30 hover:text-cyan"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/10 px-3 text-xs text-white/70 transition hover:border-cyan/30 hover:text-cyan"
               >
                 发布到期草稿
               </button>
@@ -264,13 +264,13 @@ function FilterBar({
   ];
 
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-3">
+    <div className="mt-6 flex flex-wrap items-center gap-2">
       <form className="contents" action="">
         <input type="hidden" name="section" value={section} />
         <select
           name="status"
           defaultValue={currentStatus}
-          className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+          className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
         >
           {statusOptions.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -283,11 +283,11 @@ function FilterBar({
           type="search"
           defaultValue={query}
           placeholder="搜索标题 / slug / 年份"
-          className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan sm:min-w-64"
+          className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan sm:min-w-56"
         />
         <button
           type="submit"
-          className="min-h-10 rounded-md border border-cyan/35 px-4 text-sm text-cyan transition hover:bg-cyan/10"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-cyan/35 px-3 text-xs text-cyan transition hover:bg-cyan/10"
         >
           筛选
         </button>

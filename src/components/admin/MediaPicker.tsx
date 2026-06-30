@@ -177,7 +177,7 @@ export function MediaPicker({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索文件名或描述……"
-            className="h-9 w-full rounded-md border border-white/10 bg-black/20 pl-9 pr-8 text-sm outline-none placeholder:text-white/25 focus:border-cyan"
+            className="h-9 w-full rounded-md border border-white/10 bg-black/20 pl-9 pr-8 text-xs outline-none placeholder:text-white/25 focus:border-cyan"
           />
           {search ? (
             <button

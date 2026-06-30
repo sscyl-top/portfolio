@@ -84,38 +84,38 @@ export default async function AdminPagesPage({ searchParams }: { searchParams: P
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Pages
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">页面</h2>
-      <p className="mt-3 text-sm text-white/48">
+      <h2 className="mt-2 text-2xl font-semibold">页面</h2>
+      <p className="mt-1.5 text-xs text-white/48">
         先管理首页、作品页和简历页的标题与 SEO；模块化内容编辑会接在这里继续扩展。
       </p>
 
       {error ? (
-        <p className="mt-6 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-200">
+        <p className="mt-5 rounded-md border border-red-300/20 bg-red-300/10 p-4 text-xs text-red-200">
           页面读取失败：{error.message}
         </p>
       ) : null}
 
-      <div className="mt-6 grid gap-4">
+      <div className="mt-5 grid gap-4">
         {pages.map((page) => (
           <div key={page.slug}>
             <form
               action={savePageSettings}
-              className="rounded-md border border-white/10 bg-white/[0.035] p-5"
+              className="rounded-md border border-white/10 bg-white/[0.035] p-4"
             >
               <input type="hidden" name="slug" value={page.slug} />
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-mono text-[10px] uppercase text-white/36">
                     {page.slug}
                   </p>
-                  <h3 className="mt-1 text-xl font-semibold">
+                  <h3 className="mt-1 text-sm font-semibold">
                     {labels[page.slug]}
                   </h3>
                 </div>
-                <SaveButton saved={toast === "page-saved" && slug === page.slug}>保存</SaveButton>
+                <SaveButton saved={toast === "page-saved" && slug === page.slug} size="sm">保存</SaveButton>
               </div>
 
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <Field label="页面标题" name="title" defaultValue={page.title} />
                 <Field
                   label="SEO 标题"
@@ -129,16 +129,16 @@ export default async function AdminPagesPage({ searchParams }: { searchParams: P
                 />
               </div>
 
-              <p className="mt-4 font-mono text-[10px] text-white/30">
+              <p className="mt-3 font-mono text-[10px] text-white/30">
                 {page.modules.length} modules
               </p>
             </form>
 
             {page.slug === "home" ? (
-              <section className="mt-4 rounded-md border border-white/10 bg-white/[0.035] p-5">
+              <section className="mt-4 rounded-md border border-white/10 bg-white/[0.035] p-4">
                 <div>
-                  <h4 className="text-sm font-medium text-white/80">首页板块排序</h4>
-                  <p className="mt-1 text-xs text-white/40">
+                  <h4 className="text-xs font-medium text-white/80">首页板块排序</h4>
+                  <p className="mt-1 text-[11px] text-white/40">
                     调整首页 Hero 首屏与专业能力板块的显示顺序。
                   </p>
                 </div>
@@ -162,13 +162,13 @@ function Field({
   defaultValue: string;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid gap-1.5 text-xs">
       <span className="text-white/58">{label}</span>
       <input
         name={name}
         defaultValue={defaultValue}
         required={name === "title"}
-        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+        className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
       />
     </label>
   );

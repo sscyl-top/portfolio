@@ -53,8 +53,8 @@ export function SaveButton({
   }, []);
 
   const sizeClasses = size === "sm"
-    ? "min-h-8 px-3 text-xs"
-    : "min-h-9 px-4 text-sm";
+    ? "h-8 px-2.5 text-xs"
+    : "h-9 px-3 text-xs";
 
   const variantClasses = {
     cyan: "bg-cyan text-black hover:bg-white",

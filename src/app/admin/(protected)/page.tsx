@@ -73,10 +73,13 @@ export default async function AdminDashboardPage() {
       <p className="font-mono text-xs uppercase tracking-[0.22em] text-cyan">
         Dashboard
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">控制台</h2>
+      <h2 className="mt-2 text-2xl font-semibold">控制台</h2>
+      <p className="mt-1.5 text-xs text-white/48">
+        网站内容管理与数据概览
+      </p>
 
       {/* ── stats grid ── */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <MetricCard
           label="已发布"
           value={String(publishedCount ?? 0)}
@@ -120,23 +123,23 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* ── two columns: recent works + messages ── */}
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {/* recent works */}
         <Panel title="最近更新">
           {recent && recent.length > 0 ? (
             <ul className="divide-y divide-white/8">
               {recent.map((work) => (
-                <li key={work.slug} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                <li key={work.slug} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
                   <div
-                    className={`size-2 shrink-0 rounded-full ${
+                    className={`size-1.5 shrink-0 rounded-full ${
                       work.status === "published" ? "bg-emerald-400/60" : "bg-amber-400/60"
                     }`}
                   />
-                  <span className="min-w-0 flex-1 truncate text-sm text-white/80">
+                  <span className="min-w-0 flex-1 truncate text-xs text-white/80">
                     {work.title}
                   </span>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    className={`inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[10px] font-medium ${
                       work.status === "published"
                         ? "bg-emerald-400/15 text-emerald-300"
                         : "bg-amber-400/15 text-amber-300"
@@ -146,7 +149,7 @@ export default async function AdminDashboardPage() {
                   </span>
                   <Link
                     href={`/admin/works/${work.slug}`}
-                    className="shrink-0 text-xs text-white/35 transition hover:text-cyan"
+                    className="shrink-0 text-[11px] text-white/35 transition hover:text-cyan"
                   >
                     编辑
                   </Link>
@@ -163,10 +166,10 @@ export default async function AdminDashboardPage() {
           {recentMessages && recentMessages.length > 0 ? (
             <ul className="divide-y divide-white/8">
               {recentMessages.map((msg) => (
-                <li key={msg.id} className="py-2.5 first:pt-0 last:pb-0">
+                <li key={msg.id} className="py-2 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 text-sm font-medium text-white/80">
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-white/80">
                         {msg.status === "new" ? (
                           <span className="inline-block size-1.5 shrink-0 rounded-full bg-cyan" />
                         ) : null}
@@ -174,7 +177,7 @@ export default async function AdminDashboardPage() {
                           {msg.name || "匿名"}
                         </span>
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-white/40">
+                      <p className="mt-0.5 truncate text-[11px] text-white/40">
                         {msg.subject || "（无主题）"}
                       </p>
                     </div>
@@ -241,9 +244,9 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-3.5 py-2 text-sm text-white/55 transition hover:border-cyan/30 hover:text-cyan"
+      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-3 text-xs text-white/55 transition hover:border-cyan/30 hover:text-cyan"
     >
-      {icon}
+      <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{icon}</span>
       {label}
     </Link>
   );
@@ -257,8 +260,8 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.025] p-5">
-      <h3 className="mb-3 text-sm font-semibold text-white/70">{title}</h3>
+    <div className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
+      <h3 className="mb-3 text-xs font-semibold text-white/70">{title}</h3>
       {children}
     </div>
   );

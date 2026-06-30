@@ -48,7 +48,7 @@ export function ResumeEditor({ resume }: Props) {
   return (
     <form
       action={handleSubmit}
-      className="mt-6 grid gap-6 rounded-md border border-white/10 bg-white/[0.035] p-5"
+      className="mt-5 grid gap-4 rounded-md border border-white/10 bg-white/[0.035] p-4"
     >
       <BasicFields resume={resume} />
       <StrengthsList defaultItems={resume.strengths} />
@@ -60,25 +60,25 @@ export function ResumeEditor({ resume }: Props) {
       <CampusList defaultItems={resume.campus} />
       <EducationSection education={resume.education} />
 
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex items-center justify-between pt-3">
         <div>
           {saveStatus === 'ok' && (
-            <span className="flex items-center gap-1.5 text-sm text-green-400">
-              <CheckCircle className="h-4 w-4" />{saveMsg}
+            <span className="flex items-center gap-1.5 text-xs text-green-400">
+              <CheckCircle className="h-3.5 w-3.5" />{saveMsg}
             </span>
           )}
           {saveStatus === 'err' && (
-            <span className="flex items-center gap-1.5 text-sm text-red-400" title={saveMsg}>
-              <AlertCircle className="h-4 w-4" />保存失败：{saveMsg}
+            <span className="flex items-center gap-1.5 text-xs text-red-400" title={saveMsg}>
+              <AlertCircle className="h-3.5 w-3.5" />保存失败：{saveMsg}
             </span>
           )}
         </div>
         <button
           disabled={isPending}
           type="submit"
-          className="inline-flex min-h-10 items-center gap-2 rounded-md bg-cyan px-5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-50"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan px-4 text-xs font-medium text-black transition hover:bg-white disabled:opacity-50"
         >
-          <Save aria-hidden="true" className="h-4 w-4" />
+          <Save aria-hidden="true" className="h-3.5 w-3.5" />
           {isPending ? "保存中…" : "保存简历"}
         </button>
       </div>
@@ -120,7 +120,7 @@ function StrengthsList({ defaultItems }: { defaultItems: string[] }) {
             name="strength"
             defaultValue={item}
             placeholder={`第 ${i + 1} 条优势陈述`}
-            className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
           />
         </ListRow>
       ))}
@@ -140,7 +140,7 @@ function HighlightsList({ defaultItems }: { defaultItems: string[] }) {
             name="highlight"
             defaultValue={item}
             placeholder="例如 Brand Visual System"
-            className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
           />
         </ListRow>
       ))}
@@ -160,7 +160,7 @@ function ServicesList({ defaultItems }: { defaultItems: string[] }) {
             name="service"
             defaultValue={item}
             placeholder="例如 品牌视觉升级"
-            className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+            className="h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
           />
         </ListRow>
       ))}
@@ -172,8 +172,8 @@ function ServicesList({ defaultItems }: { defaultItems: string[] }) {
 function DownloadsFields({ downloads }: { downloads: ResumeDownloads }) {
   return (
     <section>
-      <h3 className="text-sm font-medium text-white/80">下载链接</h3>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
+      <h3 className="text-xs font-medium text-white/80">下载链接</h3>
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
         <Field label="PDF 链接" name="download_pdf" defaultValue={downloads.pdf} />
         <Field label="JPG 链接" name="download_jpg" defaultValue={downloads.jpg} />
       </div>
@@ -191,31 +191,31 @@ function ExpertiseList({ defaultItems }: { defaultItems: ResumeExpertise[] }) {
       {items.map((expertise, i) => (
         <div
           key={i}
-          className="rounded-md border border-white/10 bg-black/20 p-4"
+          className="rounded-md border border-white/10 bg-black/20 p-3"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <input
               name="expertise_title"
               defaultValue={expertise.title}
               placeholder="分类名称"
-              className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 flex-1 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <button
               type="button"
               onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
               className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
-          <div className="mt-3 space-y-2">
+          <div className="mt-2 space-y-1.5">
             {(expertise.items.length > 0 ? expertise.items : [""]).map((item, j) => (
-              <div key={j} className="flex items-center gap-2">
+              <div key={j} className="flex items-center gap-1.5">
                 <input
                   name={`expertise_items_${i}`}
                   defaultValue={item}
                   placeholder={`第 ${j + 1} 项`}
-                  className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+                  className="h-9 flex-1 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
                 />
                 <button
                   type="button"
@@ -230,7 +230,7 @@ function ExpertiseList({ defaultItems }: { defaultItems: ResumeExpertise[] }) {
                   }
                   className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
               </div>
             ))}
@@ -244,9 +244,9 @@ function ExpertiseList({ defaultItems }: { defaultItems: ResumeExpertise[] }) {
                 ),
               )
             }
-            className="mt-2 inline-flex items-center gap-1 text-xs text-cyan hover:text-white"
+            className="mt-2 inline-flex items-center gap-1 text-[11px] text-cyan hover:text-white"
           >
-            <Plus className="h-3.5 w-3.5" /> 添加子项
+            <Plus className="h-3 w-3" /> 添加子项
           </button>
         </div>
       ))}
@@ -278,19 +278,19 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
   return (
     <ListSection title="工作经验" addLabel="添加经历">
       {items.map((exp, i) => (
-        <div key={i} className="rounded-md border border-white/10 bg-black/20 p-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
+        <div key={i} className="rounded-md border border-white/10 bg-black/20 p-3">
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
             <input
               name="experience_company"
               defaultValue={exp.company}
               placeholder="公司"
-              className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <input
               name="experience_title"
               defaultValue={exp.title}
               placeholder="职位"
-              className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <div className="flex items-start gap-1">
               <div className="flex flex-col gap-0.5">
@@ -298,7 +298,7 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
                   type="button"
                   onClick={() => moveItem(i, "up")}
                   disabled={i === 0}
-                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                  className="grid h-4 w-4 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
                 >
                   <ChevronUp className="h-3 w-3" />
                 </button>
@@ -306,7 +306,7 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
                   type="button"
                   onClick={() => moveItem(i, "down")}
                   disabled={i === items.length - 1}
-                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                  className="grid h-4 w-4 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
                 >
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -314,9 +314,9 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
               <button
                 type="button"
                 onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
-                className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
+                className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -324,16 +324,16 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
             name="experience_period"
             defaultValue={exp.period}
             placeholder="时间段"
-            className="mt-3 min-h-10 w-full rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+            className="mt-2 h-9 w-full rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
           />
-          <div className="mt-3 space-y-2">
+          <div className="mt-2 space-y-1.5">
             {(exp.points.length > 0 ? exp.points : [""]).map((point, j) => (
-              <div key={j} className="flex items-start gap-2">
+              <div key={j} className="flex items-start gap-1.5">
                 <input
                   name={`experience_points_${i}`}
                   defaultValue={point}
                   placeholder={`第 ${j + 1} 条描述`}
-                  className="min-h-10 flex-1 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+                  className="h-9 flex-1 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
                 />
                 <button
                   type="button"
@@ -346,9 +346,9 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
                       ),
                     )
                   }
-                  className="grid h-10 w-10 place-items-center rounded-md text-white/30 hover:text-white/70"
+                  className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
               </div>
             ))}
@@ -362,9 +362,9 @@ function ExperienceList({ defaultItems }: { defaultItems: ResumeExperience[] }) 
                 ),
               )
             }
-            className="mt-2 inline-flex items-center gap-1 text-xs text-cyan hover:text-white"
+            className="mt-2 inline-flex items-center gap-1 text-[11px] text-cyan hover:text-white"
           >
-            <Plus className="h-3.5 w-3.5" /> 添加描述
+            <Plus className="h-3 w-3" /> 添加描述
           </button>
         </div>
       ))}
@@ -396,19 +396,19 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
   return (
     <ListSection title="校园经历" addLabel="添加经历">
       {items.map((item, i) => (
-        <div key={i} className="rounded-md border border-white/10 bg-black/20 p-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
+        <div key={i} className="rounded-md border border-white/10 bg-black/20 p-3">
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
             <input
               name="campus_company"
               defaultValue={item.company}
               placeholder="公司 / 组织"
-              className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <input
               name="campus_title"
               defaultValue={item.title}
               placeholder="职位"
-              className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <div className="flex items-start gap-1">
               <div className="flex flex-col gap-0.5">
@@ -416,7 +416,7 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
                   type="button"
                   onClick={() => moveItem(i, "up")}
                   disabled={i === 0}
-                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                  className="grid h-4 w-4 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
                 >
                   <ChevronUp className="h-3 w-3" />
                 </button>
@@ -424,7 +424,7 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
                   type="button"
                   onClick={() => moveItem(i, "down")}
                   disabled={i === items.length - 1}
-                  className="grid h-5 w-5 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
+                  className="grid h-4 w-4 place-items-center rounded text-white/30 hover:text-white/70 disabled:opacity-30"
                 >
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -432,9 +432,9 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
               <button
                 type="button"
                 onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
-                className="grid min-h-10 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
+                className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/40 hover:border-red-300/30 hover:text-red-300"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -442,14 +442,14 @@ function CampusList({ defaultItems }: { defaultItems: ResumeCampus[] }) {
             name="campus_period"
             defaultValue={item.period}
             placeholder="时间段"
-            className="mt-3 min-h-10 w-full rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+            className="mt-2 h-9 w-full rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
           />
           <TextArea
             name="campus_description"
             defaultValue={item.description}
             placeholder="经历描述"
             rows={3}
-            className="mt-3"
+            className="mt-2"
           />
         </div>
       ))}
@@ -473,44 +473,46 @@ function EducationSection({ education }: { education: ResumeEducation }) {
 
   return (
     <section>
-      <h3 className="text-sm font-medium text-white/80">教育背景</h3>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
+      <h3 className="text-xs font-medium text-white/80">教育背景</h3>
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
         <Field label="学校" name="education_school" defaultValue={education.school} />
         <Field label="学校英文" name="education_schoolEnglish" defaultValue={education.schoolEnglish} />
         <Field label="专业" name="education_major" defaultValue={education.major} />
         <Field label="专业英文" name="education_majorEnglish" defaultValue={education.majorEnglish} />
       </div>
-      <Field label="时间段" name="education_period" defaultValue={education.period} />
-      <TextArea label="备注" name="education_note" defaultValue={education.note} rows={2} />
+      <div className="mt-2">
+        <Field label="时间段" name="education_period" defaultValue={education.period} />
+      </div>
+      <TextArea label="备注" name="education_note" defaultValue={education.note} rows={2} className="mt-2" />
 
-      <div className="mt-5">
-        <h4 className="text-xs font-medium uppercase text-white/50">荣誉与成就</h4>
+      <div className="mt-4">
+        <h4 className="text-[11px] font-medium uppercase text-white/50">荣誉与成就</h4>
         {achievements.map((ach, i) => (
-          <div key={i} className="mt-2 grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
+          <div key={i} className="mt-1.5 grid gap-1.5 md:grid-cols-[1fr_1fr_1fr_auto]">
             <input
               name="achievement_label"
               defaultValue={ach.label}
               placeholder="标签"
-              className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <input
               name="achievement_value"
               defaultValue={ach.value}
               placeholder="内容"
-              className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <input
               name="achievement_detail"
               defaultValue={ach.detail ?? ""}
               placeholder="补充（可选）"
-              className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+              className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
             />
             <button
               type="button"
               onClick={() => setAchievements((prev) => prev.filter((_, idx) => idx !== i))}
-              className="grid h-10 w-10 place-items-center rounded-md text-white/30 hover:text-white/70"
+              className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </button>
           </div>
         ))}
@@ -521,29 +523,29 @@ function EducationSection({ education }: { education: ResumeEducation }) {
         />
       </div>
 
-      <div className="mt-5">
-        <h4 className="text-xs font-medium uppercase text-white/50">组织与实践</h4>
+      <div className="mt-4">
+        <h4 className="text-[11px] font-medium uppercase text-white/50">组织与实践</h4>
         {activities.map((act, i) => (
-          <div key={i} className="mt-2 rounded-md border border-white/10 bg-black/20 p-3">
-            <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+          <div key={i} className="mt-1.5 rounded-md border border-white/10 bg-black/20 p-3">
+            <div className="grid gap-1.5 md:grid-cols-[1fr_1fr_auto]">
               <input
                 name="activity_period"
                 defaultValue={act.period}
                 placeholder="时间段"
-                className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+                className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
               />
               <input
                 name="activity_title"
                 defaultValue={act.title}
                 placeholder="职务 / 活动"
-                className="min-h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-cyan"
+                className="h-9 rounded-md border border-white/10 bg-black/40 px-2.5 text-xs outline-none focus:border-cyan"
               />
               <button
                 type="button"
                 onClick={() => setActivities((prev) => prev.filter((_, idx) => idx !== i))}
-                className="grid h-10 w-10 place-items-center rounded-md text-white/30 hover:text-white/70"
+                className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3 w-3" />
               </button>
             </div>
             <TextArea
@@ -578,8 +580,8 @@ function ListSection({
 }) {
   return (
     <section>
-      <h3 className="text-sm font-medium text-white/80">{title}</h3>
-      <div className="mt-3 space-y-3">{children}</div>
+      <h3 className="text-xs font-medium text-white/80">{title}</h3>
+      <div className="mt-2 space-y-2">{children}</div>
     </section>
   );
 }
@@ -592,13 +594,13 @@ function ListRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <GripVertical className="h-4 w-4 text-white/20" />
+    <div className="flex items-center gap-1.5">
+      <GripVertical className="h-3.5 w-3.5 text-white/20" />
       {children}
       <button
         type="button"
         onClick={onRemove}
-        className="grid h-10 w-10 place-items-center rounded-md text-white/30 hover:text-white/70"
+        className="grid h-9 w-9 place-items-center rounded-md text-white/30 hover:text-white/70"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
@@ -619,9 +621,9 @@ function AddButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-md border border-cyan/30 px-3 py-2 text-xs text-cyan transition hover:bg-cyan/10 ${className}`}
+      className={`inline-flex h-9 items-center gap-1 rounded-md border border-cyan/30 px-3 text-xs text-cyan transition hover:bg-cyan/10 ${className}`}
     >
-      <Plus className="h-3.5 w-3.5" />
+      <Plus className="h-3 w-3" />
       {label}
     </button>
   );
@@ -639,13 +641,13 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid gap-1.5 text-xs">
       <span className="text-white/58">{label}</span>
       <input
         name={name}
         defaultValue={defaultValue}
         required={required}
-        className="min-h-10 rounded-md border border-white/10 bg-black/20 px-3 text-sm outline-none focus:border-cyan"
+        className="h-9 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
       />
     </label>
   );
@@ -667,14 +669,14 @@ function TextArea({
   className?: string;
 }) {
   return (
-    <label className={`grid gap-2 text-sm ${className}`}>
+    <label className={`grid gap-1.5 text-xs ${className}`}>
       {label ? <span className="text-white/58">{label}</span> : null}
       <textarea
         name={name}
         defaultValue={defaultValue}
         rows={rows}
         placeholder={placeholder}
-        className="min-h-[5rem] resize-y rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none focus:border-cyan"
+        className="min-h-[4rem] resize-y rounded-md border border-white/10 bg-black/20 px-2.5 py-2 text-xs outline-none focus:border-cyan"
       />
     </label>
   );
