@@ -66,7 +66,9 @@ function buildHeroTextOverrides(
   return {
     desktopTitle: pickText(texts, "hero.title.desktop"),
     mobileTitle: pickText(texts, "hero.title.mobile"),
+    kicker: pickText(texts, "hero.kicker"),
     experienceLabel: pickText(texts, "hero.experience"),
+    experienceYears: pickText(texts, "hero.experience.years"),
     tickerItems: pickTextArray(texts, "home.hero.ticker"),
   };
 }

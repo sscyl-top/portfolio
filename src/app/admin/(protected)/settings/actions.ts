@@ -164,6 +164,9 @@ export async function saveSiteSettings(formData: FormData) {
     cta_center_logo_offset_y: isNaN(cta_center_logo_offset_y) ? 0 : Math.min(500, Math.max(-500, cta_center_logo_offset_y)),
   };
 
+  // 将 CTA transform 值合并进 saveData，让 site_settings 列真正生效（不再只写 text_content）
+  Object.assign(saveData, ctaTransformValues);
+
   let saveError: string | null = null;
   // 重试次数减少到2次（原来8次导致30秒+），迁移并行化
   for (let attempt = 0; attempt < 3; attempt++) {

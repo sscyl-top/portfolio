@@ -81,6 +81,20 @@ export default async function WorksPage() {
     ctaCommercial: pickText(texts, "works.cta.commercial"),
   };
 
+  const featuredTextOverrides = {
+    featuredKicker: pickText(texts, "works.featuredKicker"),
+    featuredTitle: pickText(texts, "works.featuredTitle"),
+    featuredDescription: pickText(texts, "works.featuredDescription"),
+    swipeHint: pickText(texts, "works.swipeHint"),
+  };
+
+  const explorerTextOverrides = {
+    allWorksKicker: pickText(texts, "works.allWorksKicker"),
+    allWorksTitle: pickText(texts, "works.allWorksTitle"),
+    allWorksDescription: pickText(texts, "works.allWorksDescription"),
+    emptyCategory: pickText(texts, "works.emptyCategory"),
+  };
+
   return (
     <WorksPageShell>
       <SectionTitleObserver />

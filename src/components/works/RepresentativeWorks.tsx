@@ -8,7 +8,15 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { Work } from "@/data/portfolio";
 import { WorkMediaFrame } from "./WorkMediaFrame";
 
-type RepresentativeWorksProps = { works: Work[] };
+type RepresentativeWorksProps = {
+  works: Work[];
+  textOverrides?: {
+    featuredKicker?: string;
+    featuredTitle?: string;
+    featuredDescription?: string;
+    swipeHint?: string;
+  };
+};
 
 type RepresentativeCardStyle = CSSProperties & {
   "--slot-x": string; "--slot-y": string; "--slot-r": string;
@@ -110,7 +118,7 @@ const RepresentativeCard = memo(function RepresentativeCard({
   );
 });
 
-export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
+export function RepresentativeWorks({ works, textOverrides }: RepresentativeWorksProps) {
   const displayWorks = works.slice(0, CARD_COUNT);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -207,10 +215,10 @@ export function RepresentativeWorks({ works }: RepresentativeWorksProps) {
   return (
     <section id="section-featured" className="relative overflow-visible px-5 pb-20 pt-28 md:px-8 md:pt-48">
       <div className="relative mx-auto max-w-7xl text-center">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-copper" data-text-key="works.featuredKicker">Featured Works</p>
-        <h1 className="mt-3 text-5xl font-semibold text-ink md:text-7xl" data-text-key="works.featuredTitle">代表作</h1>
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-copper" data-text-key="works.featuredKicker">{textOverrides?.featuredKicker || "Featured Works"}</p>
+        <h1 className="mt-3 text-5xl font-semibold text-ink md:text-7xl" data-text-key="works.featuredTitle">{textOverrides?.featuredTitle || "代表作"}</h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-ink-2 md:text-lg" data-text-key="works.featuredDescription">
-          从品牌全案、视觉系统到 AIGC 提案能力，先用 7 个关键项目建立第一印象。
+          {textOverrides?.featuredDescription || "从品牌全案、视觉系统到 AIGC 提案能力，先用 7 个关键项目建立第一印象。"}
         </p>
 
         {/* DESKTOP: fan */}

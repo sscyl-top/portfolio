@@ -24,6 +24,7 @@ export type HeroTextOverrides = {
   mobileTitle?: string;
   kicker?: string;
   experienceLabel?: string;
+  experienceYears?: string;
   tickerItems?: string[];
   mainCta?: string;
   secondaryCta?: string;
@@ -403,7 +404,7 @@ function HeroSideCards({
         className="absolute -right-[2.5%] top-[29%] hidden w-44 rounded-lg bg-white/[0.08] p-5 backdrop-blur xl:block 2xl:-right-[1.5%]"
       >
         <Sparkles className="h-6 w-6 text-copper" aria-hidden="true" />
-        <p className="mt-6 text-4xl font-semibold text-white" data-text-key="hero.experience.years">5年+</p>
+        <p className="mt-6 text-4xl font-semibold text-white" data-text-key="hero.experience.years">{textOverrides.experienceYears || "5年+"}</p>
         <p className="mt-2 text-xs leading-5 text-white/50" data-text-key="hero.experience.label">
           {textOverrides.experienceLabel || "品牌视觉与商业设计实践"}
         </p>

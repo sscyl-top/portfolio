@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/admin-session";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 const heroVideoSchema = z.object({
   mainVideoMediaId: z.string().uuid().nullable(),
@@ -15,16 +16,13 @@ const heroVideoSchema = z.object({
 
 type HeroVideoSettings = z.infer<typeof heroVideoSchema>;
 
-type PageModule = {
-  id: string;
-  type: string;
-  sort_order: number;
-  is_visible: boolean;
-  settings: Record<string, unknown>;
+// site_settings 表中 hero 视频列名与表单字段的映射
+const HERO_VIDEO_COLUMNS: Record<keyof HeroVideoSettings, string> = {
+  mainVideoMediaId: "hero_main_video_media_id",
+  sideCard1MediaId: "hero_side1_video_media_id",
+  sideCard2MediaId: "hero_side2_video_media_id",
+  sideCard3MediaId: "hero_side3_video_media_id",
 };
-
-const HERO_MODULE_ID = "hero-videos";
-const HERO_MODULE_TYPE = "hero_videos";
 
 export async function saveHeroVideos(formData: FormData) {
   const toUuid = (value: FormDataEntryValue | null): string | null => {
@@ -45,38 +43,46 @@ export async function saveHeroVideos(formData: FormData) {
   }
 
   const { client } = await requireAdmin();
+  const serviceClient = createSupabaseServiceClient();
 
-  const { data: existing } = await client
-    .from("pages")
-    .select("slug,title,modules,seo_title,seo_description")
-    .eq("slug", "home")
-    .single();
+  // 写入 site_settings 表（前台读取的数据源）
+  const siteSettingsUpdate: Record<string, string | null> = {};
+  for (const [formKey, column] of Object.entries(HERO_VIDEO_COLUMNS)) {
+    siteSettingsUpdate[column] = parsed.data[formKey as keyof HeroVideoSettings];
+  }
 
-  const existingModules = (existing?.modules as PageModule[] | null) ?? [];
-  const filteredModules = existingModules.filter(
-    (m) => m.id !== HERO_MODULE_ID,
-  );
+  const { error: settingsError } = await client
+    .from("site_settings")
+    .upsert(
+      { id: true, ...siteSettingsUpdate },
+      { onConflict: "id" },
+    );
 
-  const heroModule: PageModule = {
-    id: HERO_MODULE_ID,
-    type: HERO_MODULE_TYPE,
+  if (settingsError) {
+    console.error("[Hero] site_settings save failed:", settingsError.message);
+    // 不 return，继续写 text_content 后备
+  }
+
+  // 同时写入 text_content 作为后备存储（与 settings/actions.ts 一致）
+  const now = new Date().toISOString();
+  const textRows = Object.entries(HERO_VIDEO_COLUMNS).map(([, column]) => ({
+    key: column,
+    content: siteSettingsUpdate[column] ?? "",
+    page: "site_settings",
+    section: "settings",
     sort_order: 0,
-    is_visible: true,
-    settings: parsed.data,
-  };
+    is_active: true,
+    deleted_at: null,
+    updated_at: now,
+  }));
 
-  const { error } = await client.from("pages").upsert(
-    {
-      slug: "home",
-      title: existing?.title ?? "首页",
-      seo_title: existing?.seo_title ?? "首页",
-      seo_description: existing?.seo_description ?? "",
-      modules: [heroModule, ...filteredModules],
-    },
-    { onConflict: "slug" },
-  );
+  const { error: textError } = await serviceClient
+    .from("text_content")
+    .upsert(textRows, { onConflict: "key" });
 
-  if (error) throw new Error(error.message);
+  if (textError) {
+    console.error("[Hero] text_content save failed:", textError.message);
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/hero");
@@ -88,25 +94,42 @@ export async function getHeroVideoConfig(): Promise<HeroVideoSettings | null> {
     const { createSupabaseServerClient } = await import("@/lib/supabase/server");
     const supabase = await createSupabaseServerClient();
 
-    const { data } = await supabase
-      .from("pages")
-      .select("modules")
-      .eq("slug", "home")
+    // 优先从 site_settings 读取（前台渲染的数据源）
+    const { data: settingsData } = await supabase
+      .from("site_settings")
+      .select("hero_main_video_media_id,hero_side1_video_media_id,hero_side2_video_media_id,hero_side3_video_media_id")
       .single();
 
-    if (!data?.modules) return null;
+    if (settingsData) {
+      return {
+        mainVideoMediaId: settingsData.hero_main_video_media_id ?? null,
+        sideCard1MediaId: settingsData.hero_side1_video_media_id ?? null,
+        sideCard2MediaId: settingsData.hero_side2_video_media_id ?? null,
+        sideCard3MediaId: settingsData.hero_side3_video_media_id ?? null,
+      };
+    }
 
-    const modules = data.modules as PageModule[];
-    const heroModule = modules.find((m) => m.id === HERO_MODULE_ID);
+    // 后备：从 text_content 读取
+    const { data: textData } = await supabase
+      .from("text_content")
+      .select("key,content")
+      .in("key", Object.values(HERO_VIDEO_COLUMNS))
+      .eq("is_active", true)
+      .is("deleted_at", null);
 
-    if (!heroModule) return null;
+    if (!textData || textData.length === 0) return null;
 
-    const settings = heroModule.settings as Partial<HeroVideoSettings>;
+    const textMap = new Map(textData.map((item) => [item.key, item.content]));
+    const getValue = (column: string): string | null => {
+      const val = (textMap.get(column) ?? "").trim();
+      return val || null;
+    };
+
     return {
-      mainVideoMediaId: settings.mainVideoMediaId ?? null,
-      sideCard1MediaId: settings.sideCard1MediaId ?? null,
-      sideCard2MediaId: settings.sideCard2MediaId ?? null,
-      sideCard3MediaId: settings.sideCard3MediaId ?? null,
+      mainVideoMediaId: getValue(HERO_VIDEO_COLUMNS.mainVideoMediaId),
+      sideCard1MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard1MediaId),
+      sideCard2MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard2MediaId),
+      sideCard3MediaId: getValue(HERO_VIDEO_COLUMNS.sideCard3MediaId),
     };
   } catch {
     return null;

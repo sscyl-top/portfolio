@@ -11,6 +11,12 @@ import { WorkMediaFrame } from "./WorkMediaFrame";
 type WorksExplorerProps = {
   works: Work[];
   categoryNames?: string[];
+  textOverrides?: {
+    allWorksKicker?: string;
+    allWorksTitle?: string;
+    allWorksDescription?: string;
+    emptyCategory?: string;
+  };
 };
 
 type DisplayWorkItem =
@@ -32,6 +38,7 @@ const placeholderTones: Work["coverTone"][] = ["cyan", "blue", "graphite", "warm
 export function WorksExplorer({
   works,
   categoryNames = categories,
+  textOverrides,
 }: WorksExplorerProps) {
   const [activeCategory, setActiveCategory] = useState(categoryNames[0] ?? "");
 
@@ -188,7 +195,7 @@ export function WorksExplorer({
           </div>
         ) : (
           <div className="rounded-lg border border-edge-2 bg-surface-2 p-6 text-center text-sm text-ink-2 md:p-10" data-text-key="works.emptyCategory">
-            这个分类还没有发布作品，后续可从后台添加。
+            {textOverrides?.emptyCategory || "这个分类还没有发布作品，后续可从后台添加。"}
           </div>
         )}
       </div>
