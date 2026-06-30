@@ -93,7 +93,7 @@ export default async function AdminWorksPage({
     supabase
       .from("work_categories")
       .select("work_id,categories(name)")
-      .eq("categories.deleted_at", null),
+      .is("categories.deleted_at", null),
   ]);
   let works = (data ?? []) as AdminWorkRow[];
   const categories = (categoriesData ?? []) as TaxonomyRow[];
@@ -122,8 +122,9 @@ export default async function AdminWorksPage({
   const coverMediaMap = new Map(coverMedia.map((m) => [m.id, m]));
 
   const getCoverUrl = (work: AdminWorkRow) => {
-    if (!work.cover_media_id) return null;
-    const media = coverMediaMap.get(work.cover_media_id);
+    const coverId = work.cover_media_id || work.representative_cover_media_id;
+    if (!coverId) return null;
+    const media = coverMediaMap.get(coverId);
     if (!media) return null;
     return { url: buildPublicMediaUrl(media.storage_key), mime_type: media.mime_type };
   };
@@ -249,7 +250,7 @@ export default async function AdminWorksPage({
           {section === "all" ? (
             <CategoryPills
               categories={categories}
-              works={works.filter((w) => !w.is_representative)}
+              works={works}
               currentCategory={categoryFilter}
               currentStatus={status}
               currentQuery={query}
@@ -304,7 +305,7 @@ function FilterBar({
   ];
 
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <form className="contents" action="">
         <input type="hidden" name="section" value={section} />
         {currentCategory ? <input type="hidden" name="category" value={currentCategory} /> : null}

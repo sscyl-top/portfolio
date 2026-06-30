@@ -454,7 +454,7 @@ function SettingsPanel({ work, mediaNoGap }: { work: WorkEditorRow; mediaNoGap: 
           <StatusSelect name="status" defaultValue={work.status as "draft" | "published" | "private"} />
         </label>
         <CheckField label="代表作" name="is_representative" defaultChecked={work.is_representative} compact />
-        <CheckField label="复合设计" name="is_composite" defaultChecked={work.is_composite} compact />
+        <CheckField label="早期作品" name="is_composite" defaultChecked={work.is_composite} compact />
         <CheckField label="图片无间距" name="media_no_gap" defaultChecked={mediaNoGap} compact />
         <Field label="SEO 标题" name="seo_title" defaultValue={work.seo_title} compact />
       </div>
