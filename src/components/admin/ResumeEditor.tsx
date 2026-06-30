@@ -97,7 +97,7 @@ function BasicFields({ resume }: { resume: ResumeData }) {
         <Field label="邮箱" name="email" defaultValue={resume.contact.email} required />
       </div>
       <Field label="电话" name="phone" defaultValue={resume.contact.phone} />
-      <Field label="微信号" name="wechat_id" defaultValue="" />
+      <Field label="微信号" name="wechat_id" defaultValue={resume.contact.wechat_id} />
       <div className="md:col-span-4">
         <TextArea
           label="定位描述"

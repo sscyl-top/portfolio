@@ -7,10 +7,9 @@ type ContactFinaleProps = {
   email: string;
   phone: string;
   location: string;
+  wechatId: string;
   marqueeItems?: string[];
 };
-
-const wechatId = "CTT522423";
 
 const defaultMarqueeItems = ["聊聊设计", "·", "stroke:BRAND & AI", "·", "stroke:LET'S TALK", "·"];
 
@@ -36,7 +35,7 @@ function renderMarqueeItem(item: string, index: number) {
   );
 }
 
-export function ContactFinale({ email, phone, location, marqueeItems }: ContactFinaleProps) {
+export function ContactFinale({ email, phone, location, wechatId, marqueeItems }: ContactFinaleProps) {
   const items = marqueeItems && marqueeItems.length > 0 ? marqueeItems : defaultMarqueeItems;
 
   return (

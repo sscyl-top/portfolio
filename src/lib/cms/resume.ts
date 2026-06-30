@@ -52,6 +52,7 @@ export type ResumeDownloads = {
 export type ResumeContact = {
   email: string;
   phone: string;
+  wechat_id: string;
 };
 
 export type ResumeData = {
@@ -139,6 +140,7 @@ export async function getResumeData(): Promise<ResumeData> {
       contact: {
         email: row.email || defaultResumeData.contact.email,
         phone: row.phone || defaultResumeData.contact.phone,
+        wechat_id: row.wechat_id || defaultResumeData.contact.wechat_id,
       },
       strengths:
         Array.isArray(row.strengths) &&

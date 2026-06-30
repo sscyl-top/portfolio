@@ -344,6 +344,7 @@ export default async function ResumePage() {
         email={resume.contact.email}
         phone={resume.contact.phone}
         location={resume.location}
+        wechatId={resume.contact.wechat_id}
         marqueeItems={marqueeItems}
       />
     </main>
