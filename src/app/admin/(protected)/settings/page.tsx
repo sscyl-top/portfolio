@@ -1,5 +1,3 @@
-import QRCode from "qrcode";
-
 import { siteSettings } from "@/data/portfolio";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -7,6 +5,8 @@ import { buildPublicMediaUrl } from "@/lib/cms/media-url";
 import { SettingsMediaField } from "@/components/admin/SettingsMediaField";
 import { SettingsVideoField } from "@/components/admin/SettingsVideoField";
 import { TickerLogosField } from "@/components/admin/TickerLogosField";
+import { ShareCardPreview } from "@/components/admin/ShareCardPreview";
+import { QrCodePreview } from "@/components/admin/QrCodePreview";
 import { SaveButton } from "@/components/admin/SaveButton";
 import { saveSiteSettings } from "./actions";
 
@@ -259,14 +259,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   const shareImageUrl = shareAsset
     ? buildPublicMediaUrl(shareAsset.storage_key)
     : undefined;
-  const qrDataUrl = await QRCode.toDataURL(BASE_URL, {
-    width: 128,
-    margin: 2,
-    color: {
-      dark: "#ffffff",
-      light: "#050505",
-    },
-  });
 
   return (
     <div>
@@ -477,37 +469,25 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
         <section className="rounded-lg border border-white/10 bg-black/20 p-4">
           <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider">分享卡片预览</h3>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-            {shareImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={shareImageUrl}
-                alt="分享缩略图"
-                className="h-20 w-36 rounded-md border border-white/10 object-cover"
-              />
-            ) : (
-              <span className="grid h-20 w-36 place-items-center rounded-md border border-dashed border-white/10 text-xs text-white/26">
-                未选择分享图
-              </span>
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white">
-                {settings.name}
-              </p>
-              <p className="mt-1 line-clamp-2 text-xs text-white/58">
-                {settings.seo_description || settings.seo_title}
-              </p>
-              <p className="mt-1.5 break-all font-mono text-[10px] text-white/34">
-                {shareImageUrl ?? "无分享图 URL"}
-              </p>
-            </div>
-            <div className="shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrDataUrl}
-                alt="站点二维码"
-                className="h-24 w-24 rounded-md border border-white/10"
-              />
+          <p className="mt-1 text-[11px] text-white/40">
+            模拟各社交平台分享后的卡片样式，实际效果以平台渲染为准。
+          </p>
+          <div className="mt-3">
+            <ShareCardPreview
+              title={settings.seo_title || settings.name}
+              description={settings.seo_description}
+              imageUrl={shareImageUrl}
+              url={BASE_URL}
+              siteName={settings.name}
+            />
+          </div>
+          <div className="mt-5 border-t border-white/8 pt-4">
+            <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider">二维码生成器</h4>
+            <p className="mt-1 text-[11px] text-white/40">
+              可自定义链接（站点首页、作品页、简历页等），支持深/浅色背景，可下载 PNG。
+            </p>
+            <div className="mt-3">
+              <QrCodePreview baseUrl={BASE_URL} siteName={settings.name} />
             </div>
           </div>
         </section>

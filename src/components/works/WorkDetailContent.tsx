@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { Text } from "@/components/cms/Text";
 import { WorkReactions } from "@/components/works/WorkReactions";
 import { WorkContentBlocks } from "@/components/works/WorkContentBlocks";
+import { ShareButtons } from "@/components/works/ShareButtons";
 import type { Work } from "@/data/portfolio";
 
 type WorkDetailContentProps = {
@@ -71,6 +72,16 @@ export function WorkDetailContent({ work, relatedWorks, isModal = false }: WorkD
 
       <section className={reactionsClass}>
         <WorkReactions workSlug={work.slug} />
+        <div className="mt-6 border-t border-edge-2 pt-6">
+          <p className="mb-3 font-mono text-xs uppercase tracking-[0.22em] text-ink-3">
+            <Text k="work.detail.shareTitle" fallback="分享此作品" />
+          </p>
+          <ShareButtons
+            title={work.title}
+            description={work.summary}
+            imageUrl={work.shareMedia?.url ?? work.coverMedia?.url}
+          />
+        </div>
       </section>
 
       {relatedWorks.length > 0 ? (
