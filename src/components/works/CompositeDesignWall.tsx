@@ -355,31 +355,31 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-4 md:px-0 md:pb-2">
-            <div className="flex w-auto max-w-full flex-row items-center justify-center gap-1.5 md:w-full md:max-w-2xl md:gap-6">
+          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-4 md:pb-2">
+            <div className="flex w-full max-w-2xl flex-row items-center justify-center gap-2 px-4 md:gap-6 md:px-8">
               <Link
                 href="/resume"
-                className="inline-flex min-h-11 flex-none items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-edge hover:text-ink md:min-h-12 md:gap-1.5 md:px-6 md:text-sm md:w-48"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-edge hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaResume"
               >
                 <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="whitespace-nowrap">{textOverrides.ctaResume || "查看简历"}</span>
+                <span className="truncate">{textOverrides.ctaResume || "查看简历"}</span>
               </Link>
               <Link
                 href="/resume#hiring-contact"
-                className="group inline-flex min-h-11 flex-none items-center justify-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-black shadow-sm transition hover:bg-gray-100 md:min-h-12 md:gap-1.5 md:px-6 md:text-sm md:w-52"
+                className="group inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-black shadow-sm transition hover:bg-gray-100 md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
                 data-text-key="works.ctaHiring"
               >
                 <BriefcaseBusiness className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="whitespace-nowrap">{textOverrides.ctaHiring || "聘用联系"}</span>
+                <span className="truncate">{textOverrides.ctaHiring || "聘用联系"}</span>
               </Link>
               <Link
                 href="/resume#commercial-contact"
-                className="inline-flex min-h-11 flex-none items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink md:min-h-12 md:gap-1.5 md:px-6 md:text-sm md:w-48"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaCommercial"
               >
                 <MessagesSquare className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="whitespace-nowrap">{textOverrides.ctaCommercial || "商业咨询"}</span>
+                <span className="truncate">{textOverrides.ctaCommercial || "商业咨询"}</span>
               </Link>
             </div>
           </div>
