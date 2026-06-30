@@ -52,6 +52,7 @@ export default async function AdminWorksPage({
     section?: string;
     status?: string;
     q?: string;
+    category?: string | string[];
   }>;
 }) {
   const { seeded, seedError, section: rawSection = "all", status: rawStatus = "all", q = "", category = "" } = await searchParams;
@@ -78,7 +79,7 @@ export default async function AdminWorksPage({
     supabase
       .from("works")
       .select(
-        "id,title,slug,status,year,sort_order,is_representative,is_composite,representative_order,composite_order,updated_at,cover_media_id",
+        "id,title,slug,status,year,sort_order,is_representative,is_composite,representative_order,composite_order,updated_at,cover_media_id,representative_cover_media_id",
       )
       .is("deleted_at", null)
       .order("sort_order", { ascending: false })
@@ -138,11 +139,31 @@ export default async function AdminWorksPage({
     if (section === "representative" && !work.is_representative) return false;
     if (section === "composite" && !work.is_composite) return false;
     if (status !== "all" && work.status !== status) return false;
+    if (categoryFilter && section === "all") {
+      if (categoryFilter === "__uncategorized__") {
+        if (work.category_names.length > 0) return false;
+      } else if (!work.category_names.includes(categoryFilter)) return false;
+    }
     if (query) {
       const haystack = `${work.title} ${work.slug} ${work.year}`.toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
+  });
+
+  const filteredWorksForBatch = filteredWorks.map((w) => {
+    const cover = getCoverUrl(w);
+    return {
+      id: w.id,
+      title: w.title,
+      slug: w.slug,
+      status: w.status,
+      year: w.year,
+      is_representative: w.is_representative,
+      is_composite: w.is_composite,
+      cover_url: cover?.url ?? null,
+      cover_mime_type: cover?.mime_type ?? null,
+    };
   });
 
   const representativeSlots: { slot: number; work: AdminWorkRow | null }[] = Array.from({ length: 7 }, (_, i) => {
@@ -225,8 +246,18 @@ export default async function AdminWorksPage({
             </form>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <FilterBar currentStatus={status} query={query} section={section} />
+          {section === "all" ? (
+            <CategoryPills
+              categories={categories}
+              works={works.filter((w) => !w.is_representative)}
+              currentCategory={categoryFilter}
+              currentStatus={status}
+              currentQuery={query}
+            />
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <FilterBar currentStatus={status} query={query} section={section} currentCategory={categoryFilter} />
             <form action={publishScheduledWorks}>
               <button
                 type="submit"
@@ -242,7 +273,11 @@ export default async function AdminWorksPage({
               作品读取失败：{error.message}
             </p>
           ) : (
-            <WorkBatchManager works={filteredWorks} />
+            <WorkBatchManager
+              works={filteredWorksForBatch}
+              viewMode="cards"
+              dense={section === "composite"}
+            />
           )}
         </>
       )}
@@ -254,10 +289,12 @@ function FilterBar({
   currentStatus,
   query,
   section,
+  currentCategory,
 }: {
   currentStatus: StatusFilter;
   query: string;
   section: Section;
+  currentCategory?: string;
 }) {
   const statusOptions: { value: StatusFilter; label: string }[] = [
     { value: "all", label: "全部状态" },
@@ -270,6 +307,7 @@ function FilterBar({
     <div className="mt-6 flex flex-wrap items-center gap-2">
       <form className="contents" action="">
         <input type="hidden" name="section" value={section} />
+        {currentCategory ? <input type="hidden" name="category" value={currentCategory} /> : null}
         <select
           name="status"
           defaultValue={currentStatus}
@@ -344,6 +382,91 @@ function SectionTabs({
             ? `共 ${worksCount} 个作品`
             : `显示 ${filteredCount} 个作品（共 ${worksCount} 个）`}
       </p>
+    </div>
+  );
+}
+
+function CategoryPills({
+  categories,
+  works,
+  currentCategory,
+  currentStatus,
+  currentQuery,
+}: {
+  categories: TaxonomyRow[];
+  works: AdminWorkRow[];
+  currentCategory: string;
+  currentStatus: StatusFilter;
+  currentQuery: string;
+}) {
+  const categoryWorkCounts = new Map<string, number>();
+  for (const w of works) {
+    for (const cat of w.category_names) {
+      categoryWorkCounts.set(cat, (categoryWorkCounts.get(cat) ?? 0) + 1);
+    }
+  }
+  const uncategorizedCount = works.filter((w) => w.category_names.length === 0).length;
+
+  const buildHref = (cat: string) => {
+    const params = new URLSearchParams();
+    params.set("section", "all");
+    if (cat) params.set("category", cat);
+    if (currentStatus !== "all") params.set("status", currentStatus);
+    if (currentQuery) params.set("q", currentQuery);
+    return `/admin/works?${params.toString()}`;
+  };
+
+  return (
+    <div className="mt-5 flex flex-wrap gap-2">
+      <Link
+        href={buildHref("")}
+        className={`inline-flex h-8 items-center rounded-full px-3.5 text-xs transition ${
+          !currentCategory
+            ? "bg-cyan text-black"
+            : "border border-white/12 text-white/60 hover:border-white/30 hover:text-white/90"
+        }`}
+      >
+        全部
+        <span className={`ml-1.5 ${!currentCategory ? "text-black/60" : "text-white/30"}`}>
+          {works.length}
+        </span>
+      </Link>
+      {categories.map((cat) => {
+        const count = categoryWorkCounts.get(cat.name) ?? 0;
+        if (count === 0) return null;
+        const isActive = currentCategory === cat.name;
+        return (
+          <Link
+            key={cat.id}
+            href={buildHref(cat.name)}
+            className={`inline-flex h-8 items-center rounded-full px-3.5 text-xs transition ${
+              isActive
+                ? "bg-cyan text-black"
+                : "border border-white/12 text-white/60 hover:border-white/30 hover:text-white/90"
+            }`}
+          >
+            {cat.name}
+            <span className={`ml-1.5 ${isActive ? "text-black/60" : "text-white/30"}`}>
+              {count}
+            </span>
+          </Link>
+        );
+      })}
+      {uncategorizedCount > 0 ? (
+        <Link
+          href={buildHref("__uncategorized__")}
+          className={`inline-flex h-8 items-center rounded-full px-3.5 text-xs transition ${
+            currentCategory === "__uncategorized__"
+              ? "bg-cyan text-black"
+              : "border border-white/12 text-white/60 hover:border-white/30 hover:text-white/90"
+          }`}
+        >
+          未分类
+          <span className={`ml-1.5 ${currentCategory === "__uncategorized__" ? "text-black/60" : "text-white/30"}`}>
+            {uncategorizedCount}
+          </span>
+        </Link>
+      ) : null}
     </div>
   );
 }
