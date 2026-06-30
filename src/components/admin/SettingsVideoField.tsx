@@ -21,6 +21,7 @@ type Props = {
   defaultValue: string;
   hint?: string;
   aspectRatio?: "video" | "square" | "wide";
+  compact?: boolean;
 };
 
 const ACCEPTED_VIDEO_TYPES = "video/mp4,video/webm,video/ogg,video/quicktime";
@@ -38,6 +39,7 @@ export function SettingsVideoField({
   defaultValue,
   hint,
   aspectRatio = "video",
+  compact = false,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
@@ -46,11 +48,18 @@ export function SettingsVideoField({
   const [uploadedPreview, setUploadedPreview] = useState<{ id: string; url: string; original_name: string; mime_type: string } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   const selected = assets.find((a) => a.id === value);
   const previewUrl = uploadedPreview ? uploadedPreview.url : (selected ? buildPublicMediaUrl(selected.storage_key) : undefined);
   const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
   const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
+
+  const ctrlH = compact ? "h-8" : "h-9";
+
+  const triggerFileSelect = useCallback(() => {
+    hiddenInputRef.current?.click();
+  }, []);
 
   const handleUpload = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
@@ -81,23 +90,6 @@ export function SettingsVideoField({
       setIsUploading(false);
     }
   }, []);
-
-  const triggerFileSelect = useCallback(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ACCEPTED_VIDEO_TYPES;
-    input.style.position = "fixed";
-    input.style.top = "-9999px";
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        void handleUpload(target.files);
-      }
-      input.remove();
-    };
-    document.body.appendChild(input);
-    input.click();
-  }, [handleUpload]);
 
   useEffect(() => {
     const el = dropZoneRef.current;
@@ -166,9 +158,11 @@ export function SettingsVideoField({
     }
   };
 
+  const videoW = compact ? "w-28" : "w-32";
+
   return (
-    <div className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
+    <div className="grid gap-1.5">
+      <span className="text-xs font-medium text-white/58">{label}</span>
 
       <div
         ref={dropZoneRef}
@@ -183,11 +177,11 @@ export function SettingsVideoField({
           <button
             type="button"
             onClick={triggerFileSelect}
-            className="block w-full cursor-pointer p-3 text-left transition hover:bg-white/[0.03]"
+            className="block w-full cursor-pointer p-2.5 text-left transition hover:bg-white/[0.03]"
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2.5">
               <div
-                className={`relative shrink-0 w-40 ${ASPECT_CLASS[aspectRatio]} overflow-hidden rounded border border-white/20 bg-black/30`}
+                className={`relative shrink-0 ${videoW} ${ASPECT_CLASS[aspectRatio]} overflow-hidden rounded border border-white/20 bg-black/30`}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
@@ -201,14 +195,14 @@ export function SettingsVideoField({
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 grid place-items-center bg-black/20 transition pointer-events-none">
-                  <Play className="h-6 w-6 text-white/70 fill-white/40" />
+                  <Play className="h-5 w-5 text-white/70 fill-white/40" />
                 </div>
               </div>
-              <div className="flex-1 min-w-0 pt-1">
+              <div className="flex-1 min-w-0 pt-0.5">
                 <p className="truncate text-xs text-white/60">{previewName}</p>
                 <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
-                <p className="mt-2 text-[10px] text-white/25">
-                  鼠标悬停预览播放 · 点击替换视频
+                <p className="mt-1 text-[10px] text-white/25">
+                  悬停预览 · 点击替换
                 </p>
               </div>
             </div>
@@ -217,21 +211,21 @@ export function SettingsVideoField({
           <button
             type="button"
             onClick={triggerFileSelect}
-            className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-6 transition hover:bg-white/[0.06]"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 p-3 transition hover:bg-white/[0.06]"
           >
             {isUploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-cyan" />
+              <Loader2 className="h-10 w-10 animate-spin text-cyan" />
             ) : (
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10">
-                <Film className="h-6 w-6 text-white/40" />
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
+                <Film className="h-5 w-5 text-white/40" />
               </div>
             )}
-            <div className="text-center">
+            <div className="text-left">
               <p className="text-xs text-white/50">
-                {isUploading ? "上传中..." : "点击或拖拽视频到此处上传"}
+                {isUploading ? "上传中..." : "点击或拖拽上传视频"}
               </p>
               <p className="mt-0.5 text-[10px] text-white/25">
-                支持 MP4 / WEBM / OGG / MOV，最大 10GB
+                MP4 / WEBM / OGG / MOV
               </p>
             </div>
           </button>
@@ -239,14 +233,24 @@ export function SettingsVideoField({
       </div>
 
       <input type="hidden" name={name} value={value} />
+      <input
+        ref={hiddenInputRef}
+        type="file"
+        accept={ACCEPTED_VIDEO_TYPES}
+        className="sr-only"
+        onChange={(e) => {
+          void handleUpload(e.target.files);
+          e.target.value = "";
+        }}
+      />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <select
           value={value}
           onChange={(e) => { setValue(e.target.value); setUploadedPreview(null); }}
-          className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+          className={`${ctrlH} min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2 text-xs outline-none focus:border-cyan`}
         >
-          <option value="">从媒体库选择已上传的视频</option>
+          <option value="">从媒体库选择</option>
           {assets
             .filter((a) => a.mime_type.startsWith("video/"))
             .map((asset) => (
@@ -260,9 +264,9 @@ export function SettingsVideoField({
           type="button"
           onClick={triggerFileSelect}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
+          className={`inline-flex ${ctrlH} shrink-0 items-center gap-1 rounded-md border border-white/10 bg-black/20 px-2 text-[11px] text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40`}
         >
-          {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+          {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
           上传
         </button>
 
@@ -270,14 +274,14 @@ export function SettingsVideoField({
           <button
             type="button"
             onClick={() => { setValue(""); setUploadedPreview(null); }}
-            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
+            className={`${ctrlH} shrink-0 rounded-md border border-white/10 bg-black/20 px-2 text-white/40 transition hover:border-red-300/30 hover:text-red-300`}
           >
             <X className="h-3.5 w-3.5" />
           </button>
         ) : null}
       </div>
 
-      {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
+      {hint ? <p className="text-[10px] leading-tight text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
     </div>
   );

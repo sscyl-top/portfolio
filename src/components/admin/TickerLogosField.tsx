@@ -20,6 +20,7 @@ type Props = {
   assets: MediaAsset[];
   defaultValue: string;
   hint?: string;
+  compact?: boolean;
 };
 
 const ACCEPTED_IMAGE_TYPES = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml";
@@ -49,6 +50,7 @@ export function TickerLogosField({
   assets,
   defaultValue,
   hint,
+  compact = false,
 }: Props) {
   const [ids, setIds] = useState<string[]>(() => parseIds(defaultValue));
   const [uploadedLogos, setUploadedLogos] = useState<Record<string, UploadedLogo>>({});
@@ -57,6 +59,10 @@ export function TickerLogosField({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  const thumbSize = compact ? "h-16 w-20" : "h-20 w-24";
+  const p = compact ? "p-3" : "p-4";
+  const emptyP = compact ? "p-5" : "p-8";
 
   const selectedAssets = useMemo(() => {
     return ids
@@ -167,8 +173,8 @@ export function TickerLogosField({
   }, [handleUpload]);
 
   return (
-    <div className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
+    <div className="grid gap-1.5">
+      <span className="text-xs font-medium text-white/58">{label}</span>
 
       <div
         ref={dropZoneRef}
@@ -181,14 +187,15 @@ export function TickerLogosField({
         onClick={triggerFileSelect}
       >
         {selectedAssets.length > 0 ? (
-          <div className="p-4">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className={p}>
+            <div className="flex flex-wrap items-center gap-2">
               {selectedAssets.map((item) => (
                 <div
                   key={item.id}
-                  className="group relative flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:10px_10px]"
+                  className={`group relative flex ${thumbSize} shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:8px_8px]`}
                   title={item.name}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.url}
                     alt={item.name}
@@ -204,32 +211,32 @@ export function TickerLogosField({
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex items-center justify-center gap-2 text-center">
+            <div className="mt-2 flex items-center justify-center gap-1.5 text-center">
               {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-cyan" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan" />
               ) : (
-                <UploadCloud className="h-4 w-4 text-white/30" />
+                <UploadCloud className="h-3.5 w-3.5 text-white/30" />
               )}
-              <span className="text-[11px] text-white/30">
-                {isUploading ? "上传中..." : "点击任意位置或拖拽图片到此处继续添加"}
+              <span className="text-[10px] text-white/30">
+                {isUploading ? "上传中..." : "点击或拖拽继续添加"}
               </span>
             </div>
           </div>
         ) : (
-          <div className="flex w-full flex-col items-center justify-center gap-2 p-8">
+          <div className={`flex w-full flex-col items-center justify-center gap-2 ${emptyP}`}>
             {isUploading ? (
               <Loader2 className="h-8 w-8 animate-spin text-cyan" />
             ) : (
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10">
-                <UploadCloud className="h-6 w-6 text-white/40" />
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
+                <UploadCloud className="h-5 w-5 text-white/40" />
               </div>
             )}
             <div className="text-center">
-              <p className="text-sm text-white/50">
-                {isUploading ? "上传中..." : "点击或拖拽图片到此处上传"}
+              <p className="text-xs text-white/50">
+                {isUploading ? "上传中..." : "点击或拖拽上传图片"}
               </p>
-              <p className="mt-1 text-xs text-white/25">
-                支持 PNG / JPG / GIF / WEBP / SVG，建议 PNG 透明底，可多选
+              <p className="mt-0.5 text-[10px] text-white/25">
+                PNG / JPG / GIF / WEBP / SVG，建议透明底，可多选
               </p>
             </div>
           </div>
@@ -250,7 +257,7 @@ export function TickerLogosField({
         }}
       />
 
-      {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
+      {hint ? <p className="text-[10px] leading-tight text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
     </div>
   );

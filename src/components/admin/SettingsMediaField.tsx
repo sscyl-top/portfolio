@@ -22,6 +22,7 @@ type Props = {
   accept?: string;
   hint?: string;
   circular?: boolean;
+  compact?: boolean;
 };
 
 const ACCEPTED_IMAGE_TYPES = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml";
@@ -34,6 +35,7 @@ export function SettingsMediaField({
   accept = ACCEPTED_IMAGE_TYPES,
   hint,
   circular = false,
+  compact = false,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,6 +50,13 @@ export function SettingsMediaField({
   const previewName = uploadedPreview ? uploadedPreview.original_name : selected?.original_name;
   const previewMime = uploadedPreview ? uploadedPreview.mime_type : selected?.mime_type;
   const isGif = previewMime === "image/gif";
+
+  const previewSize = compact ? "h-14" : "h-16";
+  const previewMaxW = compact ? "max-w-[100px]" : "max-w-[120px]";
+  const emptySize = compact ? "h-10" : "h-12";
+  const dropP = compact ? "p-2.5" : "p-3";
+  const emptyP = compact ? "p-3" : "p-4";
+  const ctrlH = compact ? "h-8" : "h-9";
 
   const triggerFileSelect = useCallback(() => {
     inputRef.current?.click();
@@ -138,8 +147,8 @@ export function SettingsMediaField({
   }, [handleUpload]);
 
   return (
-    <div className="grid gap-2 text-sm">
-      <span className="text-white/58">{label}</span>
+    <div className="grid gap-1.5">
+      <span className="text-xs font-medium text-white/58">{label}</span>
 
       <div
         ref={dropZoneRef}
@@ -154,9 +163,9 @@ export function SettingsMediaField({
           <button
             type="button"
             onClick={triggerFileSelect}
-            className={`block w-full cursor-pointer overflow-hidden p-3 text-left transition hover:bg-white/[0.03] ${circular ? "text-center" : ""}`}
+            className={`block w-full cursor-pointer overflow-hidden ${dropP} text-left transition hover:bg-white/[0.03] ${circular ? "text-center" : ""}`}
           >
-            <div className={`flex items-start gap-3 ${circular ? "flex-col items-center" : ""}`}>
+            <div className={`flex items-center gap-2.5 ${circular ? "flex-col items-center" : ""}`}>
               {isGif ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -164,8 +173,8 @@ export function SettingsMediaField({
                   alt={selected?.alt_text || previewName || label}
                   className={
                     circular
-                      ? "h-20 w-20 shrink-0 rounded-full border border-white/20 object-cover"
-                      : "h-20 w-auto max-w-[160px] shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:12px_12px] object-contain"
+                      ? `${previewSize} ${previewSize} w-14 shrink-0 rounded-full border border-white/20 object-cover`
+                      : `${previewSize} w-auto ${previewMaxW} shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:8px_8px] object-contain`
                   }
                 />
               ) : (
@@ -175,15 +184,15 @@ export function SettingsMediaField({
                   alt={selected?.alt_text || previewName || label}
                   className={
                     circular
-                      ? "h-20 w-20 shrink-0 rounded-full border border-white/20 object-cover"
-                      : "h-20 w-auto max-w-[160px] shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:12px_12px] object-contain"
+                      ? `${previewSize} w-14 shrink-0 rounded-full border border-white/20 object-cover`
+                      : `${previewSize} w-auto ${previewMaxW} shrink-0 rounded bg-[repeating-conic-gradient(#222_0%_25%,#2a2a2a_0%_50%)] bg-[length:8px_8px] object-contain`
                   }
                 />
               )}
               <div className={`min-w-0 flex-1 ${circular ? "text-center" : ""}`}>
                 <p className="truncate text-xs text-white/60">{previewName}</p>
                 <p className="mt-0.5 text-[10px] text-white/30">{previewMime}</p>
-                <p className="mt-2 text-[10px] text-white/25">
+                <p className="mt-1 text-[10px] text-white/25">
                   点击替换图片
                 </p>
               </div>
@@ -193,25 +202,25 @@ export function SettingsMediaField({
           <button
             type="button"
             onClick={triggerFileSelect}
-            className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 p-4 transition hover:bg-white/[0.06]"
+            className={`flex w-full cursor-pointer items-center justify-center gap-2 ${emptyP} transition hover:bg-white/[0.06]`}
           >
             {isUploading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-cyan" />
+              <Loader2 className={`${emptySize} ${emptySize} animate-spin text-cyan`} />
             ) : (
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
+              <div className={`grid ${emptySize} ${emptySize} place-items-center rounded-full bg-white/10`}>
                 {circular ? (
-                  <div className="h-6 w-6 rounded-full bg-white/20" />
+                  <div className={`${compact ? "h-5 w-5" : "h-6 w-6"} rounded-full bg-white/20`} />
                 ) : (
-                  <ImageIcon className="h-5 w-5 text-white/40" />
+                  <ImageIcon className={`${compact ? "h-4 w-4" : "h-5 w-5"} text-white/40`} />
                 )}
               </div>
             )}
-            <div className="text-center">
+            <div className="text-left">
               <p className="text-xs text-white/50">
-                {isUploading ? "上传中..." : "点击或拖拽图片到此处上传"}
+                {isUploading ? "上传中..." : "点击或拖拽上传图片"}
               </p>
               <p className="mt-0.5 text-[10px] text-white/25">
-                支持 PNG / JPG / GIF / WEBP / SVG
+                PNG / JPG / GIF / WEBP / SVG
               </p>
             </div>
           </button>
@@ -220,13 +229,13 @@ export function SettingsMediaField({
 
       <input type="hidden" name={name} value={value} />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <select
           value={value}
           onChange={(e) => { setValue(e.target.value); setUploadedPreview(null); }}
-          className="min-h-9 flex-1 rounded-md border border-white/10 bg-black/20 px-2.5 text-xs outline-none focus:border-cyan"
+          className={`${ctrlH} min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-2 text-xs outline-none focus:border-cyan`}
         >
-          <option value="">从媒体库选择已上传的图片</option>
+          <option value="">从媒体库选择</option>
           {assets
             .filter((a) => a.mime_type.startsWith("image/"))
             .map((asset) => (
@@ -240,9 +249,9 @@ export function SettingsMediaField({
           type="button"
           onClick={triggerFileSelect}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40"
+          className={`inline-flex ${ctrlH} shrink-0 items-center gap-1 rounded-md border border-white/10 bg-black/20 px-2 text-[11px] text-white/60 transition hover:border-cyan/30 hover:text-cyan disabled:opacity-40`}
         >
-          {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+          {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
           上传
         </button>
 
@@ -250,25 +259,14 @@ export function SettingsMediaField({
           <button
             type="button"
             onClick={() => { setValue(""); setUploadedPreview(null); }}
-            className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/40 transition hover:border-red-300/30 hover:text-red-300"
+            className={`${ctrlH} shrink-0 rounded-md border border-white/10 bg-black/20 px-2 text-white/40 transition hover:border-red-300/30 hover:text-red-300`}
           >
             <X className="h-3.5 w-3.5" />
           </button>
         ) : null}
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="sr-only"
-        onChange={(e) => {
-          void handleUpload(e.target.files);
-          e.target.value = "";
-        }}
-      />
-
-      {hint ? <p className="text-[10px] text-white/30">{hint}</p> : null}
+      {hint ? <p className="text-[10px] leading-tight text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
     </div>
   );
