@@ -90,9 +90,15 @@ export function EditableText({
   const isSavingRef = useRef(false)
 
   // text-content 获取：有 initialContent 或 Context 数据时跳过 fetch
+  // 当 Provider 存在但 key 不在 texts 中时也跳过（Provider 已批量预取，DB 无此记录）
   useEffect(() => {
     if (initialContent != null) return
     if (ctxData) return
+    // Provider 存在但 key 未命中 → DB 无此记录，直接用 fallback，避免 404 噪音
+    if (ctx != null) {
+      setIsLoading(false)
+      return
+    }
 
     fetch(`/api/text-content?key=${encodeURIComponent(textKey)}`)
       .then((res) => res.json())
@@ -104,7 +110,7 @@ export function EditableText({
         setIsLoading(false)
       })
       .catch(() => setIsLoading(false))
-  }, [textKey, initialContent, ctxData])
+  }, [textKey, initialContent, ctxData, ctx])
 
   // admin 检查：有 Provider 时共享 Context 结果，无 Provider 时独立 fetch
   useEffect(() => {
