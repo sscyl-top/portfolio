@@ -67,6 +67,13 @@ const heroFloatingMediaCards = [
   },
 ];
 
+/** 微信内置浏览器(X5/WKWebView)视频兼容属性 */
+const wxVideoAttrs: Record<string, string> = {
+  "x5-video-player-type": "h5",
+  "x5-video-player-fullscreen": "false",
+  "webkit-playsinline": "true",
+};
+
 function MeteorShower() {
   const meteor1Ref = useRef<HTMLDivElement>(null);
   const meteor2Ref = useRef<HTMLDivElement>(null);
@@ -286,10 +293,25 @@ function HeroMainCard({
     tryPlay();
     document.addEventListener("WeixinJSBridgeReady", tryPlay, { once: true });
 
+    // 超时兜底：微信X5内核可能不触发 loadeddata/canplay 事件
+    const fallback = setTimeout(() => {
+      video.classList.remove("opacity-0");
+      const skeleton = video.parentElement?.querySelector("[data-hero-skeleton]") as HTMLElement | null;
+      if (skeleton) skeleton.style.opacity = "0";
+    }, 3500);
+
     return () => {
       document.removeEventListener("WeixinJSBridgeReady", tryPlay);
+      clearTimeout(fallback);
     };
   }, [videos.main]);
+
+  const revealMainVideo = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    video.classList.remove("opacity-0");
+    const skeleton = video.parentElement?.querySelector("[data-hero-skeleton]") as HTMLElement | null;
+    if (skeleton) skeleton.style.opacity = "0";
+  };
 
   return (
     <>
@@ -318,11 +340,10 @@ function HeroMainCard({
             loop
             playsInline
             preload="metadata"
-            onLoadedData={(e) => {
-              e.currentTarget.classList.remove("opacity-0");
-              const skeleton = (e.currentTarget.parentElement?.querySelector('[data-hero-skeleton]') as HTMLElement | null);
-              if (skeleton) skeleton.style.opacity = "0";
-            }}
+            onLoadedData={revealMainVideo}
+            onCanPlay={revealMainVideo}
+            onLoadedMetadata={revealMainVideo}
+            {...wxVideoAttrs}
           />
         </>
       ) : null}
@@ -504,8 +525,25 @@ export function FloatingImageCard({
     );
     observer.observe(card);
 
-    return () => observer.disconnect();
+    // 超时兜底：微信X5内核可能不触发 loadeddata/canplay
+    const fallback = setTimeout(() => {
+      video.classList.remove("opacity-0");
+      const skeleton = video.parentElement?.querySelector("[data-float-skeleton]") as HTMLElement | null;
+      if (skeleton) skeleton.style.opacity = "0";
+    }, 3500);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallback);
+    };
   }, [videoSrc]);
+
+  const revealFloatVideo = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    video.classList.remove("opacity-0");
+    const skeleton = video.parentElement?.querySelector("[data-float-skeleton]") as HTMLElement | null;
+    if (skeleton) skeleton.style.opacity = "0";
+  };
 
   return (
     <div
@@ -532,11 +570,10 @@ export function FloatingImageCard({
             loop
             playsInline
             preload="metadata"
-            onLoadedData={(e) => {
-              e.currentTarget.classList.remove("opacity-0");
-              const skeleton = (e.currentTarget.parentElement?.querySelector('[data-float-skeleton]') as HTMLElement | null);
-              if (skeleton) skeleton.style.opacity = "0";
-            }}
+            onLoadedData={revealFloatVideo}
+            onCanPlay={revealFloatVideo}
+            onLoadedMetadata={revealFloatVideo}
+            {...wxVideoAttrs}
           />
         </>
       ) : null}

@@ -6,6 +6,13 @@ import Image from "next/image";
 import type { Work } from "@/data/portfolio";
 import { toneClass } from "@/lib/workTone";
 
+/** 微信内置浏览器(X5/WKWebView)视频兼容属性 */
+const wxVideoAttrs: Record<string, string> = {
+  "x5-video-player-type": "h5",
+  "x5-video-player-fullscreen": "false",
+  "webkit-playsinline": "true",
+};
+
 type WorkMediaFrameProps = {
   className?: string;
   hover?: boolean;
@@ -70,14 +77,23 @@ export function WorkMediaFrame({
     if (!isVideo || !videoRef.current) return;
     const v = videoRef.current;
     if (inViewport) {
-      v.play().catch(() => {
-        /* autoplay 被浏览器阻止时静默失败 */
-      });
+      v.play().catch(() => {});
+      // 微信内置浏览器需要 WeixinJSBridgeReady 后才能播放
+      const tryPlay = () => v.play().catch(() => {});
+      document.addEventListener("WeixinJSBridgeReady", tryPlay, { once: true });
+      return () => document.removeEventListener("WeixinJSBridgeReady", tryPlay);
     } else {
       v.pause();
       if (!v.seeking) v.currentTime = 0;
     }
   }, [inViewport, isVideo]);
+
+  // 超时兜底：微信X5可能不触发 loadeddata/canplay
+  useEffect(() => {
+    if (!isVideo) return;
+    const t = setTimeout(() => setMediaLoaded(true), 3500);
+    return () => clearTimeout(t);
+  }, [isVideo]);
 
   // 图片优先使用 thumbUrl（多尺寸优化），回退到 url
   const imageUrl = media?.thumbUrl ?? media?.url;
@@ -118,7 +134,10 @@ export function WorkMediaFrame({
           preload={inViewport ? "metadata" : "none"}
           poster={posterUrl}
           onLoadedData={() => setMediaLoaded(true)}
+          onCanPlay={() => setMediaLoaded(true)}
+          onLoadedMetadata={() => setMediaLoaded(true)}
           style={positionStyle}
+          {...wxVideoAttrs}
         />
       ) : isGif && media ? (
         <img

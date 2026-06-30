@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
+/** 微信内置浏览器(X5/WKWebView)视频兼容属性 */
+const wxVideoAttrs: Record<string, string> = {
+  "x5-video-player-type": "h5",
+  "x5-video-player-fullscreen": "false",
+  "webkit-playsinline": "true",
+};
+
 type MotionEntry = {
   id: number;
   el: HTMLElement;
@@ -311,6 +318,7 @@ export function SmartVideo({
       controls={isLoaded && controls}
       poster={poster}
       className={`relative block w-full h-auto transition-opacity duration-500 ${isLoaded ? "opacity-100" : "opacity-0"} ${className ?? ""}`}
+      {...wxVideoAttrs}
       {...rest}
     />
   );
