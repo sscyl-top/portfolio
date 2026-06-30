@@ -370,7 +370,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[270px] w-[min(300px,66vw)] -translate-x-1/2 -translate-y-[48px] md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)] md:translate-y-0">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[270px] w-[min(300px,66vw)] -translate-x-1/2 -translate-y-[72px] md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)] md:translate-y-0">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
