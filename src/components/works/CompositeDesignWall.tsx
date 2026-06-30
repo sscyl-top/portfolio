@@ -276,11 +276,11 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-14 min-h-[380px] px-0 pb-1 pt-0 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
+          className="portfolio-cta-panel relative mt-16 min-h-[420px] px-0 pb-0 pt-0 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
-          <div className="absolute inset-x-[4%] bottom-0 top-6 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
+          <div className="absolute inset-x-[4%] bottom-4 top-14 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -297,7 +297,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-[64px] z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-[112px] z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
@@ -326,7 +326,7 @@ export function CompositeDesignWall({
           </div>
 
           <div
-            className="cta-logo-ticker absolute inset-x-0 bottom-[110px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            className="cta-logo-ticker absolute inset-x-0 bottom-[88px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
             style={{
               transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
               transformOrigin: "center center",
@@ -370,7 +370,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[270px] w-[min(300px,66vw)] -translate-x-1/2 -translate-y-[72px] md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)] md:translate-y-0">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[320px] w-[min(340px,72vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

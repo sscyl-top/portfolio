@@ -570,7 +570,7 @@ button {
 
 @media (max-width: 767px) {
   .light .portfolio-cta-panel > div:last-child {
-    background: linear-gradient(to top, rgba(247, 251, 253, 0.95), rgba(247, 251, 253, 0.7), transparent);
+    background: none;
   }
 }
 
