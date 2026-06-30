@@ -34,6 +34,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// metadataBase：让 OG/Twitter 图片 URL 解析为线上地址，而非 localhost
+// 注意：不能同时导出 metadata 和 generateMetadata，所以 metadataBase 放在 generateMetadata 的返回值里
+
 
 import { AnalyticsTracker } from "@/components/admin/AnalyticsTracker";
 import { FloatingMusicBall } from "@/components/site/FloatingMusicBall.client";
@@ -53,9 +56,14 @@ export async function generateMetadata(): Promise<Metadata> {
     settings.shareMediaUrl ?? settings.logoMediaUrl ?? settings.avatarMediaUrl;
 
   return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL || "https://sscyl.top",
+    ),
     title: settings.seoTitle,
     description: settings.seoDescription,
     manifest: "/manifest.webmanifest",
+    applicationName: "sscyl.top",
+    authors: [{ name: "陈涛涛" }],
     icons: imageUrl ? { icon: imageUrl, apple: imageUrl } : undefined,
     openGraph: {
       title: settings.seoTitle,

@@ -52,19 +52,21 @@ export async function generateMetadata({
   if (!work) return { title: pageTitle };
 
   const ogImage = work.shareMedia?.url ?? work.coverMedia?.url;
+  // SEO 标题优先使用作品实际标题，而非分类名
+  const seoTitle = work.title ? `${work.title} | sscyl.top` : pageTitle;
 
   return {
-    title: pageTitle,
+    title: seoTitle,
     description: work.summary,
     openGraph: {
-      title: pageTitle,
+      title: seoTitle,
       description: work.summary,
       type: "article",
       ...(ogImage ? { images: [{ url: ogImage, alt: work.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: pageTitle,
+      title: seoTitle,
       description: work.summary,
       ...(ogImage ? { images: [ogImage] } : {}),
     },
