@@ -236,7 +236,18 @@ export function SettingsMediaField({
         </div>
       </div>
 
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={value} readOnly />
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="sr-only"
+        onChange={(e) => {
+          void handleUpload(e.target.files);
+          e.target.value = "";
+        }}
+      />
 
       {hint ? <p className="text-[10px] leading-tight text-white/30">{hint}</p> : null}
       {error ? <p className="text-xs text-red-300">{error}</p> : null}

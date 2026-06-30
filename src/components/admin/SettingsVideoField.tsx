@@ -248,7 +248,7 @@ export function SettingsVideoField({
         </div>
       </div>
 
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={value} readOnly />
       <input
         ref={hiddenInputRef}
         type="file"
