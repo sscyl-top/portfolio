@@ -244,11 +244,11 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-24 min-h-[480px] px-0 pb-6 pt-8 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
+          className="portfolio-cta-panel relative mt-20 min-h-[580px] px-0 pb-6 pt-12 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
-          <div className="absolute inset-x-[4%] bottom-6 top-8 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
+          <div className="absolute inset-x-[5%] bottom-6 top-12 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -265,7 +265,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-28 z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
@@ -278,7 +278,7 @@ export function CompositeDesignWall({
                   <img
                     src={ctaCenterLogoUrl}
                     alt="中心Logo"
-                    className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                    className="cta-logo-img h-auto w-[min(280px,56vw)] md:w-[min(360px,64vw)]"
                   />
                 ) : (
                   <Image
@@ -286,7 +286,7 @@ export function CompositeDesignWall({
                     alt="无限进步"
                     width={360}
                     height={90}
-                    className="cta-logo-img h-auto w-[min(360px,64vw)]"
+                    className="cta-logo-img h-auto w-[min(280px,56vw)] md:w-[min(360px,64vw)]"
                   />
                 )}
               </div>
@@ -294,7 +294,7 @@ export function CompositeDesignWall({
           </div>
 
           <div
-            className="cta-logo-ticker absolute inset-x-0 bottom-[72px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            className="cta-logo-ticker absolute inset-x-0 bottom-[80px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
             style={{
               transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
               transformOrigin: "center center",
@@ -338,7 +338,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[380px] w-[min(420px,78vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[340px] w-[min(380px,72vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -356,10 +356,10 @@ export function CompositeDesignWall({
           </div>
 
           <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-4 md:pb-2">
-            <div className="flex w-full max-w-2xl flex-row items-center justify-center gap-1.5 px-3 md:gap-6 md:px-8">
+            <div className="flex w-full max-w-2xl flex-row items-center justify-center gap-2 px-4 md:gap-6 md:px-8">
               <Link
                 href="/resume"
-                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-2 text-[11px] text-ink backdrop-blur transition hover:border-edge hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-edge hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaResume"
               >
                 <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
@@ -367,7 +367,7 @@ export function CompositeDesignWall({
               </Link>
               <Link
                 href="/resume#hiring-contact"
-                className="group inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full bg-white px-2 text-[11px] font-semibold text-black shadow-sm transition hover:bg-gray-100 md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
+                className="group inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-black shadow-sm transition hover:bg-gray-100 md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-52"
                 data-text-key="works.ctaHiring"
               >
                 <BriefcaseBusiness className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
@@ -375,7 +375,7 @@ export function CompositeDesignWall({
               </Link>
               <Link
                 href="/resume#commercial-contact"
-                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-2 text-[11px] text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full border border-edge bg-glass-strong px-3 text-xs text-ink backdrop-blur transition hover:border-copper/60 hover:text-ink md:min-h-12 md:flex-none md:gap-1.5 md:px-6 md:text-sm md:w-48"
                 data-text-key="works.ctaCommercial"
               >
                 <MessagesSquare className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
