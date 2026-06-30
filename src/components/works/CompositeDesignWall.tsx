@@ -276,11 +276,11 @@ export function CompositeDesignWall({
 
         <div
           ref={ctaRef}
-          className="portfolio-cta-panel relative mt-12 min-h-[480px] px-0 pb-4 pt-4 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
+          className="portfolio-cta-panel relative mt-10 min-h-[420px] px-0 pb-2 pt-2 md:mt-48 md:min-h-[680px] md:pt-16 md:pb-8"
         >
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_52%_24%,rgba(139,215,205,0.16),transparent_30%),radial-gradient(circle_at_50%_92%,var(--overlay),transparent_42%)]" />
 
-          <div className="absolute inset-x-[4%] bottom-4 top-2 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
+          <div className="absolute inset-x-[4%] bottom-2 top-0 z-10 md:inset-x-[8%] md:bottom-10 md:top-12">
             {ctaCardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -297,7 +297,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-16 z-40 flex justify-center md:top-28">
+          <div className="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center md:top-28">
             <div
               style={{
                 transform: `translate(${ctaCenterLogoOffsetX}px, ${ctaCenterLogoOffsetY}px) scale(${ctaCenterLogoScale})`,
@@ -326,7 +326,7 @@ export function CompositeDesignWall({
           </div>
 
           <div
-            className="cta-logo-ticker absolute inset-x-0 bottom-[68px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
+            className="cta-logo-ticker absolute inset-x-0 bottom-[56px] z-20 overflow-hidden opacity-70 md:bottom-[82px]"
             style={{
               transform: `translate(${ctaTickerLogoOffsetX}px, ${ctaTickerLogoOffsetY}px) scale(${ctaTickerLogoScale})`,
               transformOrigin: "center center",
@@ -370,7 +370,7 @@ export function CompositeDesignWall({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-1/2 z-30 h-[290px] w-[min(320px,68vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
+          <div className="absolute bottom-0 left-1/2 z-30 h-[260px] w-[min(290px,64vw)] -translate-x-1/2 md:bottom-0 md:h-[440px] md:w-[min(560px,84vw)]">
             {activeFigureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -387,7 +387,7 @@ export function CompositeDesignWall({
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-3 md:pb-2">
+          <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center pb-2 md:pb-2">
             <div className="flex w-full max-w-2xl flex-row items-center justify-center gap-2 px-4 md:gap-6 md:px-8">
               <Link
                 href="/resume"
