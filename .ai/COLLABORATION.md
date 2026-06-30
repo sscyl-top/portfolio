@@ -1,12 +1,30 @@
 # AI 协作说明
 
-> 本文件用于多个 AI 助手（如 Trae / 豆包）之间的工作交接，避免重复劳动和互相覆盖。
+> 本文件用于多个 AI 助手（均为 GLM-5.2：Trae Walk code 模式 + Trae IDE solo 模式）之间的工作交接，避免重复劳动和互相覆盖。
 > 每次会话结束前，请更新本文件。
 
 ## 当前工作状态（2026-06-30）
 
 ### 最新提交
+- `e50cd3b` feat(media): 媒体库批量选择与删除
 - `f52bfba` fix(settings): 修复视频上传后保存被清空的问题
+
+### 媒体库批量删除功能（2026-06-30，commit `e50cd3b`）
+- **背景**：用户反馈单个删除"缓半天才有效果，点到下一个时刚好补位，容易误删"
+- **实现**：
+  - 新增 `MediaBatchClient.tsx` client component 管理选择状态
+  - 每个卡片左上角增加**始终可见**的复选框（避免 hover 才出现导致的误操作）
+  - 顶部 sticky 工具栏：全选/取消全选、已选数量、清除选择、批量删除按钮
+  - 批量删除带 `window.confirm` 确认 + `useTransition` 防双击
+  - `actions.ts` 新增 `batchDeleteMediaAssets`（逗号分隔 ids 批量软删，与单个删除同样的软删模式）
+  - 保留单个 hover 删除按钮作为快捷方式
+- **线上验证**（Playwright 自动化）：
+  - 317 个复选框正确渲染
+  - 单选→工具栏切换显示"已选 1/317"+批量删除按钮+卡片高亮环
+  - 多选累加→"已选 3/317"
+  - 全选→"已选 317/317"，按钮文字自动切换为"取消全选"
+  - 取消全选→恢复初始状态（无选中、提示文字恢复、批量按钮隐藏）
+  - 未实际执行删除以保护真实数据，server action 逻辑已通过 tsc 类型检查
 
 ### 已修复的问题
 1. **视频上传后保存被清空**（commit `f52bfba`）
@@ -39,7 +57,7 @@
 
 ### 重要发现（修正之前的误判）
 - **site_settings 表的 cta_*_scale/offset 列实际是存在的**（CTA transform 值保存测试通过，值持久化成功）
-- 之前会话判断"缺失列"可能是误判，或豆包在期间补充了迁移
+- 之前会话判断"缺失列"可能是误判，或另一个 AI（Trae IDE solo 模式）在期间补充了迁移
 - 但 `cta_figure_light_media_id` 列仍可能缺失（未单独测试），保留列过滤逻辑作为安全网
 
 ### 待解决的问题
@@ -60,11 +78,11 @@
 > 用户要求两个 AI（Trae Walk code 模式 + Trae IDE solo 模式）明确分工。
 
 ### 分工原则
-- **豆包（Trae IDE solo 模式）→ 视觉/UI 优化**
+- **另一个 AI（Trae IDE solo 模式，GLM-5.2）→ 视觉/UI 优化**
   - 擅长界面调整、布局优化、所见即所得预览调试
   - 负责后台 UI 优化（用户提到后台 UI 还有问题）
   - solo 模式有完整 IDE 视觉反馈，适合 UI 迭代
-  - 注意：豆包只能用 MCP，不能用内置浏览器
+  - 注意：该 AI 只能用 MCP，不能用内置浏览器
 
 - **我（Trae Walk code 模式）→ bug 排查/测试/数据层**
   - 本次系统性测试、保存链路排查、数据库 schema 验证
@@ -78,7 +96,8 @@
 - **Server Action 表单提交注意**：React 受控表单必须用 `form.requestSubmit()` 不能用 `form.submit()`，否则会报 "A React form was unexpectedly submitted"
 
 ### 备份分支
-- `backup/hero-side2-fix-20260630`：本次修复前的状态
+- `backup/before-media-batch-delete`：媒体库批量删除功能开发前的状态（2026-06-30）
+- `backup/hero-side2-fix-20260630`：视频保存修复前的状态
 
 ## 协作规则
 
