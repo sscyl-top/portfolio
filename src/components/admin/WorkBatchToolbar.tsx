@@ -39,13 +39,19 @@ interface WorkItem {
   year: string;
   is_representative: boolean;
   is_composite: boolean;
+  cover_url?: string | null;
+  cover_mime_type?: string | null;
 }
+
+type CoverInfo = { url: string; mime_type: string } | null;
 
 interface Props {
   works: WorkItem[];
+  viewMode?: "table" | "cards";
+  dense?: boolean;
 }
 
-export function WorkBatchManager({ works }: Props) {
+export function WorkBatchManager({ works, viewMode = "table", dense = false }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [orderedWorks, setOrderedWorks] = useState(works);
@@ -218,7 +224,7 @@ export function WorkBatchManager({ works }: Props) {
               disabled={!hasSelection || isPending}
               className="min-h-9 rounded-md border border-white/10 px-3 text-sm text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-40"
             >
-              设为复合设计
+              设为早期作品
             </button>
           </form>
 
@@ -244,39 +250,54 @@ export function WorkBatchManager({ works }: Props) {
           items={orderedWorks.map((w) => w.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="overflow-x-auto border-y border-white/10">
-            <table className="min-w-full text-left text-sm">
-              <thead className="font-mono text-[10px] uppercase text-white/36">
-                <tr>
-                  <th className="py-3 pr-1 font-normal"></th>
-                  <th className="py-3 pr-2 font-normal">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={toggleAll}
-                      className="h-4 w-4 accent-cyan"
+          {viewMode === "cards" ? (
+            <div className={`mt-2 grid gap-3 ${dense ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"}`}>
+              {orderedWorks.map((work) => (
+                <SortableCard
+                  key={work.id}
+                  work={work}
+                  isSelected={selected.has(work.id)}
+                  onToggle={() => toggleOne(work.id)}
+                  isPending={isPending}
+                  dense={dense}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto border-y border-white/10">
+              <table className="min-w-full text-left text-sm">
+                <thead className="font-mono text-[10px] uppercase text-white/36">
+                  <tr>
+                    <th className="py-3 pr-1 font-normal"></th>
+                    <th className="py-3 pr-2 font-normal">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAll}
+                        className="h-4 w-4 accent-cyan"
+                      />
+                    </th>
+                    <th className="py-3 pr-4 font-normal">Title</th>
+                    <th className="px-4 py-3 font-normal">Status</th>
+                    <th className="px-4 py-3 font-normal">Year</th>
+                    <th className="px-4 py-3 font-normal">Placement</th>
+                    <th className="py-3 pl-4 font-normal">Public URL</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {orderedWorks.map((work) => (
+                    <SortableRow
+                      key={work.id}
+                      work={work}
+                      isSelected={selected.has(work.id)}
+                      onToggle={() => toggleOne(work.id)}
+                      isPending={isPending}
                     />
-                  </th>
-                  <th className="py-3 pr-4 font-normal">Title</th>
-                  <th className="px-4 py-3 font-normal">Status</th>
-                  <th className="px-4 py-3 font-normal">Year</th>
-                  <th className="px-4 py-3 font-normal">Placement</th>
-                  <th className="py-3 pl-4 font-normal">Public URL</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {orderedWorks.map((work) => (
-                  <SortableRow
-                    key={work.id}
-                    work={work}
-                    isSelected={selected.has(work.id)}
-                    onToggle={() => toggleOne(work.id)}
-                    isPending={isPending}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </SortableContext>
       </DndContext>
       {dialog}
@@ -359,7 +380,7 @@ function SortableRow({
       <td className="px-4 py-4 text-white/56">
         {[
           work.is_representative ? "代表作" : null,
-          work.is_composite ? "复合设计" : null,
+          work.is_composite ? "早期作品" : null,
         ]
           .filter(Boolean)
           .join(" / ") || "-"}
@@ -393,5 +414,114 @@ function StatusBadge({ status }: { status: WorkStatus }) {
     <span className="rounded-full border border-white/12 px-2.5 py-1 text-xs text-white/62">
       {label}
     </span>
+  );
+}
+
+function SortableCard({
+  work,
+  isSelected,
+  onToggle,
+  isPending,
+  dense,
+}: {
+  work: WorkItem;
+  isSelected: boolean;
+  onToggle: () => void;
+  isPending: boolean;
+  dense: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: work.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  const aspectClass = dense ? "aspect-[3/4]" : "aspect-video";
+  const hasCover = !!work.cover_url;
+  const isVideo = hasCover && (work.cover_mime_type ?? "").startsWith("video/");
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative overflow-hidden rounded-lg border transition ${
+        isDragging ? "border-cyan bg-cyan/[0.04]" : "border-white/10 bg-white/[0.03] hover:border-white/20"
+      } ${isSelected ? "ring-2 ring-cyan/60" : ""}`}
+    >
+      <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggle}
+          className="h-4 w-4 accent-cyan"
+        />
+      </div>
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="absolute right-2 top-2 z-10 cursor-grab rounded bg-black/40 p-1 text-white/30 opacity-0 transition hover:text-white/70 group-hover:opacity-100 active:cursor-grabbing disabled:opacity-30"
+        title="拖拽调整排序"
+        disabled={isPending}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      <Link href={`/admin/works/${work.id}`} className="block">
+        <div className={`relative ${aspectClass} overflow-hidden bg-black/30`}>
+          {hasCover ? (
+            isVideo ? (
+              <video
+                src={work.cover_url!}
+                className="h-full w-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img
+                src={work.cover_url!}
+                alt={work.title}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+            )
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-white/20">
+              无封面
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          {work.status !== "published" ? (
+            <span className="absolute right-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-yellow-300/80 backdrop-blur-sm">
+              {work.status === "draft" ? "草稿" : "私密"}
+            </span>
+          ) : null}
+        </div>
+        <div className={dense ? "p-2" : "p-3"}>
+          <p className={`truncate font-medium text-white/90 ${dense ? "text-xs" : "text-sm"}`}>
+            {work.title}
+          </p>
+          <p className={`mt-0.5 flex items-center gap-1.5 text-white/40 ${dense ? "text-[10px]" : "text-[11px]"}`}>
+            {work.year ? <span>{work.year}</span> : null}
+            {work.is_representative ? (
+              <span className="rounded bg-cyan/20 px-1 text-cyan">代表作</span>
+            ) : null}
+            {work.is_composite ? (
+              <span className="rounded bg-amber-500/20 px-1 text-amber-300">早期</span>
+            ) : null}
+          </p>
+        </div>
+      </Link>
+    </div>
   );
 }
