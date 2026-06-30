@@ -13,7 +13,6 @@ const resumeSchema = z.object({
   location: z.string().trim().max(80),
   email: z.string().trim().email().max(120),
   phone: z.string().trim().max(30),
-  zcool_url: z.string().trim().max(200),
   wechat_id: z.string().trim().max(60),
 });
 
@@ -100,7 +99,6 @@ export async function saveResume(formData: FormData) {
     location: formData.get("location") ?? "",
     email: formData.get("email"),
     phone: formData.get("phone") ?? "",
-    zcool_url: formData.get("zcool_url") ?? "",
     wechat_id: formData.get("wechat_id") ?? "",
   });
 

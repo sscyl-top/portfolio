@@ -52,7 +52,6 @@ export type ResumeDownloads = {
 export type ResumeContact = {
   email: string;
   phone: string;
-  zcool: string;
 };
 
 export type ResumeData = {
@@ -80,7 +79,6 @@ export type ResumeRow = {
   location: string;
   email: string;
   phone: string;
-  zcool_url: string;
   wechat_id: string;
   strengths: string[];
   highlights: string[];
@@ -124,7 +122,7 @@ export async function getResumeData(): Promise<ResumeData> {
     const { data } = await supabase
       .from("resumes")
       .select(
-        "name,alias,role,positioning,location,email,phone,zcool_url,wechat_id,strengths,highlights,expertise,experience,campus,education,services,downloads",
+        "name,alias,role,positioning,location,email,phone,wechat_id,strengths,highlights,expertise,experience,campus,education,services,downloads",
       )
       .single();
 
@@ -141,7 +139,6 @@ export async function getResumeData(): Promise<ResumeData> {
       contact: {
         email: row.email || defaultResumeData.contact.email,
         phone: row.phone || defaultResumeData.contact.phone,
-        zcool: row.zcool_url || defaultResumeData.contact.zcool,
       },
       strengths:
         Array.isArray(row.strengths) &&

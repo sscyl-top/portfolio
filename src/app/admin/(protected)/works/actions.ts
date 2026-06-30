@@ -1055,7 +1055,7 @@ const createWorkFromMediaSchema = z.object({
 });
 
 /**
- * 站酷式快速发布：从拖拽上传的媒体一键创建作品草稿。
+ * 快速发布：从拖拽上传的媒体一键创建作品草稿。
  * 第一个媒体设为封面，其余按顺序生成对应内容块。
  */
 export async function createWorkFromMedia(formData: FormData) {
@@ -1152,7 +1152,7 @@ const createWorkFromWizardSchema = z.object({
 });
 
 /**
- * 站酷式三步向导：从媒体、元数据创建作品。
+ * 三步向导：从媒体、元数据创建作品。
  * 第一个媒体设为封面，其余按顺序生成内容块；同时写入分类与标签。
  */
 export async function createWorkFromWizard(formData: FormData) {

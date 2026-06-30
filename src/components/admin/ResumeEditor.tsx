@@ -98,9 +98,6 @@ function BasicFields({ resume }: { resume: ResumeData }) {
       </div>
       <Field label="电话" name="phone" defaultValue={resume.contact.phone} />
       <Field label="微信号" name="wechat_id" defaultValue="" />
-      <div className="md:col-span-2">
-        <Field label="Zcool URL" name="zcool_url" defaultValue={resume.contact.zcool} />
-      </div>
       <div className="md:col-span-4">
         <TextArea
           label="定位描述"

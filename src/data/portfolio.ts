@@ -162,7 +162,6 @@ export const siteSettings = {
     { label: "简历", href: "/resume" },
   ],
   socialLinks: [
-    { label: "Zcool", href: "https://www.zcool.com.cn/u/25717361" },
     { label: "Email", href: "#" },
   ],
 };
@@ -189,7 +188,6 @@ export const resume = {
   contact: {
     email: "hello@sscyl.top",
     phone: "19276690901",
-    zcool: "https://www.zcool.com.cn/u/25717361",
   },
   strengths: [
     "综合 5 年+经验：曾作为年销亿级全球全产业链品牌「极克 Jetfly」的唯一首席设计师，以一人设计团队模式独立构建并落地品牌全链路视觉体系。",
